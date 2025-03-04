@@ -1,9 +1,9 @@
 ## Code: backend/app/routers/llm.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.app import database, schemas
-from backend.app.config import Config
-from backend.app.utils import get_current_user
+from visual_workflow_editor.backend.app import database, schemas
+from visual_workflow_editor.backend.app.config import Config
+from visual_workflow_editor.backend.app.utils import get_current_user
 import httpx  # For making HTTP requests to the LLM API
 import json
 

@@ -1,4 +1,4 @@
-## frontend/src/components/GlobalVariables.js
+// frontend/src/components/GlobalVariables.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, TextField, Button, Typography, List, ListItem, ListItemText, IconButton, Divider } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';

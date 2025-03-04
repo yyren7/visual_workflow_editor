@@ -1,15 +1,14 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-
-Base = declarative_base()
+from visual_workflow_editor.backend.app.database import Base
 
 class User(Base):
     """
     Represents a user in the system.
     """
     __tablename__ = "users"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -27,6 +26,7 @@ class Flow(Base):
     Represents a flow (diagram) in the system.
     """
     __tablename__ = "flows"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     flow_data = Column(JSON, nullable=False, default={})  # Stores the flow data as a JSON object

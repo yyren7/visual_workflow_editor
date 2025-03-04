@@ -1,4 +1,4 @@
-## frontend/src/components/Sidebar.js
+// frontend/src/components/Sidebar.js
 import React, { useCallback } from 'react';
 import { Box, Drawer, Divider } from '@mui/material';
 import NodeSelector from './NodeSelector';

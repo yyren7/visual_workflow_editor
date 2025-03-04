@@ -1,4 +1,4 @@
-## frontend/src/api/api.js
+// frontend/src/api/api.js
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api'; // Default API base URL

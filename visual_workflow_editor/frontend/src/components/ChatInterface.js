@@ -1,4 +1,4 @@
-## frontend/src/components/ChatInterface.js
+// frontend/src/components/ChatInterface.js
 import React, { useState, useCallback } from 'react';
 import { Box, TextField, Button, List, ListItem, ListItemText, Typography } from '@mui/material';
 import PropTypes from 'prop-types';

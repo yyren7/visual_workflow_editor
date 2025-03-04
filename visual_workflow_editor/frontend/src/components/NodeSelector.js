@@ -1,4 +1,4 @@
-## frontend/src/components/NodeSelector.js
+// frontend/src/components/NodeSelector.js
 import React from 'react';
 import { Box, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import PropTypes from 'prop-types';

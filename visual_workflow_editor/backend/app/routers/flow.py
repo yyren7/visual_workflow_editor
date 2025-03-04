@@ -3,9 +3,9 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from backend.app import models, database, schemas
-from backend.app.config import Config
-from backend.app.utils import get_current_user
+from visual_workflow_editor.backend.app import models, database, schemas
+from visual_workflow_editor.backend.app.config import Config
+from visual_workflow_editor.backend.app.utils import get_current_user
 
 router = APIRouter(
     prefix="/flows",

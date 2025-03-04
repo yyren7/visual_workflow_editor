@@ -1,10 +1,10 @@
 ## backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.config import Config
-from backend.app.routers import user, flow, llm
-from backend.app.database import engine
-from backend.app.models import Base
+from visual_workflow_editor.backend.app.config import Config
+from visual_workflow_editor.backend.app.routers import user, flow, llm
+from visual_workflow_editor.backend.app.database import engine
+from visual_workflow_editor.backend.app.models import Base
 
 # Create the database tables
 Base.metadata.create_all(bind=engine)
