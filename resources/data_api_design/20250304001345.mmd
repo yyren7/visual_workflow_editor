@@ -1,0 +1,71 @@
+
+classDiagram
+    class FlowEditor {
+        -nodes: list
+        -edges: list
+        -selectedNode: Node
+        +addNode(node: Node)
+        +updateNode(node: Node)
+        +removeNode(nodeId: str)
+        +addEdge(edge: Edge)
+        +removeEdge(edgeId: str)
+        +loadFlow(flowData: dict)
+        +saveFlow() dict
+        +onNodeClick(node: Node)
+    }
+    class Node {
+        -id: str
+        -type: str
+        -data: dict
+        -position: dict
+        +Node(id: str, type: str, data: dict, position: dict)
+        +getData() dict
+        +setData(data: dict)
+    }
+    class Edge {
+        -id: str
+        -source: str
+        -target: str
+        -sourceHandle: str
+        -targetHandle: str
+        +Edge(id: str, source: str, target: str, sourceHandle: str, targetHandle: str)
+    }
+    class Sidebar {
+        +addNodeByType(nodeType: str)
+    }
+    class NodeSelector {
+        +getNodeTypes() list
+    }
+    class NodeProperties {
+        -node: Node
+        +updateNodeProperty(property: str, value: any)
+    }
+    class GlobalVariables {
+        -variables: dict
+        +loadVariables(filePath: str)
+        +saveVariables(filePath: str)
+        +getVariable(name: str) any
+        +setVariable(name: str, value: any)
+    }
+    class ChatInterface {
+        +sendMessage(message: str) str
+        +getChatHistory() list
+    }
+    class FastAPI {
+        +create_flow(flow_data: dict) dict
+        +get_flow(flow_id: str) dict
+        +update_flow(flow_id: str, flow_data: dict) dict
+        +delete_flow(flow_id: str) dict
+        +generate_node(prompt: str) dict
+        +update_node_by_llm(node_id: str, prompt: str) dict
+        +login(user_data: dict) dict
+        +register(user_data: dict) dict
+    }
+
+    FlowEditor -- Node : contains
+    FlowEditor -- Edge : contains
+    FlowEditor -- Sidebar : uses
+    FlowEditor -- NodeProperties : uses
+    FlowEditor -- GlobalVariables : uses
+    FlowEditor -- ChatInterface : uses
+    Sidebar -- NodeSelector : uses

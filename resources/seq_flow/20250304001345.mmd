@@ -1,0 +1,50 @@
+
+sequenceDiagram
+    participant FE as FlowEditor
+    participant SB as Sidebar
+    participant NS as NodeSelector
+    participant NP as NodeProperties
+    participant GV as GlobalVariables
+    participant CI as ChatInterface
+    participant API as FastAPI
+    participant DB as Database
+
+    # Initial Flow Load
+    FE->>API: get_flow(flow_id)
+    API->>DB: query_flow(flow_id)
+    DB-->>API: return flow_data
+    API-->>FE: return flow_data
+    FE->>FE: loadFlow(flow_data)
+
+    # Add Node from Sidebar
+    SB->>NS: getNodeTypes()
+    NS-->>SB: return nodeTypes
+    SB->>FE: addNodeByType(nodeType)
+    FE->>FE: create Node(nodeType)
+    FE->>FE: addNode(node)
+    FE->>FE: render()
+
+    # Select Node and Edit Properties
+    FE->>FE: onNodeClick(node)
+    FE->>NP: display properties of node
+    NP->>FE: updateNodeProperty(property, value)
+    FE->>FE: updateNode(node)
+    FE->>FE: render()
+
+    # Use Chat Interface to Generate Node
+    CI->>API: sendMessage(prompt)
+    API->>API: generate_node(prompt)
+    API->>FE: return new node data
+    FE->>FE: addNode(node)
+    FE->>FE: render()
+
+    # Save Flow
+    FE->>API: saveFlow()
+    API->>DB: update_flow(flow_id, flow_data)
+    DB-->>API: return success
+    API-->>FE: return success
+
+    # Global Variables
+    GV->>GV: loadVariables(filePath)
+    GV->>GV: getVariable(name)
+    GV->>GV: setVariable(name, value)
