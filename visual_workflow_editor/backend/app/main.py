@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from visual_workflow_editor.backend.app.config import Config
-from visual_workflow_editor.backend.app.routers import user, flow, llm
+from visual_workflow_editor.backend.app.routers import user, flow, llm, email # 导入 email 路由
 from visual_workflow_editor.backend.app.database import engine
 from visual_workflow_editor.backend.app.models import Base
 
@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(user.router)
 app.include_router(flow.router)
 app.include_router(llm.router)
+app.include_router(email.router) # 引入 email 路由
 
 @app.get("/")
 async def root():

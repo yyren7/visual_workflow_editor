@@ -30,6 +30,11 @@ class Config:
     # Global Variables File Path
     GLOBAL_VARIABLES_PATH: str = os.getenv("GLOBAL_VARIABLES_PATH", "global_variables.json") # Default path for global variables
 
+    # Email settings
+    MAIL_HOST: str = os.getenv("MAIL_HOST", "smtp.example.com")  # Default SMTP server
+    MAIL_USER: str = os.getenv("MAIL_USER", "your_email@example.com")  # Default email username
+    MAIL_PASS: str = os.getenv("MAIL_PASS", "your_email_password")  # Default email password
+
     @staticmethod
     def configure():
         """
