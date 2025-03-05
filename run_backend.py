@@ -16,5 +16,5 @@ if os.path.exists(sqlite_db_path):
         print(f"警告: 无法删除旧数据库文件: {sqlite_db_path}")
 
 if __name__ == "__main__":
-    # 注意这里使用字符串形式指定应用路径
-    uvicorn.run("visual_workflow_editor.backend.app.main:app", host="0.0.0.0", port=8000, reload=True)
+    # 使用正确的模块路径
+    uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)

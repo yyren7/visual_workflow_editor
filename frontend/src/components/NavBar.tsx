@@ -1,10 +1,10 @@
 // visual_workflow_editor/frontend/src/components/NavBar.tsx
-import React, { useState, useEffect } from 'react';
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  IconButton, 
+import React, { useState } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
   Button,
   Box,
   Menu,
@@ -14,36 +14,16 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import LanguageSelector from './LanguageSelector';
+import { useAuth } from '../contexts/AuthContext';
 
 const NavBar: React.FC = () => {
-  const { t } = useTranslation();
+  // 使用i18n.t代替useTranslation
+  const t = (key: string) => i18n.t(key);
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { isAuthenticated, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  
-  useEffect(() => {
-    // 检查用户是否已登录
-    const checkAuth = () => {
-      const token = localStorage.getItem('access_token');
-      setIsAuthenticated(!!token);
-    };
-    
-    checkAuth();
-    
-    // 添加事件监听器以监听localStorage的变化
-    window.addEventListener('storage', checkAuth);
-    
-    // 创建自定义事件监听器，监听登录状态变化
-    const handleLoginChange = () => checkAuth();
-    window.addEventListener('loginChange', handleLoginChange);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      window.removeEventListener('loginChange', handleLoginChange);
-    };
-  }, []);
   
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -54,17 +34,8 @@ const NavBar: React.FC = () => {
   };
   
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    setIsAuthenticated(false);
-    
-    // 触发登录状态变化事件
-    window.dispatchEvent(new Event('loginChange'));
-    
+    logout(); // 使用AuthContext提供的logout方法
     handleMenuClose();
-    
-    // 使用原生window.location替代React Router导航
-    // 这避免了与React Router的导航组件和条件渲染之间的冲突
-    window.location.href = '/login';
   };
   
   return (
