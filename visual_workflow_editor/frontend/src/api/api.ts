@@ -71,6 +71,7 @@ apiClient.interceptors.request.use(
  * @returns {Promise<FlowData>} - A promise that resolves to the created flow's ID.
  */
 export const createFlow = async (flowData: FlowData): Promise<FlowData> => {
+    console.log("createFlow request:", flowData);
     try {
         const response: AxiosResponse<FlowData> = await apiClient.post(`/flows/`, flowData);
         return response.data;
@@ -86,6 +87,7 @@ export const createFlow = async (flowData: FlowData): Promise<FlowData> => {
  * @returns {Promise<FlowData>} - A promise that resolves to the flow data.
  */
 export const getFlow = async (flowId: string): Promise<FlowData> => {
+    console.log("getFlow request:", flowId);
     try {
         const response: AxiosResponse<FlowData> = await apiClient.get(`/flows/${flowId}`);
         return response.data;
@@ -102,6 +104,7 @@ export const getFlow = async (flowId: string): Promise<FlowData> => {
  * @returns {Promise<void>} - A promise that resolves when the flow is updated.
  */
 export const updateFlow = async (flowId: string, flowData: FlowData): Promise<void> => {
+    console.log("updateFlow request:", flowId, flowData);
     try {
         await apiClient.put(`/flows/${flowId}`, flowData);
     } catch (error) {
@@ -116,6 +119,7 @@ export const updateFlow = async (flowId: string, flowData: FlowData): Promise<vo
  * @returns {Promise<void>} - A promise that resolves when the flow is deleted.
  */
 export const deleteFlow = async (flowId: string): Promise<void> => {
+    console.log("deleteFlow request:", flowId);
     try {
         await apiClient.delete(`/flows/${flowId}`);
     } catch (error) {
@@ -130,6 +134,7 @@ export const deleteFlow = async (flowId: string): Promise<void> => {
  * @returns {Promise<NodeGenerationResult>} - A promise that resolves to the generated node data.
  */
 export const generateNode = async (prompt: string): Promise<NodeGenerationResult> => {
+    console.log("generateNode request:", prompt);
     try {
         const response: AxiosResponse<NodeGenerationResult> = await apiClient.post(`/llm/generate_node`, { prompt: prompt });
         return response.data;
@@ -146,6 +151,7 @@ export const generateNode = async (prompt: string): Promise<NodeGenerationResult
  * @returns {Promise<NodeUpdateResult>} - A promise that resolves to the updated node data.
  */
 export const updateNodeByLLM = async (nodeId: string, prompt: string): Promise<NodeUpdateResult> => {
+    console.log("updateNodeByLLM request:", nodeId, prompt);
     try {
         const response: AxiosResponse<NodeUpdateResult> = await apiClient.post(`/llm/update_node/${nodeId}`, { prompt: prompt });
         return response.data;
@@ -161,6 +167,7 @@ export const updateNodeByLLM = async (nodeId: string, prompt: string): Promise<N
  * @returns {Promise<any>} - A promise that resolves to the registered user data.
  */
 export const registerUser = async (userData: UserRegisterData): Promise<any> => {
+    console.log("registerUser request:", userData);
     try {
         const response: AxiosResponse<any> = await axios.post(`${API_BASE_URL}/users/register`, userData);
         return response.data;
@@ -176,6 +183,7 @@ export const registerUser = async (userData: UserRegisterData): Promise<any> => 
  * @returns {Promise<LoginResponse>} - A promise that resolves to the login token.
  */
 export const loginUser = async (userData: UserLoginData): Promise<LoginResponse> => {
+    console.log("loginUser request:", userData);
    try {
        // 将JSON转换为表单数据格式，因为后端使用的是OAuth2PasswordRequestForm
        const formData = new URLSearchParams();
@@ -203,6 +211,7 @@ export const loginUser = async (userData: UserLoginData): Promise<LoginResponse>
  * @returns {Promise<FlowData[]>} - A promise that resolves to the flows data.
  */
 export const getFlowsForUser = async (skip = 0, limit = 10): Promise<FlowData[]> => {
+    console.log("getFlowsForUser request:", skip, limit);
     try {
         const response: AxiosResponse<FlowData[]> = await apiClient.get(`/flows?skip=${skip}&limit=${limit}`);
         return response.data;
@@ -220,6 +229,7 @@ export const getFlowsForUser = async (skip = 0, limit = 10): Promise<FlowData[]>
  * @returns {Promise<any>} - Promise，成功resolve，失败reject
  */
 export const sendEmail = async (title: string, content: string): Promise<any> => {
+    console.log("sendEmail request:", title, content);
   try {
     const response: AxiosResponse<any> = await apiClient.post('/email/send', {
       to: 'ren.yiyu@nidec.com', // 接收者邮箱
