@@ -10,7 +10,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:800
  */
 export const createFlow = async (flowData) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/flows/`, { flow_data: flowData });
+        const response = await axios.post(`${API_BASE_URL}/flows/`, flowData);
         return response.data;
     } catch (error) {
         console.error("Error creating flow:", error);
@@ -41,7 +41,7 @@ export const getFlow = async (flowId) => {
  */
 export const updateFlow = async (flowId, flowData) => {
     try {
-        await axios.put(`${API_BASE_URL}/flows/${flowId}`, { flow_data: flowData });
+        await axios.put(`${API_BASE_URL}/flows/${flowId}`, flowData);
     } catch (error) {
         console.error("Error updating flow:", error);
         throw error;

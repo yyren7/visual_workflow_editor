@@ -2,6 +2,7 @@
 __pycache__
 *.pyc
 .vs
+venv
 
 # Node.js
 node_modules/

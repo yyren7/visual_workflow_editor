@@ -49,7 +49,7 @@ const App = () => {
           </AppBar>
           <Container maxWidth="xl" sx={{ mt: 2 }}>
             <Routes>
-              <Route path="/" element={<Typography variant="body1">{t('Welcome to the Flow Editor!')}</Typography>} />
+              <Route path="/" element={<FlowEditorWrapper />} />
               <Route path="/flow/:flowId" element={<FlowEditorWrapper />} />
             </Routes>
           </Container>

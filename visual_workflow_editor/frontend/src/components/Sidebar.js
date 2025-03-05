@@ -1,9 +1,8 @@
 // frontend/src/components/Sidebar.js
-import React, { useCallback } from 'react';
-import { Box, Drawer, Divider } from '@mui/material';
+import React from 'react';
+import { Box, Drawer, Divider, Typography } from '@mui/material';
 import NodeSelector from './NodeSelector';
 import PropTypes from 'prop-types';
-import { useReactFlow } from 'reactflow';
 
 /**
  * Sidebar Component
@@ -11,27 +10,6 @@ import { useReactFlow } from 'reactflow';
  * This component provides a sidebar with a NodeSelector for adding nodes to the flow.
  */
 const Sidebar = ({ isOpen, toggleSidebar }) => {
-  const { addNode } = useReactFlow();
-
-  /**
-   * Adds a node of the specified type to the flow.
-   * @param {string} nodeType - The type of node to add.
-   */
-  const addNodeByType = useCallback((nodeType) => {
-    const id = `${nodeType}-${Date.now()}`; // Generate a unique ID
-    const newNode = {
-      id: id,
-      type: nodeType,
-      data: { label: `${nodeType} Node` }, // Default label, can be customized
-      position: { x: 100, y: 100 }, // Default position
-    };
-    addNode(newNode);
-  }, [addNode]);
-
-  const handleNodeSelect = (nodeType) => {
-    addNodeByType(nodeType);
-  };
-
   return (
     <Drawer
       anchor="left"
@@ -44,12 +22,31 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         '& .MuiDrawer-paper': {
           width: 240,
           boxSizing: 'border-box',
+          bgcolor: '#1e1e1e',
+          color: 'white',
         },
       }}
     >
       <Box sx={{ overflow: 'auto' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            padding: '16px',
+            textAlign: 'center',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+            bgcolor: '#333',
+            color: 'white'
+          }}
+        >
+          节点选择器
+        </Typography>
         <Divider />
-        <NodeSelector onNodeSelect={handleNodeSelect} />
+        <Box sx={{ p: 1 }}>
+          <Typography variant="body2" sx={{ mb: 2, color: '#aaa', fontStyle: 'italic' }}>
+            拖拽节点到流程图区域
+          </Typography>
+          <NodeSelector />
+        </Box>
       </Box>
     </Drawer>
   );

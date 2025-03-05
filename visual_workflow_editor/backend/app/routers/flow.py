@@ -15,7 +15,13 @@ router = APIRouter(
 
 
 @router.post("/", response_model=schemas.Flow)
-async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.get_db), current_user: schemas.User = None):
+    """
+    Creates a new flow.
+    """
+    # 开发模式下可选认证
+    owner_id = current_user.id if current_user else 1  # 默认用户ID为1
+    db_flow = models.Flow(flow_data=flow.flow_data, owner_id=owner_id, name=flow.name)
     """
     Creates a new flow.
     """
@@ -27,7 +33,7 @@ async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.g
 
 
 @router.get("/{flow_id}", response_model=schemas.Flow)
-async def get_flow(flow_id: int, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def get_flow(flow_id: int, db: Session = Depends(database.get_db), current_user: schemas.User = None):
     """
     Gets a flow by ID.
     """
