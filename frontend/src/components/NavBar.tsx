@@ -61,7 +61,10 @@ const NavBar: React.FC = () => {
     window.dispatchEvent(new Event('loginChange'));
     
     handleMenuClose();
-    navigate('/login');
+    
+    // 使用原生window.location替代React Router导航
+    // 这避免了与React Router的导航组件和条件渲染之间的冲突
+    window.location.href = '/login';
   };
   
   return (

@@ -274,8 +274,8 @@ const resources: Resource = {
 // 初始化配置
 const initOptions: InitOptions = {
   resources,
-  lng: 'zh', // 默认语言
-  fallbackLng: 'en',
+  lng: 'en', // 默认语言
+  fallbackLng: 'zh',
   interpolation: {
     escapeValue: false // 不需要对React的输入进行转义
   }
