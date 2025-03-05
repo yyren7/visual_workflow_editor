@@ -1,6 +1,7 @@
-// frontend/src/components/NodeSelector.tsx
+// visual_workflow_editor/frontend/src/components/NodeSelector.tsx
 import React from 'react';
 import { Box, List, ListItem, ListItemText } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 // 节点类型定义
 export interface NodeTypeInfo {
@@ -13,25 +14,6 @@ interface NodeSelectorProps {
   onNodeSelect?: (nodeType: NodeTypeInfo) => void;
 }
 
-const nodeTypes: NodeTypeInfo[] = [
-  {
-    id: 'input',
-    label: 'Input Node',
-  },
-  {
-    id: 'output',
-    label: 'Output Node',
-  },
-  {
-    id: 'process',
-    label: 'Process Node',
-  },
-  {
-    id: 'decision',
-    label: 'Decision Node',
-  },
-];
-
 /**
  * NodeSelector Component
  *
@@ -39,17 +21,36 @@ const nodeTypes: NodeTypeInfo[] = [
  * It provides a method to retrieve the available node types.
  */
 const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) => {
+  const { t } = useTranslation();
+  
   /**
    * Gets the available node types.
    * @returns {Array<NodeTypeInfo>} - An array of node type objects.
    */
   const getNodeTypes = (): NodeTypeInfo[] => {
-    return nodeTypes;
+    return [
+      {
+        id: 'input',
+        label: t('nodeTypes.input'),
+      },
+      {
+        id: 'output',
+        label: t('nodeTypes.output'),
+      },
+      {
+        id: 'process',
+        label: t('nodeTypes.process'),
+      },
+      {
+        id: 'decision',
+        label: t('nodeTypes.decision'),
+      },
+    ];
   };
 
   const onDragStart = (event: React.DragEvent<HTMLLIElement>, nodeType: NodeTypeInfo): void => {
     // 确保事件正确触发并设置数据
-    console.log('拖拽开始:', nodeType.id);
+    console.log(t('nodeDrag.start'), nodeType.id);
     event.dataTransfer.setData('application/reactflow-node', nodeType.id);
     event.dataTransfer.effectAllowed = 'move';
     
@@ -83,7 +84,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
 
   // 添加拖拽结束事件处理函数
   const onDragEnd = (event: React.DragEvent<HTMLLIElement>): void => {
-    console.log('拖拽结束');
+    console.log(t('nodeDrag.end'));
     if (event.currentTarget.classList) {
       event.currentTarget.classList.remove('dragging');
     }
@@ -119,7 +120,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
               >
               <ListItemText
                 primary={nodeType.label}
-                secondary="拖拽至流程图"
+                secondary={t('nodeTypes.dragHint')}
                 primaryTypographyProps={{
                   fontWeight: 'bold'
                 }}

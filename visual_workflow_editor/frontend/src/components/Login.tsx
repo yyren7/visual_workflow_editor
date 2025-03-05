@@ -1,11 +1,14 @@
+// visual_workflow_editor/frontend/src/components/Login.tsx
 import React, { useState, FormEvent } from 'react';
 import { Container, TextField, Button, Typography, Box } from '@mui/material';
 import { loginUser, UserLoginData, LoginResponse } from '../api/api.ts';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const navigate = useNavigate();
@@ -30,30 +33,29 @@ const Login: React.FC = () => {
           // 触发登录状态变化事件，通知NavBar更新
           window.dispatchEvent(new Event('loginChange'));
           
-          enqueueSnackbar('登录成功', { variant: 'success' });
+          enqueueSnackbar(t('login.success'), { variant: 'success' });
           // 成功存储token后再导航
           navigate('/flow');
         } catch (e) { // 捕获 localStorage.setItem 异常
           console.error('Error saving access token to localStorage:', e);
-          enqueueSnackbar('登录成功，但令牌存储失败', { variant: 'warning' }); // 提示警告 Snackbar
+          enqueueSnackbar(t('login.tokenError'), { variant: 'warning' }); // 提示警告 Snackbar
         }
       } else {
         console.error('Access token not found in response');
-        enqueueSnackbar('登录成功，但未收到有效的认证令牌', { variant: 'warning' });
+        enqueueSnackbar(t('login.noToken'), { variant: 'warning' });
       }
     } catch (error) {
       console.error('Login Error:', error);
-      console.error('登录失败', error);
       
       // 处理错误信息，确保类型安全
-      let errorMessage = '未知错误';
+      let errorMessage = t('common.unknown');
       if (error instanceof AxiosError && error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
       
-      enqueueSnackbar('登录失败: ' + errorMessage, { variant: 'error' });
+      enqueueSnackbar(`${t('login.failed')}: ${errorMessage}`, { variant: 'error' });
     }
   };
 
@@ -68,7 +70,7 @@ const Login: React.FC = () => {
         }}
       >
         <Typography component="h1" variant="h5">
-          登录
+          {t('login.title')}
         </Typography>
         <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
@@ -76,7 +78,7 @@ const Login: React.FC = () => {
             required
             fullWidth
             id="username"
-            label="用户名"
+            label={t('login.username')}
             name="username"
             autoComplete="username"
             autoFocus
@@ -88,7 +90,7 @@ const Login: React.FC = () => {
             required
             fullWidth
             name="password"
-            label="密码"
+            label={t('login.password')}
             type="password"
             id="password"
             autoComplete="current-password"
@@ -101,7 +103,7 @@ const Login: React.FC = () => {
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
           >
-            登录
+            {t('login.submit')}
           </Button>
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
             <Button
@@ -109,7 +111,7 @@ const Login: React.FC = () => {
               color="primary"
               onClick={() => navigate('/register')}
             >
-              没有账号？去注册
+              {t('login.noAccount')}
             </Button>
             
             <Button
@@ -118,7 +120,7 @@ const Login: React.FC = () => {
               onClick={() => navigate('/submit')}
               sx={{ mt: 2, width: '100%' }}
             >
-              前往提交页面
+              {t('login.goSubmit')}
             </Button>
           </Box>
         </Box>

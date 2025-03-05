@@ -1,4 +1,4 @@
-// frontend/src/App.tsx
+// visual_workflow_editor/frontend/src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Container, Box } from '@mui/material';
@@ -7,7 +7,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { SnackbarProvider } from 'notistack';
-import i18n from './i18n'; // Import the i18n configuration
 // 导入组件
 import Register from './components/Register';
 import Login from './components/Login';

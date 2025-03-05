@@ -1,9 +1,10 @@
-// frontend/src/components/ChatInterface.tsx
+// visual_workflow_editor/frontend/src/components/ChatInterface.tsx
 import React, { useState, useCallback, KeyboardEvent, ChangeEvent } from 'react';
 import { Box, TextField, Button, List, ListItem, ListItemText, Typography } from '@mui/material';
 import { generateNode, updateNodeByLLM } from '../api/api';
 import { useSnackbar } from 'notistack';
 import { NodeData } from './FlowEditor';
+import { useTranslation } from 'react-i18next';
 
 // 聊天消息接口
 interface ChatMessage {
@@ -23,6 +24,7 @@ interface ChatInterfaceProps {
  * This component provides a chat interface for interacting with the LLM to generate and update nodes.
  */
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }) => {
+  const { t } = useTranslation();
   const [message, setMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const { enqueueSnackbar } = useSnackbar();
@@ -38,7 +40,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
       if (userMessage.toLowerCase().startsWith('generate node')) {
         const nodeData = await generateNode(userMessage);
         onAddNode(nodeData);
-        return "Node generated successfully!";
+        return t('chat.nodeGenerated');
       } else if (userMessage.toLowerCase().startsWith('update node')) {
         // Extract node ID and prompt from the message
         const parts = userMessage.split(' ');
@@ -46,23 +48,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
         const prompt = parts.slice(3).join(' '); // The rest of the message is the prompt
 
         if (!nodeId || !prompt) {
-          enqueueSnackbar('Invalid update node command. Please specify node ID and prompt.', { variant: 'error' });
-          return "Invalid update node command.";
+          enqueueSnackbar(t('chat.invalidUpdateCommand'), { variant: 'error' });
+          return t('chat.invalidUpdateCommand');
         }
 
         const updatedNodeData = await updateNodeByLLM(nodeId, prompt);
         onUpdateNode(nodeId, updatedNodeData);
-        return `Node ${nodeId} updated successfully!`;
+        return t('chat.nodeUpdated');
       } else {
-        enqueueSnackbar('Invalid command. Please use "generate node" or "update node" command.', { variant: 'warning' });
-        return "Invalid command. Please use 'generate node' or 'update node' command.";
+        enqueueSnackbar(t('chat.invalidCommand'), { variant: 'warning' });
+        return t('chat.invalidCommand');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      enqueueSnackbar(`Error processing message: ${errorMessage}`, { variant: 'error' });
-      return `Error processing message: ${errorMessage}`;
+      const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+      enqueueSnackbar(`${t('chat.error')} ${errorMessage}`, { variant: 'error' });
+      return `${t('chat.error')} ${errorMessage}`;
     }
-  }, [enqueueSnackbar, onAddNode, onUpdateNode]);
+  }, [enqueueSnackbar, onAddNode, onUpdateNode, t]);
 
   /**
    * Handles the sending of a message.
@@ -92,7 +94,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
               <ListItemText
                 primary={
                   <Typography variant="subtitle2" color={chat.type === 'user' ? 'primary' : 'secondary'}>
-                    {chat.type === 'user' ? 'You:' : 'Bot:'}
+                    {chat.type === 'user' ? t('chat.you') : t('chat.bot')}
                   </Typography>
                 }
                 secondary={
@@ -108,7 +110,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <TextField
-          label="Message"
+          label={t('chat.message')}
           variant="outlined"
           fullWidth
           value={message}
@@ -120,7 +122,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
           }}
         />
         <Button variant="contained" color="primary" sx={{ ml: 1 }} onClick={handleSendMessage}>
-          Send
+          {t('chat.send')}
         </Button>
       </Box>
     </Box>

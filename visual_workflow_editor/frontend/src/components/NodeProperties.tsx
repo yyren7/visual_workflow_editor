@@ -1,8 +1,10 @@
+// visual_workflow_editor/frontend/src/components/NodeProperties.tsx
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Box, TextField, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Node } from 'reactflow';
 import { NodeData } from './FlowEditor';
+import { useTranslation } from 'react-i18next';
 
 interface NodePropertiesProps {
   node: Node<NodeData> | null;
@@ -15,6 +17,7 @@ interface NodePropertiesProps {
  * This component displays and allows editing of the properties of a selected node.
  */
 const NodeProperties: React.FC<NodePropertiesProps> = ({ node, onNodePropertyChange }) => {
+  const { t } = useTranslation();
   const [properties, setProperties] = useState<NodeData>({ label: '' });
 
   useEffect(() => {
@@ -44,14 +47,14 @@ const NodeProperties: React.FC<NodePropertiesProps> = ({ node, onNodePropertyCha
   };
 
   if (!node) {
-    return <Typography>No node selected.</Typography>;
+    return <Typography>{t('nodeProperties.noNode')}</Typography>;
   }
 
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography variant="h6">Node Properties</Typography>
-      <Typography variant="subtitle1">Node ID: {node.id}</Typography>
-      <Typography variant="subtitle1">Node Type: {node.type}</Typography>
+      <Typography variant="h6">{t('nodeProperties.title')}</Typography>
+      <Typography variant="subtitle1">{t('nodeProperties.nodeId')}: {node.id}</Typography>
+      <Typography variant="subtitle1">{t('nodeProperties.nodeType')}: {node.type}</Typography>
 
       <Accordion defaultExpanded>
         <AccordionSummary
@@ -59,7 +62,7 @@ const NodeProperties: React.FC<NodePropertiesProps> = ({ node, onNodePropertyCha
           aria-controls="properties-content"
           id="properties-header"
         >
-          <Typography>Data Properties</Typography>
+          <Typography>{t('nodeProperties.dataProperties')}</Typography>
         </AccordionSummary>
         <AccordionDetails>
           {Object.entries(properties).map(([key, value]) => (

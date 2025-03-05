@@ -1,3 +1,4 @@
+// visual_workflow_editor/frontend/src/components/Submit.tsx
 import React, { useState } from 'react';
 import { 
   Container, 
@@ -11,12 +12,14 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { sendEmail } from '../api/api'; // 引入 sendEmail 函数
+import { useTranslation } from 'react-i18next';
 
 /**
  * 提交界面组件
  * 此界面无需登录即可访问，用户可以发送邮件
  */
 const Submit: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -27,14 +30,14 @@ const Submit: React.FC = () => {
   
   const handleSendEmail = async () => {
     if (!title.trim()) {
-      setSnackbarMessage('请输入标题');
+      setSnackbarMessage(t('submit.emptyTitle'));
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
       return;
     }
     
     if (!content.trim()) {
-      setSnackbarMessage('请输入内容');
+      setSnackbarMessage(t('submit.emptyContent'));
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
       return;
@@ -47,7 +50,7 @@ const Submit: React.FC = () => {
       await sendEmail(title, content);
       
       // 显示成功消息
-      setSnackbarMessage('邮件发送成功！');
+      setSnackbarMessage(t('submit.success'));
       setSnackbarSeverity('success');
       setOpenSnackbar(true);
       
@@ -62,7 +65,7 @@ const Submit: React.FC = () => {
       
     } catch (error: any) {
       console.error('发送邮件失败:', error);
-      setSnackbarMessage(error.response?.data?.message || '发送邮件失败，请稍后重试'); // 显示后端返回的错误信息
+      setSnackbarMessage(error.response?.data?.message || t('submit.error')); // 显示后端返回的错误信息
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
     } finally {
@@ -81,10 +84,10 @@ const Submit: React.FC = () => {
         }}
       >
         <Typography component="h1" variant="h4" gutterBottom>
-          写信界面
+          {t('submit.title')}
         </Typography>
         <Typography variant="body1" paragraph>
-          您可以在此页面写信并发送到指定邮箱。
+          {t('submit.description')}
         </Typography>
         
         <Paper elevation={3} sx={{ p: 4, mt: 2, width: '100%', maxWidth: 600 }}>
@@ -93,7 +96,7 @@ const Submit: React.FC = () => {
             required
             fullWidth
             id="title"
-            label="标题"
+            label={t('submit.emailTitle')}
             name="title"
             autoFocus
             value={title}
@@ -105,7 +108,7 @@ const Submit: React.FC = () => {
             required
             fullWidth
             name="content"
-            label="内容"
+            label={t('submit.emailContent')}
             id="content"
             multiline
             rows={6}
@@ -130,7 +133,7 @@ const Submit: React.FC = () => {
               color="primary"
               onClick={() => navigate('/login')}
             >
-              返回登录
+              {t('submit.backToLogin')}
             </Button>
             
             <Button 
@@ -139,7 +142,7 @@ const Submit: React.FC = () => {
               onClick={handleSendEmail}
               disabled={loading}
             >
-              {loading ? '发送中...' : '发送邮件'}
+              {loading ? t('submit.sending') : t('submit.sendEmail')}
             </Button>
           </Box>
         </Paper>

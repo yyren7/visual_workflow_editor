@@ -1,3 +1,4 @@
+// visual_workflow_editor/frontend/src/components/NavBar.tsx
 import React, { useState, useEffect } from 'react';
 import { 
   AppBar, 
@@ -76,7 +77,7 @@ const NavBar: React.FC = () => {
           <MenuIcon />
         </IconButton>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          {t('Flow Editor')}
+          {t('nav.flowEditor')}
         </Typography>
         
         <LanguageSelector />
@@ -109,10 +110,10 @@ const NavBar: React.FC = () => {
                 handleMenuClose();
                 navigate('/flow');
               }}>
-                流程编辑器
+                {t('nav.flowEditor')}
               </MenuItem>
               <Divider />
-              <MenuItem onClick={handleLogout}>退出登录</MenuItem>
+              <MenuItem onClick={handleLogout}>{t('nav.logout')}</MenuItem>
             </Menu>
           </>
         ) : (
@@ -122,13 +123,13 @@ const NavBar: React.FC = () => {
               onClick={() => navigate('/login')}
               sx={{ mr: 1 }}
             >
-              登录
+              {t('nav.login')}
             </Button>
             <Button 
               color="inherit" 
               onClick={() => navigate('/register')}
             >
-              注册
+              {t('nav.register')}
             </Button>
           </Box>
         )}

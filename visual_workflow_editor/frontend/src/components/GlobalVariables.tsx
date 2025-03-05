@@ -1,4 +1,4 @@
-// frontend/src/components/GlobalVariables.tsx
+// visual_workflow_editor/frontend/src/components/GlobalVariables.tsx
 import React, { useState, useCallback } from 'react';
 import { Box, TextField, Button, Typography, List, ListItem, ListItemText, IconButton, Divider } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -7,6 +7,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useSnackbar, VariantType } from 'notistack';
 import { saveAs } from 'file-saver';
+import { useTranslation } from 'react-i18next';
 
 // 定义变量类型
 interface VariablesType {
@@ -19,6 +20,7 @@ interface VariablesType {
  * This component manages global variables, allowing users to load, save, edit, add, and delete variables.
  */
 const GlobalVariables: React.FC = () => {
+  const { t } = useTranslation();
   const [variables, setVariables] = useState<VariablesType>({});
   const [newVariableName, setNewVariableName] = useState<string>('');
   const { enqueueSnackbar } = useSnackbar();
@@ -35,21 +37,21 @@ const GlobalVariables: React.FC = () => {
           const loadedVariables = JSON.parse(e.target.result as string);
           if (typeof loadedVariables === 'object' && loadedVariables !== null) {
             setVariables(loadedVariables);
-            enqueueSnackbar('Global variables loaded successfully!', { variant: 'success' });
+            enqueueSnackbar(t('globalVariables.loadSuccess'), { variant: 'success' });
           } else {
-            enqueueSnackbar('Invalid JSON format in file.', { variant: 'error' });
+            enqueueSnackbar(t('globalVariables.invalidFormat'), { variant: 'error' });
           }
         }
       } catch (error) {
-        enqueueSnackbar('Error parsing JSON file.', { variant: 'error' });
+        enqueueSnackbar(t('globalVariables.loadError'), { variant: 'error' });
         console.error("Error loading variables:", error);
       }
     };
     reader.onerror = () => {
-      enqueueSnackbar('Error reading the file.', { variant: 'error' });
+      enqueueSnackbar(t('globalVariables.readError'), { variant: 'error' });
     };
     reader.readAsText(file);
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   /**
    * Saves variables to a JSON file.
@@ -58,8 +60,8 @@ const GlobalVariables: React.FC = () => {
     const jsonString = JSON.stringify(variables, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     saveAs(blob, 'global_variables.json');
-    enqueueSnackbar('Global variables saved successfully!', { variant: 'success' });
-  }, [variables, enqueueSnackbar]);
+    enqueueSnackbar(t('globalVariables.saveSuccess'), { variant: 'success' });
+  }, [variables, enqueueSnackbar, t]);
 
   /**
    * Gets a variable by name.
@@ -88,9 +90,9 @@ const GlobalVariables: React.FC = () => {
       setVariable(newVariableName, '');
       setNewVariableName('');
     } else if (variables[newVariableName]) {
-      enqueueSnackbar('Variable name already exists.', { variant: 'error' });
+      enqueueSnackbar(t('globalVariables.duplicateName'), { variant: 'error' });
     } else {
-      enqueueSnackbar('Please enter a variable name.', { variant: 'warning' });
+      enqueueSnackbar(t('globalVariables.emptyName'), { variant: 'warning' });
     }
   };
 
@@ -108,12 +110,12 @@ const GlobalVariables: React.FC = () => {
 
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography variant="h6">Global Variables</Typography>
+      <Typography variant="h6">{t('globalVariables.title')}</Typography>
       <Divider />
 
       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
         <TextField
-          label="New Variable Name"
+          label={t('globalVariables.newVariable')}
           variant="outlined"
           size="small"
           value={newVariableName}
@@ -121,7 +123,7 @@ const GlobalVariables: React.FC = () => {
           sx={{ mr: 1 }}
         />
         <Button variant="contained" color="primary" size="small" startIcon={<AddIcon />} onClick={handleAddVariable}>
-          Add
+          {t('globalVariables.add')}
         </Button>
       </Box>
 
@@ -138,7 +140,7 @@ const GlobalVariables: React.FC = () => {
             <ListItemText
               primary={
                 <TextField
-                  label="Variable Value"
+                  label={t('globalVariables.variableValue')}
                   variant="outlined"
                   size="small"
                   value={value || ''}
@@ -162,12 +164,12 @@ const GlobalVariables: React.FC = () => {
             size="small"
             startIcon={<UploadIcon />}
           >
-            Upload Variables
+            {t('globalVariables.upload')}
             <input type="file" hidden onChange={handleFileUpload} accept=".json" />
           </Button>
         </Box>
         <Button variant="contained" color="success" size="small" startIcon={<SaveIcon />} onClick={saveVariables}>
-          Save Variables
+          {t('globalVariables.save')}
         </Button>
       </Box>
     </Box>

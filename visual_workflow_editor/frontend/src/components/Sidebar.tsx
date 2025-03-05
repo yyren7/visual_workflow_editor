@@ -1,7 +1,8 @@
-// frontend/src/components/Sidebar.tsx
+// visual_workflow_editor/frontend/src/components/Sidebar.tsx
 import React from 'react';
 import { Box, Drawer, Divider, Typography } from '@mui/material';
 import NodeSelector from './NodeSelector';
+import { useTranslation } from 'react-i18next';
 
 // 侧边栏属性接口
 interface SidebarProps {
@@ -15,6 +16,8 @@ interface SidebarProps {
  * This component provides a sidebar with a NodeSelector for adding nodes to the flow.
  */
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
+  const { t } = useTranslation();
+  
   return (
     <Drawer
       anchor="left"
@@ -43,12 +46,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             color: 'white'
           }}
         >
-          节点选择器
+          {t('sidebar.title')}
         </Typography>
         <Divider />
         <Box sx={{ p: 1 }}>
           <Typography variant="body2" sx={{ mb: 2, color: '#aaa', fontStyle: 'italic' }}>
-            拖拽节点到流程图区域
+            {t('sidebar.dragHint')}
           </Typography>
           <NodeSelector />
         </Box>
