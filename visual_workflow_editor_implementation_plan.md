@@ -30,32 +30,31 @@
 ```mermaid
 gantt
     title 视觉工作流编辑器实施计划
-    dateFormat  YYYY-MM-DD
     section 1. 流程图基础功能
-    增强拖放体验           :a1, 2025-03-06, 5d
-    优化节点连接逻辑       :a2, after a1, 3d
-    添加自动布局功能       :a3, after a2, 4d
+    增强拖放体验           
+    优化节点连接逻辑       
+    添加自动布局功能       
     
     section 2. 自定义节点系统
-    节点类型注册框架       :b1, 2025-03-06, 7d
-    节点模板编辑器         :b2, after b1, 5d
-    节点属性验证系统       :b3, after b2, 3d
+    节点类型注册框架       
+    节点模板编辑器        
+    节点属性验证系统       
     
     section 3. 导入/导出功能
-    XML格式定义            :c1, after a3, 3d
-    流程导出功能           :c2, after c1, 2d
-    流程导入功能           :c3, after c2, 2d
-    历史记录系统           :c4, after c3, 4d
+    XML格式定义           
+    流程导出功能           
+    流程导入功能           
+    历史记录系统           
     
     section 4. LLM集成
-    Gemini API集成         :d1, after b3, 5d
-    提示模板系统           :d2, after d1, 3d
-    节点生成优化           :d3, after d2, 4d
+    Gemini API集成        
+    提示模板系统           
+    节点生成优化           
     
     section 5. 国际化支持
-    i18n框架设置           :e1, 2025-03-15, 3d
-    生成基础翻译           :e2, after e1, 2d
-    实现语言切换功能       :e3, after e2, 2d
+    i18n框架设置           
+    生成基础翻译           
+    实现语言切换功能      
 ```
 
 ## 3. 详细实施计划

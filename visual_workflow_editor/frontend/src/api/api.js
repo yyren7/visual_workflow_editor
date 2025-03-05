@@ -1,7 +1,26 @@
 // frontend/src/api/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api'; // Default API base URL
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'; // Default API base URL, 移除 /api 前缀
+
+// 创建axios实例
+const apiClient = axios.create({
+  baseURL: API_BASE_URL
+});
+
+// 添加请求拦截器，自动附加认证token
+apiClient.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
 
 /**
  * Creates a new flow.
@@ -10,7 +29,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:800
  */
 export const createFlow = async (flowData) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/flows/`, flowData);
+        const response = await apiClient.post(`/flows/`, flowData);
         return response.data;
     } catch (error) {
         console.error("Error creating flow:", error);
@@ -25,7 +44,7 @@ export const createFlow = async (flowData) => {
  */
 export const getFlow = async (flowId) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/flows/${flowId}`);
+        const response = await apiClient.get(`/flows/${flowId}`);
         return response.data;
     } catch (error) {
         console.error("Error getting flow:", error);
@@ -41,7 +60,7 @@ export const getFlow = async (flowId) => {
  */
 export const updateFlow = async (flowId, flowData) => {
     try {
-        await axios.put(`${API_BASE_URL}/flows/${flowId}`, flowData);
+        await apiClient.put(`/flows/${flowId}`, flowData);
     } catch (error) {
         console.error("Error updating flow:", error);
         throw error;
@@ -55,7 +74,7 @@ export const updateFlow = async (flowId, flowData) => {
  */
 export const deleteFlow = async (flowId) => {
     try {
-        await axios.delete(`${API_BASE_URL}/flows/${flowId}`);
+        await apiClient.delete(`/flows/${flowId}`);
     } catch (error) {
         console.error("Error deleting flow:", error);
         throw error;
@@ -69,7 +88,7 @@ export const deleteFlow = async (flowId) => {
  */
 export const generateNode = async (prompt) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/llm/generate_node`, { prompt: prompt });
+        const response = await apiClient.post(`/llm/generate_node`, { prompt: prompt });
         return response.data;
     } catch (error) {
         console.error("Error generating node:", error);
@@ -85,7 +104,7 @@ export const generateNode = async (prompt) => {
  */
 export const updateNodeByLLM = async (nodeId, prompt) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/llm/update_node/${nodeId}`, { prompt: prompt });
+        const response = await apiClient.post(`/llm/update_node/${nodeId}`, { prompt: prompt });
         return response.data;
     } catch (error) {
         console.error("Error updating node by LLM:", error);
@@ -114,13 +133,24 @@ export const registerUser = async (userData) => {
  * @returns {Promise<object>} - A promise that resolves to the login token.
  */
 export const loginUser = async (userData) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/users/login`, userData);
-        return response.data;
-    } catch (error) {
-        console.error("Error logging in user:", error);
-        throw error;
-    }
+   try {
+       // 将JSON转换为表单数据格式，因为后端使用的是OAuth2PasswordRequestForm
+       const formData = new URLSearchParams();
+       formData.append('username', userData.username);
+       formData.append('password', userData.password);
+       
+       const response = await axios.post(`${API_BASE_URL}/users/login`, formData, {
+           headers: {
+               'Content-Type': 'application/x-www-form-urlencoded'
+           }
+       });
+       
+       console.log('Login Response:', response.data);
+       return response.data;
+   } catch (error) {
+       console.error("Error logging in user:", error);
+       throw error;
+   }
 };
 
 /**
@@ -131,7 +161,7 @@ export const loginUser = async (userData) => {
  */
 export const getFlowsForUser = async (skip = 0, limit = 10) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/flows?skip=${skip}&limit=${limit}`);
+        const response = await apiClient.get(`/flows?skip=${skip}&limit=${limit}`);
         return response.data;
     } catch (error) {
         console.error("Error getting flows for user:", error);

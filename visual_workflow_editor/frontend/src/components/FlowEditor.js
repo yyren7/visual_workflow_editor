@@ -152,7 +152,7 @@ const FlowEditor = ({ flowId }) => {
       try {
         await deleteFlow(flowId);
         enqueueSnackbar('Flow deleted successfully!', { variant: 'success' });
-        window.location.href = '/'; // Redirect to home
+        window.location.href = '/flow'; // 重定向到流程编辑器页面，而不是根路径
       } catch (error) {
         enqueueSnackbar(`Error deleting flow: ${error.message}`, { variant: 'error' });
       }
