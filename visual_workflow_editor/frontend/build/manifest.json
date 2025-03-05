@@ -1,0 +1,9 @@
+{
+  "short_name": "工作流编辑器",
+  "name": "可视化工作流编辑器",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

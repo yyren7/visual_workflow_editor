@@ -1,6 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { Container, TextField, Button, Typography, Box } from '@mui/material';
-import { loginUser, UserLoginData, LoginResponse } from '../api/api';
+import { loginUser, UserLoginData, LoginResponse } from '../api/api.ts';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
