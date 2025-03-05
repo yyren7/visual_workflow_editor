@@ -86,19 +86,39 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
   };
 
   return (
-    <Box sx={{ padding: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{
+      padding: 2,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      bgcolor: '#1e1e1e',
+      color: '#eee'
+    }}>
       <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2 }}>
         <List>
           {getChatHistory().map((chat, index) => (
-            <ListItem key={index} alignItems="flex-start">
+            <ListItem
+              key={index}
+              alignItems="flex-start"
+              sx={{
+                bgcolor: chat.type === 'user' ? 'rgba(25, 118, 210, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 1,
+                mb: 1
+              }}
+            >
               <ListItemText
                 primary={
-                  <Typography variant="subtitle2" color={chat.type === 'user' ? 'primary' : 'secondary'}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: chat.type === 'user' ? '#90caf9' : '#f48fb1'
+                    }}
+                  >
                     {chat.type === 'user' ? t('chat.you') : t('chat.bot')}
                   </Typography>
                 }
                 secondary={
-                  <Typography variant="body2" color="textPrimary">
+                  <Typography variant="body2" sx={{ color: '#eee' }}>
                     {chat.text}
                   </Typography>
                 }
@@ -118,6 +138,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode }
           onKeyPress={(e: KeyboardEvent<HTMLDivElement>) => {
             if (e.key === 'Enter') {
               handleSendMessage();
+            }
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              color: '#eee',
+              '& fieldset': {
+                borderColor: '#555',
+              },
+              '&:hover fieldset': {
+                borderColor: '#777',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#90caf9',
+              }
+            },
+            '& .MuiInputLabel-root': {
+              color: '#aaa'
             }
           }}
         />

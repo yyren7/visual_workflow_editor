@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -17,18 +17,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true); // 添加加载状态
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 验证token有效性的函数
   const verifyToken = async (token: string): Promise<boolean> => {
     if (!token) return false;
 
     try {
+      console.log('验证token...');
       const response = await axios.get(`${API_BASE_URL}/auth/verify-token`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-
+      console.log('Token验证成功');
       return response.status === 200;
     } catch (error) {
       console.error('Token验证失败:', error);
@@ -36,48 +38,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // 登录函数
+  // 登录函数 - 不自动跳转，让路由系统处理
   const login = (token: string) => {
+    console.log('设置认证token');
     localStorage.setItem('access_token', token);
     setIsAuthenticated(true);
   };
 
-  // 登出函数 - 只在这一个地方处理导航
+  // 登出函数 - 只设置状态，并在确定状态后使用统一的路由处理
   const logout = () => {
+    console.log('移除认证token，设置为未认证状态');
     localStorage.removeItem('access_token');
     setIsAuthenticated(false);
     navigate('/login', { replace: true });
   };
 
-  // 初始加载时验证token
+  // 初始加载时验证token - 使用async/await提高可读性
   useEffect(() => {
     const initAuth = async () => {
+      console.log('初始化认证状态...');
       setIsLoading(true);
-      const token = localStorage.getItem('access_token');
-      
-      if (token) {
-        const isValid = await verifyToken(token);
+      try {
+        const token = localStorage.getItem('access_token');
+        console.log('获取到token:', token ? '存在' : '不存在');
         
-        if (isValid) {
-          setIsAuthenticated(true);
+        if (token) {
+          const isValid = await verifyToken(token);
+          console.log('Token验证结果:', isValid ? '有效' : '无效');
+          
+          if (isValid) {
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem('access_token');
+            setIsAuthenticated(false);
+          }
         } else {
-          localStorage.removeItem('access_token');
           setIsAuthenticated(false);
         }
-      } else {
+      } catch (error) {
+        console.error('认证初始化错误:', error);
         setIsAuthenticated(false);
+      } finally {
+        console.log('认证初始化完成');
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     initAuth();
   }, []);
 
-  // 监听本地存储变化
+  // 监听本地存储变化 - 处理多标签页同步登录状态
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('access_token');
+      console.log('存储变化检测, token:', token ? '存在' : '不存在');
       
       if (token) {
         const isValid = await verifyToken(token);
@@ -99,6 +113,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('loginChange', checkAuth);
     };
   }, []);
+
+  // 记录认证状态变化
+  useEffect(() => {
+    console.log('认证状态变化:', {
+      isAuthenticated,
+      isLoading,
+      currentPath: location.pathname
+    });
+  }, [isAuthenticated, isLoading, location]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>

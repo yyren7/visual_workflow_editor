@@ -483,18 +483,53 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             snapToGrid={true}
             snapGrid={[15, 15]}
             fitView
-            style={{ background: '#f5f5f5' }}
+            style={{ background: '#1e1e1e' }}
           >
-            <Controls showInteractive={true} />
-            <Background color="#99A1A8" gap={12} size={1} variant={BackgroundVariant.Dots} />
+            <Controls showInteractive={true} style={{ backgroundColor: '#2d2d2d', color: '#fff' }} />
+            <Background color="#444" gap={12} size={1} variant={BackgroundVariant.Dots} />
           </ReactFlow>
         </Box>
         
-        {/* 右侧属性面板 */}
-        <Box sx={{ width: 300, p: 2, borderLeft: '1px solid #ddd', backgroundColor: '#fff' }}>
-          <NodeProperties node={selectedNode} onNodePropertyChange={onNodePropertyChange} />
-          <GlobalVariables />
-          <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
+        {/* 右侧面板区域，包含属性面板和聊天界面 */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: 350,
+          borderLeft: '1px solid #444',
+          backgroundColor: '#2d2d2d',
+          color: '#eee'
+        }}>
+          {/* 属性面板 */}
+          <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto' }}>
+            <NodeProperties node={selectedNode} onNodePropertyChange={onNodePropertyChange} />
+            <GlobalVariables />
+          </Box>
+          
+          {/* 聊天界面 - 独立面板 */}
+          <Box
+            sx={{
+              height: '40%',
+              borderTop: '1px solid #444',
+              backgroundColor: '#1e1e1e',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Box sx={{
+              p: 1,
+              backgroundColor: '#333',
+              color: '#eee',
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              display: 'flex',
+              justifyContent: 'center'
+            }}>
+              对话助手
+            </Box>
+            <Box sx={{ flexGrow: 1, display: 'flex' }}>
+              <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
+            </Box>
+          </Box>
         </Box>
       </Box>
     </Box>

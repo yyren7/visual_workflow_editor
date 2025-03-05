@@ -1,7 +1,7 @@
 // visual_workflow_editor/frontend/src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { Container, Box } from '@mui/material';
+import { Container, Box, CircularProgress, Typography } from '@mui/material';
 import FlowEditorWrapper from './components/FlowEditor';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
@@ -31,11 +31,29 @@ const darkTheme = createTheme({
 const AppRoutes: React.FC = () => {
   // 使用直接访问i18n而非useTranslation
   const t = (key: string) => i18n.t(key);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // 当认证状态正在加载时，显示加载内容
+  if (isLoading) {
+    return (
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '80vh'
+      }}>
+        <CircularProgress size={40} />
+        <Typography sx={{ mt: 2 }}>
+          加载中...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Routes>
-      {/* 根路径根据登录状态重定向 */}
+      {/* 根路径根据登录状态重定向 - 避免中间跳转 */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/flow" replace /> : <Navigate to="/login" replace />} />
 
       {/* 公开路由 - 登录、注册和提交，已登录用户重定向到 /flow */}
@@ -55,8 +73,8 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
 
-      {/* 所有其他路由重定向到登录页面 */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      {/* 所有其他路由重定向 - 根据登录状态决定去向 */}
+      <Route path="*" element={isAuthenticated ? <Navigate to="/flow" replace /> : <Navigate to="/login" replace />} />
     </Routes>
   );
 };

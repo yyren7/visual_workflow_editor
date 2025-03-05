@@ -3,6 +3,7 @@ __pycache__
 *.pyc
 .vs
 venv
+claude-env
 
 # Node.js
 node_modules/
