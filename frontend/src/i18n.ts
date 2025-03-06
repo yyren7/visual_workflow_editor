@@ -27,6 +27,7 @@ const resources: Resource = {
       'common.update': '更新',
       'common.remove': '移除',
       'common.noData': '暂无数据',
+      'common.failed': '失败',
       
       // 导航栏
       'nav.flowEditor': '流程编辑器',
@@ -72,6 +73,19 @@ const resources: Resource = {
       'flowEditor.noFlowToDelete': '没有要删除的流程',
       'flowEditor.invalidFlowData': '流程数据无效',
       'flowEditor.reactFlowNotInitialized': 'React Flow实例未初始化',
+      'flowEditor.untitledFlow': '未命名流程',
+      'flowEditor.processingDrop': '开始处理拖放...',
+      'flowEditor.invalidReactFlowReference': 'ReactFlow实例或元素引用无效',
+      'flowEditor.dropEventDetails': '拖放事件对象:',
+      'flowEditor.droppedNodeType': '拖放的节点类型:',
+      'flowEditor.nodeTypeNotFound': '未能获取到节点类型数据',
+      'flowEditor.calculatedPosition': '计算的放置位置:',
+      'flowEditor.nodeAddSuccess': '节点添加成功:',
+      'flowEditor.flowInitialization': 'Flow初始化:',
+      'flowEditor.reactFlowInstanceMethods': 'ReactFlow实例方法:',
+      'flowEditor.reactFlowView': 'ReactFlow视图:',
+      'flowEditor.directDragStart': '直接拖拽开始:',
+      'flowEditor.chatAssistant': '对话助手',
       
       // 节点类型
       'nodeTypes.input': '输入数据节点',
@@ -85,6 +99,7 @@ const resources: Resource = {
       'nodeDrag.start': '拖拽开始',
       'nodeDrag.end': '拖拽结束',
       'nodeDrag.hint': '拖拽节点到流程图区域',
+      'nodeDrag.hover': '拖拽悬停中...',
       
       // 节点属性面板
       'nodeProperties.title': '节点属性',
@@ -159,6 +174,7 @@ const resources: Resource = {
       'common.update': 'Update',
       'common.remove': 'Remove',
       'common.noData': 'No data available',
+      'common.failed': 'Failed',
       
       // Navigation bar
       'nav.flowEditor': 'Flow Editor',
@@ -204,6 +220,19 @@ const resources: Resource = {
       'flowEditor.noFlowToDelete': 'No flow to delete',
       'flowEditor.invalidFlowData': 'Flow data is invalid',
       'flowEditor.reactFlowNotInitialized': 'React Flow instance not initialized',
+      'flowEditor.untitledFlow': 'Untitled Flow',
+      'flowEditor.processingDrop': 'Processing drop...',
+      'flowEditor.invalidReactFlowReference': 'Invalid ReactFlow instance or element reference',
+      'flowEditor.dropEventDetails': 'Drop event details:',
+      'flowEditor.droppedNodeType': 'Dropped node type:',
+      'flowEditor.nodeTypeNotFound': 'Node type data not found',
+      'flowEditor.calculatedPosition': 'Calculated position:',
+      'flowEditor.nodeAddSuccess': 'Node added successfully:',
+      'flowEditor.flowInitialization': 'Flow initialization:',
+      'flowEditor.reactFlowInstanceMethods': 'ReactFlow instance methods:',
+      'flowEditor.reactFlowView': 'ReactFlow view:',
+      'flowEditor.directDragStart': 'Direct drag start:',
+      'flowEditor.chatAssistant': 'Chat Assistant',
       
       // Node types
       'nodeTypes.input': 'Input Data Node',
@@ -217,6 +246,7 @@ const resources: Resource = {
       'nodeDrag.start': 'Drag started',
       'nodeDrag.end': 'Drag ended',
       'nodeDrag.hint': 'Drag node to flow area',
+      'nodeDrag.hover': 'Dragging over...',
       
       // Node properties panel
       'nodeProperties.title': 'Node Properties',

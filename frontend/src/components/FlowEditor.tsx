@@ -44,6 +44,7 @@ import GlobalVariables from './GlobalVariables';
 import ChatInterface from './ChatInterface';
 import Sidebar from './Sidebar';
 import { createFlow, getFlow, updateFlow, deleteFlow } from '../api/api';
+import { useTranslation } from 'react-i18next';
 
 // 节点数据接口定义
 export interface NodeData {
@@ -78,12 +79,13 @@ const nodeTypes: NodeTypes = {
 };
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
+  const { t } = useTranslation();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [flowName, setFlowName] = useState<string>('Untitled Flow');
+  const [flowName, setFlowName] = useState<string>(t('flowEditor.untitledFlow'));
   const { enqueueSnackbar } = useSnackbar();
   const { fitView } = useReactFlow();
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
@@ -142,20 +144,20 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       if (flowData && flowData.flow_data) {
         setNodes(flowData.flow_data.nodes || []);
         setEdges(flowData.flow_data.edges || []);
-        setFlowName(flowData.name || 'Untitled Flow');
-        enqueueSnackbar('Flow loaded successfully!', { variant: 'success' });
+        setFlowName(flowData.name || t('flowEditor.untitledFlow'));
+        enqueueSnackbar(t('flowEditor.loadSuccess'), { variant: 'success' });
       } else {
-        enqueueSnackbar('Flow data is invalid.', { variant: 'error' });
+        enqueueSnackbar(t('flowEditor.invalidFlowData'), { variant: 'error' });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      enqueueSnackbar(`Error loading flow: ${errorMessage}`, { variant: 'error' });
+      const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+      enqueueSnackbar(`${t('flowEditor.loadError')} ${errorMessage}`, { variant: 'error' });
     }
   };
 
   const saveFlow = async () => {
     if (!reactFlowInstance) {
-      enqueueSnackbar('React Flow instance not initialized.', { variant: 'error' });
+      enqueueSnackbar(t('flowEditor.reactFlowNotInitialized'), { variant: 'error' });
       return;
     }
 
@@ -164,19 +166,18 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     if (flowId) {
       try {
         await updateFlow(flowId, { flow_data: flowData, name: flowName });
-        enqueueSnackbar('Flow updated successfully!', { variant: 'success' });
+        enqueueSnackbar(t('flowEditor.saveSuccess'), { variant: 'success' });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        enqueueSnackbar(`Error updating flow: ${errorMessage}`, { variant: 'error' });
+        const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+        enqueueSnackbar(`${t('flowEditor.saveError')} ${errorMessage}`, { variant: 'error' });
       }
     } else {
       try {
         const newFlow = await createFlow({ flow_data: flowData, name: flowName });
-        // window.location.href = `/flow/${newFlow.id}`; // Redirect to the new flow
-        enqueueSnackbar('Flow created successfully!', { variant: 'success' });
+        enqueueSnackbar(t('flowEditor.saveSuccess'), { variant: 'success' });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        enqueueSnackbar(`Error creating flow: ${errorMessage}`, { variant: 'error' });
+        const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+        enqueueSnackbar(`${t('flowEditor.saveError')} ${errorMessage}`, { variant: 'error' });
       }
     }
   };
@@ -185,14 +186,14 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     if (flowId) {
       try {
         await deleteFlow(flowId);
-        enqueueSnackbar('Flow deleted successfully!', { variant: 'success' });
+        enqueueSnackbar(t('flowEditor.deleteSuccess'), { variant: 'success' });
         window.location.href = '/flow'; // 重定向到流程编辑器页面，而不是根路径
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        enqueueSnackbar(`Error deleting flow: ${errorMessage}`, { variant: 'error' });
+        const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+        enqueueSnackbar(`${t('flowEditor.deleteError')} ${errorMessage}`, { variant: 'error' });
       }
     } else {
-      enqueueSnackbar('No flow to delete.', { variant: 'warning' });
+      enqueueSnackbar(t('flowEditor.noFlowToDelete'), { variant: 'warning' });
     }
   };
 
@@ -221,17 +222,17 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-    console.log('拖拽悬停中...');
-  }, []);
+    console.log(t('nodeDrag.hover'));
+  }, [t]);
 
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
-      console.log('开始处理拖放...');
+      console.log(t('flowEditor.processingDrop'));
       
       // 检查是否在ReactFlow区域内
       if (!reactFlowWrapper.current || !reactFlowInstance) {
-        console.error('ReactFlow实例或元素引用无效');
+        console.error(t('flowEditor.invalidReactFlowReference'));
         return;
       }
 
@@ -239,7 +240,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       
       // 显示事件详情以便调试
-      console.log('拖放事件对象:', {
+      console.log(t('flowEditor.dropEventDetails'), {
         clientX: event.clientX,
         clientY: event.clientY,
         target: event.target,
@@ -252,10 +253,10 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       
       // 获取拖拽的节点类型数据
       const nodeType = event.dataTransfer.getData('application/reactflow-node');
-      console.log('拖放的节点类型:', nodeType);
+      console.log(t('flowEditor.droppedNodeType'), nodeType);
       
       if (!nodeType) {
-        console.error('未能获取到节点类型数据');
+        console.error(t('flowEditor.nodeTypeNotFound'));
         return;
       }
 
@@ -265,15 +266,15 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         y: event.clientY - reactFlowBounds.top,
       });
       
-      console.log('计算的放置位置:', position);
+      console.log(t('flowEditor.calculatedPosition'), position);
 
       // 创建一个基于类型的默认标签
-      let label = '未知节点';
+      let label = t('nodeTypes.unknown');
       switch(nodeType) {
-        case 'input': label = '输入数据节点'; break;
-        case 'process': label = '数据处理节点'; break;
-        case 'output': label = '输出数据节点'; break;
-        case 'decision': label = '决策节点'; break;
+        case 'input': label = t('nodeTypes.input'); break;
+        case 'process': label = t('nodeTypes.process'); break;
+        case 'output': label = t('nodeTypes.output'); break;
+        case 'decision': label = t('nodeTypes.decision'); break;
       }
 
       // 创建新节点
@@ -286,9 +287,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
 
       // 添加节点到流程图
       setNodes((nds) => [...nds, newNode]);
-      console.log('节点添加成功:', newNode);
+      console.log(t('flowEditor.nodeAddSuccess'), newNode);
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, setNodes, t]
   );
 
   const onUpdateNode = (nodeId: string, updatedNodeData: { data: NodeData }) => {
@@ -304,11 +305,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
 
   const onInit = (_reactFlowInstance: ReactFlowInstance) => {
     setReactFlowInstance(_reactFlowInstance);
-    console.log('Flow初始化:', _reactFlowInstance ? '成功' : '失败');
+    console.log(t('flowEditor.flowInitialization'), _reactFlowInstance ? t('common.success') : t('common.failed'));
     
     if (_reactFlowInstance) {
-      console.log('ReactFlow实例方法:', Object.keys(_reactFlowInstance));
-      console.log('ReactFlow视图:', _reactFlowInstance.toObject());
+      console.log(t('flowEditor.reactFlowInstanceMethods'), Object.keys(_reactFlowInstance));
+      console.log(t('flowEditor.reactFlowView'), _reactFlowInstance.toObject());
     }
   };
 
@@ -317,7 +318,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       {/* 顶部工具栏 */}
       <Paper elevation={2} sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 0 }}>
         <TextField
-          label="Flow Name"
+          label={t('flowEditor.flowName')}
           variant="outlined"
           size="small"
           value={flowName}
@@ -326,7 +327,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         />
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {/* 侧边栏切换按钮 */}
-          <Tooltip title="切换侧边栏">
+          <Tooltip title={t('flowEditor.toggleSidebar')}>
             <IconButton
               color="primary"
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -337,7 +338,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           </Tooltip>
           
           {/* 节点选择器按钮 */}
-          <Tooltip title="节点选择器">
+          <Tooltip title={t('flowEditor.nodeSelector')}>
             <IconButton
               color="primary"
               onClick={handleNodeSelectorClick}
@@ -362,7 +363,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             }}
           >
             <Box sx={{ p: 1, textAlign: 'center', fontWeight: 'bold' }}>
-              节点选择器
+              {t('flowEditor.nodeSelector')}
             </Box>
             <Divider sx={{ my: 1 }} />
             <NodeSelector onNodeSelect={(nodeType) => {
@@ -395,7 +396,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
                   key={type}
                   draggable
                   onDragStart={(event: React.DragEvent<HTMLDivElement>) => {
-                    console.log('直接拖拽开始:', type);
+                    console.log(t('flowEditor.directDragStart'), type);
                     event.dataTransfer.setData('application/reactflow-node', type);
                     event.dataTransfer.effectAllowed = 'move';
                   }}
@@ -416,13 +417,13 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
                     }
                   }}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(`nodeTypes.${type}`)}
                 </Box>
               ))}
             </Box>
           </Paper>
 
-          {/* 快速添加节点按钮 */}
+          {/* 快速添加节点按钮 - 已注释掉
           <Button
             variant="contained"
             color="success"
@@ -445,14 +446,15 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           >
             添加处理节点
           </Button>
+          */}
           
           {/* 流程操作按钮 */}
           <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={saveFlow}>
-            保存
+            {t('flowEditor.save')}
           </Button>
           {flowId && (
             <Button variant="contained" color="error" onClick={deleteCurrentFlow}>
-              删除
+              {t('flowEditor.delete')}
             </Button>
           )}
         </Box>
@@ -524,7 +526,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
               display: 'flex',
               justifyContent: 'center'
             }}>
-              对话助手
+              {t('flowEditor.chatAssistant')}
             </Box>
             <Box sx={{ flexGrow: 1, display: 'flex' }}>
               <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
