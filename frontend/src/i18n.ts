@@ -298,6 +298,153 @@ const resources: Resource = {
       'submit.emptyTitle': 'Please enter a title',
       'submit.emptyContent': 'Please enter content'
     }
+  },
+  ja: {
+    translation: {
+      // アプリケーションのタイトルと共通テキスト
+      'app.title': 'ビジュアルワークフローエディタ',
+      'common.yes': 'はい',
+      'common.no': 'いいえ',
+      'common.error': 'エラー',
+      'common.success': '成功',
+      'common.unknown': '不明',
+      'common.loading': '読み込み中...',
+      'common.save': '保存',
+      'common.delete': '削除',
+      'common.cancel': 'キャンセル',
+      'common.confirm': '確認',
+      'common.back': '戻る',
+      'common.next': '次へ',
+      'common.done': '完了',
+      'common.add': '追加',
+      'common.edit': '編集',
+      'common.update': '更新',
+      'common.remove': '削除',
+      'common.noData': 'データがありません',
+      'common.failed': '失敗',
+      
+      // ナビゲーションバー
+      'nav.flowEditor': 'フローエディタ',
+      'nav.login': 'ログイン',
+      'nav.register': '登録',
+      'nav.logout': 'ログアウト',
+      
+      // ログインページ
+      'login.title': 'ログイン',
+      'login.username': 'ユーザー名',
+      'login.password': 'パスワード',
+      'login.submit': 'ログイン',
+      'login.noAccount': 'アカウントをお持ちでない方は登録へ',
+      'login.goSubmit': '送信ページへ',
+      'login.success': 'ログインに成功しました',
+      'login.failed': 'ログインに失敗しました',
+      'login.tokenError': 'ログインは成功しましたが、トークンの保存に失敗しました',
+      'login.noToken': 'ログインは成功しましたが、有効な認証トークンを受信できませんでした',
+      
+      // 登録ページ
+      'register.title': 'アカウント登録',
+      'register.username': 'ユーザー名',
+      'register.password': 'パスワード',
+      'register.submit': '登録',
+      'register.hasAccount': 'すでにアカウントをお持ちですか？ログインへ',
+      'register.success': '登録に成功しました',
+      'register.failed': '登録に失敗しました',
+      
+      // フローエディタ
+      'flowEditor.flowName': 'フロー名',
+      'flowEditor.toggleSidebar': 'サイドバー切替',
+      'flowEditor.nodeSelector': 'ノードセレクタ',
+      'flowEditor.addInputNode': '入力ノードを追加',
+      'flowEditor.addProcessNode': '処理ノードを追加',
+      'flowEditor.save': '保存',
+      'flowEditor.delete': '削除',
+      'flowEditor.saveSuccess': 'フローの保存に成功しました！',
+      'flowEditor.saveError': 'フローの保存中にエラーが発生しました：',
+      'flowEditor.loadSuccess': 'フローの読み込みに成功しました！',
+      'flowEditor.loadError': 'フローの読み込み中にエラーが発生しました：',
+      'flowEditor.deleteSuccess': 'フローの削除に成功しました！',
+      'flowEditor.deleteError': 'フローの削除中にエラーが発生しました：',
+      'flowEditor.noFlowToDelete': '削除するフローがありません',
+      'flowEditor.invalidFlowData': 'フローデータが無効です',
+      'flowEditor.reactFlowNotInitialized': 'React Flowインスタンスが初期化されていません',
+      'flowEditor.untitledFlow': '無題のフロー',
+      'flowEditor.processingDrop': 'ドロップを処理中...',
+      'flowEditor.invalidReactFlowReference': 'ReactFlowインスタンスまたは要素の参照が無効です',
+      'flowEditor.dropEventDetails': 'ドロップイベントの詳細：',
+      'flowEditor.droppedNodeType': 'ドロップされたノードタイプ：',
+      'flowEditor.nodeTypeNotFound': 'ノードタイプデータが見つかりませんでした',
+      'flowEditor.calculatedPosition': '計算された位置：',
+      'flowEditor.nodeAddSuccess': 'ノードの追加に成功しました：',
+      'flowEditor.flowInitialization': 'フロー初期化：',
+      'flowEditor.reactFlowInstanceMethods': 'ReactFlowインスタンスメソッド：',
+      'flowEditor.reactFlowView': 'ReactFlowビュー：',
+      'flowEditor.directDragStart': '直接ドラッグ開始：',
+      'flowEditor.chatAssistant': 'チャットアシスタント',
+      
+      // ノードタイプ
+      'nodeTypes.input': '入力データノード',
+      'nodeTypes.process': 'データ処理ノード',
+      'nodeTypes.output': '出力データノード',
+      'nodeTypes.decision': '判断ノード',
+      'nodeTypes.unknown': '不明なノード',
+      'nodeTypes.dragHint': 'フローチャートへドラッグ',
+      
+      // ノード操作ヒント
+      'nodeDrag.start': 'ドラッグ開始',
+      'nodeDrag.end': 'ドラッグ終了',
+      'nodeDrag.hint': 'ノードをフロー領域へドラッグ',
+      'nodeDrag.hover': 'ドラッグ中...',
+      
+      // ノードプロパティパネル
+      'nodeProperties.title': 'ノードプロパティ',
+      'nodeProperties.nodeId': 'ノードID',
+      'nodeProperties.nodeType': 'ノードタイプ',
+      'nodeProperties.dataProperties': 'データプロパティ',
+      'nodeProperties.noNode': 'ノードが選択されていません',
+      
+      // グローバル変数
+      'globalVariables.title': 'グローバル変数',
+      'globalVariables.newVariable': '新しい変数名',
+      'globalVariables.add': '追加',
+      'globalVariables.variableValue': '変数の値',
+      'globalVariables.upload': '変数をアップロード',
+      'globalVariables.save': '変数を保存',
+      'globalVariables.loadSuccess': 'グローバル変数の読み込みに成功しました！',
+      'globalVariables.loadError': 'JSONファイルの解析エラー',
+      'globalVariables.invalidFormat': 'ファイル内のJSON形式が無効です',
+      'globalVariables.readError': 'ファイルの読み取りエラー',
+      'globalVariables.saveSuccess': 'グローバル変数の保存に成功しました！',
+      'globalVariables.duplicateName': '変数名はすでに存在します',
+      'globalVariables.emptyName': '変数名を入力してください',
+      
+      // チャットインターフェース
+      'chat.message': 'メッセージ',
+      'chat.send': '送信',
+      'chat.you': 'あなた：',
+      'chat.bot': 'ボット：',
+      'chat.invalidCommand': '無効なコマンドです。"generate node"または"update node"コマンドを使用してください',
+      'chat.invalidUpdateCommand': '無効なノード更新コマンドです。ノードIDとプロンプトを指定してください',
+      'chat.nodeGenerated': 'ノードの生成に成功しました！',
+      'chat.nodeUpdated': 'ノードの更新に成功しました！',
+      'chat.error': 'メッセージ処理中にエラーが発生しました：',
+      
+      // サイドバー
+      'sidebar.title': 'ノードセレクタ',
+      'sidebar.dragHint': 'ノードをフロー領域へドラッグ',
+      
+      // 送信ページ
+      'submit.title': 'メッセージインターフェース',
+      'submit.description': 'このページで指定されたメールアドレスにメッセージを作成して送信できます。',
+      'submit.emailTitle': 'タイトル',
+      'submit.emailContent': '内容',
+      'submit.backToLogin': 'ログインに戻る',
+      'submit.sendEmail': 'メールを送信',
+      'submit.sending': '送信中...',
+      'submit.success': 'メールの送信に成功しました！',
+      'submit.error': 'メールの送信に失敗しました。後でもう一度お試しください',
+      'submit.emptyTitle': 'タイトルを入力してください',
+      'submit.emptyContent': '内容を入力してください'
+    }
   }
 };
 
@@ -305,7 +452,7 @@ const resources: Resource = {
 const initOptions: InitOptions = {
   resources,
   lng: 'en', // 默认语言
-  fallbackLng: 'zh',
+  fallbackLng: 'en',
   interpolation: {
     escapeValue: false // 不需要对React的输入进行转义
   }

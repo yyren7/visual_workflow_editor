@@ -1,5 +1,5 @@
 // frontend/src/components/nodes/ProcessNode.tsx
-import React, { memo } from 'react';
+import React, { memo, useLayoutEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, CardContent, Typography } from '@mui/material';
 import { NodeData } from '../FlowEditor';
@@ -8,34 +8,105 @@ interface ProcessNodeProps {
   data: NodeData & {
     description?: string;
   };
+  isConnectable?: boolean;
 }
 
-const ProcessNode: React.FC<ProcessNodeProps> = ({ data }) => {
+// 获取父节点容器并修改其样式
+const useNodeParentFix = (ref: React.RefObject<HTMLDivElement>) => {
+  useLayoutEffect(() => {
+    if (ref.current) {
+      // 获取ReactFlow节点容器（通常是ref.current的父元素或祖先元素）
+      const nodeElement = ref.current.closest('.react-flow__node');
+      if (nodeElement) {
+        // 移除ReactFlow节点的默认样式
+        (nodeElement as HTMLElement).style.padding = '0';
+        (nodeElement as HTMLElement).style.borderRadius = '0';
+        (nodeElement as HTMLElement).style.backgroundColor = 'transparent';
+        (nodeElement as HTMLElement).style.border = 'none';
+        (nodeElement as HTMLElement).style.overflow = 'visible';
+        (nodeElement as HTMLElement).style.display = 'flex';
+        (nodeElement as HTMLElement).style.alignItems = 'center';
+        (nodeElement as HTMLElement).style.justifyContent = 'center';
+      }
+    }
+  }, [ref]);
+};
+
+const ProcessNode: React.FC<ProcessNodeProps> = ({ data, isConnectable = true }) => {
+  const nodeRef = useRef<HTMLDivElement>(null);
+  
+  // 应用节点父容器修复
+  useNodeParentFix(nodeRef);
+  
   return (
-    <div className="react-flow__node-process" style={{ border: 'none', background: 'transparent', padding: 0 }}>
-      <Card sx={{ 
-        minWidth: 150, 
-        border: '1px solid #009688',
-        borderRadius: '4px',
-        backgroundColor: '#1e1e1e',
-        boxShadow: 'none',
-        overflow: 'visible'
-      }}>
-        <CardContent sx={{ 
-          padding: '10px',
-          paddingBottom: '10px !important', // 覆盖CardContent最后一个子元素的padding-bottom
-          '&:last-child': { paddingBottom: '10px' }
-        }}>
-          <Typography variant="h6" component="div" sx={{ fontSize: 14, fontWeight: 'bold', color: '#009688' }}>
+    <div ref={nodeRef} style={{ width: '100%', height: '100%' }}>
+      <Card 
+        sx={{
+          width: '100%',
+          height: '100%',
+          backgroundColor: '#1e1e1e',
+          color: 'white',
+          borderRadius: '4px',
+          border: '2px solid #009688',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'visible',
+          '& .MuiCardContent-root': {
+            padding: '8px',
+            '&:last-child': { 
+              paddingBottom: '8px' 
+            }
+          }
+        }}
+      >
+        <CardContent>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              fontSize: '14px', 
+              fontWeight: 'bold', 
+              color: '#009688',
+              marginBottom: '4px'
+            }}
+          >
             {data.label}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#aaa' }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: '#aaa',
+              fontSize: '12px'
+            }}
+          >
             {data.description || 'process'}
           </Typography>
-          <Handle type="target" position={Position.Top} id="target" />
-          <Handle type="source" position={Position.Bottom} id="source" />
         </CardContent>
       </Card>
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="target"
+        isConnectable={isConnectable}
+        style={{ 
+          background: '#009688',
+          border: '2px solid #009688',
+          width: '8px',
+          height: '8px'
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="source"
+        isConnectable={isConnectable}
+        style={{ 
+          background: '#009688',
+          border: '2px solid #009688',
+          width: '8px',
+          height: '8px'
+        }}
+      />
     </div>
   );
 };

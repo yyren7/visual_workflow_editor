@@ -22,7 +22,13 @@ const LanguageSelector: React.FC = () => {
     // 检查是否需要更新HTML标题
     const title = document.querySelector('title');
     if (title) {
-      title.textContent = i18n.language === 'zh' ? '可视化工作流编辑器' : 'Visual Workflow Editor';
+      if (i18n.language === 'zh') {
+        title.textContent = '可视化工作流编辑器';
+      } else if (i18n.language === 'ja') {
+        title.textContent = 'ビジュアルワークフローエディタ';
+      } else {
+        title.textContent = 'Visual Workflow Editor';
+      }
     }
   }, [i18n.language]);
 
@@ -51,6 +57,18 @@ const LanguageSelector: React.FC = () => {
     }
   }, [i18n]);
 
+  // 显示当前语言名称
+  const getCurrentLanguageName = () => {
+    switch (i18n.language) {
+      case 'zh':
+        return '中文';
+      case 'ja':
+        return '日本語';
+      default:
+        return 'English';
+    }
+  };
+
   return (
     <>
       <Button
@@ -59,7 +77,7 @@ const LanguageSelector: React.FC = () => {
         onClick={handleClick}
         aria-label="select language"
       >
-        {i18n.language === 'zh' ? '中文' : 'English'}
+        {getCurrentLanguageName()}
       </Button>
       <Menu
         anchorEl={anchorEl}
@@ -68,6 +86,7 @@ const LanguageSelector: React.FC = () => {
       >
         <MenuItem onClick={() => changeLanguage('zh')}>中文</MenuItem>
         <MenuItem onClick={() => changeLanguage('en')}>English</MenuItem>
+        <MenuItem onClick={() => changeLanguage('ja')}>日本語</MenuItem>
       </Menu>
     </>
   );
