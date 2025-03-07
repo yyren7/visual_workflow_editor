@@ -43,7 +43,7 @@ jobs:
         
     - name: 运行后端测试
       run: |
-        docker run --rm workflow-editor-backend:latest pytest -xvs
+        docker run --rm workflow-editor-backend:latest python -m pytest -xvs
 
     - name: 运行前端测试
       run: |

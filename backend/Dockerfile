@@ -23,6 +23,9 @@ RUN ls -la /app/backend
 
 ENV PYTHONPATH=/app
 
+# 确保pytest在路径中
+RUN pip list
+
 EXPOSE 8000
 
 # 使用正确的路径运行backend目录下的run_backend.py
