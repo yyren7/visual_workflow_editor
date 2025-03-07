@@ -5,6 +5,7 @@ from backend.app.config import Config
 from backend.app.routers import user, flow, llm, email, auth # 导入 auth 路由
 from backend.app.database import engine
 from backend.app.models import Base
+from backend.app.utils import get_version, get_version_info
 
 # Create the database tables
 Base.metadata.create_all(bind=engine)
@@ -12,7 +13,7 @@ Base.metadata.create_all(bind=engine)
 # Initialize FastAPI app
 app = FastAPI(
     title=Config.PROJECT_NAME,
-    version="0.1.0",
+    version=get_version(),  # 动态读取版本号
 )
 
 # CORS configuration
@@ -34,3 +35,8 @@ app.include_router(auth.router) # 引入 auth 路由
 @app.get("/")
 async def root():
     return {"message": "Flow Editor API"}
+
+# 添加一个新的端点，提供版本信息
+@app.get("/api/version")
+async def version():
+    return get_version_info()

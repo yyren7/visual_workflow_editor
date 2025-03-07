@@ -29,6 +29,12 @@ const resources: Resource = {
       'common.noData': '暂无数据',
       'common.failed': '失败',
       
+      // 版本信息
+      'version.label': '版本',
+      'version.lastUpdated': '最后更新',
+      'version.newAvailable': '新版本可用',
+      'version.current': '当前版本',
+      
       // 导航栏
       'nav.flowEditor': '流程编辑器',
       'nav.login': '登录',
@@ -176,6 +182,12 @@ const resources: Resource = {
       'common.noData': 'No data available',
       'common.failed': 'Failed',
       
+      // Version information
+      'version.label': 'Version',
+      'version.lastUpdated': 'Last Updated',
+      'version.newAvailable': 'New version available',
+      'version.current': 'Current Version',
+      
       // Navigation bar
       'nav.flowEditor': 'Flow Editor',
       'nav.login': 'Login',
@@ -322,6 +334,12 @@ const resources: Resource = {
       'common.remove': '削除',
       'common.noData': 'データがありません',
       'common.failed': '失敗',
+      
+      // バージョン情報
+      'version.label': 'バージョン',
+      'version.lastUpdated': '最終更新',
+      'version.newAvailable': '新しいバージョンが利用可能',
+      'version.current': '現在のバージョン',
       
       // ナビゲーションバー
       'nav.flowEditor': 'フローエディタ',

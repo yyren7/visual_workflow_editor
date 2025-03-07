@@ -86,4 +86,31 @@ visual_workflow_editor/
 
 - 后端配置在`.env`文件中
 - 全局变量存储在`global_variables.json`中
-- 数据库使用SQLite，文件位于`flow_editor.db` 
+- 数据库使用SQLite，文件位于`flow_editor.db`
+
+## 版本管理
+
+项目使用语义化版本进行管理，版本号格式为：`主版本号.次版本号.修订号`
+
+- 主版本号：当进行不兼容的API更改时递增
+- 次版本号：当增加向下兼容的功能时递增
+- 修订号：当进行向下兼容的问题修复时递增
+
+### 版本更新工具
+
+项目提供了一个版本更新脚本，可以自动更新版本号、创建Git标签和更新变更日志：
+
+```bash
+# 更新修订号（patch）
+./update-version.sh
+
+# 更新次版本号（minor）
+./update-version.sh minor "添加新功能"
+
+# 更新主版本号（major）
+./update-version.sh major "重大更新"
+```
+
+### 版本历史
+
+查看 [CHANGELOG.md](CHANGELOG.md) 获取完整版本历史和变更说明。 

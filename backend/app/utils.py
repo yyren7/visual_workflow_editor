@@ -7,6 +7,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from backend.app import models, schemas, database
 from backend.app.config import Config
+import json
+import os
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -60,3 +62,27 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     if user is None:
         raise credentials_exception
     return user
+
+def get_version_info():
+    """
+    从项目根目录的version.json文件中读取版本信息
+    
+    Returns:
+        dict: 包含'version'和'lastUpdated'的字典，如果读取失败则返回默认值
+    """
+    try:
+        # 尝试找到项目根目录的version.json（相对于当前文件的位置）
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        version_path = os.path.join(base_dir, 'version.json')
+        
+        with open(version_path, 'r') as f:
+            version_data = json.load(f)
+            return version_data
+    except Exception as e:
+        print(f"读取版本信息失败: {e}")
+        # 返回默认版本信息
+        return {"version": "0.0.0", "lastUpdated": "未知"}
+
+def get_version():
+    """简单获取版本号"""
+    return get_version_info().get("version", "0.0.0")

@@ -16,6 +16,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate } from 'react-router-dom';
 import i18n from '../i18n';
 import LanguageSelector from './LanguageSelector';
+import VersionInfo from './VersionInfo';
 import { useAuth } from '../contexts/AuthContext';
 
 const NavBar: React.FC = () => {
@@ -53,6 +54,8 @@ const NavBar: React.FC = () => {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           {t('nav.flowEditor')}
         </Typography>
+        
+        <VersionInfo />
         
         <LanguageSelector />
         
