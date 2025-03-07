@@ -1,50 +1,131 @@
-
 sequenceDiagram
+    participant UI as UserInterface
     participant FE as FlowEditor
-    participant SB as Sidebar
-    participant NS as NodeSelector
-    participant NP as NodeProperties
-    participant GV as GlobalVariables
-    participant CI as ChatInterface
-    participant API as FastAPI
+    participant PM as ProjectManager
+    participant FM as FlowManager
+    participant NS as NodeService
+    participant ES as EdgeService
+    participant VS as VariableService
+    participant LLM as LLMService
+    participant API as APIGateway
     participant DB as Database
 
-    # Initial Flow Load
-    FE->>API: get_flow(flow_id)
-    API->>DB: query_flow(flow_id)
-    DB-->>API: return flow_data
-    API-->>FE: return flow_data
-    FE->>FE: loadFlow(flow_data)
+    %% 用户登录流程
+    UI->>API: login(credentials)
+    API->>DB: validateCredentials(username, password)
+    DB-->>API: authenticationResult
+    API-->>UI: authToken + userData
 
-    # Add Node from Sidebar
-    SB->>NS: getNodeTypes()
-    NS-->>SB: return nodeTypes
-    SB->>FE: addNodeByType(nodeType)
-    FE->>FE: create Node(nodeType)
-    FE->>FE: addNode(node)
-    FE->>FE: render()
+    %% 加载项目列表
+    UI->>API: getProjects()
+    API->>DB: queryProjects(userId)
+    DB-->>API: projectsList
+    API-->>UI: projectsList
 
-    # Select Node and Edit Properties
-    FE->>FE: onNodeClick(node)
-    FE->>NP: display properties of node
-    NP->>FE: updateNodeProperty(property, value)
-    FE->>FE: updateNode(node)
-    FE->>FE: render()
+    %% 创建新项目
+    UI->>API: createProject(projectData)
+    API->>DB: saveProject(projectData)
+    DB-->>API: projectId
+    API-->>UI: projectDetails
 
-    # Use Chat Interface to Generate Node
-    CI->>API: sendMessage(prompt)
-    API->>API: generate_node(prompt)
-    API->>FE: return new node data
-    FE->>FE: addNode(node)
-    FE->>FE: render()
+    %% 打开项目并加载流程图列表
+    UI->>API: getProjectFlows(projectId)
+    API->>DB: queryFlows(projectId)
+    DB-->>API: flowsList
+    API-->>UI: flowsList
 
-    # Save Flow
-    FE->>API: saveFlow()
-    API->>DB: update_flow(flow_id, flow_data)
-    DB-->>API: return success
-    API-->>FE: return success
+    %% 创建新流程图
+    UI->>API: createFlow(flowData)
+    API->>DB: saveFlow(flowData)
+    DB-->>API: flowId
+    API-->>UI: flowDetails
 
-    # Global Variables
-    GV->>GV: loadVariables(filePath)
-    GV->>GV: getVariable(name)
-    GV->>GV: setVariable(name, value)
+    %% 加载流程图
+    UI->>API: getFlow(flowId)
+    API->>DB: queryFlow(flowId)
+    DB-->>API: flowData
+    API-->>UI: flowData
+    UI->>FE: loadFlow(flowData)
+    FE->>NS: loadNodes(nodes)
+    FE->>ES: loadEdges(edges)
+    FE->>VS: loadVariables(variables)
+
+    %% 添加节点 - 通过模板
+    UI->>API: getNodeTemplates()
+    API->>DB: queryNodeTemplates()
+    DB-->>API: nodeTemplatesList
+    API-->>UI: nodeTemplatesList
+    UI->>FE: addNodeFromTemplate(templateId, position)
+    FE->>NS: createNode(templateId, position)
+    NS->>FE: newNode
+    FE-->>UI: updateCanvas()
+
+    %% 编辑节点属性
+    UI->>FE: selectNode(nodeId)
+    FE-->>UI: nodeProperties
+    UI->>FE: updateNodeProperty(nodeId, key, value)
+    FE->>NS: updateNode(nodeId, properties)
+    FE-->>UI: updateCanvas()
+
+    %% 连接节点 (创建边)
+    UI->>FE: connectNodes(sourceId, targetId, sourceHandle, targetHandle)
+    FE->>ES: createEdge(sourceId, targetId, sourceHandle, targetHandle)
+    ES->>FE: newEdge
+    FE-->>UI: updateCanvas()
+
+    %% 使用AI助手生成节点
+    UI->>LLM: sendMessage(prompt)
+    LLM->>LLM: analyzePrompt()
+    LLM->>NS: generateNodeFromPrompt(nodeSpec)
+    NS->>FE: newNode
+    FE-->>UI: updateCanvas()
+    LLM-->>UI: assistantResponse
+
+    %% 使用AI助手修改节点
+    UI->>LLM: sendMessage(prompt, nodeId)
+    LLM->>LLM: analyzePromptWithNodeContext(nodeId)
+    LLM->>NS: updateNodeFromPrompt(nodeId, nodeSpec)
+    NS->>FE: updatedNode
+    FE-->>UI: updateCanvas()
+    LLM-->>UI: assistantResponse
+
+    %% 管理全局变量
+    UI->>VS: createVariable(variableData)
+    VS->>DB: saveVariable(variableData)
+    DB-->>VS: variableId
+    VS-->>UI: variableDetails
+
+    UI->>VS: updateVariable(variableId, variableData)
+    VS->>DB: updateVariableRecord(variableId, variableData)
+    DB-->>VS: success
+    VS-->>UI: updatedVariable
+
+    %% 保存流程图
+    UI->>FE: saveFlow()
+    FE->>FM: prepareFlowData()
+    FM->>API: saveFlow(flowId, flowData)
+    API->>DB: updateFlowRecord(flowId, flowData)
+    DB-->>API: success
+    API-->>UI: saveSuccess
+
+    %% 创建版本快照
+    UI->>FM: createVersion(comment)
+    FM->>API: createFlowVersion(flowId, versionData)
+    API->>DB: saveVersionSnapshot(flowId, versionData)
+    DB-->>API: versionId
+    API-->>UI: versionDetails
+
+    %% 导出流程图
+    UI->>FM: exportFlow(flowId)
+    FM->>API: getFlowExport(flowId)
+    API->>DB: queryCompleteFlow(flowId)
+    DB-->>API: completeFlowData
+    API-->>UI: exportedJson
+
+    %% 执行流程图
+    UI->>API: executeFlow(flowId, inputParameters)
+    API->>DB: getFlowForExecution(flowId)
+    DB-->>API: flowExecutionData
+    API->>API: initializeExecutionEngine(flowExecutionData)
+    API->>API: executeNodes(startNodes)
+    API-->>UI: executionResults
