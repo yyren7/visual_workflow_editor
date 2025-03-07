@@ -1,39 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
-import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
+
+// 导入API配置
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 /**
  * VersionInfo组件 - 显示应用的版本信息
  * 
- * 尝试从后端API获取版本信息，如果失败则尝试直接从version.json获取
+ * 从后端API获取版本信息
  */
 const VersionInfo: React.FC = () => {
   const { t } = useTranslation();
   const [versionData, setVersionData] = useState<{version: string, lastUpdated: string} | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchVersionInfo = async () => {
       try {
-        // 首先尝试从API获取版本信息
-        const response = await axios.get('/api/version');
-        setVersionData(response.data);
-      } catch (apiError) {
-        console.log('无法从API获取版本信息，尝试直接读取version.json', apiError);
+        // 直接使用fetch，避免axios配置问题
+        console.log(`尝试从API获取版本信息: ${API_BASE_URL}/api/version`);
+        const response = await fetch(`${API_BASE_URL}/api/version`);
         
-        try {
-          // API失败后尝试直接获取version.json
-          const fileResponse = await fetch('/version.json');
-          if (fileResponse.ok) {
-            const data = await fileResponse.json();
-            setVersionData(data);
-          } else {
-            console.error('无法读取version.json文件');
-          }
-        } catch (fileError) {
-          console.error('读取version.json失败:', fileError);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('API版本信息获取成功:', data);
+          setVersionData(data);
+          setError(false);
+        } else {
+          console.error('API请求失败, 状态码:', response.status);
+          setError(true);
         }
+      } catch (apiError) {
+        console.error('无法从API获取版本信息', apiError);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -42,23 +44,48 @@ const VersionInfo: React.FC = () => {
     fetchVersionInfo();
   }, []);
 
-  if (loading || !versionData) {
-    return null; // 加载中或没有数据时不显示
+  // 只有在成功获取到数据后才显示版本信息
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, opacity: 0.5 }}>
+        <Typography variant="caption" color="inherit">
+          {t('version.label')}: 加载中...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error || !versionData) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, opacity: 0.7 }}>
+        <Typography variant="caption" color="inherit" sx={{ color: '#ff9800' }}>
+          {t('version.label')}: 未知
+        </Typography>
+      </Box>
+    );
   }
 
   return (
-    <Tooltip title={`${t('version.lastUpdated')}: ${versionData.lastUpdated}`} arrow placement="top">
+    <Tooltip 
+      title={`${t('version.lastUpdated')}: ${versionData.lastUpdated}`} 
+      arrow 
+      placement="top"
+    >
       <Box 
         sx={{ 
           display: 'flex',
           alignItems: 'center',
           mr: 2,
-          opacity: 0.7,
+          padding: '2px 8px',
+          borderRadius: '4px',
+          opacity: 0.85,
           '&:hover': {
-            opacity: 1
+            opacity: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
           }
         }}
       >
+        <InfoIcon sx={{ fontSize: '0.9rem', mr: 0.5 }} />
         <Typography variant="caption" color="inherit">
           {t('version.label')}: {versionData.version}
         </Typography>

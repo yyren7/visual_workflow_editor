@@ -1,6 +1,16 @@
 ## backend/app/main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import sys
+import os
+from pathlib import Path
+
+# 添加项目根目录到Python路径
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(BASE_DIR))
+
+# 现在可以导入backend包
 from backend.app.config import Config
 from backend.app.routers import user, flow, llm, email, auth # 导入 auth 路由
 from backend.app.database import engine
@@ -16,21 +26,28 @@ app = FastAPI(
     version=get_version(),  # 动态读取版本号
 )
 
-# CORS configuration
+# CORS configuration - 配置更加明确的CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=Config.CORS_ORIGINS,
-    allow_credentials=Config.CORS_CREDENTIALS,
-    allow_methods=Config.CORS_METHODS,
-    allow_headers=Config.CORS_HEADERS,
+    allow_origins=[
+        "http://localhost:3000",      # 本地开发环境
+        "http://localhost:8000",      # 后端API地址
+        "http://172.18.0.3:3000",     # Docker网络中的前端容器
+        "http://workflow-editor-frontend:3000",  # 容器名称访问
+        "*"                          # 允许所有源
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
 app.include_router(user.router)
 app.include_router(flow.router)
 app.include_router(llm.router)
-app.include_router(email.router) # 引入 email 路由
-app.include_router(auth.router) # 引入 auth 路由
+app.include_router(email.router)
+app.include_router(auth.router)
 
 @app.get("/")
 async def root():
@@ -38,5 +55,15 @@ async def root():
 
 # 添加一个新的端点，提供版本信息
 @app.get("/api/version")
-async def version():
-    return get_version_info()
+async def version(request: Request):
+    # 记录请求信息以便调试
+    origin = request.headers.get("origin", "未知来源")
+    print(f"接收到版本请求，来源: {origin}")
+    
+    version_data = get_version_info()
+    print(f"返回版本信息: {version_data}")
+    
+    # 明确设置CORS响应头
+    response = JSONResponse(content=version_data)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response

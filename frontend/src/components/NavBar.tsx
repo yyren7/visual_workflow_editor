@@ -9,7 +9,9 @@ import {
   Box,
   Menu,
   MenuItem,
-  Divider
+  Divider,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -25,6 +27,8 @@ const NavBar: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -40,76 +44,92 @@ const NavBar: React.FC = () => {
   };
   
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <IconButton
-          size="large"
-          edge="start"
-          color="inherit"
-          aria-label="menu"
-          sx={{ mr: 2 }}
-        >
-          <MenuIcon />
-        </IconButton>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          {t('nav.flowEditor')}
-        </Typography>
+    <AppBar position="static" elevation={3}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 1 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
+            {t('nav.flowEditor')}
+          </Typography>
+        </Box>
         
-        <VersionInfo />
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          flexGrow: 1
+        }}>
+          <VersionInfo />
+        </Box>
         
-        <LanguageSelector />
-        
-        {isAuthenticated ? (
-          <>
-            <IconButton
-              color="inherit"
-              onClick={handleMenuOpen}
-              aria-controls="user-menu"
-              aria-haspopup="true"
-            >
-              <AccountCircleIcon />
-            </IconButton>
-            <Menu
-              id="user-menu"
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-            >
-              <MenuItem onClick={() => {
-                handleMenuClose();
-                navigate('/flow');
-              }}>
-                {t('nav.flowEditor')}
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={handleLogout}>{t('nav.logout')}</MenuItem>
-            </Menu>
-          </>
-        ) : (
-          <Box sx={{ display: 'flex' }}>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/login')}
-              sx={{ mr: 1 }}
-            >
-              {t('nav.login')}
-            </Button>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/register')}
-            >
-              {t('nav.register')}
-            </Button>
-          </Box>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <LanguageSelector />
+          
+          {isAuthenticated ? (
+            <>
+              <IconButton
+                color="inherit"
+                onClick={handleMenuOpen}
+                aria-controls="user-menu"
+                aria-haspopup="true"
+                sx={{ ml: 1 }}
+              >
+                <AccountCircleIcon />
+              </IconButton>
+              <Menu
+                id="user-menu"
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  navigate('/flow');
+                }}>
+                  {t('nav.flowEditor')}
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>{t('nav.logout')}</MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <Box sx={{ display: 'flex' }}>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/login')}
+                sx={{ mx: 0.5 }}
+                size={isMobile ? "small" : "medium"}
+              >
+                {t('nav.login')}
+              </Button>
+              <Button 
+                color="inherit" 
+                variant="outlined"
+                onClick={() => navigate('/register')}
+                sx={{ mx: 0.5 }}
+                size={isMobile ? "small" : "medium"}
+              >
+                {t('nav.register')}
+              </Button>
+            </Box>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );
