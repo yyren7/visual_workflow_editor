@@ -4,7 +4,7 @@ FROM node:16-alpine
 WORKDIR /app
 
 # 复制前端的package.json文件
-COPY frontend/package.json frontend/package-lock.json ./
+COPY ./frontend/package.json ./frontend/package-lock.json ./
 
 # 为缓存目录创建正确的权限
 RUN mkdir -p node_modules/.cache
@@ -16,8 +16,8 @@ USER node
 # 安装依赖
 RUN npm ci
 
-# 只复制frontend目录内容
-COPY --chown=node:node frontend/ .
+# 复制源代码
+COPY --chown=node:node ./frontend/ .
 
 EXPOSE 3000
 

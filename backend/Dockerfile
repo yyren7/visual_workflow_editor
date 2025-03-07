@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 将requirements.txt复制到工作目录
-COPY requirements.txt .
+COPY ./backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 将整个项目目录复制到容器中
