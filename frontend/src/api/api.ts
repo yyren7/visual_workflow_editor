@@ -1,7 +1,8 @@
 // frontend/src/api/api.ts
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'; // Default API base URL, 移除 /api 前缀
+// 使用环境变量配置API基础URL，如果不存在则使用默认值
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 // 数据接口定义
 export interface FlowData {

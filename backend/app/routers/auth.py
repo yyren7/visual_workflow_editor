@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError, jwt
-from visual_workflow_editor.backend.app.config import Config
-from visual_workflow_editor.backend.app import database, models, schemas
+from backend.app.config import Config
+from backend.app import database, models, schemas
 from sqlalchemy.orm import Session
-from visual_workflow_editor.backend.app.utils import get_current_user
+from backend.app.utils import get_current_user
 
 router = APIRouter(
     prefix="/auth",

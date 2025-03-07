@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from visual_workflow_editor.backend.app.database import Base
+from backend.app.database import Base
 
 class User(Base):
     """

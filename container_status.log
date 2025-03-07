@@ -1,0 +1,42 @@
+容器状态检查 - Fri Mar  7 03:08:57 PM JST 2025
+
+=== Docker容器状态 ===
+CONTAINER ID   IMAGE                             COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+1581c78880bf   ubuntu:22.04                      "tail -f /dev/null"      13 seconds ago   Up 11 seconds                                               workflow-editor-dev
+1c5ad381295f   visual_workflow_editor-frontend   "docker-entrypoint.s…"   13 seconds ago   Up 12 seconds   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   workflow-editor-frontend
+cbd951b242f4   visual_workflow_editor-backend    "python backend/run_…"   13 seconds ago   Up 12 seconds   0.0.0.0:8000->8000/tcp, :::8000->8000/tcp   workflow-editor-backend
+
+=== 前端容器日志 ===
+> visual-workflow-editor-frontend@0.1.0 start
+> react-scripts start
+
+(node:25) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:25) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view visual-workflow-editor-frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://172.18.0.3:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+No issues found.
+
+=== 前端应用访问检查 ===
+200
+=== 后端容器日志 ===
+INFO:     Will watch for changes in these directories: ['/app']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [1] using StatReload
+INFO:     Started server process [8]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+
+=== 后端API访问检查 ===
+200

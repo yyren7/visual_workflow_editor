@@ -1,7 +1,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from fastapi import APIRouter, HTTPException
-from visual_workflow_editor.backend.app.config import Config # 导入 Config
+from backend.app.config import Config # 导入 Config
 
 router = APIRouter()
 

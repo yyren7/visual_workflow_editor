@@ -5,8 +5,8 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from visual_workflow_editor.backend.app import models, schemas, database
-from visual_workflow_editor.backend.app.config import Config
+from backend.app import models, schemas, database
+from backend.app.config import Config
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

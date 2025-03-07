@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from visual_workflow_editor.backend.app.config import Config
+from backend.app.config import Config
 
 # Database URL from config
 DATABASE_URL = Config.DATABASE_URL

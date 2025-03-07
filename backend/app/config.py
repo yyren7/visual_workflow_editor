@@ -22,7 +22,12 @@ class Config:
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "your_llm_api_key") # Use environment variable, default to "your_llm_api_key"
 
     # CORS settings
-    CORS_ORIGINS: list = ["http://localhost:3000"]  # Allow requests from React app by default
+    CORS_ORIGINS: list = [
+        "http://localhost:3000",      # 本地开发环境
+        "http://172.18.0.3:3000",     # Docker网络中的前端容器
+        "http://workflow-editor-frontend:3000",  # 容器名称访问
+        "*"                          # 允许所有源（生产环境应该更严格）
+    ]
     CORS_CREDENTIALS: bool = True
     CORS_METHODS: list = ["*"]
     CORS_HEADERS: list = ["*"]
