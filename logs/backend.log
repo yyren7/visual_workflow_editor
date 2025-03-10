@@ -1,0 +1,20 @@
+INFO:     Will watch for changes in these directories: ['/workspace']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [6292] using StatReload
+INFO:     Started server process [6305]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     192.168.143.2:40322 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.143.2:40322 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+接收到版本请求，来源: http://localhost:3000
+返回版本信息: {'version': '0.1.1', 'lastUpdated': '2025-03-07'}
+INFO:     192.168.143.2:40376 - "GET /api/version HTTP/1.1" 200 OK
+INFO:     192.168.143.2:40380 - "OPTIONS /auth/verify-token HTTP/1.1" 200 OK
+INFO:     192.168.143.2:40384 - "OPTIONS /auth/verify-token HTTP/1.1" 200 OK
+接收到版本请求，来源: http://localhost:3000
+返回版本信息: {'version': '0.1.1', 'lastUpdated': '2025-03-07'}
+INFO:     192.168.143.2:40376 - "GET /api/version HTTP/1.1" 200 OK
+INFO:     192.168.143.2:40384 - "GET /auth/verify-token HTTP/1.1" 401 Unauthorized
+INFO:     192.168.143.2:40384 - "GET /auth/verify-token HTTP/1.1" 401 Unauthorized
+INFO:     192.168.143.2:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.143.2:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
