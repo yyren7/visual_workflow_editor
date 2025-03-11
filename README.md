@@ -1,116 +1,155 @@
-# 可视化工作流编辑器
+# Visual Workflow Editor
 
-这是一个基于Docker容器化的可视化工作流编辑器项目，支持跨平台开发和CI/CD部署。
+[English](README.md) | [中文](README_zh.md) | [日本語](README_ja.md)
 
-## 项目说明
+This is a Docker containerized visual workflow editor project that supports cross-platform development and CI/CD deployment.
 
-本项目包含：
-- 基于FastAPI的后端服务
-- 基于React的前端应用
-- SQLite数据库存储
+## Project Description
 
-## 开发环境要求
+This project includes:
 
-- Docker 和 Docker Compose
+- Backend service based on FastAPI
+- Frontend application based on React
+- SQLite database storage
+
+## Development Environment Requirements
+
+- Docker and Docker Compose
+- Visual Studio Code (recommended, supports Dev Container)
 - Git
 
-无需安装Python、Node.js或任何其他依赖，所有内容都在Docker容器中运行。
+No need to install Python, Node.js or any other dependencies, everything runs in Docker containers.
 
-## 快速开始
+## Development with Dev Container (Recommended)
 
-### 1. 克隆项目
+### 1. Install Necessary Tools
+
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- Install [Visual Studio Code](https://code.visualstudio.com/)
+- Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension in VSCode
+
+### 2. Clone the Project and Start the Development Container
 
 ```bash
-git clone https://github.com/您的用户名/visual_workflow_editor.git
+git clone https://github.com/your-username/visual_workflow_editor.git
 cd visual_workflow_editor
 ```
 
-### 2. 启动开发环境
+Open the project folder in VSCode. When prompted with "Devcontainer configuration detected", click "Reopen in Container". Alternatively, use the command palette (F1) and select "Dev Containers: Open Folder in Container".
+
+When starting for the first time, the Dev Container will automatically build the development environment, install all dependencies, and prepare the frontend and backend services.
+
+### 3. Access the Application
+
+Once the container is running:
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+
+## Development with Scripts (Alternative Method)
+
+If you're not using VS Code Dev Container, you can also use the scripts provided in the project:
 
 ```bash
-# 在Windows中
-.\dev.sh
+# Start the development environment
+./scripts/dev.sh
 
-# 在Linux/Mac中
-chmod +x dev.sh
-./dev.sh
+# Rebuild containers (when dependencies are updated)
+./scripts/rebuild.sh
+
+# Check service status
+./scripts/check-status.sh
 ```
 
-### 3. 访问应用
-
-- 前端: http://localhost:3000
-- 后端API: http://localhost:8000
-
-## 开发工作流
-
-1. **进入开发容器**
-   ```bash
-   docker exec -it workflow-editor-dev bash
-   ```
-
-2. **查看日志**
-   ```bash
-   docker-compose logs -f
-   ```
-
-3. **停止环境**
-   ```bash
-   docker-compose down
-   ```
-
-## 项目结构
+## Project Structure
 
 ```
 visual_workflow_editor/
-├── backend/             # Python后端
-│   ├── app/             # 应用代码
-│   └── Dockerfile       # 后端Docker配置
-├── frontend/            # React前端
-│   ├── src/             # 源代码
-│   └── Dockerfile       # 前端Docker配置
-├── .github/workflows/   # GitHub Actions CI/CD配置
-├── docker-compose.yml   # Docker Compose配置
-├── dev.sh               # 开发环境启动脚本
-└── README.md            # 项目说明
+├── .devcontainer/       # Dev Container configuration
+├── .github/workflows/   # GitHub Actions CI/CD configuration
+├── backend/             # Python backend
+│   ├── app/             # Application code
+│   └── Dockerfile       # Backend Docker configuration
+├── config/              # Configuration files directory
+│   └── global_variables.json # Global variables configuration
+├── deployment/          # Deployment-related configuration
+├── dev_docs/            # Development documentation
+├── frontend/            # React frontend
+│   ├── src/             # Source code
+│   └── Dockerfile       # Frontend Docker configuration
+├── logs/                # Application logs
+├── scripts/             # Development scripts
+├── CHANGELOG.md         # Version update log
+└── README.md            # Project description
 ```
 
-## CI/CD部署
+## Development Workflow
 
-本项目配置了GitHub Actions工作流，当推送到main或master分支时会自动：
+1. **Using the Terminal**
 
-1. 构建并测试代码
-2. 将Docker镜像推送到GitHub容器注册表
-3. 部署前端到GitHub Pages（如适用）
+   ```bash
+   # Open terminal in container
+   # If using VS Code Dev Container, use the VS Code terminal directly
+   ```
 
-## 配置说明
+2. **Starting Services**
 
-- 后端配置在`.env`文件中
-- 全局变量存储在`global_variables.json`中
-- 数据库使用SQLite，文件位于`flow_editor.db`
+   ```bash
+   # In the development container, frontend and backend services start automatically
+   # To start manually:
+   cd /workspace/frontend && npm start
+   cd /workspace/backend && python run_backend.py
+   ```
 
-## 版本管理
+3. **Viewing Logs**
 
-项目使用语义化版本进行管理，版本号格式为：`主版本号.次版本号.修订号`
+   ```bash
+   # Frontend logs
+   tail -f /workspace/logs/frontend.log
 
-- 主版本号：当进行不兼容的API更改时递增
-- 次版本号：当增加向下兼容的功能时递增
-- 修订号：当进行向下兼容的问题修复时递增
+   # Backend logs
+   tail -f /workspace/logs/backend.log
+   ```
 
-### 版本更新工具
+## CI/CD Deployment
 
-项目提供了一个版本更新脚本，可以自动更新版本号、创建Git标签和更新变更日志：
+This project has GitHub Actions workflows configured, which automatically:
+
+1. Build and test code
+2. Push Docker images to GitHub Container Registry
+3. Deploy frontend to GitHub Pages (if applicable)
+
+when pushed to the main or master branch.
+
+## Configuration
+
+- Backend configuration is in the `backend/.env` file
+- Global variables are stored in `config/global_variables.json`
+- The database uses SQLite, located at `config/flow_editor.db`
+
+## Version Management
+
+The project uses semantic versioning, with the format: `MAJOR.MINOR.PATCH`
+
+- MAJOR: Incremented when making incompatible API changes
+- MINOR: Incremented when adding backwards-compatible functionality
+- PATCH: Incremented when making backwards-compatible bug fixes
+
+### Version Update Tool
+
+The project provides a version update script that can automatically update the version number, create Git tags, and update the changelog:
 
 ```bash
-# 更新修订号（patch）
-./update-version.sh
+# Update patch version
+./scripts/update-version.sh
 
-# 更新次版本号（minor）
-./update-version.sh minor "添加新功能"
+# Update minor version
+./scripts/update-version.sh minor "Add new feature"
 
-# 更新主版本号（major）
-./update-version.sh major "重大更新"
+# Update major version
+./scripts/update-version.sh major "Major update"
 ```
 
-### 版本历史
+### Version History
 
-查看 [CHANGELOG.md](CHANGELOG.md) 获取完整版本历史和变更说明。 
+See [CHANGELOG.md](CHANGELOG.md) for complete version history and change notes.
