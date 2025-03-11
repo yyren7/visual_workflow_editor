@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 简化版启动脚本用于开发环境
+# 开发环境启动脚本
 
 mkdir -p /workspace/logs
 
@@ -17,32 +17,49 @@ case "$1" in
     ;;
   logs)
     # 创建日志文件
+    mkdir -p /workspace/logs
     touch /workspace/logs/frontend.log
     touch /workspace/logs/backend.log
     
-    # 在后台启动服务
-    echo "在后台启动前端和后端服务..."
+    # 检查 tmux 是否已安装
+    if ! command -v tmux &> /dev/null; then
+      echo "tmux 未安装，正在安装..."
+      sudo apt-get update && sudo apt-get install -y tmux
+    fi
+    
+    # 结束已有的 tmux 会话
+    tmux kill-session -t frontend 2>/dev/null || true
+    tmux kill-session -t backend 2>/dev/null || true
+    
+    echo "在独立会话中启动前端和后端服务..."
+    
+    # 创建前端 tmux 会话
     cd /workspace/frontend
-    npm start > /workspace/logs/frontend.log 2>&1 &
-    FRONTEND_PID=$!
+    tmux new-session -d -s frontend 'npm start | tee /workspace/logs/frontend.log; read'
+    echo "前端服务已在 tmux 会话 'frontend' 中启动"
     
+    # 创建后端 tmux 会话
     cd /workspace
-    python3 backend/run_backend.py > /workspace/logs/backend.log 2>&1 &
-    BACKEND_PID=$!
+    tmux new-session -d -s backend 'python3 backend/run_backend.py | tee /workspace/logs/backend.log; read'
+    echo "后端服务已在 tmux 会话 'backend' 中启动"
     
-    # 使用 tail 同时显示两个日志
-    echo "显示实时日志（按 Ctrl+C 停止查看）..."
-    echo "前端日志 (左) | 后端日志 (右)"
-    echo "----------------------------------------"
-    tail -f /workspace/logs/frontend.log /workspace/logs/backend.log
-    
-    # 当 tail 被中断时，杀死进程
-    kill $FRONTEND_PID $BACKEND_PID
+    echo ""
+    echo "使用以下命令连接到服务日志："
+    echo "  tmux attach -t frontend  - 查看前端日志（按 Ctrl+B 然后 D 分离）"
+    echo "  tmux attach -t backend   - 查看后端日志（按 Ctrl+B 然后 D 分离）"
+    ;;
+  stop)
+    # 停止所有服务
+    echo "停止前端和后端服务..."
+    tmux kill-session -t frontend 2>/dev/null || true
+    tmux kill-session -t backend 2>/dev/null || true
+    echo "所有服务已停止"
     ;;
   *)
-    echo "用法: ./start-dev.sh [frontend|backend|logs]"
+    echo "用法: ./start-dev.sh [frontend|backend|logs|stop]"
     echo "  frontend - 启动前端开发服务器"
     echo "  backend  - 启动后端开发服务器"
-    echo "  logs     - 在后台启动两个服务器并显示实时日志"
+    echo "  logs     - 在独立窗口中显示前端和后端日志"
+    echo "  stop     - 停止所有已启动的服务"
     ;;
-esac 
+esac

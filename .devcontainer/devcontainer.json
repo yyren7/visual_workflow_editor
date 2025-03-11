@@ -8,11 +8,12 @@
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-python.vscode-pylance",
+        // 暂时注释掉有问题的扩展
+        // "ms-python.vscode-pylance",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "formulahendry.auto-rename-tag",
-        "github.copilot",
+        // "github.copilot",
         "mtxr.sqltools",
         "mtxr.sqltools-driver-sqlite",
         "mhutchie.git-graph",
