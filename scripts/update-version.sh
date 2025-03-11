@@ -86,9 +86,10 @@ if [[ $SHOULD_COMMIT == "y" || $SHOULD_COMMIT == "Y" ]]; then
     git tag -a "v$NEW_VERSION" -m "版本 $NEW_VERSION: $COMMIT_MSG"
     
     # 询问是否要推送
-    read -p "是否要推送更改到远程仓库？ (y/n): " SHOULD_PUSH
-    if [[ $SHOULD_PUSH == "y" || $SHOULD_PUSH == "Y" ]]; then
-        git push origin master
+    read -p "是否要推送更改到远程仓库？ (y/n): " PUSH_CHANGES
+    if [ "$PUSH_CHANGES" = "y" ]; then
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        git push origin $CURRENT_BRANCH
         git push origin "v$NEW_VERSION"
         print_green "更改已推送到远程仓库"
     else
