@@ -62,17 +62,42 @@ RUN echo 'set -g mouse on' > /home/vscode/.tmux.conf \
     && echo 'set -g history-limit 10000' >> /home/vscode/.tmux.conf \
     && echo 'set -g default-terminal "screen-256color"' >> /home/vscode/.tmux.conf
 
-# 准备工作区目录（但不创建任何子目录）
+# 准备工作区目录
 WORKDIR /workspace
 
 # 创建卷目录并设置权限
 USER root
 RUN mkdir -p /workspace/logs && \
     mkdir -p /workspace/frontend/node_modules && \
+    mkdir -p /workspace/scripts && \
+    mkdir -p /workspace/.devcontainer/scripts && \
     chown -R vscode:vscode /workspace/logs && \
-    chown -R vscode:vscode /workspace/frontend/node_modules
+    chown -R vscode:vscode /workspace/frontend/node_modules && \
+    chown -R vscode:vscode /workspace/scripts && \
+    chown -R vscode:vscode /workspace/.devcontainer/scripts
 
-# 切换回vscode用户
+# 创建启动脚本
+COPY .devcontainer/post-create-contents/start-dev.sh /workspace/start-dev.sh
+RUN cp /workspace/start-dev.sh /workspace/scripts/start-dev.sh && \
+    chmod +x /workspace/start-dev.sh && \
+    chmod +x /workspace/scripts/start-dev.sh && \
+    chown vscode:vscode /workspace/start-dev.sh && \
+    chown vscode:vscode /workspace/scripts/start-dev.sh
+
+# 预安装后端和前端依赖（仅安装不变的核心依赖）
+USER vscode
+# 安装核心Python依赖
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# 安装核心Node.js依赖（不包括可能会变化的依赖）
+COPY frontend/package.json frontend/package-lock.json /tmp/
+WORKDIR /tmp
+RUN npm ci --no-optional
+
+# 清理和最终设置
+WORKDIR /workspace
 USER vscode
 
-# 不拷贝启动脚本，将在 post-create.sh 中处理 
+# 切换回vscode用户
+USER vscode 

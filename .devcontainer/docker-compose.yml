@@ -9,6 +9,7 @@ services:
       - ..:/workspace:cached
       - frontend-node-modules:/workspace/frontend/node_modules:delegated
       - workflow-logs:/workspace/logs:delegated
+      - dependency-cache:/workspace/.devcontainer/cache:delegated
     command: sleep infinity
     environment:
       - DATABASE_URL=sqlite:///./flow_editor.db
@@ -42,4 +43,5 @@ networks:
 volumes:
   frontend-node-modules:
   workflow-logs:
+  dependency-cache:
   # postgres-data: 
