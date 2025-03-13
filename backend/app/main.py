@@ -12,7 +12,7 @@ sys.path.append(str(BASE_DIR))
 
 # 现在可以导入backend包
 from backend.app.config import Config
-from backend.app.routers import user, flow, llm, email, auth # 导入 auth 路由
+from backend.app.routers import user, flow, llm, email, auth, embedding_routes # 导入 embedding 路由
 from backend.app.database import engine
 from backend.app.models import Base
 from backend.app.utils import get_version, get_version_info
@@ -48,6 +48,7 @@ app.include_router(flow.router)
 app.include_router(llm.router)
 app.include_router(email.router)
 app.include_router(auth.router)
+app.include_router(embedding_routes.router)  # 添加 embedding 路由
 
 @app.get("/")
 async def root():
