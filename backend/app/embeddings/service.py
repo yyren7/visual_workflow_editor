@@ -3,8 +3,8 @@ import time
 from typing import Any, Dict, List, Optional
 import numpy as np
 from sqlalchemy.orm import Session
-from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.vectorstores import DocArrayInMemorySearch
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain_community.vectorstores import DocArrayInMemorySearch
 from langchain.schema.runnable import RunnableMap
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
