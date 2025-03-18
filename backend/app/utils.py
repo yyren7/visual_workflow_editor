@@ -63,6 +63,36 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
+def verify_flow_ownership(flow_id: str, current_user: schemas.User, db: Session):
+    """
+    验证当前用户是否是流程图的所有者。
+    如果不是所有者，则抛出403异常。
+    
+    Args:
+        flow_id: 流程图ID(字符串形式的UUID)
+        current_user: 当前用户
+        db: 数据库会话
+        
+    Returns:
+        models.Flow: 流程图对象
+        
+    Raises:
+        HTTPException: 如果流程图不存在或用户不是所有者
+    """
+    # 先检查流程图是否存在
+    flow = db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+    if not flow:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="流程图不存在")
+    
+    # 验证所有权
+    if flow.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="没有访问此流程图的权限"
+        )
+    
+    return flow
+
 def get_version_info():
     """
     从项目根目录的version.json文件中读取版本信息

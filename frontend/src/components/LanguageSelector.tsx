@@ -76,6 +76,14 @@ const LanguageSelector: React.FC = () => {
         startIcon={<LanguageIcon />}
         onClick={handleClick}
         aria-label="select language"
+        size="small"
+        sx={{
+          minWidth: 'auto',
+          px: 1,
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+          }
+        }}
       >
         {getCurrentLanguageName()}
       </Button>
@@ -83,6 +91,15 @@ const LanguageSelector: React.FC = () => {
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
+        sx={{
+          '& .MuiPaper-root': {
+            backgroundColor: '#333',
+            color: 'white',
+          },
+          '& .MuiMenuItem-root:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+          }
+        }}
       >
         <MenuItem onClick={() => changeLanguage('zh')}>中文</MenuItem>
         <MenuItem onClick={() => changeLanguage('en')}>English</MenuItem>

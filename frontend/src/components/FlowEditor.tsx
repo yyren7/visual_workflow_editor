@@ -24,10 +24,22 @@ import {
   TextField,
   IconButton,
   Tooltip,
-  Paper
+  Paper,
+  Menu,
+  MenuItem,
+  Divider,
+  Typography
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import MenuIcon from '@mui/icons-material/Menu';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AddIcon from '@mui/icons-material/Add';
+import ChatIcon from '@mui/icons-material/Chat';
+import CodeIcon from '@mui/icons-material/Code';
+import CloseIcon from '@mui/icons-material/Close';
+import InfoIcon from '@mui/icons-material/Info';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 // 导入自定义节点和组件
 import InputNode from './nodes/InputNode';
 import OutputNode from './nodes/OutputNode';
@@ -36,9 +48,12 @@ import DecisionNode from './nodes/DecisionNode';
 import NodeProperties from './NodeProperties';
 import GlobalVariables from './GlobalVariables';
 import ChatInterface from './ChatInterface';
-import Sidebar from './Sidebar';
+import NodeSelector from './NodeSelector';
 import { createFlow, getFlow, updateFlow, deleteFlow } from '../api/api';
 import { useTranslation } from 'react-i18next';
+import LanguageSelector from './LanguageSelector';
+import VersionInfo from './VersionInfo';
+import FlowSelect from './FlowSelect';
 
 // 节点数据接口定义
 export interface NodeData {
@@ -79,16 +94,66 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [nodeInfoOpen, setNodeInfoOpen] = useState<boolean>(false);
+  const [globalVarsOpen, setGlobalVarsOpen] = useState<boolean>(false);
+  const [chatOpen, setChatOpen] = useState<boolean>(false);
+  const [toggleMenuAnchorEl, setToggleMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [flowName, setFlowName] = useState<string>(t('flowEditor.untitledFlow'));
   const { enqueueSnackbar } = useSnackbar();
   const { fitView } = useReactFlow();
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [flowSelectOpen, setFlowSelectOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (flowId) {
       loadFlow(flowId);
     }
   }, [flowId]);
+
+  // 在FlowEditor组件内添加自动保存功能
+  // 使用useEffect监听nodes和edges变化并自动保存
+  useEffect(() => {
+    // 创建防抖函数确保不会频繁调用API
+    const debounce = (func: Function, delay: number) => {
+      let timer: NodeJS.Timeout;
+      return (...args: any) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => func(...args), delay);
+      };
+    };
+
+    // 如果还没有加载完成或者没有flowId，则不保存
+    if (!flowId || !reactFlowInstance || nodes.length === 0) {
+      return;
+    }
+
+    // 创建防抖的保存函数
+    const debouncedSave = debounce(async () => {
+      try {
+        const flowData = reactFlowInstance.toObject();
+        await updateFlow(flowId, { flow_data: flowData, name: flowName });
+        console.log('流程图已自动保存');
+        // 使用简单的通知而不是弹出提示，避免打扰用户
+        // enqueueSnackbar(t('flowEditor.autoSaveSuccess'), { variant: 'success' });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+        console.error('自动保存失败:', errorMessage);
+        enqueueSnackbar(`${t('flowEditor.autoSaveError')} ${errorMessage}`, { variant: 'error' });
+      }
+    }, 2000); // 设置2秒延迟，避免频繁保存
+
+    // 只要nodes或edges变化，就触发自动保存
+    debouncedSave();
+
+    // 清理函数
+    return () => {
+      // 组件卸载时如果有待处理的保存，立即执行
+      debouncedSave.flush?.();
+    };
+  }, [nodes, edges, flowId, reactFlowInstance, flowName, enqueueSnackbar, t]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -98,6 +163,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const onNodeClick: NodeMouseHandler = useCallback(
     (event, node) => {
       setSelectedNode(node as Node<NodeData>);
+      setNodeInfoOpen(true);
     },
     [setSelectedNode]
   );
@@ -111,10 +177,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         return node;
       })
     );
-  };
-
-  const handleFlowNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFlowName(event.target.value);
   };
 
   const loadFlow = async (flowId: string) => {
@@ -134,39 +196,13 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     }
   };
 
-  const saveFlow = async () => {
-    if (!reactFlowInstance) {
-      enqueueSnackbar(t('flowEditor.reactFlowNotInitialized'), { variant: 'error' });
-      return;
-    }
-
-    const flowData = reactFlowInstance.toObject();
-
-    if (flowId) {
-      try {
-        await updateFlow(flowId, { flow_data: flowData, name: flowName });
-        enqueueSnackbar(t('flowEditor.saveSuccess'), { variant: 'success' });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t('common.unknown');
-        enqueueSnackbar(`${t('flowEditor.saveError')} ${errorMessage}`, { variant: 'error' });
-      }
-    } else {
-      try {
-        const newFlow = await createFlow({ flow_data: flowData, name: flowName });
-        enqueueSnackbar(t('flowEditor.saveSuccess'), { variant: 'success' });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t('common.unknown');
-        enqueueSnackbar(`${t('flowEditor.saveError')} ${errorMessage}`, { variant: 'error' });
-      }
-    }
-  };
-
   const deleteCurrentFlow = async () => {
     if (flowId) {
       try {
         await deleteFlow(flowId);
         enqueueSnackbar(t('flowEditor.deleteSuccess'), { variant: 'success' });
-        window.location.href = '/flow'; // 重定向到流程编辑器页面，而不是根路径
+        const userId = localStorage.getItem('user_id');
+        navigate('/flow', { replace: true });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : t('common.unknown');
         enqueueSnackbar(`${t('flowEditor.deleteError')} ${errorMessage}`, { variant: 'error' });
@@ -208,7 +244,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
       console.log(t('flowEditor.processingDrop'));
-      
+
       // 检查是否在ReactFlow区域内
       if (!reactFlowWrapper.current || !reactFlowInstance) {
         console.error(t('flowEditor.invalidReactFlowReference'));
@@ -217,11 +253,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
 
       // 获取ReactFlow边界
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      
+
       // 获取拖拽的节点类型数据
       const nodeType = event.dataTransfer.getData('application/reactflow-node');
       console.log(t('flowEditor.droppedNodeType'), nodeType);
-      
+
       if (!nodeType) {
         console.error(t('flowEditor.nodeTypeNotFound'));
         return;
@@ -232,12 +268,12 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
-      
+
       console.log(t('flowEditor.calculatedPosition'), position);
 
       // 创建一个基于类型的默认标签
       let label = t('nodeTypes.unknown');
-      switch(nodeType) {
+      switch (nodeType) {
         case 'input': label = t('nodeTypes.input'); break;
         case 'process': label = t('nodeTypes.process'); break;
         case 'output': label = t('nodeTypes.output'); break;
@@ -274,49 +310,318 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     setReactFlowInstance(_reactFlowInstance);
   };
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleMenuClose();
+  };
+
+  const handleToggleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setToggleMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleToggleMenuClose = () => {
+    setToggleMenuAnchorEl(null);
+  };
+
+  const handleOpenFlowSelect = () => {
+    handleMenuClose();
+    setFlowSelectOpen(true);
+  };
+
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* 顶部工具栏 - 简化版 */}
-      <Paper elevation={2} sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 0 }}>
-        <TextField
-          label={t('flowEditor.flowName')}
-          variant="outlined"
-          size="small"
-          value={flowName}
-          onChange={handleFlowNameChange}
-          sx={{ width: '250px' }}
-        />
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* 只保留侧边栏切换按钮 */}
-          <Tooltip title={t('flowEditor.toggleSidebar')}>
+    <Box sx={{
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      m: 0,
+      p: 0,
+      boxSizing: 'border-box',
+      bgcolor: '#1e1e1e',
+      overflow: 'hidden'
+    }}>
+      {/* 合并后的顶部工具栏 */}
+      <Paper elevation={2} sx={{
+        p: 0.75,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderRadius: 0,
+        minHeight: '48px',
+        bgcolor: '#1e1e1e',
+        borderBottom: '1px solid #333',
+        color: 'white',
+        flexShrink: 0,
+        zIndex: 10
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 0 }}>
+          {/* 侧边栏切换按钮和流程名称区域 */}
+          <Tooltip title={t('flowEditor.toggleMenu')}>
             <IconButton
-              color="primary"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              sx={{ mr: 1 }}
+              color="inherit"
+              onClick={handleToggleMenuOpen}
+              size="small"
             >
               <MenuIcon />
             </IconButton>
           </Tooltip>
-          
-          {/* 流程操作按钮 */}
-          <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={saveFlow}>
-            {t('flowEditor.save')}
-          </Button>
+          <Menu
+            anchorEl={toggleMenuAnchorEl}
+            open={Boolean(toggleMenuAnchorEl)}
+            onClose={handleToggleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            PaperProps={{
+              sx: {
+                bgcolor: '#333',
+                color: 'white',
+                '& .MuiMenuItem-root:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                },
+                '& .MuiDivider-root': {
+                  borderColor: 'rgba(255, 255, 255, 0.12)',
+                },
+              },
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                setGlobalVarsOpen(!globalVarsOpen);
+                handleToggleMenuClose();
+              }}
+            >
+              {globalVarsOpen ? t('flowEditor.closeGlobalVars') : t('flowEditor.openGlobalVars')}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setChatOpen(!chatOpen);
+                handleToggleMenuClose();
+              }}
+            >
+              {chatOpen ? t('flowEditor.closeChat') : t('flowEditor.openChat')}
+            </MenuItem>
+          </Menu>
+
+          <Tooltip title={t('flowEditor.addNode')}>
+            <IconButton
+              color="inherit"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              size="small"
+            >
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={t('flowEditor.flowName')}
+              variant="outlined"
+              size="small"
+              value={flowName}
+              InputProps={{
+                readOnly: true,
+              }}
+              sx={{
+                width: '250px',
+                '& .MuiOutlinedInput-root': {
+                  color: 'white',
+                  height: '36px',
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.23)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.23)',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  transform: 'translate(14px, 9px) scale(0.75)',
+                  '&.MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -6px) scale(0.75)',
+                  }
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexGrow: 1
+        }}>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 0 }}>
           {flowId && (
-            <Button variant="contained" color="error" onClick={deleteCurrentFlow}>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={deleteCurrentFlow}
+            >
               {t('flowEditor.delete')}
             </Button>
           )}
+
+          <LanguageSelector />
+
+          {isAuthenticated && (
+            <>
+              <IconButton
+                color="inherit"
+                onClick={handleMenuOpen}
+                size="small"
+              >
+                <AccountCircleIcon />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                PaperProps={{
+                  sx: {
+                    bgcolor: '#333',
+                    color: 'white',
+                    '& .MuiMenuItem-root:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    '& .MuiDivider-root': {
+                      borderColor: 'rgba(255, 255, 255, 0.12)',
+                    },
+                  },
+                }}
+              >
+                <MenuItem onClick={handleOpenFlowSelect}>
+                  {t('nav.flowSelect', '选择流程图')}
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>{t('nav.logout')}</MenuItem>
+              </Menu>
+            </>
+          )}
         </Box>
       </Paper>
-      
+
       {/* 主要内容区域 */}
-      <Box sx={{ flexGrow: 1, display: 'flex' }}>
-        <Sidebar
-          isOpen={sidebarOpen}
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
-        <Box ref={reactFlowWrapper} sx={{ flexGrow: 1, position: 'relative' }}>
+      <Box sx={{
+        flexGrow: 1,
+        display: 'flex',
+        overflow: 'hidden',
+        height: 'calc(100vh - 48px)',  // 减去顶部工具栏的高度
+        width: '100%',
+        position: 'relative'
+      }}>
+        {/* 节点选择器面板 - 可关闭 */}
+        {sidebarOpen && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '12px',
+              left: '12px',
+              width: '220px',
+              height: 'auto',
+              maxHeight: '60%',
+              bgcolor: '#2d2d2d',
+              borderRadius: '4px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              zIndex: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              border: '1px solid #444',
+              overflow: 'hidden'
+            }}
+          >
+            <Box sx={{
+              p: 1,
+              bgcolor: '#333',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderBottom: '1px solid #444'
+            }}>
+              <Typography variant="subtitle2">
+                {t('sidebar.title')}
+              </Typography>
+            </Box>
+            <Box sx={{ p: 1.5, overflowY: 'auto', flexGrow: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 1.5,
+                  color: '#aaa',
+                  fontStyle: 'italic',
+                  fontSize: '0.8rem'
+                }}
+              >
+                {t('sidebar.dragHint')}
+              </Typography>
+              <NodeSelector />
+            </Box>
+          </Box>
+        )}
+        <Box
+          ref={reactFlowWrapper}
+          sx={{
+            flexGrow: 1,
+            position: 'relative',
+            height: '100%',
+            width: '100%',
+            '& .react-flow': {
+              background: '#1e1e1e',
+              width: '100%',
+              height: '100%'
+            },
+            '& .react-flow__container': {
+              width: '100%',
+              height: '100%'
+            },
+            '& .react-flow__controls': {
+              position: 'fixed',
+              left: '20px',
+              bottom: '20px',
+              zIndex: 5,
+            },
+            '& .react-flow__attribution': {
+              display: 'none'  // 隐藏原有的ReactFlow标识
+            },
+            '& .version-info': {
+              position: 'fixed',
+              right: '10px',
+              bottom: '10px',
+              zIndex: 4,
+              backgroundColor: 'transparent',
+            }
+          }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -335,54 +640,177 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             snapToGrid={true}
             snapGrid={[15, 15]}
             fitView
-            style={{ background: '#1e1e1e' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              background: '#1e1e1e'
+            }}
+            className="fullscreen-flow"
           >
-            <Controls showInteractive={true} style={{ backgroundColor: '#2d2d2d', color: '#fff' }} />
+            <Controls
+              showInteractive={true}
+              style={{
+                backgroundColor: '#2d2d2d',
+                color: '#fff',
+                border: '1px solid #444',
+                borderRadius: '4px',
+                padding: '4px',
+              }}
+            />
             <Background color="#444" gap={12} size={1} variant={BackgroundVariant.Dots} />
+            <div className="version-info">
+              <VersionInfo />
+            </div>
           </ReactFlow>
         </Box>
-        
-        {/* 右侧面板区域，包含属性面板和聊天界面 */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: 350,
-          borderLeft: '1px solid #444',
-          backgroundColor: '#2d2d2d',
-          color: '#eee'
-        }}>
-          {/* 属性面板 */}
-          <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto' }}>
-            <NodeProperties node={selectedNode} onNodePropertyChange={onNodePropertyChange} />
-            <GlobalVariables />
-          </Box>
-          
-          {/* 聊天界面 - 独立面板 */}
+
+        {/* 节点信息面板 - 可关闭 */}
+        {nodeInfoOpen && selectedNode && (
           <Box
             sx={{
-              height: '40%',
-              borderTop: '1px solid #444',
-              backgroundColor: '#1e1e1e',
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              width: '350px',
+              maxHeight: 'calc(100% - 24px)',
+              bgcolor: '#2d2d2d',
+              borderRadius: '4px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              zIndex: 5,
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              border: '1px solid #444',
+              overflow: 'hidden'
             }}
           >
             <Box sx={{
               p: 1,
-              backgroundColor: '#333',
-              color: '#eee',
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
+              bgcolor: '#333',
               display: 'flex',
-              justifyContent: 'center'
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid #444'
             }}>
-              {t('flowEditor.chatAssistant')}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <InfoIcon fontSize="small" />
+                <Typography variant="subtitle2">
+                  {t('flowEditor.nodeProperties')}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => setNodeInfoOpen(false)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
             </Box>
-            <Box sx={{ flexGrow: 1, display: 'flex' }}>
+            <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
+              <NodeProperties node={selectedNode} onNodePropertyChange={onNodePropertyChange} />
+            </Box>
+          </Box>
+        )}
+
+        {/* 全局变量面板 - 可关闭 */}
+        {globalVarsOpen && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: nodeInfoOpen && selectedNode ? '50%' : '12px',
+              right: '12px',
+              width: '350px',
+              maxHeight: nodeInfoOpen && selectedNode ? 'calc(50% - 36px)' : 'calc(100% - 24px)',
+              bgcolor: '#2d2d2d',
+              borderRadius: '4px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              zIndex: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              border: '1px solid #444',
+              overflow: 'hidden'
+            }}
+          >
+            <Box sx={{
+              p: 1,
+              bgcolor: '#333',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid #444'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CodeIcon fontSize="small" />
+                <Typography variant="subtitle2">
+                  {t('flowEditor.globalVariables')}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => setGlobalVarsOpen(false)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
+              <GlobalVariables />
+            </Box>
+          </Box>
+        )}
+
+        {/* 聊天界面 - 可关闭 */}
+        {chatOpen && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: '12px',
+              right: '12px',
+              width: '350px',
+              height: '300px',
+              maxHeight: 'calc(100% - 24px)',
+              bgcolor: '#2d2d2d',
+              borderRadius: '4px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              zIndex: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              border: '1px solid #444',
+              overflow: 'hidden'
+            }}
+          >
+            <Box sx={{
+              p: 1,
+              bgcolor: '#333',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid #444'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ChatIcon fontSize="small" />
+                <Typography variant="subtitle2">
+                  {t('flowEditor.chatAssistant')}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => setChatOpen(false)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box sx={{ overflowY: 'hidden', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
               <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
             </Box>
           </Box>
-        </Box>
+        )}
+
+        {/* 流程图选择对话框 */}
+        <FlowSelect
+          open={flowSelectOpen}
+          onClose={() => setFlowSelectOpen(false)}
+        />
       </Box>
     </Box>
   );
