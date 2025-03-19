@@ -510,17 +510,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 0 }}>
-          {flowId && (
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={deleteCurrentFlow}
-            >
-              {t('flowEditor.delete')}
-            </Button>
-          )}
-
           <LanguageSelector />
 
           {isAuthenticated && (

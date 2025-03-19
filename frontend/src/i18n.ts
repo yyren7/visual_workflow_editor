@@ -176,7 +176,11 @@ const resources: Resource = {
       // 流程图选择
       'flowSelect.title': '选择流程图',
       'flowSelect.noFlows': '没有找到流程图',
-      'flowSelect.error': '加载流程图失败'
+      'flowSelect.error': '加载流程图失败',
+      'flowSelect.updateNameSuccess': '流程图名称已更新',
+      'flowSelect.updateNameError': '更新名称失败',
+      'flowSelect.deleteSuccess': '流程图已删除',
+      'flowSelect.deleteError': '删除流程图失败'
     }
   },
   en: {
@@ -350,7 +354,11 @@ const resources: Resource = {
       // Flow Select
       'flowSelect.title': 'Select Flow',
       'flowSelect.noFlows': 'No flows found',
-      'flowSelect.error': 'Failed to load flows'
+      'flowSelect.error': 'Failed to load flows',
+      'flowSelect.updateNameSuccess': 'Flow name updated successfully',
+      'flowSelect.updateNameError': 'Failed to update flow name',
+      'flowSelect.deleteSuccess': 'Flow deleted successfully',
+      'flowSelect.deleteError': 'Failed to delete flow'
     }
   },
   ja: {
@@ -451,9 +459,9 @@ const resources: Resource = {
       'flowEditor.nodeProperties': 'ノードプロパティ',
       'flowEditor.globalVariables': 'グローバル変数',
       'flowEditor.newNode': '新节点',
-      'flowEditor.deleteConfirmTitle': '确认删除流程图?',
-      'flowEditor.deleteConfirmContent': '此操作无法撤销',
-      'flowEditor.delete': '删除',
+      'flowEditor.deleteConfirmTitle': 'フローを削除しますか？',
+      'flowEditor.deleteConfirmContent': 'この操作は元に戻せません',
+      'flowEditor.delete': '削除',
       'flowEditor.cancel': '取消',
       'flowEditor.permissionDenied': '没有权限访问此流程图',
 
@@ -524,7 +532,11 @@ const resources: Resource = {
       // 流程图选择
       'flowSelect.title': 'フローチャート選択',
       'flowSelect.noFlows': 'フローチャートが見つかりません',
-      'flowSelect.error': 'フローチャートの読み込みに失敗しました'
+      'flowSelect.error': 'フローチャートの読み込みに失敗しました',
+      'flowSelect.updateNameSuccess': 'フロー名を更新しました',
+      'flowSelect.updateNameError': 'フロー名の更新に失敗しました',
+      'flowSelect.deleteSuccess': 'フローを削除しました',
+      'flowSelect.deleteError': 'フローの削除に失敗しました'
     }
   }
 };

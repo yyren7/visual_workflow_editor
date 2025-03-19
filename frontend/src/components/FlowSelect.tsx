@@ -27,7 +27,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import { getFlowsForUser, FlowData, createFlow, updateFlowName } from '../api/api';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow } from '../api/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -51,6 +52,10 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingFlow, setEditingFlow] = useState<FlowData | null>(null);
   const [newFlowName, setNewFlowName] = useState('');
+  
+  // 删除流程图确认对话框相关状态
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingFlow, setDeletingFlow] = useState<FlowData | null>(null);
 
   useEffect(() => {
     const fetchFlows = async () => {
@@ -235,6 +240,76 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     }
   };
 
+  // 打开删除流程图确认对话框
+  const handleDeleteClick = (event: React.MouseEvent, flow: FlowData) => {
+    event.preventDefault(); // 使用preventDefault而不是仅停止冒泡
+    event.stopPropagation(); // 仍然阻止事件冒泡
+    
+    // 设置要删除的流程图并打开确认对话框
+    setDeletingFlow(flow);
+    setDeleteDialogOpen(true);
+  };
+  
+  // 关闭删除确认对话框
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+    // 延迟清除删除流程图的状态，确保对话框完全关闭
+    setTimeout(() => {
+      setDeletingFlow(null);
+    }, 100);
+  };
+  
+  // 确认删除流程图
+  const handleConfirmDelete = async () => {
+    if (!deletingFlow || !deletingFlow.id) return;
+    
+    try {
+      setLoading(true);
+      
+      // 先保存要删除的流程图ID，因为后面会清除deletingFlow
+      const flowIdToDelete = deletingFlow.id.toString();
+      const flowName = deletingFlow.name;
+      
+      await deleteFlow(flowIdToDelete);
+      
+      // 从本地列表中移除被删除的流程图
+      const updatedFlows = flows.filter(flow => flow.id !== flowIdToDelete);
+      setFlows(updatedFlows);
+      setFilteredFlows(updatedFlows.filter(flow => 
+        searchTerm.trim() === '' || flow.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+      
+      // 先关闭对话框
+      setDeleteDialogOpen(false);
+      
+      // 延迟显示成功消息，确保对话框已关闭
+      setTimeout(() => {
+        enqueueSnackbar(`${t('flowSelect.deleteSuccess', '流程图已删除')}: "${flowName}"`, { variant: 'success' });
+        
+        // 检查当前打开的流程图是否是被删除的流程图
+        // 如果是，重定向到主页
+        const currentFlowId = new URLSearchParams(window.location.search).get('id');
+        if (currentFlowId === flowIdToDelete) {
+          navigate('/flow', { replace: true });
+        }
+      }, 300);
+      
+    } catch (err) {
+      console.error('删除流程图失败:', err);
+      if (err instanceof Error) {
+        enqueueSnackbar(`${t('flowSelect.deleteError', '删除失败')}: ${err.message}`, { variant: 'error' });
+      } else {
+        enqueueSnackbar(t('flowSelect.deleteError', '删除失败'), { variant: 'error' });
+      }
+    } finally {
+      setLoading(false);
+      // 不在这里调用handleDeleteDialogClose，避免在操作完成前关闭对话框
+      setTimeout(() => {
+        setDeletingFlow(null);
+      }, 300);
+    }
+  };
+
   return (
     <>
       <Dialog
@@ -359,14 +434,30 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
                         disablePadding 
                         sx={{ display: 'block' }}
                         secondaryAction={
-                          <IconButton 
-                            edge="end" 
-                            aria-label="edit"
-                            onClick={(e) => handleEditClick(e, flow)}
-                            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                          >
-                            <EditIcon />
-                          </IconButton>
+                          <Box sx={{ display: 'flex' }}>
+                            <IconButton 
+                              edge="end" 
+                              aria-label="edit"
+                              onClick={(e) => handleEditClick(e, flow)}
+                              sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton 
+                              edge="end" 
+                              aria-label="delete"
+                              onClick={(e) => handleDeleteClick(e, flow)}
+                              sx={{ 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                // 添加更明显的样式，确保点击触发
+                                '&:hover': {
+                                  color: '#f44336',
+                                }
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
                         }
                       >
                         <ListItemText
@@ -462,6 +553,62 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
             disabled={!newFlowName.trim() || loading}
           >
             {t('common.save', '保存')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* 删除流程图确认对话框 */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            bgcolor: '#2d2d2d',
+            color: 'white',
+            border: '1px solid #444'
+          }
+        }}
+        disableEscapeKeyDown
+      >
+        <DialogTitle sx={{ 
+          bgcolor: '#333', 
+          borderBottom: '1px solid #444',
+          color: '#ff5252'
+        }}>
+          {t('flowEditor.deleteConfirmTitle', '确认删除流程图?')}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2, pb: 1, mt: 1 }}>
+          <Typography sx={{ mb: 2 }}>
+            {t('flowEditor.deleteConfirmContent', '此操作无法撤销')}
+          </Typography>
+          {deletingFlow?.name && (
+            <Typography sx={{ 
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              p: 1,
+              bgcolor: 'rgba(255, 0, 0, 0.1)',
+              borderRadius: 1
+            }}>
+              "{deletingFlow.name}"
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 1 }}>
+          <Button 
+            onClick={handleDeleteDialogClose} 
+            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+          >
+            {t('flowEditor.cancel', '取消')}
+          </Button>
+          <Button 
+            onClick={handleConfirmDelete} 
+            variant="contained" 
+            color="error"
+            disabled={loading}
+          >
+            {t('flowEditor.delete', '删除')}
           </Button>
         </DialogActions>
       </Dialog>
