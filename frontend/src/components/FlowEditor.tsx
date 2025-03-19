@@ -16,6 +16,9 @@ import ReactFlow, {
   NodeTypes,
   XYPosition,
   BackgroundVariant,
+  DefaultEdgeOptions,
+  ConnectionLineType,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import {
@@ -45,6 +48,7 @@ import InputNode from './nodes/InputNode';
 import OutputNode from './nodes/OutputNode';
 import ProcessNode from './nodes/ProcessNode';
 import DecisionNode from './nodes/DecisionNode';
+import GenericNode from './nodes/GenericNode'; // 导入通用节点组件
 import NodeProperties from './NodeProperties';
 import GlobalVariables from './GlobalVariables';
 import ChatInterface from './ChatInterface';
@@ -54,6 +58,7 @@ import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 import VersionInfo from './VersionInfo';
 import FlowSelect from './FlowSelect';
+import { NodeTypeInfo } from './NodeSelector'; // 导入节点类型信息接口
 
 // 节点数据接口定义
 export interface NodeData {
@@ -85,6 +90,7 @@ const nodeTypes: NodeTypes = {
   output: OutputNode,
   process: ProcessNode,
   decision: DecisionNode,
+  generic: GenericNode, // 添加通用节点类型
 };
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
@@ -106,6 +112,28 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [flowSelectOpen, setFlowSelectOpen] = useState<boolean>(false);
+
+  // 自定义边（连接线）样式
+  const defaultEdgeOptions: DefaultEdgeOptions = {
+    animated: false,
+    style: {
+      stroke: '#888',
+      strokeWidth: 2,
+    },
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: '#888',
+      width: 20,
+      height: 20,
+    },
+  };
+  
+  // 连接线类型
+  const connectionLineStyle = {
+    stroke: '#1976d2',
+    strokeWidth: 2,
+    strokeDasharray: '5 5',
+  };
 
   useEffect(() => {
     if (flowId) {
@@ -280,11 +308,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
-      console.log(t('flowEditor.processingDrop'));
+      console.log('【调试】开始处理节点拖放事件', t('flowEditor.processingDrop'));
 
       // 检查是否在ReactFlow区域内
       if (!reactFlowWrapper.current || !reactFlowInstance) {
-        console.error(t('flowEditor.invalidReactFlowReference'));
+        console.error('【调试】ReactFlow引用无效', t('flowEditor.invalidReactFlowReference'));
         return;
       }
 
@@ -292,11 +320,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
 
       // 获取拖拽的节点类型数据
-      const nodeType = event.dataTransfer.getData('application/reactflow-node');
-      console.log(t('flowEditor.droppedNodeType'), nodeType);
+      const nodeTypeData = event.dataTransfer.getData('application/reactflow-node');
+      console.log('【调试】拖放的节点数据:', nodeTypeData, t('flowEditor.droppedNodeType'));
 
-      if (!nodeType) {
-        console.error(t('flowEditor.nodeTypeNotFound'));
+      if (!nodeTypeData) {
+        console.error('【调试】没有找到节点类型数据', t('flowEditor.nodeTypeNotFound'));
         return;
       }
 
@@ -306,8 +334,66 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      console.log(t('flowEditor.calculatedPosition'), position);
+      console.log('【调试】计算的位置坐标:', position, t('flowEditor.calculatedPosition'));
 
+      try {
+        // 尝试解析节点类型数据为JSON对象（新格式）
+        const nodeTypeInfo = JSON.parse(nodeTypeData);
+        console.log('【调试】解析后的节点类型信息:', nodeTypeInfo);
+        
+        // 检查是否是有效的节点类型对象
+        if (nodeTypeInfo && typeof nodeTypeInfo === 'object' && nodeTypeInfo.id) {
+          console.log('【调试】使用动态节点模板:', nodeTypeInfo);
+          
+          // 准备字段数据
+          const fieldValues: Record<string, any> = {};
+          if (nodeTypeInfo.fields && Array.isArray(nodeTypeInfo.fields)) {
+            for (const field of nodeTypeInfo.fields) {
+              if (field && typeof field === 'object' && field.name && 'default_value' in field) {
+                fieldValues[field.name] = field.default_value;
+              }
+            }
+          }
+          console.log('【调试】处理后的字段值:', fieldValues);
+          
+          // 创建通用节点 - 确保使用generic类型
+          const newNode: Node<NodeData> = {
+            id: `${nodeTypeInfo.type || 'node'}-${Date.now()}`,
+            // 重要：此处必须使用'generic'，而不是nodeTypeInfo.type
+            type: 'generic',
+            position,
+            data: {
+              label: nodeTypeInfo.label || nodeTypeInfo.id,
+              description: nodeTypeInfo.description || '',
+              nodeType: nodeTypeInfo.type || nodeTypeInfo.id, // 保存原始节点类型
+              type: nodeTypeInfo.type || nodeTypeInfo.id,
+              fields: nodeTypeInfo.fields ? nodeTypeInfo.fields.map((f: any) => ({
+                name: f.name,
+                value: f.default_value,
+                type: f.type
+              })) : [],
+              inputs: nodeTypeInfo.inputs || [],
+              outputs: nodeTypeInfo.outputs || [],
+              ...fieldValues, // 添加字段值作为数据属性
+            },
+          };
+          
+          console.log('【调试】创建的新节点:', newNode);
+          
+          // 添加节点到流程图
+          setNodes((nds) => [...nds, newNode]);
+          console.log('【调试】添加动态节点成功');
+          return;
+        }
+      } catch (error) {
+        // JSON解析失败，继续使用旧格式
+        console.error('【调试】解析节点数据失败，使用旧格式:', error);
+      }
+      
+      // 旧格式处理（兼容现有代码）
+      const nodeType = nodeTypeData;
+      console.log('【调试】使用旧格式处理节点:', nodeType);
+      
       // 创建一个基于类型的默认标签
       let label = t('nodeTypes.unknown');
       switch (nodeType) {
@@ -315,7 +401,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         case 'process': label = t('nodeTypes.process'); break;
         case 'output': label = t('nodeTypes.output'); break;
         case 'decision': label = t('nodeTypes.decision'); break;
+        default: console.log('【调试】未知节点类型，使用默认标签');
       }
+      console.log('【调试】选择的标签:', label);
 
       // 创建新节点
       const newNode: Node<NodeData> = {
@@ -325,9 +413,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         data: { label },
       };
 
+      console.log('【调试】创建的默认节点:', newNode);
+      
       // 添加节点到流程图
       setNodes((nds) => [...nds, newNode]);
-      console.log(t('flowEditor.nodeAddSuccess'), newNode);
+      console.log('【调试】添加默认节点成功', t('flowEditor.nodeAddSuccess'));
     },
     [reactFlowInstance, setNodes, t]
   );
@@ -665,6 +755,10 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             zoomOnScroll={true}
             snapToGrid={true}
             snapGrid={[15, 15]}
+            defaultEdgeOptions={defaultEdgeOptions}
+            connectionLineStyle={connectionLineStyle}
+            connectionLineType={ConnectionLineType.SmoothStep}
+            elevateEdgesOnSelect={true}
             fitView
             style={{
               width: '100%',

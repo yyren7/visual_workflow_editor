@@ -12,10 +12,11 @@ sys.path.append(str(BASE_DIR))
 
 # 现在可以导入backend包
 from backend.app.config import Config
-from backend.app.routers import user, flow, llm, email, auth, embedding_routes # 导入 embedding 路由
+from backend.app.routers import user, flow, llm, email, auth, embedding_routes, node_templates # 导入节点模板路由
 from backend.app.database import engine
 from backend.app.models import Base
 from backend.app.utils import get_version, get_version_info
+from backend.app.dependencies import get_node_template_service  # 导入节点模板服务依赖
 
 # Create the database tables
 Base.metadata.create_all(bind=engine)
@@ -49,6 +50,17 @@ app.include_router(llm.router)
 app.include_router(email.router)
 app.include_router(auth.router)
 app.include_router(embedding_routes.router)  # 添加 embedding 路由
+app.include_router(node_templates.router)  # 添加节点模板路由
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    应用启动时执行的事件
+    预加载节点模板数据
+    """
+    # 预加载节点模板
+    get_node_template_service()
+    print("Node templates loaded successfully")
 
 @app.get("/")
 async def root():

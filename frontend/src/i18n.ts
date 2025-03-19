@@ -116,6 +116,7 @@ const resources: Resource = {
       'nodeTypes.decision': '决策节点',
       'nodeTypes.unknown': '未知节点',
       'nodeTypes.dragHint': '拖拽至流程图',
+      'nodeTypes.generic': '通用节点',
 
       // 节点操作提示
       'nodeDrag.start': '拖拽开始',
@@ -180,7 +181,15 @@ const resources: Resource = {
       'flowSelect.updateNameSuccess': '流程图名称已更新',
       'flowSelect.updateNameError': '更新名称失败',
       'flowSelect.deleteSuccess': '流程图已删除',
-      'flowSelect.deleteError': '删除流程图失败'
+      'flowSelect.deleteError': '删除流程图失败',
+
+      // 节点选择器
+      'nodeSelector.loadError': '加载节点模板失败，使用默认节点',
+      'nodeSelector.noTemplates': '未找到节点模板，请检查节点模板路径',
+      'nodeSelector.title': '可用节点',
+      'nodeDrag.start': '开始拖拽节点',
+      'nodeDrag.end': '结束拖拽节点',
+      'nodeDrag.hover': '拖拽至此处放置'
     }
   },
   en: {
@@ -294,6 +303,7 @@ const resources: Resource = {
       'nodeTypes.decision': 'Decision Node',
       'nodeTypes.unknown': 'Unknown Node',
       'nodeTypes.dragHint': 'Drag to flow chart',
+      'nodeTypes.generic': 'Generic Node',
 
       // Node drag operations
       'nodeDrag.start': 'Drag started',
@@ -358,7 +368,15 @@ const resources: Resource = {
       'flowSelect.updateNameSuccess': 'Flow name updated successfully',
       'flowSelect.updateNameError': 'Failed to update flow name',
       'flowSelect.deleteSuccess': 'Flow deleted successfully',
-      'flowSelect.deleteError': 'Failed to delete flow'
+      'flowSelect.deleteError': 'Failed to delete flow',
+
+      // Node selector
+      'nodeSelector.loadError': 'Failed to load node template, using default node',
+      'nodeSelector.noTemplates': 'No node templates found, please check node template path',
+      'nodeSelector.title': 'Available Nodes',
+      'nodeDrag.start': 'Start dragging node',
+      'nodeDrag.end': 'End dragging node',
+      'nodeDrag.hover': 'Drag here to place'
     }
   },
   ja: {
@@ -472,6 +490,7 @@ const resources: Resource = {
       'nodeTypes.decision': '判断ノード',
       'nodeTypes.unknown': '不明なノード',
       'nodeTypes.dragHint': 'フローチャートへドラッグ',
+      'nodeTypes.generic': 'ジェネリックノード',
 
       // ノード操作ヒント
       'nodeDrag.start': 'ドラッグ開始',
@@ -536,7 +555,15 @@ const resources: Resource = {
       'flowSelect.updateNameSuccess': 'フロー名を更新しました',
       'flowSelect.updateNameError': 'フロー名の更新に失敗しました',
       'flowSelect.deleteSuccess': 'フローを削除しました',
-      'flowSelect.deleteError': 'フローの削除に失敗しました'
+      'flowSelect.deleteError': 'フローの削除に失敗しました',
+
+      // Node selector
+      'nodeSelector.loadError': 'ノードテンプレートの読み込みに失敗しました',
+      'nodeSelector.noTemplates': 'ノードテンプレートが見つかりません',
+      'nodeSelector.title': '使用可能なノード',
+      'nodeDrag.start': 'ノードのドラッグを開始',
+      'nodeDrag.end': 'ノードのドラッグを終了',
+      'nodeDrag.hover': 'ここにドラッグして配置'
     }
   }
 };
