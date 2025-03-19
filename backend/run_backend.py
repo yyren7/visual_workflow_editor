@@ -4,6 +4,10 @@
 import sys
 import os
 import uvicorn
+import warnings
+
+# 忽略PyTorch的TypedStorage警告
+warnings.filterwarnings("ignore", message="TypedStorage is deprecated")
 
 # 将父目录添加到Python路径以解决导入问题
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -96,9 +96,16 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const handleFlowSelect = (flowId: string | number | undefined) => {
     if (flowId !== undefined) {
       const userId = localStorage.getItem('user_id');
-      // 使用window.location.href强制完全刷新页面
-      window.location.href = `/flow?id=${flowId}${userId ? `&user=${userId}` : ''}`;
-      onClose();
+      // 使用navigate而非window.location.href，避免整页刷新
+      navigate(`/flow?id=${flowId}${userId ? `&user=${userId}` : ''}`);
+      
+      // 发布自定义事件，通知其他组件流程图已更改
+      const event = new CustomEvent('flow-changed', { 
+        detail: { flowId: flowId.toString() } 
+      });
+      window.dispatchEvent(event);
+      
+      onClose(); // 关闭选择窗口
     }
   };
   
@@ -140,6 +147,20 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
       enqueueSnackbar(t('flowSelect.updateNameSuccess', '流程图名称已更新'), { variant: 'success' });
       handleEditDialogClose();
       
+      // 检查当前打开的流程图是否是正在编辑的流程图
+      // 如果是，发布自定义事件通知流程图名称已更改
+      const currentFlowId = new URLSearchParams(window.location.search).get('id');
+      if (currentFlowId === editingFlow.id.toString()) {
+        // 使用自定义事件而非页面刷新
+        const event = new CustomEvent('flow-renamed', { 
+          detail: { 
+            flowId: editingFlow.id.toString(),
+            newName: newFlowName
+          } 
+        });
+        window.dispatchEvent(event);
+      }
+      
     } catch (err) {
       console.error('更新流程图名称失败:', err);
       if (err instanceof Error) {
@@ -180,7 +201,8 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         setFlows(updatedFlows);
         setFilteredFlows(updatedFlows);
         
-        handleFlowSelect(newFlow.id);
+        // 不再调用handleFlowSelect，创建后仅显示成功消息但不自动进入
+        // handleFlowSelect(newFlow.id); // 注释掉这行，不自动进入
         enqueueSnackbar(t('flowSelect.createSuccess', '创建新流程图成功'), { variant: 'success' });
       }
     } catch (err) {

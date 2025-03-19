@@ -189,6 +189,31 @@ const FlowLoader: React.FC = () => {
     
   // 注意：我们故意不将loadedFlowId作为依赖项，以防止重复加载
   }, [flowId, flowIdFromQuery, userId, navigate, enqueueSnackbar, t]);
+  
+  // 添加一个新的useEffect来监听flow-changed事件
+  useEffect(() => {
+    const handleFlowChanged = (event: CustomEvent) => {
+      if (event.detail && event.detail.flowId) {
+        const targetFlowId = event.detail.flowId;
+        const userId = localStorage.getItem('user_id');
+        
+        // 如果流程图ID已更改，更新URL并加载新流程图
+        if (targetFlowId !== loadedFlowId) {
+          console.log('接收到流程图变更事件:', targetFlowId);
+          // 更新URL，但不刷新整个页面
+          navigate(`/flow?id=${targetFlowId}${userId ? `&user=${userId}` : ''}`, { replace: true });
+        }
+      }
+    };
+    
+    // 添加事件监听器
+    window.addEventListener('flow-changed', handleFlowChanged as EventListener);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('flow-changed', handleFlowChanged as EventListener);
+    };
+  }, [loadedFlowId, navigate]);
 
   if (loading) {
     return (

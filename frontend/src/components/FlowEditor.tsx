@@ -117,12 +117,25 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   // 使用useEffect监听nodes和edges变化并自动保存
   useEffect(() => {
     // 创建防抖函数确保不会频繁调用API
-    const debounce = (func: Function, delay: number) => {
+    type DebouncedFunction = {
+      (...args: any[]): void;
+      flush?: () => void;
+    };
+    
+    const debounce = (func: Function, delay: number): DebouncedFunction => {
       let timer: NodeJS.Timeout;
-      return (...args: any) => {
+      const debouncedFunc = (...args: any) => {
         clearTimeout(timer);
         timer = setTimeout(() => func(...args), delay);
       };
+      
+      // 添加flush方法
+      debouncedFunc.flush = () => {
+        clearTimeout(timer);
+        func();
+      };
+      
+      return debouncedFunc;
     };
 
     // 如果还没有加载完成或者没有flowId，则不保存
@@ -154,6 +167,30 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       debouncedSave.flush?.();
     };
   }, [nodes, edges, flowId, reactFlowInstance, flowName, enqueueSnackbar, t]);
+
+  // 在现有useEffect之后添加一个新的useEffect来监听自定义事件
+  useEffect(() => {
+    // 监听流程图改名事件
+    const handleFlowRenamed = (event: CustomEvent) => {
+      if (event.detail && event.detail.flowId === flowId && event.detail.newName) {
+        setFlowName(event.detail.newName);
+        console.log('流程图名称已更新:', event.detail.newName);
+        // 可选: 显示一个简单提示
+        enqueueSnackbar(t('flowEditor.nameUpdated', '流程图名称已更新'), { 
+          variant: 'success',
+          autoHideDuration: 3000
+        });
+      }
+    };
+
+    // 添加事件监听器
+    window.addEventListener('flow-renamed', handleFlowRenamed as EventListener);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('flow-renamed', handleFlowRenamed as EventListener);
+    };
+  }, [flowId, enqueueSnackbar, t]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),

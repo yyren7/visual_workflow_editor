@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from typing import List
 from app.database import Base
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 class JsonEmbedding(Base):
     """存储JSON数据的embedding信息"""

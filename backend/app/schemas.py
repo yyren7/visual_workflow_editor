@@ -20,7 +20,7 @@ class User(UserBase):
     id: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NodeData(BaseModel):
     """
@@ -63,7 +63,7 @@ class Flow(FlowBase):
     updated_at: Optional[datetime] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NodeGenerationRequest(BaseModel):
     prompt: str

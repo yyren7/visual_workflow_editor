@@ -1,0 +1,121 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="`!K|NK,j98vn?R5_Q}:*" x="10" y="10" data-blockNo="1">
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="set_motor" id="1#F9+8V3qfh;R*LS1pE`" data-blockNo="1">
+        <field name="state_list">on</field>
+        <next>
+          <block type="moveL" id="ur2s72EA%*kdo0=j`^lh" data-blockNo="1">
+            <field name="point_name_list">P1</field>
+            <field name="control_x">disable</field>
+            <field name="control_y">disable</field>
+            <field name="control_z">enable</field>
+            <field name="control_rz">disable</field>
+            <field name="control_ry">disable</field>
+            <field name="control_rx">disable</field>
+            <field name="pallet_list">none</field>
+            <field name="camera_list">none</field>
+            <next>
+              <block type="moveL" id="P}6-8`]@{LLUB?~}uPOB" data-blockNo="2">
+                <field name="point_name_list">P1</field>
+                <field name="control_x">enable</field>
+                <field name="control_y">enable</field>
+                <field name="control_z">disable</field>
+                <field name="control_rz">enable</field>
+                <field name="control_ry">enable</field>
+                <field name="control_rx">enable</field>
+                <field name="pallet_list">none</field>
+                <field name="camera_list">none</field>
+                <next>
+                  <block type="loop" id="IuH+ylWnHeN#xo?=OcAq" data-blockNo="1">
+                    <statement name="DO">
+                      <block type="moveL" id="F(H0b$yT:VIs;!XC8Ak5" data-blockNo="3">
+                        <field name="point_name_list">P2</field>
+                        <field name="control_x">enable</field>
+                        <field name="control_y">enable</field>
+                        <field name="control_z">enable</field>
+                        <field name="control_rz">enable</field>
+                        <field name="control_ry">enable</field>
+                        <field name="control_rx">enable</field>
+                        <field name="pallet_list">none</field>
+                        <field name="camera_list">none</field>
+                        <next>
+                          <block type="moveL" id="pfz%+Xs;L*/b-3uv3:b]" data-blockNo="4">
+                            <field name="point_name_list">P3</field>
+                            <field name="control_x">enable</field>
+                            <field name="control_y">enable</field>
+                            <field name="control_z">enable</field>
+                            <field name="control_rz">enable</field>
+                            <field name="control_ry">enable</field>
+                            <field name="control_rx">enable</field>
+                            <field name="pallet_list">none</field>
+                            <field name="camera_list">none</field>
+                            <next>
+                              <block type="moveL" id=":Bs~t0V:#VLk;-0ISq`k" data-blockNo="5">
+                                <field name="point_name_list">P2</field>
+                                <field name="control_x">enable</field>
+                                <field name="control_y">enable</field>
+                                <field name="control_z">enable</field>
+                                <field name="control_rz">enable</field>
+                                <field name="control_ry">enable</field>
+                                <field name="control_rx">enable</field>
+                                <field name="pallet_list">none</field>
+                                <field name="camera_list">none</field>
+                                <next>
+                                  <block type="moveL" id=",VPD+j8pOUIY1PcE-?K/" data-blockNo="6">
+                                    <field name="point_name_list">P4</field>
+                                    <field name="control_x">enable</field>
+                                    <field name="control_y">enable</field>
+                                    <field name="control_z">enable</field>
+                                    <field name="control_rz">enable</field>
+                                    <field name="control_ry">enable</field>
+                                    <field name="control_rx">enable</field>
+                                    <field name="pallet_list">none</field>
+                                    <field name="camera_list">none</field>
+                                    <next>
+                                      <block type="moveL" id=")C9D!JU+mp4Pz6r)*H^~" data-blockNo="7">
+                                        <field name="point_name_list">P5</field>
+                                        <field name="control_x">enable</field>
+                                        <field name="control_y">enable</field>
+                                        <field name="control_z">enable</field>
+                                        <field name="control_rz">enable</field>
+                                        <field name="control_ry">enable</field>
+                                        <field name="control_rx">enable</field>
+                                        <field name="pallet_list">none</field>
+                                        <field name="camera_list">none</field>
+                                        <next>
+                                          <block type="moveL" id="U*;(ftu*jf0pZG(:#j~," data-blockNo="8">
+                                            <field name="point_name_list">P4</field>
+                                            <field name="control_x">enable</field>
+                                            <field name="control_y">enable</field>
+                                            <field name="control_z">enable</field>
+                                            <field name="control_rz">enable</field>
+                                            <field name="control_ry">enable</field>
+                                            <field name="control_rx">enable</field>
+                                            <field name="pallet_list">none</field>
+                                            <field name="camera_list">none</field>
+                                            <next>
+                                              <block type="return" id="dlcrO!.,mu[gf1CS^m|p" data-blockNo="1"></block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>
