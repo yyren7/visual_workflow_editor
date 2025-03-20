@@ -4,16 +4,6 @@
 
 mkdir -p /workspace/logs
 
-# 修复数据库权限
-echo "正在检查并修复数据库权限..."
-if [ -f "/workspace/flow_editor.db" ]; then
-  chmod 666 /workspace/flow_editor.db
-  echo "已设置数据库文件权限为可读写"
-fi
-if [ -d "/workspace/database" ]; then
-  chmod -R 777 /workspace/database
-  echo "已设置数据库目录权限为可读写"
-fi
 
 case "$1" in
   frontend)
