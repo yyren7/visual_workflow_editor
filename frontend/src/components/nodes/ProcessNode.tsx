@@ -1,111 +1,165 @@
 // frontend/src/components/nodes/ProcessNode.tsx
-import React, { memo, useLayoutEffect, useRef } from 'react';
+import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
-import { Card, CardContent, Typography } from '@mui/material';
+import { Card, CardContent, Typography, TextField, Stack } from '@mui/material';
 import { NodeData } from '../FlowEditor';
 
 interface ProcessNodeProps {
-  data: NodeData & {
-    description?: string;
-  };
-  isConnectable?: boolean;
+  data: NodeData;
+  selected?: boolean;
+  isConnectable: boolean;
 }
 
-// 获取父节点容器并修改其样式
-const useNodeParentFix = (ref: React.RefObject<HTMLDivElement>) => {
-  useLayoutEffect(() => {
-    if (ref.current) {
-      // 获取ReactFlow节点容器（通常是ref.current的父元素或祖先元素）
-      const nodeElement = ref.current.closest('.react-flow__node');
-      if (nodeElement) {
-        // 移除ReactFlow节点的默认样式
-        (nodeElement as HTMLElement).style.padding = '0';
-        (nodeElement as HTMLElement).style.borderRadius = '0';
-        (nodeElement as HTMLElement).style.backgroundColor = 'transparent';
-        (nodeElement as HTMLElement).style.border = 'none';
-        (nodeElement as HTMLElement).style.overflow = 'visible';
-        (nodeElement as HTMLElement).style.display = 'flex';
-        (nodeElement as HTMLElement).style.alignItems = 'center';
-        (nodeElement as HTMLElement).style.justifyContent = 'center';
-      }
-    }
-  }, [ref]);
-};
+const ProcessNode: React.FC<ProcessNodeProps> = ({ data, selected = false, isConnectable }) => {
+  // 获取或设置字段值的处理函数
+  const getFieldValue = (fieldName: string, defaultValue: string = '') => {
+    return data[fieldName] || defaultValue;
+  };
 
-const ProcessNode: React.FC<ProcessNodeProps> = ({ data, isConnectable = true }) => {
-  const nodeRef = useRef<HTMLDivElement>(null);
-  
-  // 应用节点父容器修复
-  useNodeParentFix(nodeRef);
-  
+  // 更新字段值的处理函数
+  const handleFieldChange = (fieldName: string, value: string) => {
+    // 使用类型保护确保data.updateNodeData是函数
+    if (typeof data.updateNodeData === 'function') {
+      data.updateNodeData({
+        id: data.id,
+        data: {
+          ...data,
+          [fieldName]: value,
+        },
+      });
+    }
+  };
+
   return (
-    <div ref={nodeRef} style={{ width: '100%', height: '100%' }}>
-      <Card 
-        sx={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: '#1e1e1e',
-          color: 'white',
-          borderRadius: '4px',
-          border: '2px solid #009688',
-          boxShadow: 'none',
-          position: 'relative',
-          overflow: 'visible',
-          '& .MuiCardContent-root': {
-            padding: '8px',
-            '&:last-child': { 
-              paddingBottom: '8px' 
-            }
-          }
-        }}
-      >
-        <CardContent>
-          <Typography 
-            variant="h6" 
-            component="div" 
-            sx={{ 
-              fontSize: '14px', 
-              fontWeight: 'bold', 
-              color: '#009688',
-              marginBottom: '4px'
-            }}
-          >
-            {data.label}
-          </Typography>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: '#aaa',
-              fontSize: '12px'
-            }}
-          >
-            {data.description || 'process'}
-          </Typography>
-        </CardContent>
-      </Card>
+    <div>
       <Handle
         type="target"
         position={Position.Top}
         id="target"
+        style={{ background: '#4d70ff', width: '10px', height: '10px' }}
         isConnectable={isConnectable}
-        style={{ 
-          background: '#009688',
-          border: '2px solid #009688',
-          width: '8px',
-          height: '8px'
-        }}
       />
+      <Card 
+        sx={{ 
+          minWidth: selected ? 180 : 120,
+          maxWidth: selected ? 'none' : 150,
+          bgcolor: '#2d2d2d',
+          color: '#fff',
+          borderRadius: '4px',
+          border: '2px solid #00bcd4',
+          boxShadow: selected ? '0 0 0 2px #00bcd4, 0 2px 8px rgba(0, 188, 212, 0.4)' : 'none',
+          transition: 'all 0.3s ease',
+          transform: selected ? 'scale(1)' : 'scale(0.9)',
+          '&:hover': {
+            boxShadow: '0 0 0 2px #00bcd4, 0 4px 8px rgba(0, 188, 212, 0.6)',
+            transform: selected ? 'scale(1)' : 'scale(0.95)'
+          }
+        }}
+      >
+        <CardContent 
+          sx={{ 
+            padding: selected ? '12px' : '8px',
+            '&:last-child': { paddingBottom: selected ? '12px' : '8px' },
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: selected ? '14px' : '12px', 
+              fontWeight: 'bold', 
+              color: '#00bcd4',
+              mb: selected ? 1 : 0.5
+            }}
+          >
+            {data.label}
+          </Typography>
+          
+          {selected ? (
+            <Stack spacing={1} mt={1}>
+              <TextField
+                label="参数1"
+                size="small"
+                value={getFieldValue('param1', '')}
+                onChange={(e) => handleFieldChange('param1', e.target.value)}
+                variant="outlined"
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.23)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.23)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#00bcd4',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#00bcd4',
+                  },
+                }}
+              />
+              <TextField
+                label="参数2"
+                size="small"
+                value={getFieldValue('param2', '')}
+                onChange={(e) => handleFieldChange('param2', e.target.value)}
+                variant="outlined"
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.23)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.23)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#00bcd4',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#00bcd4',
+                  },
+                }}
+              />
+            </Stack>
+          ) : (
+            data.description && (
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontSize: '10px',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}
+              >
+                {data.description}
+              </Typography>
+            )
+          )}
+        </CardContent>
+      </Card>
       <Handle
         type="source"
         position={Position.Bottom}
         id="source"
+        style={{ background: '#4d70ff', width: '10px', height: '10px' }}
         isConnectable={isConnectable}
-        style={{ 
-          background: '#009688',
-          border: '2px solid #009688',
-          width: '8px',
-          height: '8px'
-        }}
       />
     </div>
   );

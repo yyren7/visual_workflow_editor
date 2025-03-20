@@ -224,6 +224,12 @@ class NodeTemplateService:
             if node_type == "return":
                 # return节点没有输出
                 outputs = []
+            elif node_type == "condition":
+                # 条件节点有两个输出：真和假
+                outputs = [
+                    {"id": "true", "label": "True", "position": 0},
+                    {"id": "false", "label": "False", "position": 1}
+                ]
                 
             # 添加描述信息
             description = f"{self._format_label(node_type)}"

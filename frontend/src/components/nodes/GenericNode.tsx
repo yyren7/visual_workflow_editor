@@ -190,33 +190,62 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
       {renderInputHandles()}
       <Card 
         sx={{ 
-          minWidth: 180, 
-          border: selected ? '2px solid #1976d2' : '1px solid #555',
+          minWidth: selected ? 180 : 120,
+          maxWidth: selected ? 'none' : 150,
+          border: '1px solid #555',
           borderRadius: '8px',
-          boxShadow: selected ? '0 0 10px rgba(25, 118, 210, 0.5)' : '0 2px 5px rgba(0, 0, 0, 0.2)',
+          boxShadow: selected ? '0 0 0 2px #1976d2, 0 2px 8px rgba(25, 118, 210, 0.4)' : '0 2px 5px rgba(0, 0, 0, 0.2)',
           backgroundColor: selected ? 'rgba(25, 118, 210, 0.08)' : 'rgba(45, 45, 45, 1)',
-          transition: 'all 0.2s ease',
+          transition: 'all 0.3s ease',
+          transform: selected ? 'scale(1)' : 'scale(0.9)',
           '&:hover': {
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
+            boxShadow: selected 
+              ? '0 0 0 2px #1976d2, 0 4px 10px rgba(25, 118, 210, 0.5)' // 选中+悬停状态
+              : '0 0 0 2px #1976d2, 0 4px 8px rgba(0, 0, 0, 0.3)', // 仅悬停状态
+            backgroundColor: selected 
+              ? 'rgba(25, 118, 210, 0.12)'  // 选中+悬停状态稍微加深背景
+              : 'rgba(45, 45, 45, 1)',
+            border: '1px solid transparent', // 使边框透明，由box-shadow显示边框效果
+            transform: selected ? 'scale(1)' : 'scale(0.95)' // 悬停时稍微放大未选中节点
           }
         }}
       >
-        <CardContent sx={{ p: 2 }}>
+        <CardContent sx={{ p: selected ? 2 : 1.5, transition: 'all 0.3s ease' }}>
           <Typography variant="h6" component="div" gutterBottom sx={{ 
-            fontSize: '1rem', 
+            fontSize: selected ? '1rem' : '0.85rem', 
             fontWeight: 'bold',
-            color: selected ? '#fff' : '#eee'
+            color: selected ? '#fff' : '#eee',
+            mb: selected ? 1 : 0.5,
+            transition: 'all 0.3s ease'
           }}>
             {data.label}
           </Typography>
           {data.description && (
-            <Typography variant="body2" color={selected ? "text.secondary" : "rgba(255, 255, 255, 0.7)"} sx={{ fontSize: '0.8rem', mb: 1 }}>
+            <Typography 
+              variant="body2" 
+              color={selected ? "text.secondary" : "rgba(255, 255, 255, 0.7)"} 
+              sx={{ 
+                fontSize: selected ? '0.8rem' : '0.7rem', 
+                mb: selected ? 1 : 0,
+                transition: 'all 0.3s ease',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: selected ? 'unset' : 2,
+                WebkitBoxOrient: 'vertical'
+              }}
+            >
               {data.description}
             </Typography>
           )}
-          {data.fields && data.fields.length > 0 && (
-            <Box sx={{ mt: 1 }}>
+          {selected && data.fields && data.fields.length > 0 && (
+            <Box sx={{ 
+              mt: 1,
+              maxHeight: selected ? '200px' : '0px',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease',
+              opacity: selected ? 1 : 0
+            }}>
               {data.fields.map((field, index) => (
                 <Typography 
                   key={index} 
@@ -236,7 +265,7 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
               ))}
             </Box>
           )}
-          {data.type && (
+          {selected && data.type && (
             <Typography 
               variant="caption" 
               sx={{ 

@@ -19,6 +19,8 @@ import ReactFlow, {
   DefaultEdgeOptions,
   ConnectionLineType,
   MarkerType,
+  Panel,
+  useStore,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import {
@@ -59,6 +61,10 @@ import LanguageSelector from './LanguageSelector';
 import VersionInfo from './VersionInfo';
 import FlowSelect from './FlowSelect';
 import { NodeTypeInfo } from './NodeSelector'; // 导入节点类型信息接口
+import ConditionNode from './nodes/ConditionNode'; // 添加条件判断节点类型
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import WidgetsIcon from '@mui/icons-material/Widgets';
+import SortIcon from '@mui/icons-material/Sort';
 
 // 节点数据接口定义
 export interface NodeData {
@@ -91,6 +97,7 @@ const nodeTypes: NodeTypes = {
   process: ProcessNode,
   decision: DecisionNode,
   generic: GenericNode, // 添加通用节点类型
+  condition: ConditionNode, // 添加条件判断节点类型
 };
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
@@ -126,6 +133,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       width: 20,
       height: 20,
     },
+    type: 'smoothstep', // 使用平滑的阶梯线类型
+    // 注意：在React Flow的类型中，pathOptions可能不是DefaultEdgeOptions的一部分
+    // 但在运行时它是有效的属性
   };
   
   // 连接线类型
@@ -134,6 +144,356 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     strokeWidth: 2,
     strokeDasharray: '5 5',
   };
+
+  // 添加自动布局功能
+  const autoLayout = useCallback(() => {
+    // 弹出提示信息
+    enqueueSnackbar(t('flowEditor.autoLayoutStart') || '正在应用智能布局...', { 
+      variant: 'info',
+      autoHideDuration: 1500
+    });
+    
+    if (nodes.length === 0) return;
+    
+    // 创建层级布局结构
+    const layers: { [key: number]: Node[] } = {};
+    let visited = new Set<string>();
+    let nodeLevels = new Map<string, number>();
+    
+    // 找出所有输入节点（没有入边的节点）
+    const getNodeIncomers = (nodeId: string): string[] => {
+      return edges
+        .filter(edge => edge.target === nodeId)
+        .map(edge => edge.source);
+    };
+
+    const getNodeOutgoers = (nodeId: string): string[] => {
+      return edges
+        .filter(edge => edge.source === nodeId)
+        .map(edge => edge.target);
+    };
+    
+    // 找出所有没有入边的节点作为起始点
+    const startNodes = nodes
+      .filter(node => !edges.some(edge => edge.target === node.id))
+      .map(node => node.id);
+    
+    // 特殊处理Condition节点路径
+    // 获取节点是通过条件节点的true路径还是false路径连接的
+    const getNodeConnectionType = (sourceId: string, targetId: string): 'true' | 'false' | 'normal' => {
+      const edge = edges.find(e => e.source === sourceId && e.target === targetId);
+      if (edge) {
+        if (edge.sourceHandle === 'true') return 'true';
+        if (edge.sourceHandle === 'false') return 'false';
+      }
+      return 'normal';
+    };
+    
+    // 使用BFS计算每个节点的层级
+    const queue = startNodes.map(id => ({ id, level: 0 }));
+    while (queue.length > 0) {
+      const { id, level } = queue.shift()!;
+      if (visited.has(id)) {
+        // 如果已访问且当前层级更深，则更新层级
+        if ((nodeLevels.get(id) || 0) < level) {
+          nodeLevels.set(id, level);
+        }
+        continue;
+      }
+      
+      visited.add(id);
+      nodeLevels.set(id, level);
+      
+      // 将当前节点添加到对应层
+      if (!layers[level]) layers[level] = [];
+      const node = nodes.find(n => n.id === id);
+      if (node) layers[level].push(node);
+      
+      // 添加所有后继节点到队列，并确保同一层级的节点顺序保持连贯
+      const outgoers = getNodeOutgoers(id);
+      
+      // 先按类型分组，确保相同类型的节点尽可能靠近
+      const outgoersByType: {[key: string]: string[]} = {};
+      outgoers.forEach(targetId => {
+        const targetNode = nodes.find(n => n.id === targetId);
+        if (targetNode) {
+          // 为条件节点判断是true路径还是false路径
+          const connectionType = getNodeConnectionType(id, targetId);
+          let groupKey = targetNode.type || 'unknown';
+          
+          // 如果是条件节点路径，在类型中添加标记
+          if (connectionType !== 'normal') {
+            groupKey = `${groupKey}_${connectionType}`;
+          }
+          
+          if (!outgoersByType[groupKey]) outgoersByType[groupKey] = [];
+          outgoersByType[groupKey].push(targetId);
+        }
+      });
+      
+      // 按类型顺序添加到队列，确保true分支在左侧，false分支在右侧
+      // 先添加正常连接和true连接，后添加false连接
+      const typeOrder = Object.keys(outgoersByType).sort((a, b) => {
+        const aIsFalse = a.includes('_false');
+        const bIsFalse = b.includes('_false');
+        if (aIsFalse && !bIsFalse) return 1;
+        if (!aIsFalse && bIsFalse) return -1;
+        return 0;
+      });
+      
+      typeOrder.forEach(type => {
+        outgoersByType[type].forEach(targetId => {
+          queue.push({ id: targetId, level: level + 1 });
+        });
+      });
+    }
+    
+    // 处理剩余未访问的节点（可能存在孤立节点或循环）
+    const nodesByType: {[key: string]: Node[]} = {};
+    nodes.forEach(node => {
+      if (!visited.has(node.id)) {
+        // 按类型分组未访问的节点
+        const type = node.type || 'unknown';
+        if (!nodesByType[type]) nodesByType[type] = [];
+        nodesByType[type].push(node);
+      }
+    });
+    
+    // 按类型顺序处理未访问的节点
+    Object.values(nodesByType).forEach(typeNodes => {
+      typeNodes.forEach(node => {
+        if (!visited.has(node.id)) {
+          // 尝试找到合适的层级
+          const incomers = getNodeIncomers(node.id);
+          const outgoers = getNodeOutgoers(node.id);
+          
+          let level = 0;
+          if (incomers.length > 0) {
+            // 放在所有入节点的下一层
+            const maxIncomerLevel = Math.max(...incomers
+              .map(id => nodeLevels.get(id) || 0));
+            level = maxIncomerLevel + 1;
+          } else if (outgoers.length > 0) {
+            // 放在所有出节点的上一层
+            const minOutgoerLevel = Math.min(...outgoers
+              .map(id => nodeLevels.get(id) || 0));
+            level = Math.max(0, minOutgoerLevel - 1);
+          }
+          
+          nodeLevels.set(node.id, level);
+          if (!layers[level]) layers[level] = [];
+          layers[level].push(node);
+          visited.add(node.id);
+        }
+      });
+    });
+    
+    // 计算并应用新的节点位置
+    const VERTICAL_SPACING = 200;  // 增加垂直间距
+    const HORIZONTAL_SPACING = 250; // 增加水平间距
+    const MIN_VERTICAL_GAP = 80;   // 最小垂直间隔
+    
+    const layerKeys = Object.keys(layers).map(Number).sort((a, b) => a - b);
+    const newNodes = [...nodes];
+    
+    // 计算每层的实际垂直位置（考虑上一层节点的影响）
+    const layerVerticalPositions: {[key: number]: number} = {};
+    
+    layerKeys.forEach((layerIndex, index) => {
+      if (index === 0) {
+        // 第一层固定位置
+        layerVerticalPositions[layerIndex] = 0;
+      } else {
+        // 后续层计算与前一层的距离
+        const prevLayerIndex = layerKeys[index - 1];
+        const prevLayerY = layerVerticalPositions[prevLayerIndex];
+        
+        // 基本垂直距离
+        let yPosition = prevLayerY + VERTICAL_SPACING;
+        
+        // 特殊情况处理：当前层有Movel节点，且上一层也有Movel节点
+        const currentLayerHasMovel = layers[layerIndex].some(n => n.type === 'generic' && n.data?.type === 'moveL');
+        const prevLayerHasMovel = layers[prevLayerIndex].some(n => n.type === 'generic' && n.data?.type === 'moveL');
+        
+        if (currentLayerHasMovel && prevLayerHasMovel) {
+          // 增加额外间距以避免Movel节点堆叠
+          yPosition += MIN_VERTICAL_GAP; 
+        }
+        
+        layerVerticalPositions[layerIndex] = yPosition;
+      }
+    });
+    
+    layerKeys.forEach(layerIndex => {
+      const layerNodes = layers[layerIndex];
+      
+      // 优化：按节点类型分组和排序，让相同类型的节点尽量靠近
+      const nodesByType: {[key: string]: Node[]} = {};
+      layerNodes.forEach(node => {
+        const type = node.type || 'unknown';
+        if (!nodesByType[type]) nodesByType[type] = [];
+        nodesByType[type].push(node);
+      });
+      
+      // 重新排列layerNodes，确保相同类型节点连续排列，且考虑true/false分支
+      let sortedLayerNodes: Node[] = [];
+      
+      // 创建一个特殊排序函数，处理条件节点的分支
+      // 1. 优先将非条件路径(普通路径)节点放在中间
+      // 2. 将true路径节点放在左侧
+      // 3. 将false路径节点放在右侧
+      const determineConnectionType = (node: Node): number => {
+        // 检查该节点是否是其他节点的true或false分支目标
+        for (const edge of edges) {
+          if (edge.target === node.id) {
+            // 检查源节点是否为condition类型
+            const sourceNode = nodes.find(n => n.id === edge.source);
+            if (sourceNode && (sourceNode.type === 'condition')) {
+              if (edge.sourceHandle === 'true') return -1; // true分支放左边
+              if (edge.sourceHandle === 'false') return 1; // false分支放右边
+            }
+          }
+        }
+        return 0; // 普通节点或无法确定的情况
+      };
+      
+      // 按连接类型分组节点
+      const nodesByPathType: {[key: number]: Node[]} = {
+        [-1]: [], // true路径节点
+        0: [],  // 普通路径节点
+        1: []   // false路径节点
+      };
+      
+      Object.entries(nodesByType).forEach(([type, typeNodes]) => {
+        typeNodes.forEach(node => {
+          const connectionType = determineConnectionType(node);
+          nodesByPathType[connectionType].push(node);
+        });
+      });
+      
+      // 按true路径->普通路径->false路径的顺序组合
+      sortedLayerNodes = [
+        ...nodesByPathType[-1], // true路径节点
+        ...nodesByPathType[0],  // 普通路径节点
+        ...nodesByPathType[1]   // false路径节点
+      ];
+      
+      // 横向排列每层的节点
+      sortedLayerNodes.forEach((node, nodeIndex) => {
+        // 针对不同类型节点调整水平间距
+        let nodeHorizontalSpacing = HORIZONTAL_SPACING;
+        
+        // MovL节点通常比其他节点显示更多信息，需要更大间距
+        if (node.type === 'generic' && node.data?.type === 'moveL') {
+          nodeHorizontalSpacing = HORIZONTAL_SPACING * 1.2;
+        }
+        
+        // 循环类型节点也需要更大间距
+        if (node.type === 'loop') {
+          nodeHorizontalSpacing = HORIZONTAL_SPACING * 1.1;
+        }
+        
+        // 计算该节点的X位置，考虑前面节点可能有不同的间距
+        let xPosition = 0;
+        if (nodeIndex === 0) {
+          // 第一个节点居中放置
+          const totalWidth = sortedLayerNodes.reduce((sum, n, idx) => {
+            let spacing = HORIZONTAL_SPACING;
+            if (n.type === 'generic' && n.data?.type === 'moveL') {
+              spacing = HORIZONTAL_SPACING * 1.2;
+            } else if (n.type === 'loop') {
+              spacing = HORIZONTAL_SPACING * 1.1;
+            }
+            return sum + (idx < sortedLayerNodes.length - 1 ? spacing : 0);
+          }, 0);
+          
+          xPosition = -totalWidth / 2;
+        } else {
+          // 非第一个节点，基于前一个节点位置计算
+          const prevNode = sortedLayerNodes[nodeIndex - 1];
+          const prevNodeToUpdate = newNodes.find(n => n.id === prevNode.id);
+          
+          if (prevNodeToUpdate) {
+            let prevSpacing = HORIZONTAL_SPACING;
+            if (prevNode.type === 'generic' && prevNode.data?.type === 'moveL') {
+              prevSpacing = HORIZONTAL_SPACING * 1.2;
+            } else if (prevNode.type === 'loop') {
+              prevSpacing = HORIZONTAL_SPACING * 1.1;
+            }
+            
+            xPosition = prevNodeToUpdate.position.x + prevSpacing;
+          }
+        }
+        
+        const nodeToUpdate = newNodes.find(n => n.id === node.id);
+        if (nodeToUpdate) {
+          nodeToUpdate.position = {
+            x: xPosition,
+            y: layerVerticalPositions[layerIndex]
+          };
+        }
+      });
+    });
+    
+    // 更新所有节点位置
+    setNodes(newNodes);
+    
+    // 自动适应视图
+    setTimeout(() => {
+      if (reactFlowInstance) {
+        reactFlowInstance.fitView({ padding: 0.2 });
+        
+        // 显示完成提示
+        enqueueSnackbar(t('flowEditor.autoLayoutComplete') || '智能布局已完成', { 
+          variant: 'success',
+          autoHideDuration: 2000
+        });
+      }
+    }, 100);
+  }, [nodes, edges, setNodes, reactFlowInstance]);
+  
+  // 优化交叉线
+  const optimizeEdgeCrossings = useCallback(() => {
+    // 为每条边分配不同的offset值，以减少视觉上的交叉
+    const edgesBySource: { [key: string]: Edge[] } = {};
+    
+    // 按源节点分组边
+    edges.forEach(edge => {
+      if (!edgesBySource[edge.source]) {
+        edgesBySource[edge.source] = [];
+      }
+      edgesBySource[edge.source].push(edge);
+    });
+    
+    // 更新边，为每个源节点的多条边添加偏移
+    const newEdges = edges.map(edge => {
+      const sourceEdges = edgesBySource[edge.source] || [];
+      if (sourceEdges.length > 1) {
+        const edgeIndex = sourceEdges.findIndex(e => e.id === edge.id);
+        const edgeCount = sourceEdges.length;
+        
+        // 计算偏移量，使边分散
+        const offset = edgeIndex - (edgeCount - 1) / 2;
+        const offsetDistance = 20; // 偏移距离
+        
+        return {
+          ...edge,
+          style: {
+            ...edge.style,
+            strokeWidth: 2,
+            stroke: edge.style?.stroke || '#888',
+          },
+          pathOptions: {
+            offset: offset * offsetDistance,
+          },
+        };
+      }
+      
+      return edge;
+    });
+    
+    setEdges(newEdges);
+  }, [edges, setEdges]);
 
   useEffect(() => {
     if (flowId) {
@@ -221,16 +581,58 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   }, [flowId, enqueueSnackbar, t]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      // 获取源节点的sourceHandle ID，用于区分是来自"true"还是"false"输出
+      const sourceHandleId = params.sourceHandle;
+      
+      // 添加自定义边类
+      let className = '';
+      if (sourceHandleId === 'true') {
+        className = 'true-edge';
+      } else if (sourceHandleId === 'false') {
+        className = 'false-edge';
+      }
+      
+      // 创建带有正确类名的边
+      const edge = {
+        ...params,
+        className,
+        type: 'smoothstep', // 默认使用平滑阶梯线
+      };
+      
+      setEdges((eds) => addEdge(edge, eds));
+    },
     [setEdges]
   );
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (event, node) => {
+      // 如果当前已经有选中的节点，先取消其选中状态
+      if (selectedNode && selectedNode.id !== node.id) {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id === selectedNode.id) {
+              return { ...n, selected: false };
+            }
+            return n;
+          })
+        );
+      }
+      
+      // 设置新的选中节点，并确保它的selected状态为true
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === node.id) {
+            return { ...n, selected: true };
+          }
+          return n;
+        })
+      );
+      
       setSelectedNode(node as Node<NodeData>);
       setNodeInfoOpen(true);
     },
-    [setSelectedNode]
+    [setSelectedNode, selectedNode, setNodes]
   );
 
   const onNodePropertyChange = (updatedNode: UpdateNodeData) => {
@@ -304,6 +706,22 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     event.dataTransfer.dropEffect = 'move';
     console.log(t('nodeDrag.hover'));
   }, [t]);
+
+  // 处理节点拖动开始
+  const onNodeDragStart = useCallback((event: any, node: Node) => {
+    // 添加dragging类以优化拖动性能
+    document.querySelectorAll(`.react-flow__node[data-id="${node.id}"]`).forEach(el => {
+      el.classList.add('dragging');
+    });
+  }, []);
+
+  // 处理节点拖动结束
+  const onNodeDragStop = useCallback((event: any, node: Node) => {
+    // 移除dragging类
+    document.querySelectorAll(`.react-flow__node[data-id="${node.id}"]`).forEach(el => {
+      el.classList.remove('dragging');
+    });
+  }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
@@ -462,6 +880,23 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     handleMenuClose();
     setFlowSelectOpen(true);
   };
+
+  // 添加点击背景时取消节点选中的处理
+  const onPaneClick = useCallback(() => {
+    // 取消所有节点的选中状态
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.selected) {
+          return { ...n, selected: false };
+        }
+        return n;
+      })
+    );
+    
+    // 清除选中节点和关闭节点信息面板
+    setSelectedNode(null);
+    setNodeInfoOpen(false);
+  }, [setNodes, setSelectedNode]);
 
   return (
     <Box sx={{
@@ -748,13 +1183,17 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             onInit={onInit}
             onDragOver={onDragOver}
             onDrop={onDrop}
+            onNodeDragStart={onNodeDragStart}
+            onNodeDragStop={onNodeDragStop}
             nodeTypes={nodeTypes}
             deleteKeyCode="Delete"
             multiSelectionKeyCode="Control"
             selectionOnDrag={false}
+            panOnDrag={true} // 允许使用鼠标左键拖动背景
             zoomOnScroll={true}
-            snapToGrid={true}
-            snapGrid={[15, 15]}
+            zoomOnPinch={true} // 支持触控板缩放
+            snapToGrid={false}
+            snapGrid={[5, 5]}
             defaultEdgeOptions={defaultEdgeOptions}
             connectionLineStyle={connectionLineStyle}
             connectionLineType={ConnectionLineType.SmoothStep}
@@ -766,6 +1205,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
               background: '#1e1e1e'
             }}
             className="fullscreen-flow"
+            onPaneClick={onPaneClick}
           >
             <Controls
               showInteractive={true}
@@ -781,6 +1221,56 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             <div className="version-info">
               <VersionInfo />
             </div>
+            
+            {/* 添加布局工具面板 */}
+            <Panel position="top-left" style={{ marginTop: '50px', backgroundColor: '#2d2d2d', color: '#fff', borderRadius: '4px', padding: '8px', border: '1px solid #444' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  布局工具
+                </Typography>
+                <Tooltip title="自动布局节点，减少线条交叉">
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    startIcon={<AutoFixHighIcon />}
+                    onClick={() => {
+                      autoLayout();
+                      setTimeout(optimizeEdgeCrossings, 100);
+                    }}
+                    sx={{ 
+                      textTransform: 'none', 
+                      color: '#fff',
+                      borderColor: '#666',
+                      '&:hover': {
+                        borderColor: '#888',
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                      }
+                    }}
+                  >
+                    智能布局
+                  </Button>
+                </Tooltip>
+                <Tooltip title="优化连接线，减少视觉交叉">
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    startIcon={<SortIcon />}
+                    onClick={optimizeEdgeCrossings}
+                    sx={{ 
+                      textTransform: 'none', 
+                      color: '#fff',
+                      borderColor: '#666',
+                      '&:hover': {
+                        borderColor: '#888',
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                      }
+                    }}
+                  >
+                    优化连线
+                  </Button>
+                </Tooltip>
+              </Box>
+            </Panel>
           </ReactFlow>
         </Box>
 

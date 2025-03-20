@@ -21,7 +21,17 @@ numpy==1.26.2
 sentence-transformers>=2.2.0  # 用于BGE-M3嵌入模型
 torch==2.0.1
 docarray==0.32.0
-faiss-gpu==1.10.0 
+faiss-gpu
 tavily-python==0.5.1
 streamlit==1.43.1
 langchain-huggingface>=0.0.2  # 用于HuggingFaceEmbeddings的最新版本
+# 以下是新增的依赖包
+sqlalchemy-utils>=0.36.8  # 数据库工具支持
+toml>=0.10.2  # 配置文件支持
+typing-extensions>=4.0.0  # 类型支持
+pyyaml>=6.0  # YAML配置支持
+requests>=2.28.0  # HTTP客户端
+pytest-cov>=3.0.0  # 测试覆盖率工具
+aiohttp>=3.8.1  # 异步HTTP客户端
+langchain_google_genai  # Google Generative AI 集成支持
+aiosmtplib-4.0.0

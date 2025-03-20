@@ -29,6 +29,44 @@ body {
   height: 100% !important;
 }
 
+/* 优化节点拖动和选中状态 */
+.react-flow__node {
+  transition: transform 0.1s ease, background-color 0.2s ease !important;
+  box-sizing: border-box !important;
+  will-change: transform;
+  translate: 0 0;
+  /* 以下属性有助于硬件加速 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 确保选中状态不会改变节点尺寸 */
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px #1976d2 !important;
+  border-radius: 8px !important;
+  /* 使用box-shadow代替border，避免尺寸变化 */
+  border-color: transparent !important;
+}
+
+/* 为所有react-flow节点添加悬停效果 */
+.react-flow__node:hover:not(.dragging) {
+  box-shadow: 0 0 0 2px #1976d2 !important;
+  border-color: transparent !important;
+  z-index: 10 !important; /* 确保悬停的节点在最上层 */
+}
+
+/* 选中+悬停状态 */
+.react-flow__node.selected:hover {
+  box-shadow: 0 0 0 3px #1976d2, 0 4px 10px rgba(25, 118, 210, 0.5) !important;
+}
+
+/* 拖动时应用这些样式可提高性能 */
+.react-flow__node.dragging {
+  transition: none !important;
+  cursor: grabbing !important;
+}
+
 /* 修复可能的浏览器边距和内边距 */
 * {
   box-sizing: border-box;
@@ -36,4 +74,86 @@ body {
   padding: 0;
 }
 
-/* 其他现有样式 */ 
+/* 其他现有样式 */
+
+/* 连接线样式增强 */
+.react-flow__edge {
+  z-index: 1;
+}
+
+.react-flow__edge.selected {
+  z-index: 5;
+}
+
+.react-flow__edge path.react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke-width 0.2s, stroke 0.2s;
+}
+
+.react-flow__edge.selected path.react-flow__edge-path {
+  stroke-width: 3;
+  stroke: #1976d2;
+  filter: drop-shadow(0 0 5px rgba(25, 118, 210, 0.5));
+}
+
+.react-flow__edge:hover path.react-flow__edge-path {
+  stroke-width: 3;
+  stroke: #64b5f6;
+}
+
+/* 添加边类型样式 */
+.react-flow__edge.true-edge path.react-flow__edge-path {
+  stroke: #4caf50;
+}
+
+.react-flow__edge.false-edge path.react-flow__edge-path {
+  stroke: #f44336;
+}
+
+.react-flow__edge.true-edge.selected path.react-flow__edge-path {
+  stroke: #4caf50;
+  filter: drop-shadow(0 0 5px rgba(76, 175, 80, 0.5));
+}
+
+.react-flow__edge.false-edge.selected path.react-flow__edge-path {
+  stroke: #f44336;
+  filter: drop-shadow(0 0 5px rgba(244, 67, 54, 0.5));
+}
+
+/* 节点紧凑/展开动画增强 */
+.react-flow__node {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  will-change: transform, width, height, opacity;
+  transform-origin: center center;
+}
+
+.react-flow__node:not(.selected) {
+  cursor: pointer;
+}
+
+.react-flow__node.selected {
+  z-index: 10;
+}
+
+/* 平滑处理节点内部内容转换 */
+.react-flow__node .MuiCardContent-root {
+  transition: padding 0.3s ease, height 0.3s ease;
+}
+
+.react-flow__node .MuiTypography-root {
+  transition: font-size 0.3s ease, margin 0.3s ease, max-height 0.3s ease;
+}
+
+/* 为Handle添加过渡效果 */
+.react-flow__handle {
+  transition: all 0.3s ease;
+}
+
+.react-flow__node:hover:not(.selected) .react-flow__handle {
+  transform: scale(1.2);
+}
+
+.react-flow__node.selected .react-flow__handle {
+  transform: scale(1.2);
+} 
