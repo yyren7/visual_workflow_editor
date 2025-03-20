@@ -372,3 +372,29 @@ export const updateFlowName = async (flowId: string, newName: string): Promise<v
         }
     }
 };
+
+/**
+ * 复制现有流程图
+ * @param {string} flowId - 要复制的流程图ID
+ * @returns {Promise<FlowData>} - 返回新创建的流程图数据
+ */
+export const duplicateFlow = async (flowId: string): Promise<FlowData> => {
+  console.log("duplicateFlow request:", flowId);
+  try {
+    // 先获取原始流程图数据
+    const originalFlow = await getFlow(flowId);
+    
+    // 创建新的流程图对象，复制原始流程图的数据
+    const newFlowData: FlowData = {
+      name: `${originalFlow.name} (复制)`,
+      flow_data: originalFlow.flow_data,
+    };
+    
+    // 创建新的流程图
+    const newFlow = await createFlow(newFlowData);
+    return newFlow;
+  } catch (error: any) {
+    console.error("复制流程图失败:", error);
+    throw error;
+  }
+};

@@ -28,7 +28,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow } from '../api/api';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow, duplicateFlow } from '../api/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -310,6 +311,39 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     }
   };
 
+  // 复制流程图
+  const handleDuplicateClick = async (event: React.MouseEvent, flow: FlowData) => {
+    event.stopPropagation(); // 阻止事件冒泡，避免触发流程图选择
+    
+    try {
+      setLoading(true);
+      
+      if (!flow || !flow.id) return;
+      
+      // 调用复制API
+      await duplicateFlow(flow.id.toString());
+      
+      // 刷新流程图列表
+      const updatedFlows = await getFlowsForUser(0, 100);
+      setFlows(updatedFlows);
+      setFilteredFlows(updatedFlows.filter(flow => 
+        searchTerm.trim() === '' || flow.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+      
+      enqueueSnackbar(t('flowSelect.duplicateSuccess', '流程图已复制'), { variant: 'success' });
+      
+    } catch (err) {
+      console.error('复制流程图失败:', err);
+      if (err instanceof Error) {
+        enqueueSnackbar(`${t('flowSelect.duplicateError', '复制失败')}: ${err.message}`, { variant: 'error' });
+      } else {
+        enqueueSnackbar(t('flowSelect.duplicateError', '复制失败'), { variant: 'error' });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Dialog
@@ -442,6 +476,19 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
                               sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
                             >
                               <EditIcon />
+                            </IconButton>
+                            <IconButton 
+                              edge="end" 
+                              aria-label="duplicate"
+                              onClick={(e) => handleDuplicateClick(e, flow)}
+                              sx={{ 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                '&:hover': {
+                                  color: '#42a5f5',
+                                }
+                              }}
+                            >
+                              <ContentCopyIcon />
                             </IconButton>
                             <IconButton 
                               edge="end" 
