@@ -4,6 +4,17 @@
 
 mkdir -p /workspace/logs
 
+# 修复数据库权限
+echo "正在检查并修复数据库权限..."
+if [ -f "/workspace/flow_editor.db" ]; then
+  chmod 666 /workspace/flow_editor.db
+  echo "已设置数据库文件权限为可读写"
+fi
+if [ -d "/workspace/database" ]; then
+  chmod -R 777 /workspace/database
+  echo "已设置数据库目录权限为可读写"
+fi
+
 case "$1" in
   frontend)
     cd /workspace/frontend
@@ -13,6 +24,10 @@ case "$1" in
   backend)
     cd /workspace
     echo "启动后端开发服务器..."
+    # 再次确保数据库权限正确
+    if [ -f "/workspace/flow_editor.db" ]; then
+      chmod 666 /workspace/flow_editor.db
+    fi
     python3 backend/run_backend.py
     ;;
   logs)
@@ -40,6 +55,10 @@ case "$1" in
     
     # 创建后端 tmux 会话
     cd /workspace
+    # 再次确保数据库权限正确
+    if [ -f "/workspace/flow_editor.db" ]; then
+      chmod 666 /workspace/flow_editor.db
+    fi
     tmux new-session -d -s backend 'python3 backend/run_backend.py | tee /workspace/logs/backend.log; read'
     echo "后端服务已在 tmux 会话 'backend' 中启动"
     
