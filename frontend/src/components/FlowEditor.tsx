@@ -55,6 +55,7 @@ import NodeProperties from './NodeProperties';
 import GlobalVariables from './GlobalVariables';
 import ChatInterface from './ChatInterface';
 import NodeSelector from './NodeSelector';
+import DraggableResizableContainer from './DraggableResizableContainer'; // 导入可拖动调整大小的容器组件
 import { createFlow, getFlow, updateFlow, deleteFlow } from '../api/api';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
@@ -103,6 +104,7 @@ const nodeTypes: NodeTypes = {
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const { t } = useTranslation();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
@@ -119,7 +121,15 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [flowSelectOpen, setFlowSelectOpen] = useState<boolean>(false);
+  const [chatPosition, setChatPosition] = useState<{ x: number; y: number }>({ x: window.innerWidth - 400, y: window.innerHeight - 400 });
+  const [globalVarsPosition, setGlobalVarsPosition] = useState<{ x: number; y: number }>({ x: window.innerWidth - 400, y: 50 });
 
+  // 窗口大小状态
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+  
   // 自定义边（连接线）样式
   const defaultEdgeOptions: DefaultEdgeOptions = {
     animated: false,
@@ -144,6 +154,30 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     strokeWidth: 2,
     strokeDasharray: '5 5',
   };
+
+  // 窗口大小改变监听
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+      
+      // 更新组件位置
+      setChatPosition(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 400),
+        y: Math.min(prev.y, window.innerHeight - 400)
+      }));
+      
+      setGlobalVarsPosition(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 400),
+        y: Math.min(prev.y, window.innerHeight - 400)
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 添加自动布局功能
   const autoLayout = useCallback(() => {
@@ -1282,7 +1316,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
               top: '12px',
               right: '12px',
               width: '350px',
-              maxHeight: 'calc(100% - 24px)',
+              maxHeight: globalVarsOpen ? 'calc(50% - 36px)' : 'calc(100% - 24px)',
               bgcolor: '#2d2d2d',
               borderRadius: '4px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
@@ -1321,100 +1355,31 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           </Box>
         )}
 
-        {/* 全局变量面板 - 可关闭 */}
-        {globalVarsOpen && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: nodeInfoOpen && selectedNode ? '50%' : '12px',
-              right: '12px',
-              width: '350px',
-              maxHeight: nodeInfoOpen && selectedNode ? 'calc(50% - 36px)' : 'calc(100% - 24px)',
-              bgcolor: '#2d2d2d',
-              borderRadius: '4px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-              zIndex: 5,
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid #444',
-              overflow: 'hidden'
-            }}
-          >
-            <Box sx={{
-              p: 1,
-              bgcolor: '#333',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottom: '1px solid #444'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CodeIcon fontSize="small" />
-                <Typography variant="subtitle2">
-                  {t('flowEditor.globalVariables')}
-                </Typography>
-              </Box>
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => setGlobalVarsOpen(false)}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
-              <GlobalVariables />
-            </Box>
-          </Box>
-        )}
+        {/* 全局变量面板 - 可拖动和调整大小 */}
+        <DraggableResizableContainer
+          title={t('flowEditor.globalVariables')}
+          icon={<CodeIcon fontSize="small" />}
+          isOpen={globalVarsOpen}
+          onClose={() => setGlobalVarsOpen(false)}
+          defaultPosition={globalVarsPosition}
+          defaultSize={{ width: 350, height: 400 }}
+          zIndex={5}
+        >
+          <GlobalVariables />
+        </DraggableResizableContainer>
 
-        {/* 聊天界面 - 可关闭 */}
-        {chatOpen && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: '12px',
-              right: '12px',
-              width: '350px',
-              height: '300px',
-              maxHeight: 'calc(100% - 24px)',
-              bgcolor: '#2d2d2d',
-              borderRadius: '4px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-              zIndex: 5,
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid #444',
-              overflow: 'hidden'
-            }}
-          >
-            <Box sx={{
-              p: 1,
-              bgcolor: '#333',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottom: '1px solid #444'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ChatIcon fontSize="small" />
-                <Typography variant="subtitle2">
-                  {t('flowEditor.chatAssistant')}
-                </Typography>
-              </Box>
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => setChatOpen(false)}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Box sx={{ overflowY: 'hidden', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-              <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
-            </Box>
-          </Box>
-        )}
+        {/* 聊天界面 - 可拖动和调整大小 */}
+        <DraggableResizableContainer
+          title={t('flowEditor.chatAssistant')}
+          icon={<ChatIcon fontSize="small" />}
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+          defaultPosition={chatPosition}
+          defaultSize={{ width: 350, height: 300 }}
+          zIndex={5}
+        >
+          <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
+        </DraggableResizableContainer>
 
         {/* 流程图选择对话框 */}
         <FlowSelect
