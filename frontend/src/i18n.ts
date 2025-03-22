@@ -1,4 +1,3 @@
-// visual_workflow_editor/frontend/src/i18n.ts
 import i18n from 'i18next';
 import { InitOptions, Resource } from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -26,12 +25,20 @@ const resources: Resource = {
       'common.edit': '编辑',
       'common.update': '更新',
       'common.remove': '移除',
-      'common.noData': '暂无数据',
-      'common.failed': '失败',
+      'common.noData': '没有可用数据',
+
+      // API错误
+      'api.error': 'API错误',
+      'api.requestFailed': '请求失败',
+      'api.networkError': '网络错误',
+      'api.timeout': '请求超时',
+      'api.serverError': '服务器错误',
+      'api.validationError': '验证错误',
+      'api.notFound': '资源未找到',
+      'api.unauthorized': '未授权',
 
       // 版本信息
-      'version.label': '版本',
-      'version.lastUpdated': '最后更新',
+      'version.title': '版本信息',
       'version.newAvailable': '新版本可用',
       'version.current': '当前版本',
 
@@ -108,61 +115,56 @@ const resources: Resource = {
       'flowEditor.delete': '删除',
       'flowEditor.cancel': '取消',
       'flowEditor.permissionDenied': '没有权限访问此流程图',
+      'flowEditor.nodeUpdated': '节点已更新',
+      'flowEditor.nodeNotFound': '未找到节点',
+      'flowEditor.edgeAdded': '已连接节点',
+      'flowEditor.edgeAddedError': '连接节点失败',
 
       // 节点类型
-      'nodeTypes.input': '输入数据节点',
-      'nodeTypes.process': '数据处理节点',
-      'nodeTypes.output': '输出数据节点',
-      'nodeTypes.decision': '决策节点',
-      'nodeTypes.unknown': '未知节点',
-      'nodeTypes.dragHint': '拖拽至流程图',
-      'nodeTypes.generic': '通用节点',
+      'nodeType.input': '输入节点',
+      'nodeType.output': '输出节点',
+      'nodeType.process': '处理节点',
+      'nodeType.decision': '决策节点',
+      'nodeType.generic': '通用节点',
+      'nodeType.condition': '条件节点',
 
-      // 节点操作提示
-      'nodeDrag.start': '拖拽开始',
-      'nodeDrag.end': '拖拽结束',
-      'nodeDrag.hint': '拖拽节点到流程图区域',
-      'nodeDrag.hover': '拖拽悬停中...',
-
-      // 节点属性面板
-      'nodeProperties.title': '节点属性',
-      'nodeProperties.nodeId': '节点 ID',
-      'nodeProperties.nodeType': '节点类型',
-      'nodeProperties.dataProperties': '数据属性',
-      'nodeProperties.noNode': '未选择节点',
+      // 节点属性
+      'nodeProps.title': '节点属性',
+      'nodeProps.id': '节点ID',
+      'nodeProps.name': '名称',
+      'nodeProps.description': '描述',
+      'nodeProps.type': '节点类型',
+      'nodeProps.save': '保存属性',
+      'nodeProps.cancel': '取消',
+      'nodeProps.data': '数据',
+      'nodeProps.saveSuccess': '属性已保存',
+      'nodeProps.saveError': '保存属性失败',
 
       // 全局变量
-      'globalVariables.title': '全局变量',
-      'globalVariables.newVariable': '新变量名称',
-      'globalVariables.add': '添加',
-      'nodeProperties.variableValue': '变量值',
-      'globalVariables.upload': '上传变量',
-      'globalVariables.save': '保存变量',
-      'globalVariables.loadSuccess': '全局变量加载成功！',
-      'globalVariables.loadError': '解析JSON文件错误',
-      'globalVariables.invalidFormat': '文件中的JSON格式无效',
-      'globalVariables.readError': '读取文件错误',
-      'globalVariables.saveSuccess': '全局变量保存成功！',
-      'globalVariables.duplicateName': '变量名已存在',
-      'globalVariables.emptyName': '请输入变量名称',
+      'globalVars.title': '全局变量',
+      'globalVars.name': '变量名',
+      'globalVars.value': '变量值',
+      'globalVars.add': '添加变量',
+      'globalVars.save': '保存变量',
+      'globalVars.delete': '删除变量',
+      'globalVars.empty': '尚无全局变量',
 
       // 聊天界面
-      'chat.message': '消息',
+      'chat.title': '对话助手',
+      'chat.placeholder': '输入您的消息...',
       'chat.send': '发送',
-      'chat.you': '您:',
-      'chat.bot': '机器人:',
-      'chat.invalidCommand': '无效的命令。请使用"generate node"或"update node"命令',
-      'chat.invalidUpdateCommand': '无效的节点更新命令。请指定节点ID和提示信息',
-      'chat.nodeGenerated': '节点生成成功！',
-      'chat.nodeUpdated': '节点更新成功！',
-      'chat.error': '处理消息时出错：',
+      'chat.generating': '生成中...',
+      'chat.error': '生成节点失败',
+      'chat.welcome': '欢迎！我是您的流程编辑助手。您可以告诉我您需要什么类型的节点，我会帮您生成。',
 
-      // 侧边栏
-      'sidebar.title': '节点选择器',
-      'sidebar.dragHint': '拖拽节点到流程图区域',
+      // 命令提示
+      'command.createNode': '创建一个：',
+      'command.updateNode': '更新节点：',
+      'command.examples': '例如：创建一个处理CSV文件的节点',
+      'command.help': '输入"帮助"以查看可用命令',
 
       // 提交页面
-      'submit.title': '写信界面',
+      'submit.title': '提交',
       'submit.description': '您可以在此页面写信并发送到指定邮箱。',
       'submit.emailTitle': '标题',
       'submit.emailContent': '内容',
@@ -214,43 +216,51 @@ const resources: Resource = {
       'common.update': 'Update',
       'common.remove': 'Remove',
       'common.noData': 'No data available',
-      'common.failed': 'Failed',
 
-      // Version information
-      'version.label': 'Version',
-      'version.lastUpdated': 'Last Updated',
-      'version.newAvailable': 'New version available',
+      // API Errors
+      'api.error': 'API Error',
+      'api.requestFailed': 'Request Failed',
+      'api.networkError': 'Network Error',
+      'api.timeout': 'Request Timeout',
+      'api.serverError': 'Server Error',
+      'api.validationError': 'Validation Error',
+      'api.notFound': 'Resource Not Found',
+      'api.unauthorized': 'Unauthorized',
+
+      // Version Info
+      'version.title': 'Version Information',
+      'version.newAvailable': 'New Version Available',
       'version.current': 'Current Version',
 
-      // Navigation bar
+      // Navigation
       'nav.flowEditor': 'Flow Editor',
-      'nav.flowSelect': 'Select Flow',
+      'nav.flowSelect': 'Flow Selection',
       'nav.login': 'Login',
       'nav.register': 'Register',
       'nav.logout': 'Logout',
 
-      // Login page
+      // Login Page
       'login.title': 'Login',
       'login.username': 'Username',
       'login.password': 'Password',
       'login.submit': 'Login',
       'login.noAccount': 'No account? Register',
-      'login.goSubmit': 'Go to Submit Page',
-      'login.success': 'Login successful',
-      'login.failed': 'Login failed',
-      'login.tokenError': 'Login successful, but token storage failed',
-      'login.noToken': 'Login successful, but no valid authentication token received',
+      'login.goSubmit': 'Go to Submission',
+      'login.success': 'Login Successful',
+      'login.failed': 'Login Failed',
+      'login.tokenError': 'Login successful but token storage failed',
+      'login.noToken': 'Login successful but no valid auth token received',
 
-      // Register page
+      // Register Page
       'register.title': 'Register',
       'register.username': 'Username',
       'register.password': 'Password',
       'register.submit': 'Register',
       'register.hasAccount': 'Already have an account? Login',
-      'register.success': 'Registration successful',
-      'register.failed': 'Registration failed',
+      'register.success': 'Registration Successful',
+      'register.failed': 'Registration Failed',
 
-      // Flow editor
+      // Flow Editor
       'flowEditor.flowName': 'Flow Name',
       'flowEditor.toggleSidebar': 'Toggle Sidebar',
       'flowEditor.nodeSelector': 'Node Selector',
@@ -295,62 +305,57 @@ const resources: Resource = {
       'flowEditor.delete': 'Delete',
       'flowEditor.cancel': 'Cancel',
       'flowEditor.permissionDenied': 'Permission denied to access this flow',
+      'flowEditor.nodeUpdated': 'Node updated successfully!',
+      'flowEditor.nodeNotFound': 'Node not found',
+      'flowEditor.edgeAdded': 'Edge added successfully',
+      'flowEditor.edgeAddedError': 'Failed to add edge',
 
-      // Node types
-      'nodeTypes.input': 'Input Data Node',
-      'nodeTypes.process': 'Process Data Node',
-      'nodeTypes.output': 'Output Data Node',
-      'nodeTypes.decision': 'Decision Node',
-      'nodeTypes.unknown': 'Unknown Node',
-      'nodeTypes.dragHint': 'Drag to flow chart',
-      'nodeTypes.generic': 'Generic Node',
+      // Node Types
+      'nodeType.input': 'Input Node',
+      'nodeType.output': 'Output Node',
+      'nodeType.process': 'Process Node',
+      'nodeType.decision': 'Decision Node',
+      'nodeType.generic': 'Generic Node',
+      'nodeType.condition': 'Condition Node',
 
-      // Node drag operations
-      'nodeDrag.start': 'Drag started',
-      'nodeDrag.end': 'Drag ended',
-      'nodeDrag.hint': 'Drag node to flow area',
-      'nodeDrag.hover': 'Dragging over...',
+      // Node Properties
+      'nodeProps.title': 'Node Properties',
+      'nodeProps.id': 'Node ID',
+      'nodeProps.name': 'Name',
+      'nodeProps.description': 'Description',
+      'nodeProps.type': 'Node Type',
+      'nodeProps.save': 'Save Properties',
+      'nodeProps.cancel': 'Cancel',
+      'nodeProps.data': 'Data',
+      'nodeProps.saveSuccess': 'Properties saved',
+      'nodeProps.saveError': 'Failed to save properties',
 
-      // Node properties panel
-      'nodeProperties.title': 'Node Properties',
-      'nodeProperties.nodeId': 'Node ID',
-      'nodeProperties.nodeType': 'Node Type',
-      'nodeProperties.dataProperties': 'Data Properties',
-      'nodeProperties.noNode': 'No node selected',
+      // Global Variables
+      'globalVars.title': 'Global Variables',
+      'globalVars.name': 'Variable Name',
+      'globalVars.value': 'Variable Value',
+      'globalVars.add': 'Add Variable',
+      'globalVars.save': 'Save Variables',
+      'globalVars.delete': 'Delete Variable',
+      'globalVars.empty': 'No global variables yet',
 
-      // Global variables
-      'globalVariables.title': 'Global Variables',
-      'globalVariables.newVariable': 'New Variable Name',
-      'globalVariables.add': 'Add',
-      'nodeProperties.variableValue': 'Variable Value',
-      'globalVariables.upload': 'Upload Variables',
-      'globalVariables.save': 'Save Variables',
-      'globalVariables.loadSuccess': 'Global variables loaded successfully!',
-      'globalVariables.loadError': 'Error parsing JSON file',
-      'globalVariables.invalidFormat': 'Invalid JSON format in file',
-      'globalVariables.readError': 'Error reading the file',
-      'globalVariables.saveSuccess': 'Global variables saved successfully!',
-      'globalVariables.duplicateName': 'Variable name already exists',
-      'globalVariables.emptyName': 'Please enter a variable name',
-
-      // Chat interface
-      'chat.message': 'Message',
+      // Chat Interface
+      'chat.title': 'Chat Assistant',
+      'chat.placeholder': 'Type your message...',
       'chat.send': 'Send',
-      'chat.you': 'You:',
-      'chat.bot': 'Bot:',
-      'chat.invalidCommand': 'Invalid command. Please use "generate node" or "update node" command',
-      'chat.invalidUpdateCommand': 'Invalid update node command. Please specify node ID and prompt',
-      'chat.nodeGenerated': 'Node generated successfully!',
-      'chat.nodeUpdated': 'Node updated successfully!',
-      'chat.error': 'Error processing message:',
+      'chat.generating': 'Generating...',
+      'chat.error': 'Failed to generate node',
+      'chat.welcome': 'Welcome! I am your flow editing assistant. You can tell me what type of node you need, and I\'ll help you generate it.',
 
-      // Sidebar
-      'sidebar.title': 'Node Selector',
-      'sidebar.dragHint': 'Drag nodes to flow area',
+      // Command Prompts
+      'command.createNode': 'Create a:',
+      'command.updateNode': 'Update node:',
+      'command.examples': 'Examples: Create a node to process CSV files',
+      'command.help': 'Type "help" to see available commands',
 
-      // Submit page
-      'submit.title': 'Message Interface',
-      'submit.description': 'You can write and send messages to the specified email address on this page.',
+      // Submit Page
+      'submit.title': 'Submit',
+      'submit.description': 'You can write and send email to specified address on this page.',
       'submit.emailTitle': 'Title',
       'submit.emailContent': 'Content',
       'submit.backToLogin': 'Back to Login',
@@ -358,30 +363,30 @@ const resources: Resource = {
       'submit.sending': 'Sending...',
       'submit.success': 'Email sent successfully!',
       'submit.error': 'Failed to send email, please try again later',
-      'submit.emptyTitle': 'Please enter a title',
+      'submit.emptyTitle': 'Please enter title',
       'submit.emptyContent': 'Please enter content',
 
-      // Flow Select
+      // Flow Selection
       'flowSelect.title': 'Select Flow',
       'flowSelect.noFlows': 'No flows found',
       'flowSelect.error': 'Failed to load flows',
-      'flowSelect.updateNameSuccess': 'Flow name updated successfully',
-      'flowSelect.updateNameError': 'Failed to update flow name',
-      'flowSelect.deleteSuccess': 'Flow deleted successfully',
+      'flowSelect.updateNameSuccess': 'Flow name updated',
+      'flowSelect.updateNameError': 'Failed to update name',
+      'flowSelect.deleteSuccess': 'Flow deleted',
       'flowSelect.deleteError': 'Failed to delete flow',
 
-      // Node selector
-      'nodeSelector.loadError': 'Failed to load node template, using default node',
-      'nodeSelector.noTemplates': 'No node templates found, please check node template path',
+      // Node Selector
+      'nodeSelector.loadError': 'Failed to load node templates, using defaults',
+      'nodeSelector.noTemplates': 'No node templates found, please check template path',
       'nodeSelector.title': 'Available Nodes',
-      'nodeDrag.start': 'Start dragging node',
-      'nodeDrag.end': 'End dragging node',
-      'nodeDrag.hover': 'Drag here to place'
+      'nodeDrag.start': 'Started dragging node',
+      'nodeDrag.end': 'Ended dragging node',
+      'nodeDrag.hover': 'Drop here to place'
     }
   },
   ja: {
     translation: {
-      // アプリケーションのタイトルと共通テキスト
+      // アプリケーションタイトルと一般的なテキスト
       'app.title': 'ビジュアルワークフローエディタ',
       'common.yes': 'はい',
       'common.no': 'いいえ',
@@ -400,42 +405,29 @@ const resources: Resource = {
       'common.edit': '編集',
       'common.update': '更新',
       'common.remove': '削除',
-      'common.noData': 'データがありません',
-      'common.failed': '失敗',
+      'common.noData': '利用可能なデータがありません',
+
+      // APIエラー
+      'api.error': 'APIエラー',
+      'api.requestFailed': 'リクエスト失敗',
+      'api.networkError': 'ネットワークエラー',
+      'api.timeout': 'リクエストタイムアウト',
+      'api.serverError': 'サーバーエラー',
+      'api.validationError': '検証エラー',
+      'api.notFound': 'リソースが見つかりません',
+      'api.unauthorized': '権限がありません',
 
       // バージョン情報
-      'version.label': 'バージョン',
-      'version.lastUpdated': '最終更新',
-      'version.newAvailable': '新しいバージョンが利用可能',
+      'version.title': 'バージョン情報',
+      'version.newAvailable': '新しいバージョンが利用可能です',
       'version.current': '現在のバージョン',
 
-      // ナビゲーションバー
+      // ナビゲーション
       'nav.flowEditor': 'フローエディタ',
-      'nav.flowSelect': 'フローチャート選択',
+      'nav.flowSelect': 'フロー選択',
       'nav.login': 'ログイン',
       'nav.register': '登録',
       'nav.logout': 'ログアウト',
-
-      // ログインページ
-      'login.title': 'ログイン',
-      'login.username': 'ユーザー名',
-      'login.password': 'パスワード',
-      'login.submit': 'ログイン',
-      'login.noAccount': 'アカウントをお持ちでない方は登録へ',
-      'login.goSubmit': '送信ページへ',
-      'login.success': 'ログインに成功しました',
-      'login.failed': 'ログインに失敗しました',
-      'login.tokenError': 'ログインは成功しましたが、トークンの保存に失敗しました',
-      'login.noToken': 'ログインは成功しましたが、有効な認証トークンを受信できませんでした',
-
-      // 登録ページ
-      'register.title': 'アカウント登録',
-      'register.username': 'ユーザー名',
-      'register.password': 'パスワード',
-      'register.submit': '登録',
-      'register.hasAccount': 'すでにアカウントをお持ちですか？ログインへ',
-      'register.success': '登録に成功しました',
-      'register.failed': '登録に失敗しました',
 
       // フローエディタ
       'flowEditor.flowName': 'フロー名',
@@ -447,24 +439,20 @@ const resources: Resource = {
       'flowEditor.saveSuccess': 'フローの保存に成功しました！',
       'flowEditor.saveError': 'フローの保存中にエラーが発生しました：',
       'flowEditor.loadSuccess': 'フローの読み込みに成功しました！',
-      'flowEditor.loadError': 'フローの読み込み中にエラーが発生しました：',
-      'flowEditor.deleteSuccess': 'フローの削除に成功しました！',
-      'flowEditor.deleteError': 'フローの削除中にエラーが発生しました：',
+      'flowEditor.loadError': 'フローの読み込みに失敗しました',
+      'flowEditor.deleteSuccess': 'フローが正常に削除されました',
+      'flowEditor.deleteError': 'フロー削除中にエラーが発生しました：',
       'flowEditor.noFlowToDelete': '削除するフローがありません',
-      'flowEditor.invalidFlowData': 'フローデータが無効です',
+      'flowEditor.invalidFlowData': '無効なフローデータ',
       'flowEditor.reactFlowNotInitialized': 'React Flowインスタンスが初期化されていません',
       'flowEditor.untitledFlow': '無題のフロー',
       'flowEditor.processingDrop': 'ドロップを処理中...',
-      'flowEditor.invalidReactFlowReference': 'ReactFlowインスタンスまたは要素の参照が無効です',
+      'flowEditor.invalidReactFlowReference': '無効なReactFlowインスタンスまたは要素参照',
       'flowEditor.dropEventDetails': 'ドロップイベントの詳細：',
       'flowEditor.droppedNodeType': 'ドロップされたノードタイプ：',
-      'flowEditor.nodeTypeNotFound': 'ノードタイプデータが見つかりませんでした',
+      'flowEditor.nodeTypeNotFound': 'ノードタイプが見つかりません',
       'flowEditor.calculatedPosition': '計算された位置：',
-      'flowEditor.nodeAddSuccess': 'ノードの追加に成功しました：',
-      'flowEditor.flowInitialization': 'フロー初期化：',
-      'flowEditor.reactFlowInstanceMethods': 'ReactFlowインスタンスメソッド：',
-      'flowEditor.reactFlowView': 'ReactFlowビュー：',
-      'flowEditor.directDragStart': '直接ドラッグ開始：',
+      'flowEditor.nodeAddSuccess': 'ノードが正常に追加されました：',
       'flowEditor.chatAssistant': 'チャットアシスタント',
       'flowEditor.toggleMenu': 'メニューを開く',
       'flowEditor.addNode': 'ノードを追加',
@@ -476,110 +464,82 @@ const resources: Resource = {
       'flowEditor.closeChat': 'チャットアシスタントを閉じる',
       'flowEditor.nodeProperties': 'ノードプロパティ',
       'flowEditor.globalVariables': 'グローバル変数',
-      'flowEditor.newNode': '新节点',
+      'flowEditor.newNode': '新しいノード',
       'flowEditor.deleteConfirmTitle': 'フローを削除しますか？',
       'flowEditor.deleteConfirmContent': 'この操作は元に戻せません',
       'flowEditor.delete': '削除',
-      'flowEditor.cancel': '取消',
-      'flowEditor.permissionDenied': '没有权限访问此流程图',
+      'flowEditor.cancel': 'キャンセル',
+      'flowEditor.permissionDenied': 'このフローにアクセスする権限がありません',
+      'flowEditor.nodeUpdated': 'ノードが更新されました',
+      'flowEditor.nodeNotFound': 'ノードが見つかりません',
+      'flowEditor.edgeAdded': 'エッジが正常に追加されました',
+      'flowEditor.edgeAddedError': 'エッジの追加に失敗しました',
 
       // ノードタイプ
-      'nodeTypes.input': '入力データノード',
-      'nodeTypes.process': 'データ処理ノード',
-      'nodeTypes.output': '出力データノード',
-      'nodeTypes.decision': '判断ノード',
-      'nodeTypes.unknown': '不明なノード',
-      'nodeTypes.dragHint': 'フローチャートへドラッグ',
-      'nodeTypes.generic': 'ジェネリックノード',
+      'nodeType.input': '入力ノード',
+      'nodeType.output': '出力ノード',
+      'nodeType.process': '処理ノード',
+      'nodeType.decision': '決定ノード',
+      'nodeType.generic': '一般ノード',
+      'nodeType.condition': '条件ノード',
 
-      // ノード操作ヒント
-      'nodeDrag.start': 'ドラッグ開始',
-      'nodeDrag.end': 'ドラッグ終了',
-      'nodeDrag.hint': 'ノードをフロー領域へドラッグ',
-      'nodeDrag.hover': 'ドラッグ中...',
-
-      // ノードプロパティパネル
-      'nodeProperties.title': 'ノードプロパティ',
-      'nodeProperties.nodeId': 'ノードID',
-      'nodeProperties.nodeType': 'ノードタイプ',
-      'nodeProperties.dataProperties': 'データプロパティ',
-      'nodeProperties.noNode': 'ノードが選択されていません',
+      // ノードプロパティ
+      'nodeProps.title': 'ノードプロパティ',
+      'nodeProps.id': 'ノードID',
+      'nodeProps.name': '名前',
+      'nodeProps.description': '説明',
+      'nodeProps.type': 'ノードタイプ',
+      'nodeProps.save': 'プロパティを保存',
+      'nodeProps.cancel': 'キャンセル',
+      'nodeProps.data': 'データ',
+      'nodeProps.saveSuccess': 'プロパティが保存されました',
+      'nodeProps.saveError': 'プロパティの保存に失敗しました',
 
       // グローバル変数
-      'globalVariables.title': 'グローバル変数',
-      'globalVariables.newVariable': '新しい変数名',
-      'globalVariables.add': '追加',
-      'nodeProperties.variableValue': '変数の値',
-      'globalVariables.upload': '変数をアップロード',
-      'globalVariables.save': '変数を保存',
-      'globalVariables.loadSuccess': 'グローバル変数の読み込みに成功しました！',
-      'globalVariables.loadError': 'JSONファイルの解析エラー',
-      'globalVariables.invalidFormat': 'ファイル内のJSON形式が無効です',
-      'globalVariables.readError': 'ファイルの読み取りエラー',
-      'globalVariables.saveSuccess': 'グローバル変数の保存に成功しました！',
-      'globalVariables.duplicateName': '変数名はすでに存在します',
-      'globalVariables.emptyName': '変数名を入力してください',
+      'globalVars.title': 'グローバル変数',
+      'globalVars.name': '変数名',
+      'globalVars.value': '変数値',
+      'globalVars.add': '変数を追加',
+      'globalVars.save': '変数を保存',
+      'globalVars.delete': '変数を削除',
+      'globalVars.empty': 'グローバル変数はまだありません',
 
       // チャットインターフェース
-      'chat.message': 'メッセージ',
+      'chat.title': 'チャットアシスタント',
+      'chat.placeholder': 'メッセージを入力...',
       'chat.send': '送信',
-      'chat.you': 'あなた：',
-      'chat.bot': 'ボット：',
-      'chat.invalidCommand': '無効なコマンドです。"generate node"または"update node"コマンドを使用してください',
-      'chat.invalidUpdateCommand': '無効なノード更新コマンドです。ノードIDとプロンプトを指定してください',
-      'chat.nodeGenerated': 'ノードの生成に成功しました！',
-      'chat.nodeUpdated': 'ノードの更新に成功しました！',
-      'chat.error': 'メッセージ処理中にエラーが発生しました：',
+      'chat.generating': '生成中...',
+      'chat.error': 'ノードの生成に失敗しました',
+      'chat.welcome': 'ようこそ！フロー編集アシスタントです。必要なノードのタイプを教えていただければ、生成をお手伝いします。',
 
-      // サイドバー
-      'sidebar.title': 'ノードセレクタ',
-      'sidebar.dragHint': 'ノードをフロー領域へドラッグ',
+      // コマンドプロンプト
+      'command.createNode': '作成：',
+      'command.updateNode': 'ノードを更新：',
+      'command.examples': '例：CSVファイルを処理するノードを作成',
+      'command.help': '利用可能なコマンドを見るには「ヘルプ」と入力してください',
 
-      // 送信ページ
-      'submit.title': 'メッセージインターフェース',
-      'submit.description': 'このページで指定されたメールアドレスにメッセージを作成して送信できます。',
-      'submit.emailTitle': 'タイトル',
-      'submit.emailContent': '内容',
-      'submit.backToLogin': 'ログインに戻る',
-      'submit.sendEmail': 'メールを送信',
-      'submit.sending': '送信中...',
-      'submit.success': 'メールの送信に成功しました！',
-      'submit.error': 'メールの送信に失敗しました。後でもう一度お試しください',
-      'submit.emptyTitle': 'タイトルを入力してください',
-      'submit.emptyContent': '内容を入力してください',
-
-      // 流程图选择
-      'flowSelect.title': 'フローチャート選択',
-      'flowSelect.noFlows': 'フローチャートが見つかりません',
-      'flowSelect.error': 'フローチャートの読み込みに失敗しました',
-      'flowSelect.updateNameSuccess': 'フロー名を更新しました',
-      'flowSelect.updateNameError': 'フロー名の更新に失敗しました',
-      'flowSelect.deleteSuccess': 'フローを削除しました',
-      'flowSelect.deleteError': 'フローの削除に失敗しました',
-
-      // Node selector
-      'nodeSelector.loadError': 'ノードテンプレートの読み込みに失敗しました',
-      'nodeSelector.noTemplates': 'ノードテンプレートが見つかりません',
-      'nodeSelector.title': '使用可能なノード',
-      'nodeDrag.start': 'ノードのドラッグを開始',
-      'nodeDrag.end': 'ノードのドラッグを終了',
-      'nodeDrag.hover': 'ここにドラッグして配置'
+      // ノードセレクタ
+      'nodeSelector.loadError': 'ノードテンプレートの読み込みに失敗しました、デフォルトを使用します',
+      'nodeSelector.noTemplates': 'ノードテンプレートが見つかりません、テンプレートパスを確認してください',
+      'nodeSelector.title': '利用可能なノード',
+      'nodeDrag.start': 'ノードのドラッグを開始しました',
+      'nodeDrag.end': 'ノードのドラッグを終了しました',
+      'nodeDrag.hover': 'ここにドロップして配置'
     }
   }
 };
 
-// 初始化配置
-const initOptions: InitOptions = {
+// 初期化オプション
+const i18nOptions: InitOptions = {
   resources,
-  lng: 'en', // 默认语言
-  fallbackLng: 'en',
+  lng: 'zh', // 默认语言
+  fallbackLng: 'en', // 当当前语言不存在时使用的后备语言
   interpolation: {
-    escapeValue: false // 不需要对React的输入进行转义
+    escapeValue: false // 允许在翻译中使用HTML
   }
 };
 
-i18n
-  .use(initReactI18next)
-  .init(initOptions);
+// 初始化i18n
+i18n.use(initReactI18next).init(i18nOptions);
 
 export default i18n;

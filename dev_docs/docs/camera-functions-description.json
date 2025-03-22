@@ -1,0 +1,1238 @@
+[
+    {
+        "file_path": "../MvImport/CameraParams_const.py",
+        "imports": [],
+        "functions": []
+    },
+    {
+        "file_path": "../MvImport/CameraParams_header.py",
+        "imports": [
+            {
+                "import_name": "ctypes.*",
+                "as_name": "*",
+                "source": "未知模块"
+            },
+            {
+                "import_name": "CameraParams_const.*",
+                "as_name": "*",
+                "source": "本地文件: ../MvImport/CameraParams_const.py"
+            },
+            {
+                "import_name": "PixelType_header.*",
+                "as_name": "*",
+                "source": "本地文件: ../MvImport/PixelType_header.py"
+            }
+        ],
+        "functions": []
+    },
+    {
+        "file_path": "../MvImport/MvCameraControl_class.py",
+        "imports": [
+            {
+                "import_name": "sys",
+                "as_name": "sys",
+                "source": "内置模块"
+            },
+            {
+                "import_name": "copy",
+                "as_name": "copy",
+                "source": "未知模块"
+            },
+            {
+                "import_name": "ctypes",
+                "as_name": "ctypes",
+                "source": "未知模块"
+            },
+            {
+                "import_name": "ctypes.*",
+                "as_name": "*",
+                "source": "未知模块"
+            },
+            {
+                "import_name": "PixelType_header.*",
+                "as_name": "*",
+                "source": "本地文件: ../MvImport/PixelType_header.py"
+            },
+            {
+                "import_name": "CameraParams_const.*",
+                "as_name": "*",
+                "source": "本地文件: ../MvImport/CameraParams_const.py"
+            },
+            {
+                "import_name": "CameraParams_header.*",
+                "as_name": "*",
+                "source": "本地文件: ../MvImport/CameraParams_header.py"
+            },
+            {
+                "import_name": "MvErrorDefine_const.*",
+                "as_name": "*",
+                "source": "本地文件: ../MvImport/MvErrorDefine_const.py"
+            }
+        ],
+        "functions": [
+            {
+                "function_name": "__init__",
+                "used_functions": [
+                    "c_void_p",
+                    "pointer"
+                ],
+                "description": "クラスのインスタンスを初期化し、カメラコントロールオブジェクトのポインタを設定します。"
+            },
+            {
+                "function_name": "MV_CC_Initialize",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_Initialize"
+                ],
+                "description": "カメラ制御SDKを初期化します。デバイスを使用する前に必ず呼び出す必要があります。"
+            },
+            {
+                "function_name": "MV_CC_Finalize",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_Finalize"
+                ],
+                "description": "カメラ制御SDKの使用を終了し、関連リソースを解放します。"
+            },
+            {
+                "function_name": "MV_CC_GetSDKVersion",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetSDKVersion"
+                ],
+                "description": "現在使用しているSDKのバージョン情報を取得します。"
+            },
+            {
+                "function_name": "MV_CC_EnumerateTls",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumerateTls"
+                ],
+                "description": "利用可能なトランスポート層サービス（TLS）を列挙します。"
+            },
+            {
+                "function_name": "MV_CC_EnumDevices",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumDevices",
+                    "c_uint",
+                    "byref"
+                ],
+                "description": "システムに接続されているすべてのカメラデバイスを検出して列挙します。"
+            },
+            {
+                "function_name": "MV_CC_EnumDevicesEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumDevicesEx",
+                    "c_uint",
+                    "byref",
+                    "strManufacturerName.encode"
+                ],
+                "description": "指定された製造元のカメラデバイスのみを検出して列挙します。"
+            },
+            {
+                "function_name": "MV_CC_EnumDevicesEx2",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumDevicesEx2",
+                    "c_uint",
+                    "byref",
+                    "strManufacturerName.encode",
+                    "c_uint"
+                ],
+                "description": "拡張パラメータを使用して、特定の製造元や通信プロトコルのカメラデバイスを列挙します。"
+            },
+            {
+                "function_name": "MV_CC_IsDeviceAccessible",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_IsDeviceAccessible",
+                    "byref"
+                ],
+                "description": "指定されたカメラデバイスにアクセス可能かどうかを確認します。"
+            },
+            {
+                "function_name": "MV_CC_EnumInterfaces",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumInterfaces",
+                    "c_uint",
+                    "byref"
+                ],
+                "description": "利用可能な通信インターフェースを列挙します。"
+            },
+            {
+                "function_name": "MV_CC_CreateInterface",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CreateInterface",
+                    "byref",
+                    "byref"
+                ],
+                "description": "指定されたインターフェース情報を基にインターフェースオブジェクトを作成します。"
+            },
+            {
+                "function_name": "MV_CC_CreateInterfaceByID",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CreateInterfaceByID",
+                    "byref",
+                    "InterfaceID.encode"
+                ],
+                "description": "インターフェースIDを指定してインターフェースオブジェクトを作成します。"
+            },
+            {
+                "function_name": "MV_CC_OpenInterface",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_OpenInterface"
+                ],
+                "description": "インターフェースオブジェクトを開き、デバイスとの通信を準備します。"
+            },
+            {
+                "function_name": "MV_CC_CloseInterface",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CloseInterface"
+                ],
+                "description": "開いたインターフェースを閉じて、リソースを解放します。"
+            },
+            {
+                "function_name": "MV_CC_DestroyInterface",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DestroyInterface"
+                ],
+                "description": "作成したインターフェースオブジェクトを破棄し、関連リソースを解放します。"
+            },
+            {
+                "function_name": "MV_CC_EnumDevicesByInterface",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumDevicesByInterface",
+                    "byref"
+                ],
+                "description": "特定のインターフェースに接続されているデバイスのみを列挙します。"
+            },
+            {
+                "function_name": "MV_CC_SetSDKLogPath",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetSDKLogPath",
+                    "SDKLogPath.encode"
+                ],
+                "description": "SDKのログファイルが保存されるパスを設定します。"
+            },
+            {
+                "function_name": "MV_CC_CreateHandle",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CreateHandle",
+                    "byref",
+                    "byref"
+                ],
+                "description": "カメラデバイス情報に基づいてカメラハンドルを作成します。このハンドルはデバイス操作に必要です。"
+            },
+            {
+                "function_name": "MV_CC_CreateHandleWithoutLog",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CreateHandleWithoutLog",
+                    "byref",
+                    "byref"
+                ],
+                "description": "ログ出力なしでカメラハンドルを作成します。デバッグ情報が不要な場合に使用します。"
+            },
+            {
+                "function_name": "MV_CC_DestroyHandle",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DestroyHandle"
+                ],
+                "description": "作成したカメラハンドルを破棄し、関連リソースを解放します。"
+            },
+            {
+                "function_name": "MV_CC_OpenDevice",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_OpenDevice"
+                ],
+                "description": "カメラデバイスをオープンし、操作可能な状態にします。"
+            },
+            {
+                "function_name": "MV_CC_CloseDevice",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CloseDevice"
+                ],
+                "description": "オープンしたカメラデバイスを閉じ、リソースを解放します。"
+            },
+            {
+                "function_name": "MV_CC_IsDeviceConnected",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_IsDeviceConnected"
+                ],
+                "description": "カメラデバイスが正常に接続されているかどうかを確認します。"
+            },
+            {
+                "function_name": "MV_CC_RegisterImageCallBackEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RegisterImageCallBackEx"
+                ],
+                "description": "拡張画像コールバック関数を登録します。画像データ取得時に自動的に呼び出されます。"
+            },
+            {
+                "function_name": "MV_CC_RegisterImageCallBackForRGB",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RegisterImageCallBackForRGB"
+                ],
+                "description": "RGB形式の画像データを処理するコールバック関数を登録します。"
+            },
+            {
+                "function_name": "MV_CC_RegisterImageCallBackForBGR",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RegisterImageCallBackForBGR"
+                ],
+                "description": "BGR形式の画像データを処理するコールバック関数を登録します。"
+            },
+            {
+                "function_name": "MV_CC_StartGrabbing",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_StartGrabbing"
+                ],
+                "description": "カメラの画像取得処理を開始します。連続的に画像を取得するために使用します。"
+            },
+            {
+                "function_name": "MV_CC_StopGrabbing",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_StopGrabbing"
+                ],
+                "description": "カメラの画像取得処理を停止します。"
+            },
+            {
+                "function_name": "MV_CC_GetImageForRGB",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetImageForRGB",
+                    "byref"
+                ],
+                "description": "カメラからRGB形式の画像データを取得します。"
+            },
+            {
+                "function_name": "MV_CC_GetImageForBGR",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetImageForBGR",
+                    "byref"
+                ],
+                "description": "カメラからBGR形式の画像データを取得します。"
+            },
+            {
+                "function_name": "MV_CC_GetImageBuffer",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetImageBuffer",
+                    "byref"
+                ],
+                "description": "カメラの画像バッファから生のイメージデータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_FreeImageBuffer",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FreeImageBuffer",
+                    "byref"
+                ],
+                "description": "取得した画像バッファのメモリを解放します。"
+            },
+            {
+                "function_name": "MV_CC_GetOneFrameTimeout",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetOneFrameTimeout",
+                    "byref"
+                ],
+                "description": "指定したタイムアウト時間内にカメラから1フレームの画像を取得します。"
+            },
+            {
+                "function_name": "MV_CC_ClearImageBuffer",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_ClearImageBuffer"
+                ],
+                "description": "カメラの内部画像バッファをクリアします。新しい画像データのみを取得したい場合に使用します。"
+            },
+            {
+                "function_name": "MV_CC_GetValidImageNum",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetValidImageNum",
+                    "byref"
+                ],
+                "description": "内部バッファに保存されている有効な画像フレーム数を取得します。"
+            },
+            {
+                "function_name": "MV_CC_DisplayOneFrame",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DisplayOneFrame",
+                    "byref"
+                ],
+                "description": "指定されたウィンドウに1フレームの画像を表示します。"
+            },
+            {
+                "function_name": "MV_CC_DisplayOneFrameEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DisplayOneFrameEx",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用して、指定されたウィンドウに1フレームの画像を表示します。"
+            },
+            {
+                "function_name": "MV_CC_SetImageNodeNum",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetImageNodeNum",
+                    "c_uint"
+                ],
+                "description": "内部画像バッファのノード数（画像フレームの最大保存数）を設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetGrabStrategy",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetGrabStrategy",
+                    "c_uint"
+                ],
+                "description": "画像取得の戦略を設定します。例えば、最新フレーム優先やすべてのフレーム取得など。"
+            },
+            {
+                "function_name": "MV_CC_SetOutputQueueSize",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetOutputQueueSize"
+                ],
+                "description": "出力キューのサイズを設定します。画像取得バッファリングに影響します。"
+            },
+            {
+                "function_name": "MV_CC_GetDeviceInfo",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetDeviceInfo",
+                    "byref"
+                ],
+                "description": "接続されているカメラデバイスの詳細情報を取得します。"
+            },
+            {
+                "function_name": "MV_CC_GetAllMatchInfo",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetAllMatchInfo",
+                    "byref"
+                ],
+                "description": "デバイスの全ての一致情報を取得します。"
+            },
+            {
+                "function_name": "MV_CC_GetIntValueEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetIntValueEx",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応する拡張整数値パラメータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetIntValueEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetIntValueEx",
+                    "strKey.encode",
+                    "c_uint"
+                ],
+                "description": "指定されたキーに対応する拡張整数値パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_GetIntValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetIntValue",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応する整数値パラメータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetIntValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetIntValue",
+                    "strKey.encode",
+                    "c_uint32"
+                ],
+                "description": "指定されたキーに対応する整数値パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_GetEnumValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetEnumValue",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応する列挙値パラメータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetEnumValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetEnumValue",
+                    "strKey.encode",
+                    "c_uint32"
+                ],
+                "description": "指定されたキーに対応する列挙値パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_GetEnumEntrySymbolic",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetEnumEntrySymbolic",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応する列挙値のシンボリック表現を取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetEnumValueByString",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetEnumValueByString",
+                    "strKey.encode",
+                    "sValue.encode"
+                ],
+                "description": "文字列を使用して、指定されたキーに対応する列挙値パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_GetFloatValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetFloatValue",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応する浮動小数点値パラメータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetFloatValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetFloatValue",
+                    "strKey.encode",
+                    "c_float"
+                ],
+                "description": "指定されたキーに対応する浮動小数点値パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_GetBoolValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetBoolValue",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応するブール値パラメータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetBoolValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBoolValue",
+                    "strKey.encode"
+                ],
+                "description": "指定されたキーに対応するブール値パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_GetStringValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetStringValue",
+                    "strKey.encode",
+                    "byref"
+                ],
+                "description": "指定されたキーに対応する文字列パラメータを取得します。"
+            },
+            {
+                "function_name": "MV_CC_SetStringValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetStringValue",
+                    "strKey.encode",
+                    "sValue.encode"
+                ],
+                "description": "指定されたキーに対応する文字列パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetCommandValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetCommandValue",
+                    "strKey.encode"
+                ],
+                "description": "指定されたキーに対応するコマンドを実行します。特定の操作をトリガーするために使用します。"
+            },
+            {
+                "function_name": "MV_CC_ReadMemory",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_ReadMemory",
+                    "c_uint"
+                ],
+                "description": "カメラのメモリから指定されたアドレスのデータを読み込みます。"
+            },
+            {
+                "function_name": "MV_CC_WriteMemory",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_WriteMemory",
+                    "c_uint"
+                ],
+                "description": "カメラのメモリの指定されたアドレスにデータを書き込みます。"
+            },
+            {
+                "function_name": "MV_CC_InvalidateNodes",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_InvalidateNodes"
+                ],
+                "description": "すべてのノードを無効化し、ノードのキャッシュをクリアします。"
+            },
+            {
+                "function_name": "MV_XML_GetGenICamXML",
+                "used_functions": [
+                    "MvCamCtrldll.MV_XML_GetGenICamXML",
+                    "c_uint",
+                    "byref"
+                ],
+                "description": "カメラのGenICam XMLファイルを取得します。カメラの詳細な機能とパラメータ情報が含まれています。"
+            },
+            {
+                "function_name": "MV_XML_GetNodeAccessMode",
+                "used_functions": [
+                    "MvCamCtrldll.MV_XML_GetNodeAccessMode",
+                    "strName.encode",
+                    "byref"
+                ],
+                "description": "指定されたノードのアクセスモード（読み取り専用、書き込み可能など）を取得します。"
+            },
+            {
+                "function_name": "MV_XML_GetNodeInterfaceType",
+                "used_functions": [
+                    "MvCamCtrldll.MV_XML_GetNodeInterfaceType",
+                    "strName.encode",
+                    "byref"
+                ],
+                "description": "指定されたノードのインターフェースタイプを取得します。"
+            },
+            {
+                "function_name": "MV_CC_FeatureSave",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FeatureSave",
+                    "strFileName.encode"
+                ],
+                "description": "カメラの現在の設定をファイルに保存します。後で同じ設定を復元するために使用できます。"
+            },
+            {
+                "function_name": "MV_CC_FeatureLoad",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FeatureLoad",
+                    "strFileName.encode"
+                ],
+                "description": "保存したカメラ設定ファイルからカメラの設定を読み込みます。"
+            },
+            {
+                "function_name": "MV_CC_FileAccessRead",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FileAccessRead",
+                    "byref"
+                ],
+                "description": "カメラ内部のファイルからデータを読み取ります。"
+            },
+            {
+                "function_name": "MV_CC_FileAccessReadEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FileAccessReadEx",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用してカメラ内部のファイルからデータを読み取ります。"
+            },
+            {
+                "function_name": "MV_CC_FileAccessWrite",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FileAccessWrite",
+                    "byref"
+                ],
+                "description": "カメラの内部ファイルにデータを書き込みます。"
+            },
+            {
+                "function_name": "MV_CC_FileAccessWriteEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FileAccessWriteEx",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用してカメラの内部ファイルにデータを書き込みます。"
+            },
+            {
+                "function_name": "MV_CC_GetFileAccessProgress",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetFileAccessProgress",
+                    "byref"
+                ],
+                "description": "ファイルアクセス操作の進行状況を取得します。"
+            },
+            {
+                "function_name": "MV_CC_LocalUpgrade",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_LocalUpgrade",
+                    "strFilePathName.encode"
+                ],
+                "description": "指定されたファイルを使用してカメラのファームウェアをアップグレードします。"
+            },
+            {
+                "function_name": "MV_CC_GetUpgradeProcess",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetUpgradeProcess",
+                    "byref"
+                ],
+                "description": "ファームウェアアップグレードの進行状況を取得します。"
+            },
+            {
+                "function_name": "MV_CC_RegisterExceptionCallBack",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RegisterExceptionCallBack"
+                ],
+                "description": "例外発生時に呼び出されるコールバック関数を登録します。"
+            },
+            {
+                "function_name": "MV_CC_RegisterAllEventCallBack",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RegisterAllEventCallBack"
+                ],
+                "description": "すべてのイベントに対応するコールバック関数を登録します。"
+            },
+            {
+                "function_name": "MV_CC_RegisterEventCallBackEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RegisterEventCallBackEx",
+                    "pEventName.encode"
+                ],
+                "description": "指定されたイベントに対する拡張コールバック関数を登録します。"
+            },
+            {
+                "function_name": "MV_CC_EventNotificationOn",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EventNotificationOn",
+                    "strEventName.encode"
+                ],
+                "description": "指定されたイベントの通知を有効にします。"
+            },
+            {
+                "function_name": "MV_CC_EventNotificationOff",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EventNotificationOff",
+                    "strEventName.encode"
+                ],
+                "description": "指定されたイベントの通知を無効にします。"
+            },
+            {
+                "function_name": "MV_GIGE_SetEnumDevTimeout",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetEnumDevTimeout",
+                    "c_uint"
+                ],
+                "description": "GigEカメラデバイスの列挙タイムアウト時間を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_ForceIpEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_ForceIpEx",
+                    "c_uint",
+                    "c_uint",
+                    "c_uint"
+                ],
+                "description": "GigEカメラに強制的にIP設定を適用します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetIpConfig",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetIpConfig",
+                    "c_uint"
+                ],
+                "description": "GigEカメラのIP設定方法を構成します（DHCPなど）。"
+            },
+            {
+                "function_name": "MV_GIGE_SetNetTransMode",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetNetTransMode",
+                    "c_uint"
+                ],
+                "description": "GigEカメラのネットワーク転送モードを設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_GetNetTransInfo",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetNetTransInfo",
+                    "byref"
+                ],
+                "description": "GigEカメラのネットワーク転送に関する情報を取得します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetDiscoveryMode",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetDiscoveryMode",
+                    "c_uint"
+                ],
+                "description": "GigEカメラのディスカバリーモードを設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetGvspTimeout",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetGvspTimeout",
+                    "c_uint"
+                ],
+                "description": "GigE Vision Stream Protocol（GVSP）のタイムアウト時間を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_GetGvspTimeout",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetGvspTimeout",
+                    "byref"
+                ],
+                "description": "現在のGVSP（GigE Vision Stream Protocol）のタイムアウト設定を取得します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetGvcpTimeout",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetGvcpTimeout",
+                    "c_uint"
+                ],
+                "description": "GigE Vision Control Protocol（GVCP）のタイムアウト時間を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_GetGvcpTimeout",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetGvcpTimeout",
+                    "byref"
+                ],
+                "description": "現在のGVCP（GigE Vision Control Protocol）のタイムアウト設定を取得します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetRetryGvcpTimes",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetRetryGvcpTimes",
+                    "c_uint"
+                ],
+                "description": "GVCP通信の再試行回数を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_GetRetryGvcpTimes",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetRetryGvcpTimes",
+                    "byref"
+                ],
+                "description": "現在のGVCP通信の再試行回数設定を取得します。"
+            },
+            {
+                "function_name": "MV_CC_GetOptimalPacketSize",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_GetOptimalPacketSize"
+                ],
+                "description": "ネットワーク通信の最適なパケットサイズを取得します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetResend",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetResend",
+                    "c_uint",
+                    "c_uint",
+                    "c_uint"
+                ],
+                "description": "GigEカメラのデータパケット再送機能を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetResendMaxRetryTimes",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetResendMaxRetryTimes",
+                    "c_uint"
+                ],
+                "description": "GigEカメラのデータパケット再送の最大再試行回数を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_GetResendMaxRetryTimes",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetResendMaxRetryTimes",
+                    "byref"
+                ],
+                "description": "GigEカメラのデータパケット再送の最大再試行回数設定を取得します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetResendTimeInterval",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetResendTimeInterval",
+                    "c_uint"
+                ],
+                "description": "GigEカメラのデータパケット再送の時間間隔を設定します。"
+            },
+            {
+                "function_name": "MV_GIGE_GetResendTimeInterval",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetResendTimeInterval",
+                    "byref"
+                ],
+                "description": "GigEカメラのデータパケット再送の時間間隔設定を取得します。"
+            },
+            {
+                "function_name": "MV_GIGE_SetTransmissionType",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_SetTransmissionType",
+                    "byref"
+                ],
+                "description": "GigEカメラの送信タイプを設定します（ユニキャスト、マルチキャストなど）。"
+            },
+            {
+                "function_name": "MV_GIGE_IssueActionCommand",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_IssueActionCommand",
+                    "byref",
+                    "byref"
+                ],
+                "description": "GigEカメラにアクションコマンドを発行します。複数のカメラを同期するのに役立ちます。"
+            },
+            {
+                "function_name": "MV_GIGE_GetMulticastStatus",
+                "used_functions": [
+                    "MvCamCtrldll.MV_GIGE_GetMulticastStatus",
+                    "byref",
+                    "byref"
+                ],
+                "description": "GigEカメラのマルチキャスト状態を取得します。"
+            },
+            {
+                "function_name": "MV_CAML_GetSerialPortList",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CAML_GetSerialPortList",
+                    "byref"
+                ],
+                "description": "Camera Link カメラで利用可能なシリアルポートのリストを取得します。"
+            },
+            {
+                "function_name": "MV_CAML_SetEnumSerialPorts",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CAML_SetEnumSerialPorts",
+                    "byref"
+                ],
+                "description": "Camera Link カメラのシリアルポート列挙パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CAML_SetDeviceBaudrate",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CAML_SetDeviceBaudrate",
+                    "c_uint"
+                ],
+                "description": "Camera Link カメラのシリアル通信ボーレートを設定します。"
+            },
+            {
+                "function_name": "MV_CAML_GetDeviceBaudrate",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CAML_GetDeviceBaudrate",
+                    "byref"
+                ],
+                "description": "Camera Link カメラの現在のシリアル通信ボーレート設定を取得します。"
+            },
+            {
+                "function_name": "MV_CAML_GetSupportBaudrates",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CAML_GetSupportBaudrates",
+                    "byref"
+                ],
+                "description": "Camera Link カメラがサポートするボーレートのリストを取得します。"
+            },
+            {
+                "function_name": "MV_CAML_SetGenCPTimeOut",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CAML_SetGenCPTimeOut",
+                    "c_uint"
+                ],
+                "description": "Camera Link カメラのGenCPプロトコルのタイムアウト時間を設定します。"
+            },
+            {
+                "function_name": "MV_USB_SetTransferSize",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_SetTransferSize",
+                    "c_uint"
+                ],
+                "description": "USBカメラのデータ転送サイズを設定します。"
+            },
+            {
+                "function_name": "MV_USB_GetTransferSize",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_GetTransferSize",
+                    "byref"
+                ],
+                "description": "USBカメラの現在のデータ転送サイズ設定を取得します。"
+            },
+            {
+                "function_name": "MV_USB_SetTransferWays",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_SetTransferWays",
+                    "c_uint"
+                ],
+                "description": "USBカメラのデータ転送方法を設定します。"
+            },
+            {
+                "function_name": "MV_USB_GetTransferWays",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_GetTransferWays",
+                    "byref"
+                ],
+                "description": "USBカメラの現在のデータ転送方法設定を取得します。"
+            },
+            {
+                "function_name": "MV_USB_RegisterStreamExceptionCallBack",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_RegisterStreamExceptionCallBack"
+                ],
+                "description": "USBカメラのストリーム例外に対するコールバック関数を登録します。"
+            },
+            {
+                "function_name": "MV_USB_SetEventNodeNum",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_SetEventNodeNum",
+                    "c_uint"
+                ],
+                "description": "USBカメラのイベントノード数を設定します。"
+            },
+            {
+                "function_name": "MV_USB_SetSyncTimeOut",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_SetSyncTimeOut",
+                    "c_uint"
+                ],
+                "description": "USBカメラの同期タイムアウト時間を設定します。"
+            },
+            {
+                "function_name": "MV_USB_GetSyncTimeOut",
+                "used_functions": [
+                    "MvCamCtrldll.MV_USB_GetSyncTimeOut",
+                    "byref"
+                ],
+                "description": "USBカメラの現在の同期タイムアウト設定を取得します。"
+            },
+            {
+                "function_name": "MV_CC_EnumInterfacesByGenTL",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumInterfacesByGenTL",
+                    "byref",
+                    "strGenTLPath.encode"
+                ],
+                "description": "GenTLライブラリを使用して利用可能なインターフェースを列挙します。"
+            },
+            {
+                "function_name": "MV_CC_EnumDevicesByGenTL",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_EnumDevicesByGenTL",
+                    "byref"
+                ],
+                "description": "GenTLライブラリを使用して利用可能なデバイスを列挙します。"
+            },
+            {
+                "function_name": "MV_CC_UnloadGenTLLibrary",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_UnloadGenTLLibrary",
+                    "GenTLPath.encode"
+                ],
+                "description": "ロードされたGenTLライブラリをアンロードします。"
+            },
+            {
+                "function_name": "MV_CC_CreateHandleByGenTL",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_CreateHandleByGenTL",
+                    "byref",
+                    "byref"
+                ],
+                "description": "GenTLデバイス情報を使用してカメラハンドルを作成します。"
+            },
+            {
+                "function_name": "MV_CC_SaveImageEx2",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SaveImageEx2",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用して画像データをファイルに保存します。"
+            },
+            {
+                "function_name": "MV_CC_SaveImageEx3",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SaveImageEx3",
+                    "byref"
+                ],
+                "description": "より多くの拡張パラメータを使用して画像データをファイルに保存します。"
+            },
+            {
+                "function_name": "MV_CC_SaveImageToFile",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SaveImageToFile",
+                    "byref"
+                ],
+                "description": "画像データを指定されたファイルに保存します。"
+            },
+            {
+                "function_name": "MV_CC_SaveImageToFileEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SaveImageToFileEx",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用して画像データを指定されたファイルに保存します。"
+            },
+            {
+                "function_name": "MV_CC_SavePointCloudData",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SavePointCloudData",
+                    "byref"
+                ],
+                "description": "3Dカメラからの点群データをファイルに保存します。"
+            },
+            {
+                "function_name": "MV_CC_RotateImage",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_RotateImage",
+                    "byref"
+                ],
+                "description": "画像を指定された角度で回転させます。"
+            },
+            {
+                "function_name": "MV_CC_FlipImage",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_FlipImage",
+                    "byref"
+                ],
+                "description": "画像を水平または垂直に反転させます。"
+            },
+            {
+                "function_name": "MV_CC_ConvertPixelType",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_ConvertPixelType",
+                    "byref"
+                ],
+                "description": "画像のピクセル形式を別の形式に変換します。"
+            },
+            {
+                "function_name": "MV_CC_ConvertPixelTypeEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_ConvertPixelTypeEx",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用して画像のピクセル形式を変換します。"
+            },
+            {
+                "function_name": "MV_CC_SetBayerCvtQuality",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBayerCvtQuality",
+                    "c_uint"
+                ],
+                "description": "ベイヤー変換の品質レベルを設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetBayerFilterEnable",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBayerFilterEnable",
+                    "c_bool"
+                ],
+                "description": "ベイヤーフィルタリングの有効/無効を設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetBayerGammaValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBayerGammaValue",
+                    "c_float"
+                ],
+                "description": "ベイヤー変換のガンマ値を設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetGammaValue",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetGammaValue",
+                    "c_int",
+                    "c_float"
+                ],
+                "description": "画像処理のガンマ値を設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetBayerGammaParam",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBayerGammaParam",
+                    "byref"
+                ],
+                "description": "ベイヤー変換のガンマパラメータを詳細に設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetBayerCCMParam",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBayerCCMParam",
+                    "byref"
+                ],
+                "description": "ベイヤー変換の色変換マトリックス（CCM）パラメータを設定します。"
+            },
+            {
+                "function_name": "MV_CC_SetBayerCCMParamEx",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_SetBayerCCMParamEx",
+                    "byref"
+                ],
+                "description": "拡張パラメータを使用してベイヤー変換の色変換マトリックスを設定します。"
+            },
+            {
+                "function_name": "MV_CC_ImageContrast",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_ImageContrast",
+                    "byref"
+                ],
+                "description": "画像のコントラストを調整します。"
+            },
+            {
+                "function_name": "MV_CC_HBDecode",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_HB_Decode",
+                    "byref"
+                ],
+                "description": "HB（ハイバンド）圧縮された画像データをデコードします。"
+            },
+            {
+                "function_name": "MV_CC_DrawRect",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DrawRect",
+                    "byref"
+                ],
+                "description": "画像上に矩形を描画します。"
+            },
+            {
+                "function_name": "MV_CC_DrawCircle",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DrawCircle",
+                    "byref"
+                ],
+                "description": "画像上に円を描画します。"
+            },
+            {
+                "function_name": "MV_CC_DrawLines",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_DrawLines",
+                    "byref"
+                ],
+                "description": "画像上に線を描画します。"
+            },
+            {
+                "function_name": "MV_CC_StartRecord",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_StartRecord",
+                    "byref"
+                ],
+                "description": "画像の録画を開始します。"
+            },
+            {
+                "function_name": "MV_CC_InputOneFrame",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_InputOneFrame",
+                    "byref"
+                ],
+                "description": "録画中の録画ストリームに1フレームの画像を入力します。"
+            },
+            {
+                "function_name": "MV_CC_StopRecord",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_StopRecord"
+                ],
+                "description": "画像の録画を停止します。"
+            },
+            {
+                "function_name": "MV_CC_OpenParamsGUI",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_OpenParamsGUI"
+                ],
+                "description": "カメラパラメータ設定用のグラフィカルユーザーインターフェイス（GUI）を開きます。"
+            },
+            {
+                "function_name": "MV_CC_ReconstructImage",
+                "used_functions": [
+                    "MvCamCtrldll.MV_CC_ReconstructImage",
+                    "byref"
+                ],
+                "description": "特殊な画像フォーマットから標準的な画像フォーマットに画像を再構築します。"
+            }
+        ]
+    },
+    {
+        "file_path": "../MvImport/MvErrorDefine_const.py",
+        "imports": [],
+        "functions": []
+    },
+    {
+        "file_path": "../MvImport/PixelType_header.py",
+        "imports": [
+            {
+                "import_name": "ctypes.*",
+                "as_name": "*",
+                "source": "未知模块"
+            }
+        ],
+        "functions": []
+    }
+]

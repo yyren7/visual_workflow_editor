@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, List, Any
 
-from app.database import get_db
-from app.embeddings.service import EmbeddingService
-from app.embeddings.models import JsonEmbedding
-from app.embeddings.config import embedding_config
+from backend.app.database import get_db
+from backend.app.embeddings.service import EmbeddingService
+from backend.app.embeddings.models import JsonEmbedding
+from backend.app.embeddings.config import embedding_config
 
 router = APIRouter(
     prefix="/api/embeddings",
@@ -19,7 +19,7 @@ async def create_embedding(
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """创建JSON数据的embedding"""
-    service = EmbeddingService()
+    service = EmbeddingService.get_instance()
     try:
         embedding = await service.create_embedding(db, json_data)
         return {
@@ -38,7 +38,7 @@ async def find_similar(
     db: Session = Depends(get_db)
 ) -> List[Dict[str, Any]]:
     """查找相似的JSON数据"""
-    service = EmbeddingService()
+    service = EmbeddingService.get_instance()
     try:
         similar_embeddings = await service.find_similar(
             db, 
@@ -64,7 +64,7 @@ async def query_with_llm(
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """使用LLM回答基于相似文档的问题"""
-    service = EmbeddingService()
+    service = EmbeddingService.get_instance()
     try:
         response = await service.query_with_llm(
             db,

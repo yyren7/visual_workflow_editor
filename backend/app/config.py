@@ -12,14 +12,29 @@ class Config:
     API_PREFIX: str = "/api"
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your_secret_key")  # Use environment variable, default to "your_secret_key"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
 
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///flow_editor.db")
 
     # LLM API settings
-    LLM_API_URL: str = os.getenv("LLM_API_URL", "http://localhost:8001")  # Default LLM API URL
-    LLM_API_KEY: str = os.getenv("LLM_API_KEY", "your_llm_api_key") # Use environment variable, default to "your_llm_api_key"
+    USE_GOOGLE_AI: bool = False  # 禁用Google AI
+    USE_DEEPSEEK: bool = True  # 启用DeepSeek
+    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    
+    
+    # DeepSeek API设置
+    DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "sk-a5fe39f6088d410784c2c31a5db4cc5f")
+    DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    
+    # 兼容旧代码的配置
+    LLM_API_URL: str = os.getenv("LLM_API_URL", "http://localhost:8001")
+    LLM_API_KEY: str = os.getenv("LLM_API_KEY", DEEPSEEK_API_KEY if USE_DEEPSEEK else "your_llm_api_key") 
+    LLM_MODEL: str = os.getenv("LLM_MODEL", DEEPSEEK_MODEL)
+    
+    # Debug mode
+    DEBUG: bool = os.getenv("DEBUG", "0") == "1"
 
     # CORS settings
     CORS_ORIGINS: list = [

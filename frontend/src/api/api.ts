@@ -30,6 +30,46 @@ export interface NodeUpdateResult {
     };
 }
 
+// 定义工作流处理请求接口
+export interface WorkflowProcessRequest {
+    prompt: string;
+    session_id?: string;  // 会话ID，可选
+}
+
+// 定义工作流处理响应接口
+export interface WorkflowProcessResponse {
+    user_input: string;
+    expanded_input: string;
+    step_results: Array<{
+        step: string;
+        enriched_step?: string;
+        tool_action?: {
+            tool_type: string;
+            result: {
+                success: boolean;
+                message: string;
+                data?: any;
+            };
+        };
+    }>;
+    missing_info?: {
+        success: boolean;
+        message: string;
+        data?: {
+            context: string;
+            questions: string[];
+            formatted_text: string;
+        };
+    };
+    created_nodes?: Record<string, any>;
+    error?: string;
+    session_id?: string;
+    user_id?: string;
+    summary?: string;
+    nodes?: Array<any>;
+    connections?: Array<any>;
+}
+
 export interface UserRegisterData {
     username: string;
     password: string;
@@ -397,4 +437,20 @@ export const duplicateFlow = async (flowId: string): Promise<FlowData> => {
     console.error("复制流程图失败:", error);
     throw error;
   }
+};
+
+/**
+ * 处理工作流提示，创建或修改流程图节点
+ * @param {WorkflowProcessRequest} request - 包含提示和可选会话ID的请求
+ * @returns {Promise<WorkflowProcessResponse>} - 工作流处理结果
+ */
+export const processWorkflow = async (request: WorkflowProcessRequest): Promise<WorkflowProcessResponse> => {
+    console.log("processWorkflow request:", request);
+    try {
+        const response: AxiosResponse<WorkflowProcessResponse> = await apiClient.post('/workflow/process', request);
+        return response.data;
+    } catch (error) {
+        console.error("Error processing workflow:", error);
+        throw error;
+    }
 };

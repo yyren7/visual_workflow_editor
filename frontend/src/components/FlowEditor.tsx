@@ -876,13 +876,48 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
 
   const onUpdateNode = (nodeId: string, updatedNodeData: { data: NodeData }) => {
     setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          return { ...node, data: updatedNodeData.data };
-        }
-        return node;
-      })
+      nds.map((node) => (node.id === nodeId ? { ...node, data: updatedNodeData.data } : node))
     );
+    enqueueSnackbar(t('flowEditor.nodeUpdated'), { variant: 'success' });
+  };
+
+  /**
+   * 连接两个节点
+   * @param sourceId 源节点ID
+   * @param targetId 目标节点ID
+   * @param label 连接标签
+   */
+  const onConnectNodes = (sourceId: string, targetId: string, label?: string) => {
+    try {
+      // 验证节点存在
+      const sourceNode = nodes.find(node => node.id === sourceId);
+      const targetNode = nodes.find(node => node.id === targetId);
+      
+      if (!sourceNode || !targetNode) {
+        enqueueSnackbar(t('flowEditor.nodeNotFound'), { variant: 'error' });
+        return;
+      }
+      
+      // 创建新的边
+      const newEdge: Edge = {
+        id: `${sourceId}-${targetId}`,
+        source: sourceId,
+        target: targetId,
+        type: 'default',
+        label: label || '',
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+        },
+      };
+      
+      // 添加到edges中
+      setEdges((eds) => [...eds, newEdge]);
+      
+      enqueueSnackbar(t('flowEditor.edgeAdded'), { variant: 'success' });
+    } catch (error) {
+      console.error('Error connecting nodes:', error);
+      enqueueSnackbar(t('flowEditor.edgeAddedError'), { variant: 'error' });
+    }
   };
 
   const onInit = (_reactFlowInstance: ReactFlowInstance) => {
@@ -1378,7 +1413,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           defaultSize={{ width: 350, height: 300 }}
           zIndex={5}
         >
-          <ChatInterface onAddNode={onAddNode} onUpdateNode={onUpdateNode} />
+          <ChatInterface
+            onAddNode={onAddNode}
+            onUpdateNode={onUpdateNode}
+            onConnectNodes={onConnectNodes}
+          />
         </DraggableResizableContainer>
 
         {/* 流程图选择对话框 */}

@@ -5,11 +5,11 @@ class EmbeddingConfig(BaseSettings):
     """Embedding配置"""
     
     # 默认embedding模型配置
-    DEFAULT_MODEL_NAME: str = "BAAI/bge-large-zh-v1.5"
-    VECTOR_DIMENSION: int = 1024  # BAAI/bge-large-zh-v1.5 输出1024维向量
+    DEFAULT_MODEL_NAME: str = "node_database"  # 直接使用节点数据库而不是模型
+    VECTOR_DIMENSION: int = 768  # 保持向量维度以兼容现有代码
     
-    # 相似度搜索配置
-    DEFAULT_SIMILARITY_THRESHOLD: float = 0.8
+    # 相似度搜索配置 - 现在使用关键词匹配而非嵌入相似度
+    DEFAULT_SIMILARITY_THRESHOLD: float = 0.5  # 降低阈值使匹配更容易
     DEFAULT_SEARCH_LIMIT: int = 10
     
     # Gemini配置
