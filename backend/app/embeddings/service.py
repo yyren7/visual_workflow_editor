@@ -4,34 +4,29 @@ import os
 from typing import Any, Dict, List, Optional
 import numpy as np
 from sqlalchemy.orm import Session
-# 注释掉模型导入
-# from langchain_huggingface import HuggingFaceEmbeddings
-# from langchain_community.vectorstores import DocArrayInMemorySearch
-# from langchain.schema.runnable import RunnableMap
-# from langchain.prompts import ChatPromptTemplate
-# from langchain.schema.output_parser import StrOutputParser
-from openai import OpenAI
 import logging
 import xml.etree.ElementTree as ET
+from openai import OpenAI
 
-# 改为延迟导入，避免循环导入
-# from .models import JsonEmbedding
+# 导入工具和配置
 from .utils import normalize_json, calculate_similarity
 from .config import embedding_config
 from backend.app.config import Config
 
+# 导入LMStudio客户端
+from .lmstudio_client import LMStudioClient
+
 # 设置logger
 logger = logging.getLogger(__name__)
 
-# 添加一个全局变量存储单例实例
+# 添加全局缓存变量
 _embedding_service_instance = None
-# 添加初始化标记，避免重复打印初始化消息
-_model_initialized = {}
-# 添加DeepSeek客户端缓存
 _deepseek_client = None
+_lmstudio_client = None
 
-# 添加节点数据库路径常量
-NODE_DATABASE_PATH = "database/node_database"
+# 节点数据库路径常量
+# NODE_DATABASE_PATH = "database/node_database"
+NODE_DATABASE_PATH = "/workspace/database/node_database"
 
 class EmbeddingService:
     def __init__(self, model_name: str = embedding_config.DEFAULT_MODEL_NAME):
@@ -42,42 +37,60 @@ class EmbeddingService:
             model_name: 要使用的嵌入模型名称（现在仅用作标识符）
         """
         self.model_name = model_name
-        logger.info(f"初始化EmbeddingService，使用node_database目录而非模型: {model_name}")
         
-        # 注释掉模型加载代码
-        """
-        # 初始化BAAI embedding模型，使用缓存避免重复加载
-        global _embeddings_models, _model_initialized
-        if model_name not in _embeddings_models:
-            if model_name not in _model_initialized:
-                logger.info(f"初始化嵌入模型: {model_name}")
-                _model_initialized[model_name] = True
-            try:
-                _embeddings_models[model_name] = HuggingFaceEmbeddings(model_name=model_name)
-                logger.info(f"嵌入模型 {model_name} 初始化成功")
-            except Exception as e:
-                logger.error(f"初始化嵌入模型 {model_name} 失败: {str(e)}")
-                raise
+        # 检查是否使用LMStudio
+        if embedding_config.USE_LMSTUDIO:
+            logger.info(f"初始化EmbeddingService，使用LMStudio API: {embedding_config.LMSTUDIO_API_BASE_URL}")
+            # 初始化LMStudio客户端
+            global _lmstudio_client
+            if _lmstudio_client is None:
+                _lmstudio_client = LMStudioClient(
+                    api_base_url=embedding_config.LMSTUDIO_API_BASE_URL,
+                    api_key=embedding_config.LMSTUDIO_API_KEY
+                )
+            self.lmstudio_client = _lmstudio_client
         else:
-            logger.debug(f"使用缓存的嵌入模型: {model_name}")
-            
-        self.embeddings = _embeddings_models[model_name]
-        """
+            logger.info(f"初始化EmbeddingService，使用关键词匹配方法而非嵌入模型")
         
         # 初始化节点缓存
         self.node_cache = {}
         # 加载节点数据库
         self.load_node_database()
         
-        # 初始化向量数据库
-        self.vectordb = None
-        
         # DeepSeek客户端和模型配置
         self.llm_model = Config.DEEPSEEK_MODEL if Config.USE_DEEPSEEK else None
     
+    def get_node_template_service(self):
+        """获取节点模板服务（懒加载）"""
+        try:
+            from backend.app.dependencies import get_node_template_service
+            return get_node_template_service()
+        except Exception as e:
+            logger.error(f"获取节点模板服务失败: {str(e)}")
+            return None
+
     def load_node_database(self):
         """加载节点数据库中的XML文件"""
         try:
+            # 尝试从NodeTemplateService获取节点模板
+            template_service = self.get_node_template_service()
+            if template_service and template_service.templates:
+                logger.info(f"从节点模板服务加载节点定义")
+                # 将模板转换为节点缓存格式
+                for template_id, template in template_service.templates.items():
+                    node_data = {
+                        "id": template.id,
+                        "type": template.type,
+                        "fields": {field["name"]: field["default_value"] for field in template.fields},
+                    }
+                    self.node_cache[f"{template_id}.xml"] = {
+                        "json_data": node_data,
+                        "file_path": os.path.join(template_service.template_dir, f"{template_id}.xml")
+                    }
+                logger.info(f"成功从模板服务加载 {len(self.node_cache)} 个节点定义")
+                return
+                
+            # 如果无法从模板服务获取，回退到文件系统方法
             if not os.path.exists(NODE_DATABASE_PATH):
                 logger.error(f"节点数据库路径不存在: {NODE_DATABASE_PATH}")
                 return
@@ -155,13 +168,13 @@ class EmbeddingService:
         """
         global _embedding_service_instance
         if _embedding_service_instance is None:
-            logger.info(f"创建EmbeddingService单例实例，使用node_database")
+            logger.info(f"创建EmbeddingService单例实例")
             _embedding_service_instance = cls(model_name)
         return _embedding_service_instance
 
     async def create_embedding(self, db: Session, json_data: Dict[str, Any]):
         """
-        为JSON数据创建embedding（现在直接将数据存储到数据库，不生成实际的embedding）
+        为JSON数据创建embedding（使用LMStudio API或占位符）
         
         Args:
             db: 数据库会话
@@ -177,17 +190,25 @@ class EmbeddingService:
             # 标准化JSON数据
             normalized_data = normalize_json(json_data)
             
-            # 注释掉使用模型创建embedding
-            # embedding_vector = self.embeddings.embed_query(normalized_data)
-            
-            # 使用占位符向量（全0）
-            placeholder_vector = [0.0] * embedding_config.VECTOR_DIMENSION
+            # 使用LMStudio API或占位符
+            if embedding_config.USE_LMSTUDIO:
+                try:
+                    # 使用LMStudio API生成embedding向量
+                    embedding_vector = self.lmstudio_client.create_embedding(normalized_data)
+                    logger.info(f"成功使用LMStudio API生成embedding向量，维度: {len(embedding_vector)}")
+                except Exception as e:
+                    logger.error(f"使用LMStudio生成embedding失败: {str(e)}，将使用占位符")
+                    # 如果LMStudio调用失败，使用占位符向量
+                    embedding_vector = [0.0] * embedding_config.VECTOR_DIMENSION
+            else:
+                # 使用占位符向量（全0）
+                embedding_vector = [0.0] * embedding_config.VECTOR_DIMENSION
             
             current_time = time.time()
             
             embedding = JsonEmbedding(
                 json_data=json_data,
-                embedding_vector=placeholder_vector,  # 使用占位符
+                embedding_vector=embedding_vector,
                 model_name=self.model_name,
                 created_at=current_time,
                 updated_at=current_time
@@ -211,12 +232,12 @@ class EmbeddingService:
         limit: int = embedding_config.DEFAULT_SEARCH_LIMIT
     ):
         """
-        查找相似的节点数据（现在直接从node_database读取）
+        查找相似的节点数据（使用LMStudio API或关键词匹配）
         
         Args:
-            db: 数据库会话（现在不使用）
+            db: 数据库会话
             query_json: 查询JSON
-            threshold: 相似度阈值（现在不使用）
+            threshold: 相似度阈值
             limit: 返回结果数量限制
             
         Returns:
@@ -225,6 +246,39 @@ class EmbeddingService:
         try:
             # 延迟导入避免循环导入
             from .models import JsonEmbedding
+            
+            # 如果使用LMStudio进行向量搜索
+            if embedding_config.USE_LMSTUDIO:
+                # 将查询转换为文本并生成embedding
+                query_text = normalize_json(query_json)
+                try:
+                    query_embedding = self.lmstudio_client.create_embedding(query_text)
+                    
+                    # 从数据库获取所有embedding
+                    db_embeddings = db.query(JsonEmbedding).all()
+                    
+                    # 计算相似度并排序
+                    results_with_scores = []
+                    for emb in db_embeddings:
+                        # 确保embedding_vector不是占位符
+                        if all(v == 0 for v in emb.embedding_vector):
+                            continue
+                            
+                        # 计算余弦相似度
+                        similarity = calculate_similarity(query_embedding, emb.embedding_vector)
+                        if similarity >= threshold:
+                            results_with_scores.append((emb, similarity))
+                    
+                    # 按相似度排序并截取top K结果
+                    results_with_scores.sort(key=lambda x: x[1], reverse=True)
+                    top_results = [item[0] for item in results_with_scores[:limit]]
+                    
+                    logger.info(f"使用LMStudio API查找到 {len(top_results)} 个相似结果")
+                    return top_results
+                    
+                except Exception as e:
+                    logger.error(f"使用LMStudio查找相似项失败: {str(e)}，将回退到关键词匹配")
+                    # 如果LMStudio调用失败，回退到关键词匹配
             
             # 如果节点缓存为空，重新加载
             if not self.node_cache:
@@ -275,8 +329,8 @@ class EmbeddingService:
             # 返回限制数量的结果
             return matches[:limit]
         except Exception as e:
-            logger.error(f"查找相似文档时出错: {str(e)}")
-            return []
+            logger.error(f"查找相似项时出错: {str(e)}")
+            raise
 
     async def query_with_llm(
         self,

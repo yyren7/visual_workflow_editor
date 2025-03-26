@@ -9,6 +9,9 @@ from backend.app import models, schemas, database
 from backend.app.config import Config
 import json
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -95,23 +98,54 @@ def verify_flow_ownership(flow_id: str, current_user: schemas.User, db: Session)
 
 def get_version_info():
     """
-    从项目根目录的version.json文件中读取版本信息
+    获取系统版本信息，优先从数据库读取，其次使用环境变量，最后尝试从文件读取
     
     Returns:
         dict: 包含'version'和'lastUpdated'的字典，如果读取失败则返回默认值
     """
+    # 1. 优先从数据库读取
     try:
-        # 尝试找到项目根目录的version.json（相对于当前文件的位置）
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        version_path = os.path.join(base_dir, 'version.json')
-        
-        with open(version_path, 'r') as f:
-            version_data = json.load(f)
-            return version_data
+        db = database.SessionLocal()
+        try:
+            db_version = db.query(models.VersionInfo).first()
+            if db_version:
+                logger.info(f"从数据库获取版本信息: {db_version.version}")
+                return {
+                    "version": db_version.version,
+                    "lastUpdated": db_version.last_updated
+                }
+        finally:
+            db.close()
     except Exception as e:
-        print(f"读取版本信息失败: {e}")
-        # 返回默认版本信息
-        return {"version": "0.0.0", "lastUpdated": "未知"}
+        logger.warning(f"从数据库读取版本信息失败: {e}")
+    
+    # 2. 尝试从环境变量读取
+    if os.environ.get("APP_VERSION") and os.environ.get("APP_LAST_UPDATED"):
+        logger.info(f"从环境变量获取版本信息: {os.environ.get('APP_VERSION')}")
+        return {
+            "version": os.environ.get("APP_VERSION"),
+            "lastUpdated": os.environ.get("APP_LAST_UPDATED")
+        }
+    
+    # 3. 尝试从文件读取
+    try:
+        # 从workspace目录读取version.json
+        workspace_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        version_path = os.path.join(workspace_dir, 'version.json')
+        
+        if os.path.exists(version_path):
+            with open(version_path, 'r') as f:
+                version_data = json.load(f)
+                logger.info(f"从文件获取版本信息: {version_data.get('version', '0.0.0')}")
+                return version_data
+        else:
+            logger.warning(f"警告: 未找到版本文件 {version_path}")
+    except Exception as e:
+        logger.warning(f"读取版本信息文件失败: {e}")
+    
+    # 4. 返回默认版本信息
+    logger.warning("使用默认版本信息")
+    return {"version": "0.0.0", "lastUpdated": "未知"}
 
 def get_version():
     """简单获取版本号"""

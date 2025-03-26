@@ -1,7 +1,10 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# 显式加载项目根目录的.env文件
+workspace_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env')
+load_dotenv(dotenv_path=workspace_env_path)
 
 class Config:
     """
@@ -25,7 +28,7 @@ class Config:
     
     # DeepSeek API设置
     DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "sk-a5fe39f6088d410784c2c31a5db4cc5f")
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
     
     # 兼容旧代码的配置

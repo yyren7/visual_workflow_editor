@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 from backend.app.config import Config
 from backend.app.services.prompt_service import BasePromptService
 from backend.app.services.deepseek_client_service import DeepSeekClientService
+import uuid
+from backend.app.dependencies import get_node_template_service
 
 logger = logging.getLogger(__name__)
 
@@ -360,15 +362,77 @@ class ToolCallingService(BasePromptService):
             questions = params.get("questions", [])
             context = params.get("context", "")
             
+            # 过滤掉空字符串问题
+            questions = [q for q in questions if q.strip()]
+            
+            # 如果没有提供问题，使用智能默认问题
             if not questions:
-                return ToolResult(
-                    success=False,
-                    message="未提供问题"
-                )
+                logger.info("未提供问题，使用默认通用问题")
+                
+                # 如果有上下文，尝试基于上下文生成相关问题
+                if context and len(context) > 10:
+                    # 使用DeepSeek生成相关问题
+                    try:
+                        prompt = f"""根据以下上下文，生成3个相关问题，以帮助获取更多信息：
+                        
+上下文: {context}
+
+生成3个简洁的问题，每个问题应该不超过20个字，且直接询问具体信息。
+"""
+                        
+                        questions_schema = {
+                            "type": "object",
+                            "properties": {
+                                "questions": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["questions"]
+                        }
+                        
+                        result, success = await self.deepseek_service.structured_output(
+                            prompt=prompt,
+                            system_prompt="你是一个帮助生成有用问题的助手。",
+                            schema=questions_schema
+                        )
+                        
+                        if success and "questions" in result and result["questions"]:
+                            questions = result["questions"]
+                            logger.info(f"基于上下文生成了 {len(questions)} 个问题")
+                        else:
+                            # 如果生成失败，使用默认问题
+                            questions = [
+                                "请描述一下您想要的流程图的主要功能？",
+                                "这个流程图需要包含哪些关键节点？",
+                                "流程中最重要的决策点是什么？"
+                            ]
+                    except Exception as e:
+                        logger.error(f"生成问题时出错: {str(e)}")
+                        # 使用默认问题
+                        questions = [
+                            "请描述一下您想要的流程图的主要功能？",
+                            "这个流程图需要包含哪些关键节点？", 
+                            "流程中最重要的决策点是什么？"
+                        ]
+                else:
+                    # 没有上下文，使用通用问题
+                    questions = [
+                        "请描述一下您想要的流程图的主要功能？",
+                        "这个流程图需要包含哪些关键节点？",
+                        "流程中最重要的决策点是什么？"
+                    ]
+            
+            # 生成格式化文本
+            formatted_questions = "\n".join([f"{i+1}. {q}" for i, q in enumerate(questions)])
+            formatted_text = f"{context}\n\n{formatted_questions}" if context else formatted_questions
             
             result = {
                 "questions": questions,
-                "context": context
+                "context": context,
+                "formatted_text": formatted_text  # 添加格式化文本
             }
             
             return ToolResult(
@@ -387,23 +451,67 @@ class ToolCallingService(BasePromptService):
     async def _execute_node_creation(self, params: Dict[str, Any]) -> ToolResult:
         """节点创建工具实现"""
         try:
+            # 从现有模板或输入中提取节点类型和标签
             node_type = params.get("node_type")
             node_label = params.get("node_label")
             properties = params.get("properties", {})
             
-            if not node_type or not node_label:
-                return ToolResult(
-                    success=False,
-                    message="缺少必要的节点参数"
-                )
+            # 使用智能默认值处理缺失参数
+            if not node_type:
+                # 默认使用process类型节点
+                node_type = "process"
+                logger.info(f"未提供节点类型，使用默认类型: {node_type}")
+            
+            # 如果未提供节点标签，尝试从节点模板服务获取默认标签
+            if not node_label:
+                # 获取节点模板服务
+                template_service = get_node_template_service()
+                
+                # 尝试从模板中获取默认标签
+                default_found = False
+                if template_service and template_service.templates:
+                    # 查找匹配的模板
+                    for template_id, template in template_service.templates.items():
+                        if template.type == node_type:
+                            node_label = template.label
+                            default_found = True
+                            logger.info(f"使用节点模板默认标签: {node_label}")
+                            break
+                
+                # 如果没有找到模板，使用基于类型的默认标签
+                if not default_found:
+                    type_labels = {
+                        "start": "开始",
+                        "end": "结束",
+                        "process": "处理",
+                        "decision": "决策",
+                        "data": "数据",
+                        "io": "输入/输出"
+                    }
+                    node_label = type_labels.get(node_type, "节点") + f"_{str(uuid.uuid4())[:4]}"
+                    logger.info(f"未找到模板，使用生成的默认标签: {node_label}")
             
             # 生成节点ID
             node_id = f"node_{str(uuid.uuid4())[:8]}"
             
-            # 如果没有提供属性，尝试生成
+            # 如果没有提供属性，从模板获取或尝试生成
             if not properties:
-                properties, _ = await self.generate_node_properties(node_type, node_label)
+                # 首先尝试从节点模板获取默认属性
+                if template_service and template_service.templates:
+                    for template_id, template in template_service.templates.items():
+                        if template.type == node_type:
+                            # 从模板字段构建属性
+                            properties = {}
+                            for field in template.fields:
+                                properties[field.get("name", "")] = field.get("default_value", "")
+                            logger.info(f"使用模板默认属性: {properties}")
+                            break
+                
+                # 如果仍然没有属性，使用生成
+                if not properties:
+                    properties, _ = await self.generate_node_properties(node_type, node_label)
             
+            # 创建结果
             result = {
                 "node_id": node_id,
                 "node_type": node_type,
@@ -411,6 +519,7 @@ class ToolCallingService(BasePromptService):
                 "properties": properties
             }
             
+            logger.info(f"成功创建节点: {node_label} (类型: {node_type})")
             return ToolResult(
                 success=True,
                 message=f"成功创建节点: {node_label}",
@@ -426,19 +535,59 @@ class ToolCallingService(BasePromptService):
     async def _execute_connection_creation(self, params: Dict[str, Any]) -> ToolResult:
         """连接创建工具实现"""
         try:
+            # 提取连接参数
             source_id = params.get("source_id")
             target_id = params.get("target_id")
             label = params.get("label", "")
             
-            if not source_id or not target_id:
-                return ToolResult(
-                    success=False,
-                    message="缺少必要的连接参数"
-                )
+            # 处理缺失的源节点或目标节点ID
+            if not source_id and not target_id:
+                # 如果两个ID都没有，创建两个默认节点并连接它们
+                start_result = await self._execute_node_creation({"node_type": "start", "node_label": "开始"})
+                if not start_result.success:
+                    return ToolResult(
+                        success=False,
+                        message="无法创建默认的开始节点"
+                    )
+                
+                end_result = await self._execute_node_creation({"node_type": "end", "node_label": "结束"})
+                if not end_result.success:
+                    return ToolResult(
+                        success=False,
+                        message="无法创建默认的结束节点"
+                    )
+                
+                source_id = start_result.data.get("node_id")
+                target_id = end_result.data.get("node_id")
+                
+                logger.info(f"使用默认创建的节点作为连接的源和目标: {source_id} -> {target_id}")
+            
+            elif not source_id:
+                # 只缺少源节点，创建默认源节点
+                start_result = await self._execute_node_creation({"node_type": "start", "node_label": "开始"})
+                if not start_result.success:
+                    return ToolResult(
+                        success=False,
+                        message="无法创建默认的源节点"
+                    )
+                source_id = start_result.data.get("node_id")
+                logger.info(f"使用默认创建的节点作为连接的源: {source_id}")
+            
+            elif not target_id:
+                # 只缺少目标节点，创建默认目标节点
+                end_result = await self._execute_node_creation({"node_type": "end", "node_label": "结束"})
+                if not end_result.success:
+                    return ToolResult(
+                        success=False,
+                        message="无法创建默认的目标节点"
+                    )
+                target_id = end_result.data.get("node_id")
+                logger.info(f"使用默认创建的节点作为连接的目标: {target_id}")
             
             # 生成连接ID
             connection_id = f"conn_{str(uuid.uuid4())[:8]}"
             
+            # 创建结果
             result = {
                 "connection_id": connection_id,
                 "source_id": source_id,
@@ -446,6 +595,7 @@ class ToolCallingService(BasePromptService):
                 "label": label
             }
             
+            logger.info(f"成功创建连接: {source_id} -> {target_id}")
             return ToolResult(
                 success=True,
                 message=f"成功创建连接: {source_id} -> {target_id}",

@@ -33,6 +33,7 @@ import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow, dupl
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
+import { useFlowContext } from '../contexts/FlowContext';
 
 interface FlowSelectProps {
   open: boolean;
@@ -48,6 +49,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
+  const { setCurrentFlowId } = useFlowContext();
   
   // 编辑流程图名称相关状态
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -102,6 +104,11 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const handleFlowSelect = (flowId: string | number | undefined) => {
     if (flowId !== undefined) {
       const userId = localStorage.getItem('user_id');
+      
+      // 设置当前流程图ID到FlowContext
+      setCurrentFlowId(flowId.toString());
+      console.log("选择流程图：设置currentFlowId =", flowId.toString());
+      
       // 使用navigate而非window.location.href，避免整页刷新
       navigate(`/flow?id=${flowId}${userId ? `&user=${userId}` : ''}`);
       
@@ -201,23 +208,20 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
       };
 
       const newFlow = await createFlow(defaultFlow as FlowData);
+      console.log("成功创建新流程图:", newFlow);
+      
       if (newFlow && newFlow.id) {
-        // 创建成功后，刷新流程图列表
-        const updatedFlows = await getFlowsForUser(0, 100);
-        setFlows(updatedFlows);
-        setFilteredFlows(updatedFlows);
+        // 设置当前流程图ID到FlowContext
+        setCurrentFlowId(newFlow.id.toString());
+        console.log("创建流程图：设置currentFlowId =", newFlow.id.toString());
         
-        // 不再调用handleFlowSelect，创建后仅显示成功消息但不自动进入
-        // handleFlowSelect(newFlow.id); // 注释掉这行，不自动进入
-        enqueueSnackbar(t('flowSelect.createSuccess', '创建新流程图成功'), { variant: 'success' });
+        const userId = localStorage.getItem('user_id');
+        navigate(`/flow?id=${newFlow.id}${userId ? `&user=${userId}` : ''}`);
+        onClose();
       }
     } catch (err) {
       console.error('创建新流程图失败:', err);
-      if (err instanceof Error) {
-        enqueueSnackbar(`${t('flowSelect.createError', '创建新流程图失败')}: ${err.message}`, { variant: 'error' });
-      } else {
-        enqueueSnackbar(t('flowSelect.createError', '创建新流程图失败'), { variant: 'error' });
-      }
+      setError(`创建新流程图失败: ${err instanceof Error ? err.message : '未知错误'}`);
     } finally {
       setLoading(false);
     }
@@ -317,27 +321,33 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     
     try {
       setLoading(true);
+      const newFlow = await duplicateFlow(flow.id as string);
       
-      if (!flow || !flow.id) return;
-      
-      // 调用复制API
-      await duplicateFlow(flow.id.toString());
-      
-      // 刷新流程图列表
-      const updatedFlows = await getFlowsForUser(0, 100);
-      setFlows(updatedFlows);
-      setFilteredFlows(updatedFlows.filter(flow => 
-        searchTerm.trim() === '' || flow.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ));
-      
-      enqueueSnackbar(t('flowSelect.duplicateSuccess', '流程图已复制'), { variant: 'success' });
-      
+      if (newFlow && newFlow.id) {
+        // 设置当前流程图ID到FlowContext
+        setCurrentFlowId(newFlow.id.toString());
+        console.log("复制流程图：设置currentFlowId =", newFlow.id.toString());
+        
+        // 刷新流程图列表
+        const updatedFlows = await getFlowsForUser(0, 100);
+        setFlows(updatedFlows);
+        setFilteredFlows(updatedFlows.filter(f => 
+          searchTerm.trim() === '' || f.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ));
+        
+        enqueueSnackbar(t('flowSelect.duplicateSuccess', '流程图已复制'), { variant: 'success' });
+        
+        // 导航到新流程图
+        const userId = localStorage.getItem('user_id');
+        navigate(`/flow?id=${newFlow.id}${userId ? `&user=${userId}` : ''}`);
+        onClose();
+      }
     } catch (err) {
       console.error('复制流程图失败:', err);
       if (err instanceof Error) {
-        enqueueSnackbar(`${t('flowSelect.duplicateError', '复制失败')}: ${err.message}`, { variant: 'error' });
+        enqueueSnackbar(`${t('flowSelect.duplicateError', '复制流程图失败')}: ${err.message}`, { variant: 'error' });
       } else {
-        enqueueSnackbar(t('flowSelect.duplicateError', '复制失败'), { variant: 'error' });
+        enqueueSnackbar(t('flowSelect.duplicateError', '复制流程图失败'), { variant: 'error' });
       }
     } finally {
       setLoading(false);

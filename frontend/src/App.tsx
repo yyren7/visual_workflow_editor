@@ -17,6 +17,8 @@ import NavBar from './components/NavBar';
 import SelectPage from './components/SelectPage';
 // 导入认证上下文
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+// 导入流程图上下文
+import { FlowProvider } from './contexts/FlowContext';
 
 const darkTheme = createTheme({
   palette: {
@@ -107,19 +109,21 @@ const App: React.FC = () => {
       <SnackbarProvider maxSnack={3}>
         <Router>
           <AuthProvider>
-            <Container
-              maxWidth={false}
-              disableGutters
-              sx={{
-                mt: 0,
-                p: 0,
-                height: '100vh',
-                width: '100vw',
-                overflow: 'hidden'
-              }}
-            >
-              <AppRoutes />
-            </Container>
+            <FlowProvider>
+              <Container
+                maxWidth={false}
+                disableGutters
+                sx={{
+                  mt: 0,
+                  p: 0,
+                  height: '100vh',
+                  width: '100vw',
+                  overflow: 'hidden'
+                }}
+              >
+                <AppRoutes />
+              </Container>
+            </FlowProvider>
           </AuthProvider>
         </Router>
       </SnackbarProvider>

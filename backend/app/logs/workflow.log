@@ -1,0 +1,83 @@
+2025-03-26 02:12:31,222 - INFO - 开始处理用户输入: 创建一个movel节点给我
+2025-03-26 02:12:31,222 - ERROR - 处理用户输入时出错: 'WorkflowPromptService' object has no attribute '_conversation_history'
+2025-03-26 02:12:31,223 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 221, in process_user_input
+    if self._conversation_history:
+AttributeError: 'WorkflowPromptService' object has no attribute '_conversation_history'
+
+2025-03-26 02:14:26,881 - INFO - 开始处理用户输入: 创建一个movel节点给我
+2025-03-26 02:14:26,881 - ERROR - 处理用户输入时出错: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+2025-03-26 02:14:26,881 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 231, in process_user_input
+    expanded_input = await self.expansion_service.expand_prompt(user_input, context)
+TypeError: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+
+2025-03-26 02:14:35,124 - INFO - 开始处理用户输入: 创建一个movel节点给我
+2025-03-26 02:14:35,124 - ERROR - 处理用户输入时出错: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+2025-03-26 02:14:35,125 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 231, in process_user_input
+    expanded_input = await self.expansion_service.expand_prompt(user_input, context)
+TypeError: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+
+2025-03-26 02:33:25,136 - INFO - 开始处理用户输入: 创建movel节点给我
+2025-03-26 02:33:25,136 - INFO - 收集所有上下文信息用于DeepSeek交互
+2025-03-26 02:33:25,136 - ERROR - 获取当前流程图信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 02:33:25,136 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 957, in _get_current_flow_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 02:33:25,136 - ERROR - 获取当前用户信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 02:33:25,137 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 1116, in _get_current_user_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 02:33:25,137 - INFO - 全局变量文件不存在: global_variables.json
+2025-03-26 02:33:25,137 - INFO - 成功获取系统信息
+2025-03-26 02:33:25,137 - INFO - 成功收集所有上下文信息
+2025-03-26 02:33:25,137 - INFO - 添加上下文信息到用户输入
+2025-03-26 02:33:37,435 - INFO - 扩展后的提示: 步骤1: 确定节点类型为处理节点(process)
+步骤2: 设置节点名称为"movel"
+步骤3: 确认节点属性(如需要添加特定属性，请提供详细信息)
+步骤4: 将movel节点连接到流程图中的适当位置(如需要连接其他节点，请提供目标节点信息)
+
+缺少信息: 
+- movel节点的具体功能或操作内容
+- 是否需要连接其他节点(如开始节点或结束节点)
+- 需要设置的节点属性(如果有)
+2025-03-26 02:33:37,435 - ERROR - 处理用户输入时出错: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+2025-03-26 02:33:37,438 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 246, in process_user_input
+    is_tool_request, tool_name, tool_params = self.expansion_service.check_direct_tool_request(user_input)
+AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+
+2025-03-26 03:12:00,982 - INFO - 开始处理用户输入: 创建一个movel节点到页面上
+2025-03-26 03:12:00,982 - INFO - 收集所有上下文信息用于DeepSeek交互
+2025-03-26 03:12:00,982 - ERROR - 获取当前流程图信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 03:12:00,983 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 957, in _get_current_flow_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 03:12:00,983 - ERROR - 获取当前用户信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 03:12:00,983 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 1116, in _get_current_user_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 03:12:00,983 - INFO - 全局变量文件不存在: global_variables.json
+2025-03-26 03:12:00,983 - INFO - 成功获取系统信息
+2025-03-26 03:12:00,983 - INFO - 成功收集所有上下文信息
+2025-03-26 03:12:00,983 - INFO - 添加上下文信息到用户输入
+2025-03-26 03:12:08,421 - INFO - 扩展后的提示: 步骤1: 确认节点类型为"movel"节点（假设为处理节点/process）
+步骤2: 设置节点名称为"movel"（或由用户指定）
+步骤3: 设置节点属性为空（或由用户指定）
+步骤4: 在流程图编辑界面添加该节点到画布
+步骤5: 连接该节点到流程中的适当位置（如需要）
+2025-03-26 03:12:08,422 - ERROR - 处理用户输入时出错: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+2025-03-26 03:12:08,425 - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 246, in process_user_input
+    is_tool_request, tool_name, tool_params = self.expansion_service.check_direct_tool_request(user_input)
+AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+

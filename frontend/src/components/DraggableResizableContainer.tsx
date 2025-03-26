@@ -32,8 +32,8 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
   defaultSize = { width: 350, height: 300 },
   minWidth = 250,
   minHeight = 200,
-  maxWidth = 800,
-  maxHeight = 800,
+  maxWidth = 2000,
+  maxHeight = 2000,
   zIndex = 5,
   children
 }) => {
@@ -57,7 +57,36 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
   };
 
   const handleDragStop = (e: any, data: any) => {
-    setPosition({ x: data.x, y: data.y });
+    // 获取窗口尺寸
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 确保拖动后的位置不会使容器完全超出可视区域
+    // 至少保留顶部标题栏在视图中(40px)，这样用户仍能抓住容器
+    let newX = data.x;
+    let newY = data.y;
+    
+    // 右边界检查
+    if (newX > windowWidth - 40) {
+      newX = windowWidth - 40;
+    }
+    
+    // 底部边界检查
+    if (newY > windowHeight - 40) {
+      newY = windowHeight - 40;
+    }
+    
+    // 左边界检查 - 确保至少20px宽度在可视区域
+    if (newX < -size.width + 40) {
+      newX = -size.width + 40;
+    }
+    
+    // 顶部边界检查
+    if (newY < 0) {
+      newY = 0;
+    }
+    
+    setPosition({ x: newX, y: newY });
   };
 
   return (

@@ -1,0 +1,2042 @@
+2025-03-26 02:11:11,074 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:11:11,074 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:11:11,155 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:11:11,158 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:11:11,158 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:11:11,159 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:11:11,580 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:11:11,586 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:11:11,586 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:11:11,586 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:11:11,586 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:11:11,587 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:11:11,587 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:11:11,587 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:11:11,592 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:11:11,597 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:11:11,598 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:11:11,598 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:11:11,599 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:11:11,601 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:11:11,602 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:11:11,603 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:11:11,603 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:11:11,604 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:11:11,604 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:11:11,604 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:11:11,604 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:11:11,604 - backend.app.services.deepseek_client_service - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:11:11,604 - backend.app.services.deepseek_client_service - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:11:11,636 - backend.app.services.deepseek_client_service - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:11:11,636 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:11:11,636 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:11:11,636 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:11:11,636 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:11:11,636 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:11:21,995 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:11:21,995 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:11:22,074 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:11:22,076 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:11:22,077 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:11:22,077 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:11:22,486 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:11:22,492 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:11:22,493 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:11:22,493 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:11:22,493 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:11:22,493 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:11:22,493 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:11:22,494 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:11:22,498 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:11:22,502 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:11:22,503 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:11:22,503 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:11:22,504 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:11:22,506 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:11:22,506 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:11:22,508 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:11:22,508 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:11:22,509 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:11:22,509 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:11:22,509 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:11:22,509 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:11:22,509 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:11:22,509 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:11:22,540 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:11:22,540 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:11:22,540 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:11:22,540 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:11:22,540 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:11:22,540 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:11:32,989 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:11:32,989 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:11:33,071 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:11:33,074 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:11:33,075 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:11:33,075 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:11:33,490 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:11:33,497 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:11:33,497 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:11:33,497 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:11:33,497 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:11:33,498 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:11:33,498 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:11:33,498 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:11:33,503 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:11:33,506 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:11:33,507 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:11:33,508 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:11:33,509 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:11:33,511 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:11:33,511 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:11:33,512 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:11:33,512 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:11:33,514 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:11:33,514 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:11:33,514 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:11:33,514 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:11:33,514 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:11:33,514 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:11:33,545 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:11:33,545 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:11:33,545 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:11:33,545 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:11:33,545 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:11:33,545 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:12:07,703 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:12:07,704 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:12:07,782 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:12:07,785 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:12:07,786 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:12:07,786 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:12:08,193 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:12:08,198 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:12:08,198 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:12:08,198 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:12:08,198 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:12:08,199 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:12:08,199 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:12:08,199 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:12:08,204 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:12:08,207 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:12:08,208 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:12:08,209 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:12:08,210 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:12:08,212 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:12:08,212 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:12:08,213 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:12:08,214 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:12:08,215 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:12:08,215 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:12:08,215 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:12:08,215 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:12:08,215 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:12:08,215 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:12:08,246 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:12:08,246 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:12:08,246 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:12:08,246 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:12:08,246 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:12:08,246 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:12:31,210 - backend.app.services.prompt_embedding_service - INFO - 创建PromptEmbeddingService单例实例
+2025-03-26 02:12:31,210 - backend.app.embeddings.service - INFO - 创建EmbeddingService单例实例
+2025-03-26 02:12:31,210 - backend.app.embeddings.service - INFO - 初始化EmbeddingService，使用关键词匹配方法而非嵌入模型
+2025-03-26 02:12:31,210 - backend.app.embeddings.service - INFO - 从节点模板服务加载节点定义
+2025-03-26 02:12:31,211 - backend.app.embeddings.service - INFO - 成功从模板服务加载 6 个节点定义
+2025-03-26 02:12:31,211 - backend.app.services.prompt_embedding_service - INFO - EmbeddingService单例实例已初始化并缓存
+2025-03-26 02:12:31,222 - backend.workflow - INFO - 开始处理用户输入: 创建一个movel节点给我
+2025-03-26 02:12:31,222 - backend.workflow - ERROR - 处理用户输入时出错: 'WorkflowPromptService' object has no attribute '_conversation_history'
+2025-03-26 02:12:31,223 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 221, in process_user_input
+    if self._conversation_history:
+AttributeError: 'WorkflowPromptService' object has no attribute '_conversation_history'
+
+2025-03-26 02:14:07,071 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:14:07,071 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:14:07,151 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:14:07,154 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:14:07,155 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:14:07,155 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:14:07,582 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:14:07,589 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:14:07,590 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:14:07,590 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:14:07,590 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:14:07,590 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:14:07,591 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:14:07,591 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:14:07,596 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:14:07,599 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:14:07,600 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:14:07,601 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:14:07,601 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:14:07,604 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:14:07,604 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:14:07,605 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:14:07,605 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:14:07,606 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:14:07,606 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:14:07,607 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:14:07,607 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:14:07,607 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:14:07,607 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:14:07,637 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:14:07,638 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:14:07,638 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:14:07,638 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:14:07,638 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:14:07,638 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:14:26,869 - backend.app.services.prompt_embedding_service - INFO - 创建PromptEmbeddingService单例实例
+2025-03-26 02:14:26,869 - backend.app.embeddings.service - INFO - 创建EmbeddingService单例实例
+2025-03-26 02:14:26,869 - backend.app.embeddings.service - INFO - 初始化EmbeddingService，使用关键词匹配方法而非嵌入模型
+2025-03-26 02:14:26,869 - backend.app.embeddings.service - INFO - 从节点模板服务加载节点定义
+2025-03-26 02:14:26,869 - backend.app.embeddings.service - INFO - 成功从模板服务加载 6 个节点定义
+2025-03-26 02:14:26,869 - backend.app.services.prompt_embedding_service - INFO - EmbeddingService单例实例已初始化并缓存
+2025-03-26 02:14:26,881 - backend.workflow - INFO - 开始处理用户输入: 创建一个movel节点给我
+2025-03-26 02:14:26,881 - backend.workflow - ERROR - 处理用户输入时出错: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+2025-03-26 02:14:26,881 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 231, in process_user_input
+    expanded_input = await self.expansion_service.expand_prompt(user_input, context)
+TypeError: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+
+2025-03-26 02:14:35,124 - backend.workflow - INFO - 开始处理用户输入: 创建一个movel节点给我
+2025-03-26 02:14:35,124 - backend.workflow - ERROR - 处理用户输入时出错: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+2025-03-26 02:14:35,125 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 231, in process_user_input
+    expanded_input = await self.expansion_service.expand_prompt(user_input, context)
+TypeError: PromptExpansionService.expand_prompt() takes 2 positional arguments but 3 were given
+
+2025-03-26 02:15:22,055 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:15:22,056 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:15:22,136 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:15:22,139 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:15:22,140 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:15:22,140 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:15:22,565 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:15:22,570 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:15:22,570 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:15:22,570 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:15:22,570 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:15:22,571 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:15:22,571 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:15:22,571 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:15:22,576 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:15:22,580 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:15:22,581 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:15:22,582 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:15:22,582 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:15:22,584 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:15:22,585 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:15:22,586 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:15:22,586 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:15:22,587 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:15:22,587 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:15:22,587 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:15:22,587 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:15:22,587 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:15:22,587 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:15:22,618 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:15:22,618 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:15:22,618 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:15:22,618 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:15:22,618 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:15:22,619 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:17:06,411 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:17:06,411 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:17:06,494 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:17:06,497 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:17:06,498 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:17:06,498 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:17:06,923 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:17:06,930 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:17:06,931 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:17:06,931 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:17:06,931 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:17:06,931 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:17:06,931 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:17:06,932 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:17:06,936 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:17:06,940 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:17:06,941 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:17:06,941 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:17:06,942 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:17:06,944 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:17:06,944 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:17:06,946 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:17:06,946 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:17:06,947 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:17:06,947 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:17:06,947 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:17:06,947 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:17:06,947 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:17:06,947 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:17:06,978 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:17:06,978 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:17:06,978 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:17:06,978 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:17:06,978 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:17:06,978 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:17:34,700 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:17:34,700 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:17:34,782 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:17:34,785 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:17:34,786 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:17:34,786 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:17:35,219 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:17:35,226 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:17:35,226 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:17:35,226 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:17:35,226 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:17:35,227 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:17:35,227 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:17:35,228 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:17:35,233 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:17:35,236 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:17:35,237 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:17:35,238 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:17:35,238 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:17:35,240 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:17:35,241 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:17:35,242 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:17:35,242 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:17:35,243 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:17:35,244 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:17:35,244 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:17:35,244 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:17:35,244 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:17:35,244 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:17:35,275 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:17:35,275 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:17:35,276 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:17:35,276 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:17:35,276 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:17:35,276 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:18:16,564 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:18:16,564 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:18:16,642 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:18:16,645 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:18:16,646 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:18:16,646 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:18:17,065 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:18:17,071 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:18:17,071 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:18:17,072 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:18:17,072 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:18:17,072 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:18:17,072 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:18:17,073 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:18:17,077 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:18:17,080 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:18:17,082 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:18:17,082 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:18:17,083 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:18:17,085 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:18:17,085 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:18:17,087 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:18:17,087 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:18:17,088 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:18:17,088 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:18:17,088 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:18:17,088 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:18:17,088 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:18:17,088 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:18:17,119 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:18:17,119 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:18:17,119 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:18:17,119 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:18:17,119 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:18:17,119 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:29:25,821 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:29:25,821 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:29:25,907 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:29:25,910 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:29:25,911 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:29:25,911 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:29:26,329 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:29:26,337 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:29:26,338 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:29:26,338 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:29:26,338 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:29:26,338 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:29:26,338 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:29:26,339 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:29:26,343 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:29:26,347 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:29:26,348 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:29:26,348 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:29:26,349 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:29:26,351 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:29:26,351 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:29:26,353 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:29:26,353 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:29:26,354 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:29:26,354 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:29:26,354 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:29:26,354 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:29:26,354 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:29:26,354 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:29:26,385 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:29:26,385 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:29:26,385 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:29:26,385 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:29:26,385 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:29:26,385 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:29:46,159 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:29:46,159 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:29:46,242 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:29:46,245 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:29:46,246 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:29:46,246 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:29:46,664 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:29:46,671 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:29:46,671 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:29:46,671 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:29:46,671 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:29:46,672 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:29:46,672 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:29:46,673 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:29:46,677 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:29:46,681 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:29:46,682 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:29:46,683 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:29:46,683 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:29:46,685 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:29:46,686 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:29:46,687 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:29:46,687 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:29:46,688 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:29:46,688 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:29:46,688 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:29:46,688 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:29:46,688 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:29:46,688 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:29:46,720 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:29:46,720 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:29:46,720 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:29:46,720 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:29:46,720 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:29:46,720 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:30:02,995 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:30:02,995 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:30:03,082 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:30:03,085 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:30:03,087 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:30:03,087 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:30:03,545 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:30:03,552 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:30:03,552 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:30:03,552 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:30:03,552 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:30:03,553 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:30:03,553 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:30:03,553 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:30:03,558 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:30:03,561 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:30:03,562 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:30:03,563 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:30:03,563 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:30:03,565 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:30:03,566 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:30:03,567 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:30:03,567 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:30:03,568 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:30:03,568 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:30:03,568 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:30:03,568 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:30:03,568 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:30:03,568 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:30:03,599 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:30:03,599 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:30:03,599 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:30:03,599 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:30:03,599 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:30:03,599 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:30:17,906 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:30:17,906 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:30:17,985 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:30:17,988 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:30:17,989 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:30:17,989 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:30:18,400 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:30:18,408 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:30:18,409 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:30:18,409 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:30:18,409 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:30:18,409 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:30:18,410 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:30:18,410 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:30:18,415 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:30:18,418 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:30:18,419 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:30:18,420 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:30:18,420 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:30:18,422 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:30:18,423 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:30:18,425 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:30:18,425 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:30:18,426 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:30:18,426 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:30:18,426 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:30:18,426 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:30:18,426 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:30:18,426 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:30:18,457 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:30:18,457 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:30:18,457 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:30:18,457 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:30:18,457 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:30:18,457 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:30:36,187 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:30:36,188 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:30:36,270 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:30:36,273 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:30:36,274 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:30:36,274 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:30:36,712 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:30:36,720 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:30:36,720 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:30:36,720 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:30:36,720 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:30:36,721 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:30:36,721 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:30:36,721 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:30:36,726 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:30:36,729 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:30:36,731 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:30:36,731 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:30:36,732 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:30:36,734 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:30:36,734 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:30:36,736 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:30:36,736 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:30:36,737 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:30:36,737 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:30:36,737 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:30:36,737 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:30:36,737 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:30:36,737 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:30:36,767 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:30:36,768 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:30:36,768 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:30:36,768 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:30:36,768 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:30:36,768 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:30:49,683 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:30:49,683 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:30:49,781 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:30:49,784 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:30:49,785 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:30:49,785 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:30:50,285 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:30:50,294 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:30:50,294 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:30:50,294 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:30:50,294 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:30:50,295 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:30:50,295 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:30:50,295 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:30:50,300 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:30:50,304 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:30:50,305 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:30:50,306 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:30:50,307 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:30:50,309 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:30:50,309 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:30:50,311 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:30:50,311 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:30:50,312 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:30:50,312 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:30:50,312 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:30:50,312 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:30:50,312 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:30:50,312 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:30:50,343 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:30:50,344 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:30:50,344 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:30:50,344 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:30:50,344 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:30:50,344 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:31:11,548 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:31:11,548 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:31:11,629 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:31:11,632 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:31:11,633 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:31:11,633 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:31:12,052 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:31:12,060 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:31:12,060 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:31:12,060 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:31:12,060 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:31:12,060 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:31:12,060 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:31:12,061 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:31:12,065 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:31:12,069 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:31:12,070 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:31:12,071 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:31:12,071 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:31:12,073 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:31:12,074 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:31:12,075 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:31:12,075 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:31:12,076 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:31:12,076 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:31:12,076 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:31:12,076 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:31:12,076 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:31:12,076 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:31:12,108 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:31:12,108 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:31:12,108 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:31:12,108 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:31:12,108 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:31:12,108 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:33:07,275 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:33:07,276 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:33:07,356 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:33:07,359 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:33:07,360 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:33:07,360 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:33:07,759 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:33:07,764 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:33:07,764 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:33:07,764 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:33:07,764 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:33:07,765 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:33:07,765 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:33:07,765 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:33:07,769 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:33:07,773 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:33:07,774 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:33:07,775 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:33:07,775 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:33:07,777 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:33:07,778 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:33:07,779 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:33:07,779 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:33:07,780 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:33:07,780 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:33:07,780 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:33:07,780 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:33:07,780 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:33:07,780 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:33:07,811 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:33:07,811 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:33:07,812 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:33:07,812 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:33:07,812 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:33:07,812 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:33:25,128 - backend.app.services.prompt_embedding_service - INFO - 创建PromptEmbeddingService单例实例
+2025-03-26 02:33:25,128 - backend.app.embeddings.service - INFO - 创建EmbeddingService单例实例
+2025-03-26 02:33:25,129 - backend.app.embeddings.service - INFO - 初始化EmbeddingService，使用关键词匹配方法而非嵌入模型
+2025-03-26 02:33:25,129 - backend.app.embeddings.service - INFO - 从节点模板服务加载节点定义
+2025-03-26 02:33:25,129 - backend.app.embeddings.service - INFO - 成功从模板服务加载 6 个节点定义
+2025-03-26 02:33:25,129 - backend.app.services.prompt_embedding_service - INFO - EmbeddingService单例实例已初始化并缓存
+2025-03-26 02:33:25,136 - backend.workflow - INFO - 开始处理用户输入: 创建movel节点给我
+2025-03-26 02:33:25,136 - backend.workflow - INFO - 收集所有上下文信息用于DeepSeek交互
+2025-03-26 02:33:25,136 - backend.workflow - ERROR - 获取当前流程图信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 02:33:25,136 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 957, in _get_current_flow_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 02:33:25,136 - backend.workflow - ERROR - 获取当前用户信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 02:33:25,137 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 1116, in _get_current_user_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 02:33:25,137 - backend.workflow - INFO - 全局变量文件不存在: global_variables.json
+2025-03-26 02:33:25,137 - backend.workflow - INFO - 成功获取系统信息
+2025-03-26 02:33:25,137 - backend.workflow - INFO - 成功收集所有上下文信息
+2025-03-26 02:33:25,137 - backend.workflow - INFO - 添加上下文信息到用户输入
+2025-03-26 02:33:25,137 - backend.app.services.prompt_expansion_service - INFO - 调用DeepSeek API，模型: deepseek-chat, API基础URL: https://api.deepseek.com
+2025-03-26 02:33:25,137 - backend.app.services.prompt_expansion_service - INFO - 准备向DeepSeek API发送请求，消息长度: 640
+2025-03-26 02:33:25,137 - backend.app.services.prompt_expansion_service - INFO - API密钥前4位: sk-f
+2025-03-26 02:33:25,416 - httpx - INFO - HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+2025-03-26 02:33:37,434 - backend.app.services.prompt_expansion_service - INFO - DeepSeek API响应成功
+2025-03-26 02:33:37,435 - backend.workflow - INFO - 扩展后的提示: 步骤1: 确定节点类型为处理节点(process)
+步骤2: 设置节点名称为"movel"
+步骤3: 确认节点属性(如需要添加特定属性，请提供详细信息)
+步骤4: 将movel节点连接到流程图中的适当位置(如需要连接其他节点，请提供目标节点信息)
+
+缺少信息: 
+- movel节点的具体功能或操作内容
+- 是否需要连接其他节点(如开始节点或结束节点)
+- 需要设置的节点属性(如果有)
+2025-03-26 02:33:37,435 - backend.workflow - ERROR - 处理用户输入时出错: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+2025-03-26 02:33:37,438 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 246, in process_user_input
+    is_tool_request, tool_name, tool_params = self.expansion_service.check_direct_tool_request(user_input)
+AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+
+2025-03-26 02:42:25,113 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:42:25,113 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:42:25,193 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:42:25,196 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:42:25,197 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:42:25,197 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:42:25,612 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:42:25,617 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:42:25,617 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:42:25,617 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:42:25,617 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:42:25,618 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:42:25,618 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:42:25,618 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:42:25,623 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:42:25,626 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:42:25,627 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:42:25,628 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:42:25,628 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:42:25,630 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:42:25,631 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:42:25,632 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:42:25,632 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:42:25,633 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:42:25,633 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:42:25,633 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:42:25,634 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:42:25,634 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:42:25,634 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:42:25,665 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:42:25,665 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:42:25,665 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:42:25,665 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:42:25,665 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:42:25,665 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:42:44,335 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:42:44,335 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:42:44,416 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:42:44,418 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:42:44,419 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:42:44,419 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:42:44,834 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:42:44,838 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:42:44,838 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:42:44,838 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:42:44,838 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:42:44,839 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:42:44,839 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:42:44,839 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:42:44,844 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:42:44,848 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:42:44,849 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:42:44,849 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:42:44,850 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:42:44,852 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:42:44,852 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:42:44,854 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:42:44,854 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:42:44,855 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:42:44,855 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:42:44,855 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:42:44,855 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:42:44,855 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:42:44,855 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:42:44,886 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:42:44,886 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:42:44,886 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:42:44,886 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:42:44,886 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:42:44,886 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:43:34,156 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:43:34,156 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:43:34,234 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:43:34,237 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:43:34,238 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:43:34,238 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:43:34,641 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:43:34,645 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:43:34,645 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:43:34,645 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:43:34,646 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:43:34,646 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:43:34,646 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:43:34,647 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:43:34,651 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:43:34,655 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:43:34,656 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:43:34,657 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:43:34,657 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:43:34,659 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:43:34,660 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:43:34,661 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:43:34,661 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:43:34,662 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:43:34,662 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:43:34,662 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:43:34,662 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:43:34,662 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:43:34,662 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:43:34,693 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:43:34,693 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:43:34,693 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:43:34,693 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:43:34,693 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:43:34,693 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:44:25,610 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:44:25,610 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:44:25,690 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:44:25,693 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:44:25,694 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:44:25,694 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:44:26,109 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:44:26,114 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:44:26,114 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:44:26,114 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:44:26,114 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:44:26,115 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:44:26,115 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:44:26,115 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:44:26,120 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:44:26,123 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:44:26,124 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:44:26,125 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:44:26,125 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:44:26,127 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:44:26,128 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:44:26,129 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:44:26,129 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:44:26,130 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:44:26,130 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:44:26,130 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:44:26,130 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:44:26,130 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:44:26,130 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:44:26,161 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:44:26,161 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:44:26,161 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:44:26,161 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:44:26,161 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:44:26,161 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:45:14,577 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:45:14,577 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:45:14,660 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:45:14,663 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:45:14,664 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:45:14,664 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:45:15,089 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:45:15,094 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:45:15,094 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:45:15,094 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:45:15,094 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:45:15,095 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:45:15,095 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:45:15,095 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:45:15,101 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:45:15,104 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:45:15,106 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:45:15,106 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:45:15,107 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:45:15,109 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:45:15,109 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:45:15,111 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:45:15,111 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:45:15,112 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:45:15,112 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:45:15,112 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:45:15,112 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:45:15,112 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:45:15,112 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:45:15,144 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:45:15,145 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:45:15,145 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:45:15,145 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:45:15,145 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:45:15,145 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:45:58,706 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:45:58,706 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:45:58,786 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:45:58,788 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:45:58,789 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:45:58,789 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:45:59,192 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:45:59,196 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:45:59,197 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:45:59,197 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:45:59,197 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:45:59,197 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:45:59,198 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:45:59,198 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:45:59,203 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:45:59,206 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:45:59,207 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:45:59,208 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:45:59,208 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:45:59,210 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:45:59,211 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:45:59,212 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:45:59,212 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:45:59,213 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:45:59,213 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:45:59,213 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:45:59,213 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:45:59,213 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:45:59,213 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:45:59,244 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:45:59,244 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:45:59,244 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:45:59,244 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:45:59,244 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:45:59,244 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:47:13,145 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:47:13,145 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:47:13,229 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:47:13,232 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:47:13,233 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:47:13,233 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:47:13,669 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:47:13,674 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:47:13,674 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:47:13,674 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:47:13,674 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:47:13,675 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:47:13,675 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:47:13,675 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:47:13,680 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:47:13,683 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:47:13,684 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:47:13,685 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:47:13,685 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:47:13,688 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:47:13,688 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:47:13,690 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:47:13,690 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:47:13,691 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:47:13,691 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:47:13,691 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:47:13,691 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:47:13,691 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:47:13,691 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:47:13,722 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:47:13,722 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:47:13,722 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:47:13,722 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:47:13,722 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:47:13,722 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:48:05,414 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:48:05,414 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:48:05,498 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:48:05,501 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:48:05,502 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:48:05,502 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:48:05,932 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:48:05,937 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:48:05,937 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:48:05,937 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:48:05,937 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:48:05,938 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:48:05,938 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:48:05,938 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:48:05,943 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:48:05,946 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:48:05,947 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:48:05,948 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:48:05,948 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:48:05,951 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:48:05,951 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:48:05,952 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:48:05,952 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:48:05,953 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:48:05,953 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:48:05,953 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:48:05,953 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:48:05,954 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:48:05,954 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:48:05,985 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:48:05,985 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:48:05,985 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:48:05,985 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:48:05,985 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:48:05,985 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:48:54,378 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:48:54,379 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:48:54,462 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:48:54,465 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:48:54,466 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:48:54,466 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:48:54,890 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:48:54,894 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:48:54,894 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:48:54,894 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:48:54,894 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:48:54,895 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:48:54,895 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:48:54,895 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:48:54,900 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:48:54,904 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:48:54,905 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:48:54,906 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:48:54,906 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:48:54,908 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:48:54,908 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:48:54,910 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:48:54,910 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:48:54,911 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:48:54,912 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:48:54,912 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:48:54,912 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:48:54,912 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:48:54,912 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:48:54,943 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:48:54,943 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:48:54,943 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:48:54,943 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:48:54,943 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:48:54,943 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:49:36,709 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:49:36,709 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:49:36,793 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:49:36,796 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:49:36,797 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:49:36,797 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:49:37,215 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:49:37,219 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:49:37,220 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:49:37,220 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:49:37,220 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:49:37,220 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:49:37,220 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:49:37,221 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:49:37,225 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:49:37,229 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:49:37,230 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:49:37,231 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:49:37,231 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:49:37,233 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:49:37,234 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:49:37,235 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:49:37,235 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:49:37,236 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:49:37,236 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:49:37,236 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:49:37,236 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:49:37,236 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:49:37,236 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:49:37,267 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:49:37,267 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:49:37,267 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:49:37,267 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:49:37,267 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:49:37,267 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:49:49,235 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:49:49,235 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:49:49,319 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:49:49,322 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:49:49,323 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:49:49,323 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:49:49,758 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:49:49,762 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:49:49,762 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:49:49,762 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:49:49,762 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:49:49,763 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:49:49,763 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:49:49,763 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:49:49,768 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:49:49,771 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:49:49,773 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:49:49,773 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:49:49,774 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:49:49,776 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:49:49,776 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:49:49,777 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:49:49,777 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:49:49,779 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:49:49,779 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:49:49,779 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:49:49,779 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:49:49,779 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:49:49,779 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:49:49,810 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:49:49,810 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:49:49,810 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:49:49,810 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:49:49,810 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:49:49,810 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:49:59,266 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:49:59,266 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:49:59,348 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:49:59,351 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:49:59,352 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:49:59,352 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:49:59,778 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:49:59,784 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:49:59,784 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:49:59,784 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:49:59,784 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:49:59,785 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:49:59,785 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:49:59,785 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:49:59,790 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:49:59,793 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:49:59,794 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:49:59,795 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:49:59,796 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:49:59,798 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:49:59,798 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:49:59,799 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:49:59,799 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:49:59,801 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:49:59,801 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:49:59,801 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:49:59,801 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:49:59,801 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:49:59,801 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:49:59,833 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:49:59,834 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:49:59,834 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:49:59,834 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:49:59,834 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:49:59,834 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:07,193 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:07,193 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:07,275 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:07,277 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:07,278 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:07,278 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:07,702 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:07,707 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:07,707 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:07,707 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:07,707 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:07,708 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:07,708 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:07,708 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:07,713 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:07,716 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:07,718 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:07,718 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:07,719 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:07,721 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:07,721 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:07,723 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:07,723 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:07,724 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:07,724 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:07,724 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:07,724 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:07,724 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:07,724 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:07,755 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:07,755 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:07,755 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:07,755 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:07,755 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:07,755 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:14,912 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:14,912 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:14,994 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:14,997 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:14,998 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:14,998 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:15,420 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:15,424 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:15,425 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:15,425 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:15,425 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:15,425 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:15,425 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:15,426 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:15,430 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:15,434 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:15,435 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:15,435 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:15,436 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:15,438 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:15,438 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:15,440 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:15,440 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:15,441 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:15,441 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:15,441 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:15,441 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:15,441 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:15,441 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:15,472 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:15,472 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:15,473 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:15,473 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:15,473 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:15,473 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:22,630 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:22,630 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:22,711 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:22,714 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:22,715 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:22,715 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:23,139 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:23,144 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:23,144 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:23,144 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:23,144 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:23,145 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:23,145 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:23,145 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:23,150 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:23,153 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:23,154 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:23,155 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:23,156 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:23,158 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:23,159 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:23,160 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:23,160 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:23,161 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:23,161 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:23,161 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:23,161 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:23,161 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:23,162 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:23,192 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:23,193 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:23,193 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:23,193 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:23,193 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:23,193 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:32,647 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:32,647 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:32,728 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:32,731 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:32,732 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:32,732 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:33,151 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:33,156 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:33,156 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:33,156 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:33,156 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:33,157 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:33,157 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:33,157 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:33,163 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:33,166 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:33,168 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:33,168 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:33,169 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:33,171 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:33,171 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:33,173 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:33,173 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:33,174 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:33,174 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:33,174 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:33,174 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:33,174 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:33,174 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:33,205 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:33,205 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:33,205 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:33,205 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:33,205 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:33,205 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:41,090 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:41,090 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:41,170 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:41,173 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:41,174 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:41,174 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:41,592 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:41,597 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:41,597 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:41,597 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:41,597 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:41,598 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:41,598 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:41,598 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:41,603 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:41,607 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:41,608 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:41,609 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:41,609 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:41,611 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:41,612 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:41,613 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:41,613 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:41,614 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:41,614 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:41,614 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:41,614 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:41,614 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:41,614 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:41,645 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:41,646 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:41,646 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:41,646 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:41,646 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:41,646 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:48,191 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:48,191 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:48,274 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:48,276 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:48,277 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:48,277 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:48,706 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:48,710 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:48,711 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:48,711 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:48,711 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:48,711 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:48,711 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:48,712 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:48,716 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:48,720 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:48,721 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:48,722 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:48,722 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:48,724 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:48,725 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:48,726 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:48,726 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:48,727 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:48,727 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:48,727 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:48,727 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:48,727 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:48,727 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:48,758 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:48,759 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:48,759 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:48,759 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:48,759 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:48,759 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:50:55,897 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:50:55,897 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:50:55,979 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:50:55,982 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:50:55,983 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:50:55,983 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:50:56,412 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:50:56,417 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:50:56,417 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:50:56,417 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:50:56,417 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:50:56,418 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:50:56,418 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:50:56,418 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:50:56,423 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:50:56,426 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:50:56,428 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:50:56,428 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:50:56,429 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:50:56,431 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:50:56,431 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:50:56,432 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:50:56,432 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:50:56,433 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:50:56,434 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:50:56,434 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:50:56,434 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:50:56,434 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:50:56,434 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:50:56,467 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:50:56,467 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:50:56,467 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:50:56,467 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:50:56,467 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:50:56,467 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:51:08,113 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:51:08,113 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:51:08,195 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:51:08,198 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:51:08,198 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:51:08,199 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:51:08,664 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:51:08,668 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:51:08,668 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:51:08,668 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:51:08,668 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:51:08,669 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:51:08,669 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:51:08,670 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:51:08,674 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:51:08,678 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:51:08,679 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:51:08,680 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:51:08,680 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:51:08,682 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:51:08,683 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:51:08,684 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:51:08,684 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:51:08,685 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:51:08,685 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:51:08,686 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:51:08,686 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:51:08,686 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:51:08,686 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:51:08,717 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:51:08,717 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:51:08,717 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:51:08,717 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:51:08,717 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:51:08,717 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:51:37,237 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:51:37,237 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:51:37,317 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:51:37,320 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:51:37,321 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:51:37,321 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:51:37,731 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:51:37,736 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:51:37,736 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:51:37,736 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:51:37,736 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:51:37,737 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:51:37,737 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:51:37,737 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:51:37,742 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:51:37,745 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:51:37,746 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:51:37,747 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:51:37,748 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:51:37,750 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:51:37,750 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:51:37,751 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:51:37,751 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:51:37,753 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:51:37,753 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:51:37,753 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:51:37,753 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:51:37,753 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:51:37,753 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:51:37,786 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:51:37,787 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:51:37,787 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:51:37,787 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:51:37,787 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:51:37,787 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:51:59,977 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:51:59,977 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:52:00,060 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:52:00,063 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:52:00,064 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:52:00,064 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:52:00,496 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:52:00,501 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:52:00,501 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:52:00,501 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:52:00,501 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:52:00,502 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:52:00,502 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:52:00,502 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:52:00,507 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:52:00,511 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:52:00,512 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:52:00,512 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:52:00,513 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:52:00,515 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:52:00,515 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:52:00,517 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:52:00,517 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:52:00,518 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:52:00,518 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:52:00,518 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:52:00,518 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:52:00,518 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:52:00,518 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:52:00,549 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:52:00,549 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:52:00,549 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:52:00,549 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:52:00,549 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:52:00,549 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:52:50,951 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:52:50,951 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:52:51,031 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:52:51,033 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:52:51,034 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:52:51,034 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:52:51,460 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:52:51,464 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:52:51,464 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:52:51,464 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:52:51,464 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:52:51,465 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:52:51,465 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:52:51,465 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:52:51,471 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:52:51,474 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:52:51,475 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:52:51,476 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:52:51,476 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:52:51,479 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:52:51,479 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:52:51,480 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:52:51,480 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:52:51,481 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:52:51,481 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:52:51,482 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:52:51,482 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:52:51,482 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:52:51,482 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:52:51,513 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:52:51,513 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:52:51,513 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:52:51,513 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:52:51,513 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:52:51,513 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:53:40,106 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:53:40,106 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:53:40,189 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:53:40,191 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:53:40,192 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:53:40,192 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:53:40,603 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:53:40,609 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:53:40,609 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:53:40,609 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:53:40,609 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:53:40,610 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:53:40,610 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:53:40,610 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:53:40,615 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:53:40,619 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:53:40,620 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:53:40,621 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:53:40,621 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:53:40,624 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:53:40,624 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:53:40,626 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:53:40,626 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:53:40,628 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:53:40,628 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:53:40,628 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:53:40,628 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:53:40,628 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:53:40,628 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:53:40,659 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:53:40,659 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:53:40,660 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:53:40,660 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:53:40,660 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:53:40,660 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:54:48,191 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:54:48,191 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:54:48,272 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:54:48,275 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:54:48,275 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:54:48,276 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:54:48,697 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:54:48,702 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:54:48,702 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:54:48,702 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:54:48,702 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:54:48,703 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:54:48,703 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:54:48,703 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:54:48,708 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:54:48,711 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:54:48,712 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:54:48,713 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:54:48,713 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:54:48,715 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:54:48,716 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:54:48,717 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:54:48,717 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:54:48,718 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:54:48,718 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:54:48,718 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:54:48,718 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:54:48,718 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:54:48,718 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:54:48,749 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:54:48,750 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:54:48,750 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:54:48,750 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:54:48,750 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:54:48,750 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:55:30,620 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:55:30,620 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:55:30,700 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:55:30,703 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:55:30,703 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:55:30,704 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:55:31,124 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:55:31,129 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:55:31,129 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:55:31,129 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:55:31,129 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:55:31,130 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:55:31,130 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:55:31,130 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:55:31,135 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:55:31,138 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:55:31,140 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:55:31,140 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:55:31,141 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:55:31,143 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:55:31,143 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:55:31,144 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:55:31,144 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:55:31,146 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:55:31,146 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:55:31,146 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:55:31,146 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:55:31,146 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:55:31,146 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:55:31,177 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:55:31,177 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:55:31,177 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:55:31,177 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:55:31,177 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:55:31,177 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 02:55:42,634 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 02:55:42,634 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 02:55:42,716 - backend.app.main - INFO - 导入database成功
+2025-03-26 02:55:42,719 - backend.app.main - INFO - 导入models成功
+2025-03-26 02:55:42,720 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 02:55:42,720 - backend.app.main - INFO - 导入config成功
+2025-03-26 02:55:43,150 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 02:55:43,155 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 02:55:43,155 - backend.app.main - INFO - 导入utils成功
+2025-03-26 02:55:43,155 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 02:55:43,155 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 02:55:43,156 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 02:55:43,156 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 02:55:43,156 - backend.app.main - INFO - 注册路由...
+2025-03-26 02:55:43,161 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 02:55:43,165 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 02:55:43,166 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 02:55:43,167 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 02:55:43,167 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 02:55:43,170 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 02:55:43,170 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 02:55:43,171 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 02:55:43,171 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 02:55:43,173 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 02:55:43,173 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 02:55:43,173 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 02:55:43,173 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 02:55:43,173 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 02:55:43,173 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 02:55:43,204 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 02:55:43,204 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 02:55:43,204 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 02:55:43,205 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 02:55:43,205 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 02:55:43,205 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:11:15,013 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:11:15,013 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:11:15,093 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:11:15,096 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:11:15,096 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:11:15,096 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:11:15,511 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:11:15,516 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:11:15,516 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:11:15,516 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:11:15,516 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:11:15,517 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:11:15,517 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:11:15,517 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:11:15,522 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:11:15,525 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:11:15,526 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:11:15,527 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:11:15,528 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:11:15,530 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:11:15,530 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:11:15,531 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:11:15,531 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:11:15,532 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:11:15,532 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:11:15,532 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:11:15,533 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:11:15,533 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:11:15,533 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:11:15,563 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:11:15,563 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:11:15,563 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:11:15,563 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:11:15,563 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:11:15,563 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:11:37,540 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:11:37,540 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:11:37,619 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:11:37,622 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:11:37,623 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:11:37,623 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:11:38,040 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:11:38,045 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:11:38,045 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:11:38,045 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:11:38,045 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:11:38,046 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:11:38,046 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:11:38,046 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:11:38,051 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:11:38,054 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:11:38,055 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:11:38,056 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:11:38,056 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:11:38,059 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:11:38,059 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:11:38,060 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:11:38,060 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:11:38,062 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:11:38,062 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:11:38,062 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:11:38,062 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:11:38,062 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:11:38,062 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:11:38,093 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:11:38,093 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:11:38,093 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:11:38,093 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:11:38,093 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:11:38,093 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:12:00,975 - backend.app.services.prompt_embedding_service - INFO - 创建PromptEmbeddingService单例实例
+2025-03-26 03:12:00,975 - backend.app.embeddings.service - INFO - 创建EmbeddingService单例实例
+2025-03-26 03:12:00,975 - backend.app.embeddings.service - INFO - 初始化EmbeddingService，使用关键词匹配方法而非嵌入模型
+2025-03-26 03:12:00,975 - backend.app.embeddings.service - INFO - 从节点模板服务加载节点定义
+2025-03-26 03:12:00,975 - backend.app.embeddings.service - INFO - 成功从模板服务加载 6 个节点定义
+2025-03-26 03:12:00,975 - backend.app.services.prompt_embedding_service - INFO - EmbeddingService单例实例已初始化并缓存
+2025-03-26 03:12:00,982 - backend.workflow - INFO - 开始处理用户输入: 创建一个movel节点到页面上
+2025-03-26 03:12:00,982 - backend.workflow - INFO - 收集所有上下文信息用于DeepSeek交互
+2025-03-26 03:12:00,982 - backend.workflow - ERROR - 获取当前流程图信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 03:12:00,983 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 957, in _get_current_flow_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 03:12:00,983 - backend.workflow - ERROR - 获取当前用户信息时出错: No module named 'backend.app.services.flow_service'
+2025-03-26 03:12:00,983 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 1116, in _get_current_user_info
+    from backend.app.services.flow_service import FlowService
+ModuleNotFoundError: No module named 'backend.app.services.flow_service'
+
+2025-03-26 03:12:00,983 - backend.workflow - INFO - 全局变量文件不存在: global_variables.json
+2025-03-26 03:12:00,983 - backend.workflow - INFO - 成功获取系统信息
+2025-03-26 03:12:00,983 - backend.workflow - INFO - 成功收集所有上下文信息
+2025-03-26 03:12:00,983 - backend.workflow - INFO - 添加上下文信息到用户输入
+2025-03-26 03:12:00,983 - backend.app.services.prompt_expansion_service - INFO - 调用DeepSeek API，模型: deepseek-chat, API基础URL: https://api.deepseek.com
+2025-03-26 03:12:00,983 - backend.app.services.prompt_expansion_service - INFO - 准备向DeepSeek API发送请求，消息长度: 644
+2025-03-26 03:12:00,983 - backend.app.services.prompt_expansion_service - INFO - API密钥前4位: sk-f
+2025-03-26 03:12:01,259 - httpx - INFO - HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+2025-03-26 03:12:08,420 - backend.app.services.prompt_expansion_service - INFO - DeepSeek API响应成功
+2025-03-26 03:12:08,421 - backend.workflow - INFO - 扩展后的提示: 步骤1: 确认节点类型为"movel"节点（假设为处理节点/process）
+步骤2: 设置节点名称为"movel"（或由用户指定）
+步骤3: 设置节点属性为空（或由用户指定）
+步骤4: 在流程图编辑界面添加该节点到画布
+步骤5: 连接该节点到流程中的适当位置（如需要）
+2025-03-26 03:12:08,422 - backend.workflow - ERROR - 处理用户输入时出错: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+2025-03-26 03:12:08,425 - backend.workflow - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/app/services/workflow_prompt_service.py", line 246, in process_user_input
+    is_tool_request, tool_name, tool_params = self.expansion_service.check_direct_tool_request(user_input)
+AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_tool_request'
+
+2025-03-26 03:27:55,919 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:27:55,919 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:27:56,000 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:27:56,003 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:27:56,004 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:27:56,004 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:27:56,436 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:27:56,441 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:27:56,441 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:27:56,441 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:27:56,441 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:27:56,442 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:27:56,442 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:27:56,443 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:27:56,448 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:27:56,451 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:27:56,452 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:27:56,453 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:27:56,453 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:27:56,455 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:27:56,456 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:27:56,457 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:27:56,457 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:27:56,458 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:27:56,459 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:27:56,459 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:27:56,459 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:27:56,459 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:27:56,459 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:27:56,490 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:27:56,490 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:27:56,490 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:27:56,490 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:27:56,490 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:27:56,490 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:28:09,606 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:28:09,606 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:28:09,694 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:28:09,697 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:28:09,698 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:28:09,698 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:28:10,134 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:28:10,139 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:28:10,139 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:28:10,139 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:28:10,139 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:28:10,140 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:28:10,140 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:28:10,140 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:28:10,145 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:28:10,149 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:28:10,150 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:28:10,151 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:28:10,152 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:28:10,154 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:28:10,154 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:28:10,156 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:28:10,156 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:28:10,157 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:28:10,157 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:28:10,157 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:28:10,157 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:28:10,157 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:28:10,157 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:28:10,189 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:28:10,189 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:28:10,189 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:28:10,189 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:28:10,189 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:28:10,189 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:28:22,160 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:28:22,160 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:28:22,243 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:28:22,246 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:28:22,247 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:28:22,247 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:28:22,692 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:28:22,697 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:28:22,697 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:28:22,697 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:28:22,697 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:28:22,698 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:28:22,698 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:28:22,698 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:28:22,703 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:28:22,707 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:28:22,708 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:28:22,709 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:28:22,709 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:28:22,712 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:28:22,712 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:28:22,713 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:28:22,713 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:28:22,715 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:28:22,715 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:28:22,715 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:28:22,715 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:28:22,715 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:28:22,715 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:28:22,746 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:28:22,746 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:28:22,746 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:28:22,746 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:28:22,746 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:28:22,746 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:28:54,389 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:28:54,389 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:28:54,480 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:28:54,483 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:28:54,484 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:28:54,484 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:28:54,930 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:28:54,937 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:28:54,937 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:28:54,937 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:28:54,937 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:28:54,938 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:28:54,938 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:28:54,939 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:28:54,945 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:28:54,949 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:28:54,950 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:28:54,951 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:28:54,952 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:28:54,954 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:28:54,954 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:28:54,956 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:28:54,956 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:28:54,957 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:28:54,957 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:28:54,957 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:28:54,957 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:28:54,957 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:28:54,957 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:28:54,989 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:28:54,989 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:28:54,989 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:28:54,989 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:28:54,989 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:28:54,989 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:45:24,782 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:45:24,783 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:45:24,860 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:45:24,863 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:45:24,864 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:45:24,864 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:45:25,262 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:45:25,267 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:45:25,267 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:45:25,267 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:45:25,267 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:45:25,268 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:45:25,268 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:45:25,268 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:45:25,273 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:45:25,276 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:45:25,277 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:45:25,278 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:45:25,279 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:45:25,281 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:45:25,281 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:45:25,282 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:45:25,282 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:45:25,284 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:45:25,284 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:45:25,284 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:45:25,284 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:45:25,284 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:45:25,284 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:45:25,315 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:45:25,315 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:45:25,315 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:45:25,315 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:45:25,315 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:45:25,315 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:47:27,551 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:47:27,551 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:47:27,632 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:47:27,634 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:47:27,635 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:47:27,635 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:47:28,054 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:47:28,059 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:47:28,059 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:47:28,059 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:47:28,059 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:47:28,060 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:47:28,060 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:47:28,060 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:47:28,065 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:47:28,069 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:47:28,070 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:47:28,071 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:47:28,071 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:47:28,073 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:47:28,074 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:47:28,075 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:47:28,075 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:47:28,076 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:47:28,076 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:47:28,076 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:47:28,076 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:47:28,076 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:47:28,076 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:47:28,110 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:47:28,110 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:47:28,110 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:47:28,110 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:47:28,110 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:47:28,110 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:49:06,043 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:49:06,044 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:49:06,126 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:49:06,129 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:49:06,130 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:49:06,130 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:49:06,579 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:49:06,584 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:49:06,584 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:49:06,584 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:49:06,584 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:49:06,585 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:49:06,585 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:49:06,585 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:49:06,590 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:49:06,594 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:49:06,596 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:49:06,597 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:49:06,598 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:49:06,600 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:49:06,601 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:49:06,602 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:49:06,602 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:49:06,603 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:49:06,603 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:49:06,603 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:49:06,603 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:49:06,603 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:49:06,603 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:49:06,643 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:49:06,643 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:49:06,643 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:49:06,643 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:49:06,643 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:49:06,643 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:50:28,648 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:50:28,648 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:50:28,733 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:50:28,736 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:50:28,737 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:50:28,737 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:50:29,186 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:50:29,191 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:50:29,191 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:50:29,191 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:50:29,191 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:50:29,192 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:50:29,192 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:50:29,192 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:50:29,197 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:50:29,201 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:50:29,203 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:50:29,203 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:50:29,204 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:50:29,206 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:50:29,206 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:50:29,208 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:50:29,208 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:50:29,209 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:50:29,209 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:50:29,209 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:50:29,209 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:50:29,209 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:50:29,209 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:50:29,240 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:50:29,240 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:50:29,240 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:50:29,240 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:50:29,240 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:50:29,240 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-03-26 03:50:46,726 - backend.app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-03-26 03:50:46,726 - backend.app.main - INFO - 开始导入模块...
+2025-03-26 03:50:46,809 - backend.app.main - INFO - 导入database成功
+2025-03-26 03:50:46,812 - backend.app.main - INFO - 导入models成功
+2025-03-26 03:50:46,813 - backend.app.main - INFO - 导入embedding模型成功
+2025-03-26 03:50:46,813 - backend.app.main - INFO - 导入config成功
+2025-03-26 03:50:47,230 - backend.app.main - INFO - 导入基本路由成功
+2025-03-26 03:50:47,234 - backend.app.main - INFO - 导入workflow_router成功
+2025-03-26 03:50:47,234 - backend.app.main - INFO - 导入utils成功
+2025-03-26 03:50:47,234 - backend.app.main - INFO - 导入dependencies成功
+2025-03-26 03:50:47,234 - backend.app.main - INFO - 创建数据库表...
+2025-03-26 03:50:47,235 - backend.app.main - INFO - 数据库表创建成功
+2025-03-26 03:50:47,235 - backend.app.main - INFO - 初始化FastAPI应用...
+2025-03-26 03:50:47,235 - backend.app.main - INFO - 注册路由...
+2025-03-26 03:50:47,240 - backend.app.main - INFO - 注册user路由成功
+2025-03-26 03:50:47,244 - backend.app.main - INFO - 注册flow路由成功
+2025-03-26 03:50:47,245 - backend.app.main - INFO - 注册llm路由成功
+2025-03-26 03:50:47,245 - backend.app.main - INFO - 注册email路由成功
+2025-03-26 03:50:47,246 - backend.app.main - INFO - 注册auth路由成功
+2025-03-26 03:50:47,248 - backend.app.main - INFO - 注册embedding路由成功
+2025-03-26 03:50:47,248 - backend.app.main - INFO - 注册node_templates路由成功
+2025-03-26 03:50:47,250 - backend.app.main - INFO - 注册workflow路由成功
+2025-03-26 03:50:47,250 - backend.app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-03-26 03:50:47,251 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-03-26 03:50:47,251 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-03-26 03:50:47,251 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-03-26 03:50:47,251 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-03-26 03:50:47,251 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com, API密钥: sk-f***
+2025-03-26 03:50:47,251 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com
+2025-03-26 03:50:47,282 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-03-26 03:50:47,282 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-03-26 03:50:47,282 - backend.app.startup - INFO - 数据库URL: sqlite:///./flow_editor.db
+2025-03-26 03:50:47,282 - backend.app.startup - INFO - ✓ 调试模式已禁用
+2025-03-26 03:50:47,282 - backend.app.startup - INFO - API前缀: /api
+2025-03-26 03:50:47,282 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *

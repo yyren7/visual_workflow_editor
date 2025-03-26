@@ -1,0 +1,339 @@
+{
+  "generated_at": "2025-03-26T23:56:38.728999",
+  "database_url": "sqlite:///./flow_editor.db",
+  "tables": {
+    "flow_variables": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "flow_id",
+          "type": "VARCHAR(36)",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "key",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "value",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "flow_id"
+          ],
+          "referred_table": "flows",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indices": [
+        {
+          "name": "ix_flow_variables_id",
+          "columns": [
+            "id"
+          ],
+          "unique": 0
+        }
+      ],
+      "constraints": [
+        {
+          "name": "uix_flow_variable",
+          "columns": [
+            "flow_id",
+            "key"
+          ]
+        }
+      ],
+      "row_count": 0
+    },
+    "flows": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "VARCHAR(36)",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "flow_data",
+          "type": "JSON",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "owner_id",
+          "type": "VARCHAR(36)",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "owner_id"
+          ],
+          "referred_table": "users",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indices": [
+        {
+          "name": "ix_flows_id",
+          "columns": [
+            "id"
+          ],
+          "unique": 0
+        }
+      ],
+      "constraints": [],
+      "row_count": 10
+    },
+    "json_embeddings": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "json_data",
+          "type": "JSON",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "embedding_vector",
+          "type": "JSON",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "embedding_metadata",
+          "type": "JSON",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "model_name",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "FLOAT",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "updated_at",
+          "type": "FLOAT",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indices": [
+        {
+          "name": "ix_json_embeddings_id",
+          "columns": [
+            "id"
+          ],
+          "unique": 0
+        }
+      ],
+      "constraints": [],
+      "row_count": 0
+    },
+    "users": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "VARCHAR(36)",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "username",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "hashed_password",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indices": [
+        {
+          "name": "ix_users_id",
+          "columns": [
+            "id"
+          ],
+          "unique": 0
+        },
+        {
+          "name": "ix_users_username",
+          "columns": [
+            "username"
+          ],
+          "unique": 1
+        }
+      ],
+      "constraints": [],
+      "row_count": 3
+    },
+    "version_info": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "version",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "last_updated",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME",
+          "nullable": true,
+          "default": "None",
+          "autoincrement": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indices": [
+        {
+          "name": "ix_version_info_id",
+          "columns": [
+            "id"
+          ],
+          "unique": 0
+        }
+      ],
+      "constraints": [],
+      "row_count": 1
+    }
+  }
+}

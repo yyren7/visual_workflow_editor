@@ -4,22 +4,18 @@ from typing import Optional
 class EmbeddingConfig(BaseSettings):
     """Embedding配置"""
     
-    # 默认embedding模型配置
-    DEFAULT_MODEL_NAME: str = "node_database"  # 直接使用节点数据库而不是模型
+    # 默认配置
+    DEFAULT_MODEL_NAME: str = "keyword_matching"  # 改为更准确的名称，表示使用关键词匹配
     VECTOR_DIMENSION: int = 768  # 保持向量维度以兼容现有代码
     
-    # 相似度搜索配置 - 现在使用关键词匹配而非嵌入相似度
-    DEFAULT_SIMILARITY_THRESHOLD: float = 0.5  # 降低阈值使匹配更容易
+    # 相似度搜索配置
+    DEFAULT_SIMILARITY_THRESHOLD: float = 0.5
     DEFAULT_SEARCH_LIMIT: int = 10
     
-    # Gemini配置
-    GOOGLE_API_KEY: Optional[str] = None
-    
-    # 向量数据库配置
-    VECTOR_DB_TYPE: str = "docarray"  # 使用DocArrayInMemorySearch
-    VECTOR_DB_HOST: Optional[str] = None
-    VECTOR_DB_PORT: Optional[int] = None
-    VECTOR_DB_API_KEY: Optional[str] = None
+    # LMStudio API配置
+    USE_LMSTUDIO: bool = False  # 是否使用LMStudio API
+    LMSTUDIO_API_BASE_URL: str = "http://localhost:1234/v1"  # LMStudio API基础URL
+    LMSTUDIO_API_KEY: Optional[str] = None  # LMStudio API密钥(如需)
     
     class Config:
         env_prefix = "EMBEDDING_"  # 环境变量前缀

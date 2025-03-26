@@ -5,6 +5,7 @@ import { getFlow } from '../api/api';
 import FlowEditorWrapper from './FlowEditor';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { useFlowContext } from '../contexts/FlowContext';
 
 // 创建组件外的缓存，即使在StrictMode下组件重复挂载也能保持
 // 缓存最近的请求，避免重复调用API
@@ -41,6 +42,9 @@ const FlowLoader: React.FC = () => {
   const loadedFlowIdRef = useRef<string | null>(null);
   // 使用ref标记组件是否经历过初始渲染，避免StrictMode带来的重复请求
   const mountedRef = useRef(false);
+
+  // 使用FlowContext
+  const { setCurrentFlowId } = useFlowContext();
 
   // 封装获取流程图的函数，带有缓存功能
   const fetchFlowWithCache = async (flowId: string) => {
@@ -135,6 +139,10 @@ const FlowLoader: React.FC = () => {
           loadedFlowIdRef.current = targetFlowId;
           setLoadedFlowId(targetFlowId);
           
+          // 设置FlowContext中的当前流程图ID
+          setCurrentFlowId(targetFlowId);
+          console.log("设置当前流程图ID:", targetFlowId);
+          
           // 确保URL正确
           const targetUrl = `/flow?id=${targetFlowId}${userId ? `&user=${userId}` : ''}`;
           const currentPath = location.pathname + location.search;
@@ -187,8 +195,8 @@ const FlowLoader: React.FC = () => {
     // 执行加载
     loadFlowData();
     
-  // 注意：我们故意不将loadedFlowId作为依赖项，以防止重复加载
-  }, [flowId, flowIdFromQuery, userId, navigate, enqueueSnackbar, t]);
+  // 添加setCurrentFlowId作为依赖项
+  }, [flowId, flowIdFromQuery, userId, navigate, enqueueSnackbar, t, setCurrentFlowId]);
   
   // 添加一个新的useEffect来监听flow-changed事件
   useEffect(() => {
@@ -200,6 +208,8 @@ const FlowLoader: React.FC = () => {
         // 如果流程图ID已更改，更新URL并加载新流程图
         if (targetFlowId !== loadedFlowId) {
           console.log('接收到流程图变更事件:', targetFlowId);
+          // 设置FlowContext中的当前流程图ID
+          setCurrentFlowId(targetFlowId);
           // 更新URL，但不刷新整个页面
           navigate(`/flow?id=${targetFlowId}${userId ? `&user=${userId}` : ''}`, { replace: true });
         }
@@ -213,7 +223,7 @@ const FlowLoader: React.FC = () => {
     return () => {
       window.removeEventListener('flow-changed', handleFlowChanged as EventListener);
     };
-  }, [loadedFlowId, navigate]);
+  }, [loadedFlowId, navigate, setCurrentFlowId]);
 
   if (loading) {
     return (

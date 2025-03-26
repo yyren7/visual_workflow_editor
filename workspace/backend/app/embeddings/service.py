@@ -1,2 +1,0 @@
-from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-from langchain_community.vectorstores import DocArrayInMemorySearch 

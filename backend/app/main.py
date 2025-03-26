@@ -6,10 +6,55 @@ import sys
 import os
 import logging
 from pathlib import Path
+import logging.handlers
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
+# 创建logs目录
+log_dir = Path("backend/app/logs")
+log_dir.mkdir(parents=True, exist_ok=True)
+
+# 配置详细日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        # 控制台输出
+        logging.StreamHandler(),
+        # 文件输出
+        logging.handlers.RotatingFileHandler(
+            log_dir / "app.log", 
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5,
+            encoding='utf-8'
+        )
+    ]
+)
+
+# 创建单独的DeepSeek日志记录器
+deepseek_logger = logging.getLogger("backend.deepseek")
+deepseek_logger.setLevel(logging.DEBUG)
+deepseek_file_handler = logging.handlers.RotatingFileHandler(
+    log_dir / "deepseek_api.log",
+    maxBytes=20*1024*1024,  # 20MB
+    backupCount=10,
+    encoding='utf-8'
+)
+deepseek_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+deepseek_logger.addHandler(deepseek_file_handler)
+
+# 工作流处理日志记录器
+workflow_logger = logging.getLogger("backend.workflow")
+workflow_logger.setLevel(logging.DEBUG)
+workflow_file_handler = logging.handlers.RotatingFileHandler(
+    log_dir / "workflow.log",
+    maxBytes=20*1024*1024,  # 20MB
+    backupCount=10,
+    encoding='utf-8'
+)
+workflow_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+workflow_logger.addHandler(workflow_file_handler)
+
 logger = logging.getLogger(__name__)
+logger.info("日志系统已配置，将记录到 %s", log_dir)
 
 # 检查是否使用最小模式
 MINIMAL_MODE = os.environ.get("SKIP_COMPLEX_ROUTERS", "0") == "1"
@@ -37,7 +82,8 @@ try:
     from backend.app.config import Config
     logger.info("导入config成功")
     from backend.app.routers import (
-        user, flow, llm, email, auth, embedding_routes, node_templates
+        user, flow, llm, email, auth, embedding_routes, node_templates,
+        flow_router, flow_variables_router
     )
     logger.info("导入基本路由成功")
     
@@ -116,6 +162,11 @@ try:
             logger.error(f"注册workflow路由失败: {e}")
     else:
         logger.info("跳过注册workflow路由")
+
+    # 加载API路由
+    app.include_router(flow_router.router)
+    app.include_router(flow_variables_router.router)  # 添加流程图变量路由
+    logger.info("注册flow_variables路由成功")
 except Exception as e:
     logger.error(f"注册路由时出错: {e}")
     raise

@@ -52,7 +52,7 @@ import ProcessNode from './nodes/ProcessNode';
 import DecisionNode from './nodes/DecisionNode';
 import GenericNode from './nodes/GenericNode'; // 导入通用节点组件
 import NodeProperties from './NodeProperties';
-import GlobalVariables from './GlobalVariables';
+import FlowVariables from './FlowVariables';
 import ChatInterface from './ChatInterface';
 import NodeSelector from './NodeSelector';
 import DraggableResizableContainer from './DraggableResizableContainer'; // 导入可拖动调整大小的容器组件
@@ -121,7 +121,10 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [flowSelectOpen, setFlowSelectOpen] = useState<boolean>(false);
-  const [chatPosition, setChatPosition] = useState<{ x: number; y: number }>({ x: window.innerWidth - 400, y: window.innerHeight - 400 });
+  const [chatPosition, setChatPosition] = useState<{ x: number; y: number }>({ 
+    x: window.innerWidth - 720,
+    y: window.innerHeight - 620
+  });
   const [globalVarsPosition, setGlobalVarsPosition] = useState<{ x: number; y: number }>({ x: window.innerWidth - 400, y: 50 });
 
   // 窗口大小状态
@@ -158,21 +161,43 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
   // 窗口大小改变监听
   useEffect(() => {
     const handleResize = () => {
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+      
       setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight
+        width: newWidth,
+        height: newHeight
       });
       
-      // 更新组件位置
-      setChatPosition(prev => ({
-        x: Math.min(prev.x, window.innerWidth - 400),
-        y: Math.min(prev.y, window.innerHeight - 400)
-      }));
+      // 更新聊天框位置，确保其完全在可视区域内
+      setChatPosition(prev => {
+        // 确保不超出右边界
+        const maxX = newWidth - 720; // 700宽度 + 20右边距
+        // 确保不超出下边界
+        const maxY = newHeight - 620; // 600高度 + 20底部边距
+        // 确保不超出左边界（至少20px在可视区域内）
+        const minX = -680; // -700 + 20左边距
+        // 确保不超出上边界（至少顶部栏40px在可视区域内）
+        const minY = -560; // -600 + 40顶部栏高度
+        
+        return {
+          x: Math.min(Math.max(prev.x, minX), maxX),
+          y: Math.min(Math.max(prev.y, minY), maxY)
+        };
+      });
       
-      setGlobalVarsPosition(prev => ({
-        x: Math.min(prev.x, window.innerWidth - 400),
-        y: Math.min(prev.y, window.innerHeight - 400)
-      }));
+      // 更新全局变量面板位置
+      setGlobalVarsPosition(prev => {
+        const maxX = newWidth - 370; // 350宽度 + 20右边距
+        const maxY = newHeight - 420; // 400高度 + 20底部边距
+        const minX = -330; // -350 + 20左边距
+        const minY = -360; // -400 + 40顶部栏高度
+        
+        return {
+          x: Math.min(Math.max(prev.x, minX), maxX),
+          y: Math.min(Math.max(prev.y, minY), maxY)
+        };
+      });
     };
 
     window.addEventListener('resize', handleResize);
@@ -967,6 +992,20 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     setNodeInfoOpen(false);
   }, [setNodes, setSelectedNode]);
 
+  // 重置面板可见性
+  const resetPanelVisibility = useCallback(() => {
+    setNodeInfoOpen(false);
+    setChatOpen(false);
+  }, []);
+
+  const toggleVariablesPanel = useCallback(() => {
+    setGlobalVarsOpen(!globalVarsOpen);
+    if (!globalVarsOpen) {
+      resetPanelVisibility();
+      setGlobalVarsOpen(true);
+    }
+  }, [globalVarsOpen, resetPanelVisibility]);
+
   return (
     <Box sx={{
       height: '100vh',
@@ -1036,7 +1075,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           >
             <MenuItem
               onClick={() => {
-                setGlobalVarsOpen(!globalVarsOpen);
+                toggleVariablesPanel();
                 handleToggleMenuClose();
               }}
             >
@@ -1390,9 +1429,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           </Box>
         )}
 
-        {/* 全局变量面板 - 可拖动和调整大小 */}
+        {/* 流程图变量面板 - 可拖动和调整大小 */}
         <DraggableResizableContainer
-          title={t('flowEditor.globalVariables')}
+          title={t('flowEditor.flowVariables')}
           icon={<CodeIcon fontSize="small" />}
           isOpen={globalVarsOpen}
           onClose={() => setGlobalVarsOpen(false)}
@@ -1400,7 +1439,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           defaultSize={{ width: 350, height: 400 }}
           zIndex={5}
         >
-          <GlobalVariables />
+          <FlowVariables />
         </DraggableResizableContainer>
 
         {/* 聊天界面 - 可拖动和调整大小 */}
@@ -1410,7 +1449,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           isOpen={chatOpen}
           onClose={() => setChatOpen(false)}
           defaultPosition={chatPosition}
-          defaultSize={{ width: 350, height: 300 }}
+          defaultSize={{ width: 700, height: 600 }}
           zIndex={5}
         >
           <ChatInterface

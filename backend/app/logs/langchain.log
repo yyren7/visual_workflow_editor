@@ -1,0 +1,1093 @@
+2025-03-26 05:32:04 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:32:04 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:32:04 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:32:04 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:32:04 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:32:04 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:32:04 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:32:04 - langchain_chat - WARNING - 开发环境：跳过API密钥验证
+2025-03-26 05:32:04 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:32:04 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:32:27 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 05:32:27 - langchain_chat - INFO - 初始化增强对话记忆: ID=d21e261c-003c-4898-9868-f1180f0ea28c, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 05:32:27 - langchain_chat - ERROR - 处理消息时出错: 'InMemoryChatMessageHistory' object has no attribute 'append'
+2025-03-26 05:32:27 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 87, in process_message
+    memory = await self._get_memory(conversation_id, user_id, metadata)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 238, in _get_memory
+    memory = create_memory(
+  File "/workspace/backend/langchainchat/memory/conversation_memory.py", line 329, in create_memory
+    memory.add_system_message(system_message)
+  File "/workspace/backend/langchainchat/memory/conversation_memory.py", line 68, in add_system_message
+    self.chat_memory.append(system_message)
+  File "/home/vscode/.local/lib/python3.10/site-packages/pydantic/main.py", line 811, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'InMemoryChatMessageHistory' object has no attribute 'append'
+
+2025-03-26 05:32:27 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:33:49 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:33:49 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:33:49 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:33:49 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:33:49 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:33:49 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:33:49 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:33:49 - langchain_chat - WARNING - 开发环境：跳过API密钥验证
+2025-03-26 05:33:49 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:33:49 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:47:17 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 05:47:17 - langchain_chat - INFO - 初始化增强对话记忆: ID=fc5f7662-4f8f-484f-b299-eebc08cb683a, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 05:47:17 - langchain_chat - INFO - 创建新对话: fc5f7662-4f8f-484f-b299-eebc08cb683a
+2025-03-26 05:47:17 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 05:47:17 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 05:47:17 - langchain_chat - INFO - 收集系统信息
+2025-03-26 05:47:17 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 05:47:17 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 05:47:17 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:47:17 - langchain_chat - ERROR - 处理消息时出错: 'AsyncCallbackManagerForLLMRun' object has no attribute 'on_llm_start'
+2025-03-26 05:47:17 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 306, in _agenerate
+    await run_manager.on_llm_start(
+AttributeError: 'AsyncCallbackManagerForLLMRun' object has no attribute 'on_llm_start'
+
+2025-03-26 05:47:17 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:48:29 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:48:29 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:48:29 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:48:29 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:48:29 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:48:29 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:48:29 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:48:29 - langchain_chat - WARNING - 开发环境：跳过API密钥验证
+2025-03-26 05:48:29 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:48:29 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:48:54 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:48:54 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:48:54 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:48:54 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:48:54 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:48:54 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:48:54 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:48:54 - langchain_chat - WARNING - 开发环境：跳过API密钥验证
+2025-03-26 05:48:54 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:48:54 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:53:03 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 05:53:03 - langchain_chat - INFO - 初始化增强对话记忆: ID=8a3c5d16-9499-4b59-b26a-0f34642b2bcb, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 05:53:03 - langchain_chat - INFO - 创建新对话: 8a3c5d16-9499-4b59-b26a-0f34642b2bcb
+2025-03-26 05:53:03 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 05:53:03 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 05:53:03 - langchain_chat - INFO - 收集系统信息
+2025-03-26 05:53:03 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 05:53:03 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 05:53:03 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:53:03 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:53:03 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:53:03 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:53:03 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 362, in _agenerate
+    response = await self.client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_utils/_utils.py", line 279, in wrapper
+    return func(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 914, in create
+    return self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1242, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 919, in request
+    return self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1023, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 05:53:03 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:53:03 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:53:03 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:54:46 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:54:46 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:54:46 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:54:46 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:54:46 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:54:46 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:54:46 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:54:46 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com
+2025-03-26 05:54:46 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:54:46 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:54:58 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:54:58 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:54:58 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:54:58 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:54:58 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:54:58 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:54:58 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:54:58 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com
+2025-03-26 05:54:58 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:54:58 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:55:09 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:55:09 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:55:09 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:55:09 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:55:09 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:55:09 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:55:09 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:55:09 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com
+2025-03-26 05:55:09 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:55:09 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:56:27 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:56:27 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:56:27 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:56:27 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:56:27 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:56:27 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:56:27 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:56:27 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com
+2025-03-26 05:56:27 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:56:27 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:57:30 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:57:30 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:57:30 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:57:30 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:57:30 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:57:30 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:57:30 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:57:30 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com, API密钥前缀=sk-a...
+2025-03-26 05:57:30 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:57:30 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:57:45 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:57:45 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:57:45 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:57:45 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:57:45 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:57:45 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:57:45 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:57:45 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com, API密钥前缀=sk-a...
+2025-03-26 05:57:45 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:57:45 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:59:08 - langchain_chat - INFO - 处理聊天消息: 会话=8a3c5d16-9499-4b59-b26a-0f34642b2bcb, 使用上下文=True, 使用工具=True
+2025-03-26 05:59:08 - langchain_chat - WARNING - 未找到对话历史文件: 8a3c5d16-9499-4b59-b26a-0f34642b2bcb
+2025-03-26 05:59:08 - langchain_chat - INFO - 初始化增强对话记忆: ID=8a3c5d16-9499-4b59-b26a-0f34642b2bcb, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 05:59:08 - langchain_chat - INFO - 创建新对话: 8a3c5d16-9499-4b59-b26a-0f34642b2bcb
+2025-03-26 05:59:08 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 05:59:08 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 05:59:08 - langchain_chat - INFO - 收集系统信息
+2025-03-26 05:59:08 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 05:59:08 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 05:59:08 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:08 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:08 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:08 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:08 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 403, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 05:59:08 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:08 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:08 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:18 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 05:59:18 - langchain_chat - INFO - 初始化增强对话记忆: ID=e28692fe-d087-42a1-b972-3b9d95698a2e, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 05:59:18 - langchain_chat - INFO - 创建新对话: e28692fe-d087-42a1-b972-3b9d95698a2e
+2025-03-26 05:59:18 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 05:59:18 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 05:59:18 - langchain_chat - INFO - 收集系统信息
+2025-03-26 05:59:18 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 05:59:18 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 05:59:18 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:18 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:18 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:18 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:18 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 403, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 05:59:18 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:18 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:18 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:27 - langchain_chat - INFO - 处理聊天消息: 会话=e28692fe-d087-42a1-b972-3b9d95698a2e, 使用上下文=True, 使用工具=True
+2025-03-26 05:59:27 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 05:59:27 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 05:59:27 - langchain_chat - INFO - 收集系统信息
+2025-03-26 05:59:27 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 05:59:27 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 05:59:27 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:27 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:27 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:27 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:27 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 403, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 05:59:27 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:27 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:27 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:40 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 05:59:40 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 05:59:40 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 05:59:40 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 05:59:40 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 05:59:40 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 05:59:40 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 05:59:40 - langchain_chat - INFO - API配置验证通过: 基础URL=https://api.deepseek.com, API密钥前缀=sk-a...
+2025-03-26 05:59:40 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 05:59:40 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 05:59:49 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 05:59:49 - langchain_chat - INFO - 初始化增强对话记忆: ID=600e6f1b-d2ba-4804-8480-915e2ad0a07a, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 05:59:49 - langchain_chat - INFO - 创建新对话: 600e6f1b-d2ba-4804-8480-915e2ad0a07a
+2025-03-26 05:59:49 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 05:59:49 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 05:59:49 - langchain_chat - INFO - 收集系统信息
+2025-03-26 05:59:49 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 05:59:49 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 05:59:49 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:49 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:50 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:50 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 05:59:50 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 403, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 05:59:50 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 05:59:50 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 05:59:50 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:00:59 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:00:59 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:00:59 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:00:59 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:00:59 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:00:59 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:00:59 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:00:59 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:00:59 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:00:59 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:00:59 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:00:59 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:00:59 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:01:13 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:01:13 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:01:13 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:01:13 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:01:13 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:01:13 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:01:13 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:01:13 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:01:13 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:01:13 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:01:13 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:01:13 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:01:13 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:01:27 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:01:27 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:01:27 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:01:27 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:01:27 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:01:27 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:01:27 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:01:27 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:01:27 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:01:27 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:01:27 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:01:27 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:01:27 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:01:27 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:01:38 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:01:38 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:01:38 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:01:38 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:01:38 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:01:38 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:01:38 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:01:38 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:01:38 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:01:38 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:01:38 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:01:38 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:01:38 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:01:38 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:01:51 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:01:51 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:01:51 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:01:51 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:01:51 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:01:51 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:01:51 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:01:51 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:01:51 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:01:51 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:01:51 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:01:51 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:01:51 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:01:51 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:02:06 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:02:06 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:02:06 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:02:06 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:02:06 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:02:06 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:02:06 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:02:06 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:02:06 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:02:06 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:02:06 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:02:06 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:02:06 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:02:06 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:02:18 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:02:18 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:02:18 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:02:18 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:02:18 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:02:18 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:02:18 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:02:18 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:02:18 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:02:18 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:02:18 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:02:18 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:02:18 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:02:18 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:02:33 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:02:33 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:02:33 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:02:33 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:02:33 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:02:33 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:02:33 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:02:33 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:02:33 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:02:33 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:02:33 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:02:33 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:02:33 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:02:33 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:02:46 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:02:46 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:02:46 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:02:46 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:02:46 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:02:46 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:02:46 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:02:46 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:02:46 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:02:46 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:02:46 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:02:46 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:02:46 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:02:46 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:12:06 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:12:06 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:12:06 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:12:06 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:12:06 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:12:06 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:12:06 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:12:06 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:12:06 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:12:06 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:12:06 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:12:06 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:12:06 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:12:06 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:12:19 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 06:12:19 - langchain_chat - INFO - 初始化增强对话记忆: ID=7617d615-10a1-48f2-a18c-28b3c54a1125, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 06:12:19 - langchain_chat - INFO - 创建新对话: 7617d615-10a1-48f2-a18c-28b3c54a1125
+2025-03-26 06:12:19 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 06:12:19 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 06:12:19 - langchain_chat - INFO - 收集系统信息
+2025-03-26 06:12:19 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 06:12:19 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 06:12:19 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:12:19 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:12:19 - langchain_chat - INFO - 已创建异步API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:12:19 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:12:19 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:12:19 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 447, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 06:12:19 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:12:19 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:12:19 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:12:58 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 06:12:58 - langchain_chat - INFO - 初始化增强对话记忆: ID=e251e250-3e54-4da4-92f7-5f7c8281db85, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 06:12:58 - langchain_chat - INFO - 创建新对话: e251e250-3e54-4da4-92f7-5f7c8281db85
+2025-03-26 06:12:58 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 06:12:58 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 06:12:58 - langchain_chat - INFO - 收集系统信息
+2025-03-26 06:12:58 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 06:12:58 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 06:12:58 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:12:58 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:12:58 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:12:58 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:12:58 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 447, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 06:12:58 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:12:58 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:12:58 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:35:13 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:35:13 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:35:13 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:35:13 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:35:13 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:35:13 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:35:13 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:35:13 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:35:13 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:35:13 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:35:13 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_']
+2025-03-26 06:35:13 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:35:13 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:35:13 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:35:23 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:35:23 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:35:30 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 06:35:30 - langchain_chat - INFO - 初始化增强对话记忆: ID=798fec86-9ad2-4e31-9154-4df339a72ccf, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 06:35:30 - langchain_chat - INFO - 创建新对话: 798fec86-9ad2-4e31-9154-4df339a72ccf
+2025-03-26 06:35:30 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 06:35:30 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 06:35:30 - langchain_chat - INFO - 收集系统信息
+2025-03-26 06:35:30 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 06:35:30 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 06:35:30 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:35:30 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:35:30 - langchain_chat - INFO - 已创建异步API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:35:30 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:35:30 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:35:30 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 447, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 06:35:30 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:35:30 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:35:31 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:35:31 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:46:36 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:46:36 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:46:36 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:46:36 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:46:36 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:46:36 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:46:36 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:46:36 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:46:36 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:46:36 - langchain_chat - INFO - API密钥设置: 前缀=sk-a5, 长度=35
+2025-03-26 06:46:36 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:46:36 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:46:36 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:46:36 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_', 'DEEPSEEK_API_KEY', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_MODEL']
+2025-03-26 06:46:36 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:46:36 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:46:36 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:46:48 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:46:48 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:46:54 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 06:46:54 - langchain_chat - INFO - 初始化增强对话记忆: ID=ef5c668e-99b3-40b5-a156-f75919b34cf3, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 06:46:54 - langchain_chat - INFO - 创建新对话: ef5c668e-99b3-40b5-a156-f75919b34cf3
+2025-03-26 06:46:54 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 06:46:54 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 06:46:54 - langchain_chat - INFO - 收集系统信息
+2025-03-26 06:46:54 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 06:46:54 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 06:46:54 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:46:54 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:46:54 - langchain_chat - INFO - 创建异步客户端时从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:46:54 - langchain_chat - INFO - 创建异步客户端时从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:46:54 - langchain_chat - INFO - 已创建异步API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:46:55 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:46:55 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:46:55 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 454, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 06:46:55 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:46:55 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:46:55 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:46:55 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:47:34 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:47:34 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:47:40 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 06:47:40 - langchain_chat - INFO - 初始化增强对话记忆: ID=544c650b-19be-417e-b643-7c2e6853af7a, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 06:47:40 - langchain_chat - INFO - 创建新对话: 544c650b-19be-417e-b643-7c2e6853af7a
+2025-03-26 06:47:40 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 06:47:40 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 06:47:40 - langchain_chat - INFO - 收集系统信息
+2025-03-26 06:47:40 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 06:47:40 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 06:47:40 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:47:40 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:47:40 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:47:40 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:47:40 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 454, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 06:47:40 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:47:40 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:47:40 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:47:40 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:48:20 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:48:20 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:48:20 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:48:20 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:48:20 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:48:20 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:48:20 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:48:20 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:48:20 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:48:20 - langchain_chat - INFO - API密钥设置: 前缀=sk-a5, 长度=35
+2025-03-26 06:48:20 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:48:20 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:48:20 - langchain_chat - INFO - - API密钥: sk-a5fe3...cc5f (长度: 35字符)
+2025-03-26 06:48:20 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_', 'DEEPSEEK_API_KEY', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_MODEL']
+2025-03-26 06:48:20 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:48:20 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:48:20 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:48:33 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:48:33 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:48:45 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True
+2025-03-26 06:48:45 - langchain_chat - INFO - 初始化增强对话记忆: ID=1295cc20-fe5a-44c2-bb0b-9e6b3dc0ef62, 用户=bd3058f9-d717-445a-8eac-d9abe91d1f13
+2025-03-26 06:48:45 - langchain_chat - INFO - 创建新对话: 1295cc20-fe5a-44c2-bb0b-9e6b3dc0ef62
+2025-03-26 06:48:45 - langchain_chat - INFO - 使用上下文处理用户输入
+2025-03-26 06:48:45 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-26 06:48:45 - langchain_chat - INFO - 收集系统信息
+2025-03-26 06:48:45 - langchain_chat - INFO - 系统信息收集完成
+2025-03-26 06:48:45 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-26 06:48:45 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:48:45 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:48:45 - langchain_chat - INFO - 创建异步客户端时从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:48:45 - langchain_chat - INFO - 创建异步客户端时从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:48:45 - langchain_chat - INFO - 已创建异步API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:48:45 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:48:45 - langchain_chat - ERROR - 处理消息时出错: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:48:45 - langchain_chat - ERROR - 错误详情: Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 115, in process_message
+    response = await self._process_with_context(user_input, db)
+  File "/workspace/backend/langchainchat/services/chat_service.py", line 179, in _process_with_context
+    response = await self.enhanced_chat_chain.ainvoke({
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 3073, in ainvoke
+    input = await asyncio.create_task(part())
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 328, in ainvoke
+    llm_result = await self.agenerate_prompt(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 853, in agenerate_prompt
+    return await self.agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 813, in agenerate
+    raise exceptions[0]
+  File "/home/vscode/.local/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 981, in _agenerate_with_cache
+    result = await self._agenerate(
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 189, in async_wrapped
+    return await copy(fn, *args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
+    do = await self.iter(retry_state=retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
+    result = await action(retry_state)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/_utils.py", line 99, in inner
+    return call(*args, **kwargs)
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/__init__.py", line 398, in <lambda>
+    self._add_action_func(lambda rs: rs.outcome.result())
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/vscode/.local/lib/python3.10/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
+    result = await fn(*args, **kwargs)
+  File "/workspace/backend/langchainchat/models/llm.py", line 454, in _agenerate
+    response = await self.async_client.chat.completions.create(**params)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 2000, in create
+    return await self._post(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1767, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1461, in request
+    return await self._request(
+  File "/home/vscode/.local/lib/python3.10/site-packages/openai/_base_client.py", line 1562, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+
+2025-03-26 06:48:45 - langchain_chat - INFO - 异步DeepSeek API请求: 模型=deepseek-chat, 消息数量=2
+2025-03-26 06:48:45 - langchain_chat - WARNING - 无法找到适当的异步回调方法，跳过启动回调
+2025-03-26 06:48:45 - langchain_chat - ERROR - 异步DeepSeek API错误: Error code: 401 - {'error': {'message': 'Authentication Fails (no such user)', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}
+2025-03-26 06:48:45 - langchain_chat - INFO - 列出对话历史: 总数=0
+2025-03-26 06:53:01 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:53:01 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:53:01 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:53:01 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:53:01 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:53:01 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:53:01 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:53:01 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:53:01 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:53:01 - langchain_chat - INFO - API密钥设置: 前缀=sk-fa, 长度=35
+2025-03-26 06:53:01 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:01 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:01 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:01 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_MODEL', 'DEEPSEEK_API_KEY']
+2025-03-26 06:53:01 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:53:01 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:53:01 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:53:21 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:53:21 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:53:21 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:53:21 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:53:21 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:53:21 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:53:21 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:53:21 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:53:21 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:53:21 - langchain_chat - INFO - API密钥设置: 前缀=sk-fa, 长度=35
+2025-03-26 06:53:21 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:21 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:21 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:21 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:21 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:21 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:21 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_MODEL', 'DEEPSEEK_API_KEY']
+2025-03-26 06:53:21 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:53:21 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:53:21 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:53:33 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:53:33 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:53:33 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:53:33 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:53:33 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:53:33 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:53:33 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:53:33 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:53:33 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:53:33 - langchain_chat - INFO - API密钥设置: 前缀=sk-fa, 长度=35
+2025-03-26 06:53:33 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:33 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:33 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:33 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:33 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:33 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:33 - langchain_chat - INFO - - 所有环境变量: ['SHELL', 'COLORTERM', 'TERM_PROGRAM_VERSION', 'CHOKIDAR_USEPOLLING', 'DATABASE_URL', 'HOSTNAME', 'SSH_AUTH_SOCK', 'REMOTE_CONTAINERS_IPC', 'PWD', 'NODE_ENV', 'VSCODE_GIT_ASKPASS_NODE', 'HOME', 'LANG', 'LS_COLORS', 'REACT_APP_API_BASE_URL', 'REMOTE_CONTAINERS', 'GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'LESSCLOSE', 'PYTHONPATH', 'TERM', 'REMOTE_CONTAINERS_SOCKETS', 'LESSOPEN', 'USER', 'VSCODE_GIT_IPC_HANDLE', 'DISPLAY', 'SHLVL', 'GIT_EDITOR', 'PROMPT_DIRTRIM', 'DISABLE_ESLINT_PLUGIN', 'VSCODE_GIT_ASKPASS_MAIN', 'BROWSER', 'PATH', 'REMOTE_CONTAINERS_DISPLAY_SOCK', 'OLDPWD', 'TERM_PROGRAM', 'VSCODE_IPC_HOOK_CLI', '_', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_MODEL', 'DEEPSEEK_API_KEY']
+2025-03-26 06:53:33 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:53:33 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:53:33 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-26 06:53:46 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-26 06:53:46 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-26 06:53:46 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-26 06:53:46 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-26 06:53:46 - langchain_chat - INFO - 初始化聊天服务
+2025-03-26 06:53:46 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-26 06:53:46 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-26 06:53:46 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-26 06:53:46 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-26 06:53:46 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:46 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:46 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:46 - langchain_chat - INFO - API配置验证通过: 
+2025-03-26 06:53:46 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-26 06:53:46 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-26 06:53:46 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-26 06:53:46 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-26 06:53:46 - langchain_chat - INFO - 聊天服务初始化完成

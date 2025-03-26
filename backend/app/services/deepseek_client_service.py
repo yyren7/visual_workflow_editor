@@ -9,7 +9,8 @@ from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageParam,
 from openai._exceptions import OpenAIError, APIConnectionError, APITimeoutError
 from backend.app.config import Config
 
-logger = logging.getLogger(__name__)
+# 使用专门的deepseek日志记录器
+logger = logging.getLogger("backend.deepseek")
 
 # 单例管理器
 _deepseek_client_instance = None
@@ -219,9 +220,55 @@ class DeepSeekClientService:
                 logger.error("消息列表为空")
                 return "错误：消息列表为空", False
             
-            # 记录请求详情，但要保护敏感信息
+            # 记录请求详情
             msg_count = len(request_messages)
-            logger.info(f"准备DeepSeek API调用: {msg_count}条消息, 第一条角色={request_messages[0]['role'] if msg_count > 0 else '无'}")
+            logger.info(f"准备DeepSeek API调用: {msg_count}条消息")
+            
+            # 记录完整的输入消息内容（开发调试用）
+            print("\n======== DEEPSEEK API 请求开始 ========")
+            print(f"消息数量: {msg_count}")
+            for i, msg in enumerate(request_messages):
+                print(f"消息 {i+1} ({msg['role']}):")
+                # 限制内容长度以保持日志可读性
+                content_preview = msg['content']
+                if len(content_preview) > 500:
+                    content_preview = content_preview[:500] + "... (内容已截断)"
+                print(f"{content_preview}")
+            
+            # 记录工具定义（如果有）
+            if tools:
+                print(f"\n工具定义: {json.dumps(tools, ensure_ascii=False, indent=2)}")
+            
+            # 记录其他参数
+            print(f"\n模型: {model_name or self.model_name}")
+            print(f"温度: {temperature}")
+            print(f"最大令牌数: {max_tokens}")
+            print(f"JSON模式: {json_mode}")
+            print(f"流式响应: {stream}")
+            print("======================================\n")
+            
+            # 详细记录到日志文件
+            logger.info("===== DEEPSEEK API 请求详情 =====")
+            # 记录完整的请求消息内容到日志文件
+            for i, msg in enumerate(request_messages):
+                role = msg['role']
+                content = msg['content']
+                # 对日志文件不截断内容，确保完整记录
+                logger.info(f"消息 {i+1} ({role}) 完整内容:")
+                # 分行记录长内容以提高可读性
+                content_lines = content.split('\n')
+                for line in content_lines:
+                    logger.info(f"  {line}")
+            
+            if tools:
+                logger.info(f"工具定义: {json.dumps(tools, ensure_ascii=False)}")
+            
+            logger.info(f"模型: {model_name or self.model_name}")
+            logger.info(f"温度: {temperature}")
+            logger.info(f"最大令牌数: {max_tokens}")
+            logger.info(f"JSON模式: {json_mode}")
+            logger.info(f"流式响应: {stream}")
+            logger.info("==================================")
             
             # 使用指定的模型或默认模型
             model = model_name or self.model_name
@@ -276,7 +323,10 @@ class DeepSeekClientService:
                                 if delta.content:
                                     content = delta.content
                                     full_text += content
+                                    # 在控制台打印流式返回的内容
+                                    print(content, end='', flush=True)
                         response_text = full_text
+                        print("\n")
                         logger.info(f"流式API调用完成，接收到{len(response_text)}字符")
                     else:
                         # 非流式响应
@@ -285,13 +335,32 @@ class DeepSeekClientService:
                         response_text = response.choices[0].message.content
                         logger.info(f"非流式API调用完成，接收到{len(response_text)}字符")
                     
+                    # 打印并记录API返回的完整响应
+                    print("\n======== DEEPSEEK API 响应结果 ========")
+                    # 显示响应内容（限制长度以保持可读性）
+                    response_preview = response_text
+                    if len(response_preview) > 1000:
+                        response_preview = response_preview[:1000] + "... (内容已截断)"
+                    print(response_preview)
+                    print("========================================\n")
+                    
+                    # 完整记录到日志文件
+                    logger.info("===== DEEPSEEK API 响应详情 =====")
+                    # 记录完整的响应内容，不截断
+                    logger.info("响应完整内容:")
+                    # 分行记录长回复以提高可读性
+                    response_lines = response_text.split('\n')
+                    for line in response_lines:
+                        logger.info(f"  {line}")
+                    logger.info("==================================")
+                    
                     # 如果使用对话，将助手响应添加到历史
                     if use_conversation and conversation_id and response_text:
                         self.add_message(conversation_id, "assistant", response_text)
                     
                     success = True
                     logger.info("DeepSeek API调用成功")
-                    break  # 成功时跳出重试循环
+                    break
                     
                 except APIConnectionError as e:
                     # 网络连接错误，可以重试

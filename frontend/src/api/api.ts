@@ -38,8 +38,8 @@ export interface WorkflowProcessRequest {
 
 // 定义工作流处理响应接口
 export interface WorkflowProcessResponse {
-    user_input: string;
-    expanded_input: string;
+    user_input?: string;
+    expanded_input?: string;
     step_results: Array<{
         step: string;
         enriched_step?: string;
@@ -48,26 +48,32 @@ export interface WorkflowProcessResponse {
             result: {
                 success: boolean;
                 message: string;
-                data?: any;
+                data: any;
             };
         };
     }>;
-    missing_info?: {
-        success: boolean;
-        message: string;
-        data?: {
-            context: string;
-            questions: string[];
-            formatted_text: string;
+    missing_info?: any;
+    created_nodes?: {
+        [key: string]: {
+            node_id: string;
+            node_type: string;
+            node_label: string;
+            properties: any;
         };
     };
-    created_nodes?: Record<string, any>;
-    error?: string;
     session_id?: string;
-    user_id?: string;
-    summary?: string;
     nodes?: Array<any>;
     connections?: Array<any>;
+    summary?: string;
+    error?: string;
+    expanded_prompt?: string;
+    llm_interactions?: Array<{
+        stage: string;
+        input: any;
+        output: any;
+        tool_type?: string;
+        tool_params?: any;
+    }>;
 }
 
 export interface UserRegisterData {
@@ -451,6 +457,68 @@ export const processWorkflow = async (request: WorkflowProcessRequest): Promise<
         return response.data;
     } catch (error) {
         console.error("Error processing workflow:", error);
+        throw error;
+    }
+};
+
+// LangChain聊天接口定义
+export interface ChatRequest {
+    message: string;
+    conversation_id?: string;
+    metadata?: Record<string, any>;
+}
+
+export interface ChatResponse {
+    conversation_id: string;
+    message: string;
+    created_at: string;
+    metadata?: Record<string, any>;
+    context_used?: boolean;
+}
+
+/**
+ * 发送聊天消息到LangChain聊天API。
+ * @param request 聊天请求
+ * @returns 聊天响应
+ */
+export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
+    console.log("sendChatMessage request:", request);
+    try {
+        const response: AxiosResponse<ChatResponse> = await apiClient.post('/langchainchat/message', request);
+        return response.data;
+    } catch (error) {
+        console.error("Error sending chat message:", error);
+        throw error;
+    }
+};
+
+/**
+ * 获取用户的聊天会话列表。
+ * @returns 会话列表
+ */
+export const getChatConversations = async (): Promise<Array<any>> => {
+    console.log("getChatConversations request");
+    try {
+        const response: AxiosResponse<Array<any>> = await apiClient.get('/langchainchat/conversations');
+        return response.data;
+    } catch (error) {
+        console.error("Error getting chat conversations:", error);
+        throw error;
+    }
+};
+
+/**
+ * 删除指定的聊天会话。
+ * @param conversation_id 会话ID
+ * @returns 删除结果
+ */
+export const deleteChatConversation = async (conversation_id: string): Promise<any> => {
+    console.log("deleteChatConversation request:", conversation_id);
+    try {
+        const response: AxiosResponse<any> = await apiClient.delete(`/langchainchat/conversations/${conversation_id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting chat conversation:", error);
         throw error;
     }
 };
