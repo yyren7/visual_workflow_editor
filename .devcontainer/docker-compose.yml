@@ -3,8 +3,8 @@ version: '3'
 services:
   dev:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     volumes:
       - ..:/workspace:cached
     environment:

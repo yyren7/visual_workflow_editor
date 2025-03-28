@@ -4,7 +4,6 @@
 
 mkdir -p /workspace/logs
 
-
 case "$1" in
   frontend)
     cd /workspace/frontend
@@ -14,12 +13,7 @@ case "$1" in
   backend)
     cd /workspace
     echo "启动后端开发服务器..."
-    # 再次确保数据库权限正确
-    if [ -f "/workspace/flow_editor.db" ]; then
-      chmod 666 /workspace/flow_editor.db
-    fi
-    # 从.bashrc加载环境变量后再启动后端，设置PRINT_DEBUG_INFO=1只在主进程打印调试信息
-    bash -c "source ~/.bashrc && cd /workspace/backend && PRINT_DEBUG_INFO=1 PYTHONPATH=/workspace python3 run_backend.py"
+    python3 backend/run_backend.py
     ;;
   logs)
     # 创建日志文件
@@ -46,11 +40,7 @@ case "$1" in
     
     # 创建后端 tmux 会话
     cd /workspace
-    # 再次确保数据库权限正确
-    if [ -f "/workspace/flow_editor.db" ]; then
-      chmod 666 /workspace/flow_editor.db
-    fi
-    tmux new-session -d -s backend 'bash -c "source ~/.bashrc && cd /workspace/backend && PRINT_DEBUG_INFO=1 PYTHONPATH=/workspace python3 run_backend.py" | tee /workspace/logs/backend.log; read'
+    tmux new-session -d -s backend 'python3 backend/run_backend.py | tee /workspace/logs/backend.log; read'
     echo "后端服务已在 tmux 会话 'backend' 中启动"
     
     echo ""

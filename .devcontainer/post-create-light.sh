@@ -11,6 +11,13 @@ CACHE_DIR="/workspace/.devcontainer/cache"
 sudo mkdir -p "$CACHE_DIR"
 sudo chmod 777 "$CACHE_DIR"
 
+# 确保npm目录权限正确
+echo "修复npm目录权限..."
+sudo mkdir -p /workspace/frontend/node_modules
+sudo chown -R $(whoami):$(whoami) /workspace/frontend/node_modules
+sudo chmod -R 777 /workspace/frontend/node_modules
+sudo chown -R $(whoami):$(whoami) ~/.npm
+
 # 更新项目特定的依赖（只更新可能有变化的部分）
 echo "更新项目依赖..."
 

@@ -19,6 +19,7 @@ yarn-error.log
 /coverage
 
 # 环境变量文件
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -35,3 +36,6 @@ yarn-error.log
 # 操作系统
 .DS_Store
 Thumbs.db
+
+backend/database/flow_editor.db
+backend/backend/*

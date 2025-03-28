@@ -99,5 +99,11 @@ RUN npm ci --no-optional
 WORKDIR /workspace
 USER vscode
 
+# 添加以下命令，确保node_modules权限正确
+USER root
+RUN mkdir -p /workspace/frontend/node_modules && \
+    chmod -R 777 /workspace/frontend/node_modules && \
+    chown -R vscode:vscode /workspace/frontend/node_modules
+
 # 切换回vscode用户
 USER vscode 
