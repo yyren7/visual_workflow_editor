@@ -77,3 +77,24 @@ class VersionInfo(Base):
     
     def __repr__(self):
         return f"<VersionInfo(version='{self.version}', last_updated='{self.last_updated}')>"
+
+
+class UserFlowPreference(Base):
+    """用户流程图偏好模型，用于记录用户最后选择的流程图"""
+    __tablename__ = "user_flow_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    last_selected_flow_id = Column(String(36), ForeignKey("flows.id", ondelete="SET NULL"), nullable=True)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    # 建立与User的关系
+    user = relationship("User", backref="flow_preference")
+    # 建立与Flow的关系
+    flow = relationship("Flow")
+
+    # 确保每个用户只有一个偏好记录
+    __table_args__ = (UniqueConstraint('user_id', name='uix_user_flow_preference'),)
+
+    def __repr__(self):
+        return f"<UserFlowPreference(user_id={self.user_id}, last_selected_flow_id={self.last_selected_flow_id})>"

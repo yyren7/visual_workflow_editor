@@ -18,6 +18,24 @@ const requestCache: Record<string, {
 // 缓存有效期（毫秒）
 const CACHE_DURATION = 2000; // 2秒内的相同请求将使用缓存
 
+// 添加一个清除缓存的函数
+export const clearFlowCache = (flowId?: string) => {
+  if (flowId) {
+    // 清除特定流程图的缓存
+    const cacheKey = `flow_${flowId}`;
+    if (requestCache[cacheKey]) {
+      console.log(`清除流程图缓存: ${flowId}`);
+      delete requestCache[cacheKey];
+    }
+  } else {
+    // 清除所有缓存
+    console.log('清除所有流程图缓存');
+    Object.keys(requestCache).forEach(key => {
+      delete requestCache[key];
+    });
+  }
+};
+
 /**
  * FlowLoader组件
  * 
@@ -197,6 +215,25 @@ const FlowLoader: React.FC = () => {
     
   // 添加setCurrentFlowId作为依赖项
   }, [flowId, flowIdFromQuery, userId, navigate, enqueueSnackbar, t, setCurrentFlowId]);
+  
+  // 添加一个新的useEffect来监听flow-refresh事件
+  useEffect(() => {
+    const handleFlowRefresh = (event: CustomEvent) => {
+      // 当收到流程图刷新事件时，清除缓存
+      if (loadedFlowId) {
+        console.log('收到flow-refresh事件，清除缓存:', loadedFlowId);
+        clearFlowCache(loadedFlowId);
+      }
+    };
+    
+    // 添加事件监听器
+    window.addEventListener('flow-refresh', handleFlowRefresh as EventListener);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('flow-refresh', handleFlowRefresh as EventListener);
+    };
+  }, [loadedFlowId]);
   
   // 添加一个新的useEffect来监听flow-changed事件
   useEffect(() => {

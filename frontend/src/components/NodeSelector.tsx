@@ -56,32 +56,6 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
   }, [t]);
   
   /**
-   * 获取可用的节点类型（备用方法）
-   * 如果API加载失败，使用这个备用节点列表
-   * @returns {Array<NodeTypeInfo>} - 节点类型对象数组
-   */
-  const getFallbackNodeTypes = (): NodeTypeInfo[] => {
-    return [
-      {
-        id: 'input',
-        label: t('nodeTypes.input'),
-      },
-      {
-        id: 'output',
-        label: t('nodeTypes.output'),
-      },
-      {
-        id: 'process',
-        label: t('nodeTypes.process'),
-      },
-      {
-        id: 'decision',
-        label: t('nodeTypes.decision'),
-      },
-    ];
-  };
-
-  /**
    * 将NodeTemplate转换为NodeTypeInfo
    * 保持与现有代码的兼容性
    * @param template 节点模板
@@ -162,56 +136,14 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
 
   // 显示错误状态
   if (error) {
-    console.warn('Using fallback node types due to error:', error);
-    // 如果出错，使用备用节点类型列表
     return (
       <Box sx={{ width: '100%' }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
           {error}
         </Alert>
-        <nav aria-label="node types">
-          <List>
-            {getFallbackNodeTypes().map((nodeType) => (
-              <ListItem
-                key={nodeType.id}
-                disablePadding
-                draggable={true}
-                onDragStart={(event) => onDragStart(event, nodeType)}
-                onDragEnd={onDragEnd}
-                onClick={() => onNodeSelect(nodeType)}
-                sx={{
-                  cursor: 'grab',
-                  padding: '8px 16px',
-                  margin: '4px 0',
-                  border: '1px dashed rgba(255, 255, 255, 0.3)',
-                  borderRadius: '4px',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.6)',
-                  },
-                  '&.dragging': {
-                    opacity: 0.5,
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  }
-                }}
-              >
-                <ListItemText
-                  primary={nodeType.label}
-                  secondary={t('nodeTypes.dragHint')}
-                  primaryTypographyProps={{
-                    fontWeight: 'bold',
-                    color: 'white'
-                  }}
-                  secondaryTypographyProps={{
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    fontSize: '0.75rem'
-                  }}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </nav>
+        <Typography color="text.secondary" sx={{ padding: 2 }}>
+          {t('nodeSelector.errorOccurred')}
+        </Typography>
       </Box>
     );
   }

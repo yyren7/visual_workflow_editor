@@ -180,8 +180,11 @@ async def startup_event():
     预加载节点模板数据
     """
     # 预加载节点模板
-    get_node_template_service()
-    print("Node templates loaded successfully")
+    template_service = get_node_template_service()
+    print("节点模板加载成功")
+    
+    # 不再需要初始化节点类型提示服务
+    # 它将在langchainchat/prompts/chat_prompts.py中按需创建
 
 @app.get("/")
 async def root():

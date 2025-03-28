@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
 from app.database import get_db
-from app.utils import get_current_user
+from app.utils import optional_current_user, get_current_user
 from app.schemas import User
 
 # 聊天服务将在后续实现
@@ -22,6 +22,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="用户消息内容")
     conversation_id: Optional[str] = Field(default=None, description="会话ID，如果不提供则创建新会话")
     metadata: Optional[Dict[str, Any]] = Field(default=None, description="附加元数据")
+    language: Optional[str] = Field(default="en", description="期望的响应语言 (en, zh, ja)")
 
 # 响应模型
 class ChatResponse(BaseModel):
@@ -39,7 +40,7 @@ chat_service = ChatService()
 async def process_chat_message(
     request: ChatRequest = Body(...),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(optional_current_user)
 ) -> ChatResponse:
     """
     处理聊天消息
@@ -62,13 +63,14 @@ async def process_chat_message(
             conversation_id=request.conversation_id,
             user_id=user_id,
             metadata=request.metadata,
-            db=db
+            db=db,
+            language=request.language  # 传递语言参数
         )
         
         # 返回结果
         return ChatResponse(
             conversation_id=result["conversation_id"],
-            message=result["response"],
+            message=result["message"],
             created_at=result["created_at"],
             metadata=result.get("metadata"),
             context_used=result.get("context_used")
@@ -79,7 +81,7 @@ async def process_chat_message(
 @router.get("/conversations", response_model=List[Dict[str, Any]])
 async def list_conversations(
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(optional_current_user)
 ) -> List[Dict[str, Any]]:
     """
     获取用户的会话列表

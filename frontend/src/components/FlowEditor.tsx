@@ -66,6 +66,7 @@ import ConditionNode from './nodes/ConditionNode'; // 添加条件判断节点�
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import WidgetsIcon from '@mui/icons-material/Widgets';
 import SortIcon from '@mui/icons-material/Sort';
+import { clearFlowCache } from './FlowLoader'; // 导入清除缓存的函数
 
 // 节点数据接口定义
 export interface NodeData {
@@ -554,11 +555,72 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     setEdges(newEdges);
   }, [edges, setEdges]);
 
+  // 加载流程图
   useEffect(() => {
     if (flowId) {
       loadFlow(flowId);
     }
   }, [flowId]);
+  
+  // 添加对flow-refresh事件的监听，用于处理AI助手创建的节点
+  useEffect(() => {
+    const handleFlowRefresh = (event: CustomEvent) => {
+      console.log('收到流程图刷新事件', event.detail);
+      
+      // 如果提供了flowId，刷新流程图
+      if (flowId) {
+        // 先清除缓存，确保获取最新数据
+        clearFlowCache(flowId);
+        
+        // 添加小延迟确保后端处理已完成
+        setTimeout(() => {
+          console.log('刷新流程图数据...');
+          loadFlow(flowId);
+          
+          // 如果有节点ID，可以选中该节点
+          if (event.detail?.metadata?.node_id) {
+            const nodeId = event.detail.metadata.node_id;
+            console.log('尝试选中新创建的节点', nodeId);
+            
+            // 等待节点加载完成后选中节点
+            setTimeout(() => {
+              const node = nodes.find(n => n.id === nodeId);
+              if (node) {
+                setSelectedNode(node as Node<NodeData>);
+                setNodeInfoOpen(true);
+                
+                // 选中节点
+                setNodes((nds) =>
+                  nds.map((n) => {
+                    if (n.id === nodeId) {
+                      return { ...n, selected: true };
+                    }
+                    return { ...n, selected: false };
+                  })
+                );
+                
+                // 如果有节点位置信息，可以将视图中心移动到该节点
+                if (event.detail?.metadata?.position) {
+                  const pos = event.detail.metadata.position;
+                  if (reactFlowInstance) {
+                    reactFlowInstance.setCenter(pos.x, pos.y, { duration: 800 });
+                  }
+                }
+              }
+            }, 500);
+          }
+        }, 300);
+      }
+    };
+    
+    // 添加事件监听器
+    window.addEventListener('flow-refresh', handleFlowRefresh as EventListener);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('flow-refresh', handleFlowRefresh as EventListener);
+    };
+  }, [flowId, nodes, setNodes, setSelectedNode, reactFlowInstance]);
 
   // 在FlowEditor组件内添加自动保存功能
   // 使用useEffect监听nodes和edges变化并自动保存
@@ -596,6 +658,8 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         const flowData = reactFlowInstance.toObject();
         await updateFlow(flowId, { flow_data: flowData, name: flowName });
         console.log('流程图已自动保存');
+        // 清除流程图缓存，确保下次读取时获取最新数据
+        clearFlowCache(flowId);
         // 使用简单的通知而不是弹出提示，避免打扰用户
         // enqueueSnackbar(t('flowEditor.autoSaveSuccess'), { variant: 'success' });
       } catch (error) {
@@ -1456,6 +1520,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             onAddNode={onAddNode}
             onUpdateNode={onUpdateNode}
             onConnectNodes={onConnectNodes}
+            currentFlowId={flowId}
           />
         </DraggableResizableContainer>
 

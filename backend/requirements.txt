@@ -18,6 +18,7 @@ passlib==1.7.4
 python-multipart==0.0.6
 httpx==0.24.1
 numpy==1.26.2
+# 不再需要单独的翻译依赖，使用DeepSeek模型进行翻译
 # sentence-transformers>=2.2.0  # 删除，不再需要本地embedding模型
 # torch==2.0.1  # 删除，不再需要torch
 # docarray==0.32.0  # 删除，与langchain相关

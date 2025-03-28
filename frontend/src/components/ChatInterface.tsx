@@ -22,6 +22,7 @@ interface ChatInterfaceProps {
   onAddNode: (nodeData: any) => void;
   onUpdateNode: (nodeId: string, updatedNodeData: { data: NodeData }) => void;
   onConnectNodes: (sourceId: string, targetId: string, label?: string) => void;
+  currentFlowId?: string; // 添加当前流程图ID属性
 }
 
 /**
@@ -29,13 +30,13 @@ interface ChatInterfaceProps {
  *
  * This component provides a chat interface for interacting with the LLM to generate and update nodes.
  */
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode, onConnectNodes }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode, onConnectNodes, currentFlowId }) => {
   const { t } = useTranslation();
   const [message, setMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
-  const chatListRef = useRef<HTMLDivElement>(null);
+  const chatListRef = useRef<HTMLUListElement>(null);
   
   // 会话管理
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -323,12 +324,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode, 
    */
   const sendMessageToLangChain = async (userMessage: string): Promise<string> => {
     try {
+      // 创建metadata，包含当前流程图ID
+      const metadata: Record<string, any> = {
+        source: 'chat_interface'
+      };
+      
+      // 如果有当前流程图ID，加入到metadata中
+      if (currentFlowId) {
+        metadata.flow_id = currentFlowId;
+        console.log(`将当前流程图ID添加到请求: ${currentFlowId}`);
+      } else {
+        console.warn('未提供当前流程图ID，将使用默认流程图');
+      }
+      
       const response = await sendChatMessage({
         message: userMessage,
         conversation_id: sessionId,
-        metadata: {
-          source: 'chat_interface'
-        }
+        metadata: metadata
       });
       
       // 保存新的会话ID
@@ -336,6 +348,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode, 
         setSessionId(response.conversation_id);
         // 重新加载会话列表以获取最新状态
         loadConversations();
+      }
+      
+      // 检查响应中是否包含刷新流程图标记
+      if (response.metadata && response.metadata.refresh_flow) {
+        console.log('检测到刷新流程图标记，触发流程图刷新', response.metadata);
+        
+        // 触发流程图刷新
+        const event = new CustomEvent('flow-refresh', { 
+          detail: { 
+            sourceAction: 'chatbot',
+            metadata: response.metadata 
+          } 
+        });
+        window.dispatchEvent(event);
+        
+        // 添加提示通知
+        enqueueSnackbar('流程图已更新', { variant: 'info' });
       }
       
       return response.message;
@@ -538,7 +567,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode, 
       </Box>
       
       <List 
-        ref={chatListRef}
+        ref={chatListRef as React.RefObject<HTMLUListElement>}
         sx={{ 
           flex: 1, 
           overflow: 'auto',
@@ -565,8 +594,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAddNode, onUpdateNode, 
                     maxWidth: '80%',
                     p: 1.5,
                     borderRadius: 2,
-                    bgcolor: msg.type === 'user' ? 'primary.light' : 'grey.100',
-                    color: msg.type === 'user' ? 'primary.contrastText' : 'text.primary',
+                    bgcolor: msg.type === 'user' ? 'primary.light' : '#f5f5f5',
+                    color: msg.type === 'user' ? 'primary.contrastText' : '#333333',
                     wordBreak: 'break-word',
                     whiteSpace: 'pre-wrap'
                   }}

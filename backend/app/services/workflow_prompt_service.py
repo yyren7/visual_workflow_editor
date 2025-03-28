@@ -72,7 +72,7 @@ class WorkflowPromptService(BasePromptService):
         # 初始化对话历史
         self._conversation_history = []
         
-        # 工作流JSON输出模板
+        # 工作流JSON输出模板 - 使用基本模板，不再动态获取节点类型
         self.workflow_json_template = """
 你是一个专业的流程图解析助手。请根据用户输入，识别需要创建的节点和连接关系，并输出JSON格式的结果。
 
@@ -83,7 +83,7 @@ class WorkflowPromptService(BasePromptService):
   "nodes": [
     {
       "id": "唯一ID，如node1, node2...",
-      "type": "节点类型，如process, decision, start, end等",
+      "type": "节点类型，根据系统支持的节点类型选择",
       "label": "节点标签/名称",
       "properties": {
         "属性名称": "属性值"
@@ -107,18 +107,10 @@ class WorkflowPromptService(BasePromptService):
   ]
 }
 
-节点类型说明:
-- start: 开始节点
-- end: 结束节点 
-- process: 处理节点
-- decision: 决策节点
-- io: 输入输出节点
-- data: 数据节点
-
 请确保输出的JSON格式完全正确，不要添加额外的说明文本。只需返回符合上述结构的有效JSON。
 """
-    
-        # 工作流工具调用定义
+        
+        # 工作流工具调用定义 - 使用基本列表，不再动态获取节点类型
         self.workflow_tool_definition = [
             {
                 "type": "function",
@@ -130,8 +122,7 @@ class WorkflowPromptService(BasePromptService):
                         "properties": {
                             "node_type": {
                                 "type": "string", 
-                                "description": "节点类型，如process, decision, start, end等",
-                                "enum": ["start", "end", "process", "decision", "io", "data"]
+                                "description": "节点类型，请从可用节点类型中选择",
                             },
                             "node_label": {
                                 "type": "string",
@@ -525,29 +516,23 @@ class WorkflowPromptService(BasePromptService):
     
     async def generate_complete_workflow(self, user_input: str, db: Session) -> WorkflowProcessResponse:
         """
-        直接生成完整的流程图（包括节点和连接）
+        生成完整的工作流，包括所有节点和连接
+        
+        此方法直接使用结构化输出，尝试一次性生成一个完整的工作流
         
         Args:
-            user_input: 用户输入描述的工作流
+            user_input: 用户输入
             db: 数据库会话
             
         Returns:
-            包含节点和连接的工作流处理响应
+            WorkflowProcessResponse: 工作流处理响应
         """
         try:
-            logger.info(f"直接生成完整流程图: {user_input}")
+            # 获取扩展后的用户输入
+            enriched_user_input = await self.expansion_service.expand_prompt(user_input)
+            logger.info("扩展后的用户输入准备完成")
             
-            # 获取所有上下文信息（流程图、全局变量、系统信息等）
-            all_context_info = await self._gather_all_context_info(db)
-            
-            # 添加上下文信息到用户输入
-            enriched_user_input = user_input
-            if all_context_info:
-                logger.info("添加上下文信息到用户输入")
-                print("添加上下文信息到用户输入")
-                enriched_user_input = f"{all_context_info}\n用户输入: {user_input}"
-            
-            # 准备简化的提示模板
+            # 准备简化的提示模板 - 使用基本节点类型，不再动态获取
             simplified_template = """
 你是一个专业的流程图生成专家。请根据用户输入，直接生成一个完整的流程图，包括所有必要的节点和节点之间的连接关系。
 
@@ -558,7 +543,7 @@ class WorkflowPromptService(BasePromptService):
   "nodes": [
     {
       "id": "唯一ID，如node1, node2...",
-      "type": "节点类型，如process, decision, start, end等",
+      "type": "节点类型，根据系统支持的节点类型选择",
       "label": "节点标签/名称",
       "properties": {
         "描述": "节点详细信息"
@@ -579,18 +564,10 @@ class WorkflowPromptService(BasePromptService):
   "summary": "流程图整体描述"
 }
 
-节点类型说明:
-- start: 开始节点 (绿色，每个流程图必须有一个)
-- end: 结束节点 (红色，每个流程图至少有一个)
-- process: 处理节点 (蓝色，表示一个操作或行动)
-- decision: 决策节点 (黄色，具有多个输出路径的判断点)
-- io: 输入输出节点 (紫色，表示数据输入或输出)
-- data: 数据节点 (青色，表示数据存储或检索)
-
 注意事项:
-1. 必须包含一个start节点和至少一个end节点
+1. 必须包含合适的开始节点和至少一个结束节点
 2. 所有节点必须通过connections连接成一个完整流程
-3. 决策节点(decision)应该有多个输出连接，表示不同的决策路径
+3. 决策节点应该有多个输出连接，表示不同的决策路径
 4. 节点ID必须唯一，建议使用node1, node2等格式
 5. 节点位置应该合理排布，避免重叠，从上到下或从左到右布局
 6. 给节点添加合适的位置坐标，确保布局合理
@@ -955,25 +932,63 @@ class WorkflowPromptService(BasePromptService):
             # 从数据库获取当前流程图数据
             from backend.app.models import Flow
             from backend.app.services.flow_service import FlowService
+            from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
             
             flow_service = FlowService(db)
-            # 获取最新的流程图
-            flows = flow_service.get_flows()
             
-            if not flows or len(flows) == 0:
-                logger.info("没有找到现有流程图")
-                return ""
+            # 尝试从全局变量获取当前活动的流程图ID
+            from langchainchat.tools.flow_tools import get_active_flow_id
+            flow_id = get_active_flow_id()
+            
+            if not flow_id:
+                # 如果没有当前活动的流程图ID，尝试从用户偏好中获取
+                # 获取所有流程图
+                flows = flow_service.get_flows()
                 
-            # 使用最新的流程图
-            current_flow = flows[0]
+                if not flows or len(flows) == 0:
+                    logger.info("没有找到现有流程图")
+                    return ""
+                
+                # 获取最后一个流程图的所有者
+                owner_id = flows[0].owner_id
+                
+                if owner_id:
+                    # 获取用户最后选择的流程图
+                    preference_service = UserFlowPreferenceService(db)
+                    last_selected_flow_id = preference_service.get_last_selected_flow_id(owner_id)
+                    
+                    if last_selected_flow_id:
+                        # 检查流程图是否存在
+                        flow_exists = db.query(Flow).filter(Flow.id == last_selected_flow_id).first() is not None
+                        if flow_exists:
+                            flow_id = last_selected_flow_id
+                            logger.info(f"使用用户 {owner_id} 最后选择的流程图: {flow_id}")
+                        else:
+                            # 如果流程图不存在，使用最新的流程图
+                            flow_id = flows[0].id
+                            logger.info(f"用户选择的流程图已不存在，使用最新的流程图: {flow_id}")
+                    else:
+                        # 如果用户没有选择过流程图，使用最新的流程图
+                        flow_id = flows[0].id
+                        logger.info(f"用户没有选择过流程图，使用最新的流程图: {flow_id}")
+                else:
+                    # 如果流程图没有所有者，使用最新的流程图
+                    flow_id = flows[0].id
+                    logger.info(f"使用最新的流程图: {flow_id}")
             
             # 获取流程图详情
-            flow_data = flow_service.get_flow(current_flow.id)
+            flow_data = flow_service.get_flow(flow_id)
             
             if not flow_data:
-                logger.info(f"无法获取流程图 {current_flow.id} 的详情")
+                logger.info(f"无法获取流程图 {flow_id} 的详情")
                 return ""
                 
+            # 获取流程图基本信息
+            flow = db.query(Flow).filter(Flow.id == flow_id).first()
+            if not flow:
+                logger.info(f"流程图 {flow_id} 不存在")
+                return ""
+            
             # 提取节点和连接信息
             nodes = flow_data.get("nodes", [])
             connections = flow_data.get("connections", [])
@@ -997,11 +1012,11 @@ class WorkflowPromptService(BasePromptService):
                 connections_info.append(conn_info)
                 
             # 组合流程图信息
-            flow_info = f"流程图名称: {current_flow.name}\n"
-            flow_info += f"流程图ID: {current_flow.id}\n"
-            flow_info += f"所有者ID: {current_flow.owner_id}\n"
-            flow_info += f"创建时间: {current_flow.created_at}\n"
-            flow_info += f"更新时间: {current_flow.updated_at}\n"
+            flow_info = f"流程图名称: {flow.name}\n"
+            flow_info += f"流程图ID: {flow.id}\n"
+            flow_info += f"所有者ID: {flow.owner_id}\n"
+            flow_info += f"创建时间: {flow.created_at}\n"
+            flow_info += f"更新时间: {flow.updated_at}\n"
             flow_info += f"节点数量: {len(nodes)}\n"
             if nodes_info:
                 flow_info += "节点详情:\n"
@@ -1036,25 +1051,50 @@ class WorkflowPromptService(BasePromptService):
             import json
             from backend.app.services.flow_service import FlowService
             from backend.app.services.flow_variable_service import FlowVariableService
+            from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
             
             # 获取当前活动的流程图
             flow_service = FlowService(db)
-            flows = flow_service.get_flows()
             
-            if not flows or len(flows) == 0:
-                logger.info("没有找到现有流程图，无法获取变量")
-                return "当前没有活动的流程图，无法获取变量"
+            # 尝试从全局变量获取当前活动的流程图ID
+            from langchainchat.tools.flow_tools import get_active_flow_id
+            flow_id = get_active_flow_id()
             
-            # 使用第一个流程图的ID（最新的流程图）
-            current_flow_id = flows[0].id
+            if not flow_id:
+                # 如果没有当前活动的流程图ID，尝试从用户偏好中获取
+                # 为了简化，我们这里使用系统中最后操作流程图的用户
+                flows = flow_service.get_flows()
+                if not flows or len(flows) == 0:
+                    logger.info("没有找到现有流程图，无法获取变量")
+                    return "当前没有活动的流程图，无法获取变量"
+                
+                # 获取最后一个流程图的所有者
+                owner_id = flows[0].owner_id
+                
+                if owner_id:
+                    # 获取用户最后选择的流程图
+                    preference_service = UserFlowPreferenceService(db)
+                    last_selected_flow_id = preference_service.get_last_selected_flow_id(owner_id)
+                    
+                    if last_selected_flow_id:
+                        flow_id = last_selected_flow_id
+                        logger.info(f"使用用户 {owner_id} 最后选择的流程图: {flow_id}")
+                    else:
+                        # 如果用户没有选择过流程图，使用最新的流程图
+                        flow_id = flows[0].id
+                        logger.info(f"用户没有选择过流程图，使用最新的流程图: {flow_id}")
+                else:
+                    # 如果流程图没有所有者，使用最新的流程图
+                    flow_id = flows[0].id
+                    logger.info(f"使用最新的流程图: {flow_id}")
             
             # 使用FlowVariableService获取变量
             variable_service = FlowVariableService(db)
-            variables = variable_service.get_variables(current_flow_id)
+            variables = variable_service.get_variables(flow_id)
             
             # 如果没有变量
             if not variables:
-                logger.info(f"流程图 {current_flow_id} 没有变量")
+                logger.info(f"流程图 {flow_id} 没有变量")
                 return "当前流程图没有设置变量"
             
             # 格式化变量信息
@@ -1063,7 +1103,7 @@ class WorkflowPromptService(BasePromptService):
                 var_str = f"{key}: {json.dumps(value, ensure_ascii=False)}"
                 vars_info += f"- {var_str}\n"
             
-            logger.info(f"成功获取流程图 {current_flow_id} 的变量，共 {len(variables)} 个")
+            logger.info(f"成功获取流程图 {flow_id} 的变量，共 {len(variables)} 个")
             return vars_info
             
         except Exception as e:

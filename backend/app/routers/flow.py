@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from backend.app import models, database, schemas
 from backend.app.config import Config
 from backend.app.utils import get_current_user, verify_flow_ownership
+from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
 
 router = APIRouter(
     prefix="/flows",
@@ -25,6 +26,11 @@ async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.g
     db.add(db_flow)
     db.commit()
     db.refresh(db_flow)
+    
+    # 设置为用户最后选择的流程图
+    preference_service = UserFlowPreferenceService(db)
+    preference_service.set_last_selected_flow_id(current_user.id, db_flow.id)
+    
     return db_flow
 
 
@@ -34,38 +40,42 @@ async def get_flow(flow_id: str, db: Session = Depends(database.get_db), current
     Gets a flow by ID. 必须登录并且只能访问自己的流程。
     """
     flow = verify_flow_ownership(flow_id, current_user, db)
+    
+    # 记录用户最后访问的流程图
+    preference_service = UserFlowPreferenceService(db)
+    preference_service.set_last_selected_flow_id(current_user.id, flow_id)
+    
     return flow
 
 
 @router.put("/{flow_id}", response_model=schemas.Flow)
 async def update_flow(flow_id: str, flow: schemas.FlowUpdate, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
     """
-    Updates a flow by ID. 必须登录并且只能更新自己的流程。
+    Updates a flow. 必须登录并且只能更新自己的流程。
     """
     db_flow = verify_flow_ownership(flow_id, current_user, db)
-
-    flow_data = flow.flow_data
-    name = flow.name
-
-    if flow_data is not None:
-        db_flow.flow_data = flow_data
-    if name is not None:
-        db_flow.name = name
-
+    
+    # Update flow fields
+    if flow.name is not None:
+        db_flow.name = flow.name
+    if flow.flow_data is not None:
+        db_flow.flow_data = flow.flow_data
+    
     db.commit()
     db.refresh(db_flow)
     return db_flow
 
 
-@router.delete("/{flow_id}")
+@router.delete("/{flow_id}", response_model=bool)
 async def delete_flow(flow_id: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
     """
-    Deletes a flow by ID. 必须登录并且只能删除自己的流程。
+    Deletes a flow. 必须登录并且只能删除自己的流程。
     """
     db_flow = verify_flow_ownership(flow_id, current_user, db)
     db.delete(db_flow)
     db.commit()
-    return {"message": "Flow deleted successfully"}
+    return True
+
 
 @router.get("/", response_model=List[schemas.Flow])
 async def get_flows_for_user(db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user), skip: int = Query(default=0, ge=0), limit: int = Query(default=10, le=100)):
@@ -74,3 +84,52 @@ async def get_flows_for_user(db: Session = Depends(database.get_db), current_use
     """
     flows = db.query(models.Flow).filter(models.Flow.owner_id == current_user.id).order_by(models.Flow.updated_at.desc()).offset(skip).limit(limit).all()
     return flows
+
+
+@router.post("/{flow_id}/set-as-last-selected", response_model=bool)
+async def set_as_last_selected(flow_id: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+    """
+    Sets a flow as the user's last selected flow. 必须登录并且只能选择自己的流程。
+    """
+    # 验证流程图存在且属于当前用户
+    verify_flow_ownership(flow_id, current_user, db)
+    
+    # 设置为用户最后选择的流程图
+    preference_service = UserFlowPreferenceService(db)
+    success = preference_service.set_last_selected_flow_id(current_user.id, flow_id)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="无法更新用户流程图偏好")
+    
+    return True
+
+
+@router.get("/user/last-selected", response_model=schemas.Flow)
+async def get_last_selected_flow(db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+    """
+    Gets the user's last selected flow. 必须登录才能获取。
+    """
+    # 获取用户最后选择的流程图ID
+    preference_service = UserFlowPreferenceService(db)
+    flow_id = preference_service.get_last_selected_flow_id(current_user.id)
+    
+    if not flow_id:
+        # 如果用户没有选择过流程图，返回最新的一个
+        flows = db.query(models.Flow).filter(models.Flow.owner_id == current_user.id).order_by(models.Flow.updated_at.desc()).first()
+        if not flows:
+            raise HTTPException(status_code=404, detail="用户没有流程图")
+        return flows
+    
+    # 获取流程图详情
+    flow = db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+    if not flow:
+        # 如果记录的流程图不存在，返回最新的一个
+        flows = db.query(models.Flow).filter(models.Flow.owner_id == current_user.id).order_by(models.Flow.updated_at.desc()).first()
+        if not flows:
+            raise HTTPException(status_code=404, detail="用户没有流程图")
+        
+        # 更新用户偏好
+        preference_service.set_last_selected_flow_id(current_user.id, flows.id)
+        return flows
+    
+    return flow

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 token URL
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
 
 def hash_password(password: str) -> str:
     """
@@ -64,6 +64,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     user = db.query(models.User).filter(models.User.username == token_data.username).first()
     if user is None:
         raise credentials_exception
+    return user
+
+async def optional_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+    """
+    Get the current user from a JWT token.
+    Returns None if the token is invalid or missing.
+    """
+    if token is None:
+        return None
+        
+    try:
+        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=[Config.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        token_data = schemas.TokenData(username=username)
+    except JWTError:
+        return None
+    
+    user = db.query(models.User).filter(models.User.username == token_data.username).first()
     return user
 
 def verify_flow_ownership(flow_id: str, current_user: schemas.User, db: Session):

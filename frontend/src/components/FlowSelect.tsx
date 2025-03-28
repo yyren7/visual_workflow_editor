@@ -29,7 +29,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow, duplicateFlow } from '../api/api';
+import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow, duplicateFlow, setAsLastSelectedFlow } from '../api/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -108,6 +108,11 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
       // 设置当前流程图ID到FlowContext
       setCurrentFlowId(flowId.toString());
       console.log("选择流程图：设置currentFlowId =", flowId.toString());
+      
+      // 通知后端，将此流程图设置为最后选择的流程图
+      setAsLastSelectedFlow(flowId.toString())
+        .then(() => console.log("已将流程图设置为最后选择的流程图"))
+        .catch(err => console.error("设置最后选择的流程图失败:", err));
       
       // 使用navigate而非window.location.href，避免整页刷新
       navigate(`/flow?id=${flowId}${userId ? `&user=${userId}` : ''}`);
@@ -214,6 +219,14 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         // 设置当前流程图ID到FlowContext
         setCurrentFlowId(newFlow.id.toString());
         console.log("创建流程图：设置currentFlowId =", newFlow.id.toString());
+        
+        // 通知后端，将此流程图设置为最后选择的流程图
+        try {
+          await setAsLastSelectedFlow(newFlow.id.toString());
+          console.log("已将新流程图设置为最后选择的流程图");
+        } catch (err: any) {
+          console.error("设置最后选择的流程图失败:", err);
+        }
         
         const userId = localStorage.getItem('user_id');
         navigate(`/flow?id=${newFlow.id}${userId ? `&user=${userId}` : ''}`);
@@ -327,6 +340,14 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         // 设置当前流程图ID到FlowContext
         setCurrentFlowId(newFlow.id.toString());
         console.log("复制流程图：设置currentFlowId =", newFlow.id.toString());
+        
+        // 通知后端，将此流程图设置为最后选择的流程图
+        try {
+          await setAsLastSelectedFlow(newFlow.id.toString());
+          console.log("已将复制的流程图设置为最后选择的流程图");
+        } catch (err: any) {
+          console.error("设置最后选择的流程图失败:", err);
+        }
         
         // 刷新流程图列表
         const updatedFlows = await getFlowsForUser(0, 100);

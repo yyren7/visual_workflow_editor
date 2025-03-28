@@ -449,18 +449,22 @@ class ToolCallingService(BasePromptService):
     
     # 工具实现方法
     async def _execute_node_creation(self, params: Dict[str, Any]) -> ToolResult:
-        """节点创建工具实现"""
+        """创建节点工具实现"""
         try:
-            # 从现有模板或输入中提取节点类型和标签
+            logger.info(f"创建节点: {params}")
+            
+            # 验证参数
             node_type = params.get("node_type")
             node_label = params.get("node_label")
             properties = params.get("properties", {})
             
-            # 使用智能默认值处理缺失参数
             if not node_type:
-                # 默认使用process类型节点
-                node_type = "process"
-                logger.info(f"未提供节点类型，使用默认类型: {node_type}")
+                logger.warning("缺少节点类型")
+                return ToolResult(
+                    success=False,
+                    message="创建节点失败: 缺少节点类型",
+                    tool_errors=["node_type_missing"]
+                )
             
             # 如果未提供节点标签，尝试从节点模板服务获取默认标签
             if not node_label:
@@ -478,17 +482,11 @@ class ToolCallingService(BasePromptService):
                             logger.info(f"使用节点模板默认标签: {node_label}")
                             break
                 
-                # 如果没有找到模板，使用基于类型的默认标签
+                # 如果没有找到模板，使用基于节点类型的默认标签生成方式
                 if not default_found:
-                    type_labels = {
-                        "start": "开始",
-                        "end": "结束",
-                        "process": "处理",
-                        "decision": "决策",
-                        "data": "数据",
-                        "io": "输入/输出"
-                    }
-                    node_label = type_labels.get(node_type, "节点") + f"_{str(uuid.uuid4())[:4]}"
+                    # 不再使用硬编码的节点类型标签映射
+                    # 直接使用节点类型作为基础，并添加唯一标识
+                    node_label = f"{node_type.capitalize()}_{str(uuid.uuid4())[:4]}"
                     logger.info(f"未找到模板，使用生成的默认标签: {node_label}")
             
             # 生成节点ID

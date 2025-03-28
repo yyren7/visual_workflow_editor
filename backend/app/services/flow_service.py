@@ -48,8 +48,8 @@ class FlowService:
         if not flow:
             return None
             
-        # 如果data字段为None，初始化为空字典
-        flow_data = flow.data or {}
+        # 如果flow_data字段为None，初始化为空字典
+        flow_data = flow.flow_data or {}
         
         # 添加流程图元数据
         result = {
@@ -84,7 +84,7 @@ class FlowService:
             flow = models.Flow(
                 owner_id=owner_id,
                 name=name,
-                data=data or {},
+                flow_data=data or {},
                 created_at=datetime.datetime.utcnow(),
                 updated_at=datetime.datetime.utcnow()
             )
@@ -123,7 +123,7 @@ class FlowService:
                 return False
                 
             # 更新数据
-            flow.data = data
+            flow.flow_data = data
             flow.updated_at = datetime.datetime.utcnow()
             
             # 如果提供了名称，也更新名称

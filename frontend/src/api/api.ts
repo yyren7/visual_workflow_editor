@@ -453,7 +453,16 @@ export const duplicateFlow = async (flowId: string): Promise<FlowData> => {
 export const processWorkflow = async (request: WorkflowProcessRequest): Promise<WorkflowProcessResponse> => {
     console.log("processWorkflow request:", request);
     try {
-        const response: AxiosResponse<WorkflowProcessResponse> = await apiClient.post('/workflow/process', request);
+        // 获取当前语言
+        const currentLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        
+        // 添加语言到请求
+        const requestWithLanguage = {
+            ...request,
+            language: currentLanguage
+        };
+        
+        const response: AxiosResponse<WorkflowProcessResponse> = await apiClient.post('/workflow/process', requestWithLanguage);
         return response.data;
     } catch (error) {
         console.error("Error processing workflow:", error);
@@ -484,7 +493,16 @@ export interface ChatResponse {
 export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
     console.log("sendChatMessage request:", request);
     try {
-        const response: AxiosResponse<ChatResponse> = await apiClient.post('/langchainchat/message', request);
+        // 获取当前语言
+        const currentLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        
+        // 添加语言到请求
+        const requestWithLanguage = {
+            ...request,
+            language: currentLanguage
+        };
+        
+        const response: AxiosResponse<ChatResponse> = await apiClient.post('/langchainchat/message', requestWithLanguage);
         return response.data;
     } catch (error) {
         console.error("Error sending chat message:", error);
@@ -521,4 +539,31 @@ export const deleteChatConversation = async (conversation_id: string): Promise<a
         console.error("Error deleting chat conversation:", error);
         throw error;
     }
+};
+
+/**
+ * 设置用户最后选择的流程图
+ * @param flowId 流程图ID
+ * @returns 成功返回true
+ */
+export const setAsLastSelectedFlow = async (flowId: string): Promise<boolean> => {
+    const response = await apiClient.post(`/flows/${flowId}/set-as-last-selected`, null, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    return response.data;
+};
+
+/**
+ * 获取用户最后选择的流程图
+ * @returns 流程图数据
+ */
+export const getLastSelectedFlow = async (): Promise<FlowData> => {
+    const response = await apiClient.get('/flows/user/last-selected', {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    return response.data;
 };

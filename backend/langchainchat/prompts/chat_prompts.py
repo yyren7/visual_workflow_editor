@@ -1,7 +1,40 @@
 from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from typing import Optional
+import logging
+
+# 配置日志
+logger = logging.getLogger("langchainchat.prompts")
+
+def get_node_types_text() -> str:
+    """
+    动态获取所有节点类型并生成提示文本
+    
+    Returns:
+        str: 节点类型提示文本
+    """
+    try:
+        # 导入依赖
+        from backend.app.services.node_type_prompt_service import get_node_type_prompt_service
+        
+        # 获取节点类型提示服务实例
+        node_type_service = get_node_type_prompt_service()
+        
+        # 获取节点类型提示文本
+        node_types_text = node_type_service.get_node_types_prompt_text()
+        
+        # 返回提示文本
+        logger.info(f"动态生成节点类型提示文本，包含多种节点类型")
+        return node_types_text
+    except Exception as e:
+        logger.error(f"获取节点类型提示文本失败: {str(e)}")
+        # 返回简单提示而不是硬编码节点类型
+        return "请从系统中获取可用的节点类型。"
+
+# 获取节点类型提示文本
+node_types_text = get_node_types_text()
 
 # 基础系统提示
-BASE_SYSTEM_PROMPT = """你是一个专业的流程图设计助手，帮助用户设计和创建工作流流程图。
+BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用户设计和创建工作流流程图。
 
 作为流程图助手，你应该:
 1. 提供专业、简洁的流程图设计建议
@@ -10,13 +43,7 @@ BASE_SYSTEM_PROMPT = """你是一个专业的流程图设计助手，帮助用�
 4. 协助用户解决流程图设计中遇到的问题
 5. 只回答与流程图和工作流相关的问题
 
-可用的节点类型:
-- start: 开始节点 (绿色，流程起点)
-- end: 结束节点 (红色，流程终点)
-- process: 处理节点 (蓝色，表示操作或行动)
-- decision: 决策节点 (黄色，条件判断点)
-- io: 输入输出节点 (紫色，处理数据输入或输出)
-- data: 数据节点 (青色，存储或检索数据)
+{node_types_text}
 
 请始终保持专业和有帮助的态度。"""
 
@@ -38,41 +65,35 @@ ENHANCED_CHAT_PROMPT_TEMPLATE = ChatPromptTemplate.from_messages([
 
 # 工作流生成提示模板
 WORKFLOW_GENERATION_TEMPLATE = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template("""你是一个专业的流程图生成专家。请根据用户输入，直接生成一个完整的流程图，包括所有必要的节点和节点之间的连接关系。
+    SystemMessagePromptTemplate.from_template(f"""你是一个专业的流程图生成专家。请根据用户输入，直接生成一个完整的流程图，包括所有必要的节点和节点之间的连接关系。
 
 输出应该符合以下JSON结构:
-{
+{{
   "nodes": [
-    {
+    {{
       "id": "唯一ID，如node1, node2...",
       "type": "节点类型，如process, decision, start, end等",
       "label": "节点标签/名称",
-      "properties": {
+      "properties": {{
         "描述": "节点详细信息"
-      },
-      "position": {
+      }},
+      "position": {{
         "x": 节点X坐标(整数),
         "y": 节点Y坐标(整数)
-      }
-    }
+      }}
+    }}
   ],
   "connections": [
-    {
+    {{
       "source": "源节点ID",
       "target": "目标节点ID",
       "label": "连接标签/说明"
-    }
+    }}
   ],
   "summary": "流程图整体描述"
-}
+}}
 
-节点类型说明:
-- start: 开始节点 (绿色，每个流程图必须有一个)
-- end: 结束节点 (红色，每个流程图至少有一个)
-- process: 处理节点 (蓝色，表示一个操作或行动)
-- decision: 决策节点 (黄色，具有多个输出路径的判断点)
-- io: 输入输出节点 (紫色，表示数据输入或输出)
-- data: 数据节点 (青色，表示数据存储或检索)
+{node_types_text}
 
 注意事项:
 1. 必须包含一个start节点和至少一个end节点
@@ -124,7 +145,7 @@ PROMPT_EXPANSION_TEMPLATE = ChatPromptTemplate.from_messages([
 
 # 工具调用提示模板
 TOOL_CALLING_TEMPLATE = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template("""你是一个专业的流程图设计助手，能够使用工具来帮助用户创建和修改流程图。
+    SystemMessagePromptTemplate.from_template(f"""你是一个专业的流程图设计助手，能够使用工具来帮助用户创建和修改流程图。
 
 可用工具:
 1. create_node - 创建流程图节点
@@ -132,6 +153,8 @@ TOOL_CALLING_TEMPLATE = ChatPromptTemplate.from_messages([
 3. update_node - 更新节点属性
 4. delete_node - 删除节点
 5. get_flow_info - 获取当前流程图信息
+
+{node_types_text}
 
 使用工具时应遵循以下原则:
 1. 根据用户需求选择最合适的工具

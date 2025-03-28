@@ -9,6 +9,7 @@ from backend.app import schemas
 import os
 import json
 from backend.app.config import Config
+from langchainchat.utils.translator import translator
 
 router = APIRouter(
     prefix="/workflow",
@@ -20,6 +21,7 @@ router = APIRouter(
 class WorkflowRequest(BaseModel):
     prompt: str
     session_id: Optional[str] = None  # 会话ID，用于关联多次交互
+    language: Optional[str] = "en"    # 期望的响应语言 (en, zh, ja)
 
 # 全局变量模型
 class GlobalVariable(BaseModel):
@@ -156,9 +158,22 @@ async def process_workflow_input(
             result["session_id"] = request.session_id
         result["user_id"] = current_user.id
         
+        # 翻译结果
+        if hasattr(request, 'language') and request.language:
+            if result.get("summary"):
+                result["summary"] = translator.translate(result["summary"], target_language=request.language)
+            if result.get("error"):
+                result["error"] = translator.translate(result["error"], target_language=request.language)
+            if result.get("expanded_prompt"):
+                result["expanded_prompt"] = translator.translate(result["expanded_prompt"], target_language=request.language)
+            
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"处理工作流失败: {str(e)}")
+        error_message = f"处理工作流失败: {str(e)}"
+        # 翻译错误信息
+        if hasattr(request, 'language') and request.language:
+            error_message = translator.translate(error_message, target_language=request.language)
+        raise HTTPException(status_code=500, detail=error_message)
 
 @router.post("/process_v2", response_model=WorkflowProcessResponse)
 async def process_workflow_v2(
@@ -183,39 +198,26 @@ async def process_workflow_v2(
         # 调用新的工作流处理方法
         result = await workflow_service.process_workflow(request.prompt, db)
         
-        # 生成聊天机器人响应摘要
-        if not result.error:
-            # 格式化成功结果为聊天摘要
-            node_count = len(result.nodes)
-            connection_count = len(result.connections)
-            
-            node_types = {}
-            for node in result.nodes:
-                node_type = node.get("type", "unknown")
-                if node_type in node_types:
-                    node_types[node_type] += 1
-                else:
-                    node_types[node_type] = 1
-            
-            # 构建节点类型摘要
-            node_type_summary = ", ".join([f"{count}个{type_name}节点" for type_name, count in node_types.items()])
-            
-            # 添加摘要到响应
-            result.summary = f"已成功创建流程图，包含{node_count}个节点（{node_type_summary}）和{connection_count}个连接。请在界面上查看生成的流程图。"
-        else:
-            # 错误情况
-            result.summary = f"生成流程图失败: {result.error}"
+        # 翻译结果
+        if hasattr(request, 'language') and request.language:
+            if result.summary:
+                result.summary = translator.translate(result.summary, target_language=request.language)
+            if result.error:
+                result.error = translator.translate(result.error, target_language=request.language)
+            if result.expanded_prompt:
+                result.expanded_prompt = translator.translate(result.expanded_prompt, target_language=request.language)
+            if result.missing_info:
+                if isinstance(result.missing_info, list):
+                    result.missing_info = [translator.translate(item, target_language=request.language) for item in result.missing_info]
+                elif isinstance(result.missing_info, str):
+                    result.missing_info = translator.translate(result.missing_info, target_language=request.language)
         
-        # 返回处理结果
         return result
     except Exception as e:
-        # 记录详细错误
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"处理工作流V2失败: {str(e)}", exc_info=True)
+        error_message = f"处理工作流失败: {str(e)}"
+        # 翻译错误信息
+        if hasattr(request, 'language') and request.language:
+            error_message = translator.translate(error_message, target_language=request.language)
         
-        # 返回错误响应
-        return WorkflowProcessResponse(
-            error=f"处理工作流失败: {str(e)}",
-            summary=f"处理流程图时出错: {str(e)}"
-        ) 
+        # 创建带有错误信息的响应对象
+        return WorkflowProcessResponse(error=error_message) 
