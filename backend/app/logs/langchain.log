@@ -1120,3 +1120,76 @@ openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authenticat
 2025-03-28 05:36:33 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
 2025-03-28 05:36:33 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
 2025-03-28 05:36:33 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-28 06:01:30 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-28 06:01:30 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-28 06:01:30 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-28 06:01:30 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-28 06:01:30 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-28 06:01:30 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-28 06:01:30 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-28 06:01:30 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-28 06:01:30 - langchain_chat - INFO - API配置验证通过: 
+2025-03-28 06:01:30 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-28 06:01:30 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-28 06:01:30 - langchain_chat - INFO - API配置验证通过: 
+2025-03-28 06:01:30 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-28 06:01:30 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-28 06:01:30 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-28 06:01:30 - langchain_chat - INFO - 初始化聊天服务
+2025-03-28 06:01:30 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-28 06:01:30 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-28 06:01:30 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-28 06:01:30 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-28 06:01:30 - langchain_chat - INFO - API配置验证通过: 
+2025-03-28 06:01:30 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-28 06:01:30 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-28 06:01:30 - langchain_chat - INFO - API配置验证通过: 
+2025-03-28 06:01:30 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-28 06:01:30 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-28 06:01:30 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-28 06:01:30 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-28 06:01:30 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-28 06:07:28 - langchain_chat - INFO - 处理聊天消息: 会话=None, 使用上下文=True, 使用工具=True, 语言=ja
+2025-03-28 06:07:28 - langchain_chat - INFO - 初始化增强对话记忆: ID=3d40b759-d66d-418f-905f-761f65f9e59f, 用户=27c83191-caae-4df4-a217-b6398a62061b
+2025-03-28 06:07:28 - langchain_chat - INFO - 创建新对话: 3d40b759-d66d-418f-905f-761f65f9e59f
+2025-03-28 06:07:28 - langchain_chat - INFO - 检测到节点创建请求，使用工具调用
+2025-03-28 06:07:28 - langchain_chat - INFO - 从元数据中获取流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 设置当前活动流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-28 06:07:28 - langchain_chat - INFO - 收集系统信息
+2025-03-28 06:07:28 - langchain_chat - INFO - 系统信息收集完成
+2025-03-28 06:07:28 - langchain_chat - INFO - 收集当前流程图信息
+2025-03-28 06:07:28 - langchain_chat - INFO - 获取流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 成功收集流程图信息: 新流程图 03/26 16:29-755
+2025-03-28 06:07:28 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-28 06:07:28 - langchain_chat - INFO - 使用工具处理用户输入
+2025-03-28 06:07:28 - langchain_chat - INFO - 获取流程工具列表
+2025-03-28 06:07:28 - langchain_chat - INFO - 当前流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 设置当前活动流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 设置当前活动流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 成功从节点模板服务获取 6 个模板
+2025-03-28 06:07:28 - langchain_chat - INFO - 可用节点模板: ['moveL', 'condition', 'set_motor', 'loop', 'select_robot', 'return']
+2025-03-28 06:07:28 - langchain_chat - INFO - 英文创建关键词匹配成功: 'create'
+2025-03-28 06:07:28 - langchain_chat - INFO - 用户输入: 'create movel node'
+2025-03-28 06:07:28 - langchain_chat - INFO - 是否识别为节点创建请求: True
+2025-03-28 06:07:28 - langchain_chat - INFO - 检测到的节点类型: None
+2025-03-28 06:07:28 - langchain_chat - INFO - 语言设置: None
+2025-03-28 06:07:28 - langchain_chat - INFO - 创建节点类型: moveL, 标签: Movel
+2025-03-28 06:07:28 - langchain_chat - INFO - ========================================
+2025-03-28 06:07:28 - langchain_chat - INFO - 创建节点工具函数被调用
+2025-03-28 06:07:28 - langchain_chat - INFO - 节点类型参数: node_type=moveL, type=None
+2025-03-28 06:07:28 - langchain_chat - INFO - 节点标签参数: node_label=Movel, node_name=None, label=None
+2025-03-28 06:07:28 - langchain_chat - INFO - 流程图ID: flow_id=d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 其他参数: kwargs={}
+2025-03-28 06:07:28 - langchain_chat - INFO - 创建节点: 类型=moveL, 标签=Movel
+2025-03-28 06:07:28 - langchain_chat - INFO - 使用提供的属性: {'description': 'Movel - 由AI助手创建', 'point_name_list': 'P1', 'control_x': 'enable', 'control_y': 'enable', 'control_z': 'enable', 'control_rz': 'enable', 'control_ry': 'enable', 'control_rx': 'enable', 'pallet_list': 'none', 'camera_list': 'none', 'inputs': [{'id': 'input', 'label': 'Input', 'position': 0}], 'outputs': [{'id': 'output', 'label': 'Output', 'position': 0}], 'nodeType': 'moveL'}
+2025-03-28 06:07:28 - langchain_chat - INFO - 生成节点ID: moveL-1743142048950
+2025-03-28 06:07:28 - langchain_chat - INFO - 生成随机位置: {'x': 369, 'y': 162}
+2025-03-28 06:07:28 - langchain_chat - INFO - 最终节点属性: {'control_x': 'enable', 'control_y': 'enable', 'description': 'Movel - 由AI助手创建', 'fields': [], 'inputs': [{'id': 'input', 'label': 'Input', 'position': 0}], 'outputs': [{'id': 'output', 'label': 'Output', 'position': 0}], 'point_name_list': 'P1', 'pallet_list': 'none', 'camera_list': 'none', 'control_z': 'enable', 'control_rz': 'enable', 'control_ry': 'enable', 'control_rx': 'enable', 'nodeType': 'moveL'}
+2025-03-28 06:07:28 - langchain_chat - INFO - 创建节点数据: id=moveL-1743142048950, type=moveL, label=Movel
+2025-03-28 06:07:28 - langchain_chat - INFO - 使用流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-03-28 06:07:28 - langchain_chat - INFO - 节点创建成功: moveL-1743142048950
+2025-03-28 06:07:28 - langchain_chat - INFO - ========================================
+2025-03-28 06:07:28 - langchain_chat - INFO - 对话历史已保存: backend/langchainchat/sessions/27c83191-caae-4df4-a217-b6398a62061b/3d40b759-d66d-418f-905f-761f65f9e59f.json
+2025-03-28 06:07:28 - langchain_chat - INFO - 成功处理节点创建请求: 会话=3d40b759-d66d-418f-905f-761f65f9e59f
+2025-03-28 06:07:29 - langchain_chat - INFO - 列出对话历史: 总数=1
