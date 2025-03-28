@@ -69,9 +69,11 @@ logger.info("开始导入模块...")
 
 # 首先导入数据库模型
 try:
-    from backend.app.database import engine
+    from database.connection import engine, Base
     logger.info("导入database成功")
-    from backend.app.models import Base
+    
+    # 导入数据库模型
+    from database.models import User, Flow, FlowVariable, VersionInfo, UserFlowPreference
     logger.info("导入models成功")
     
     # 导入embeddings模型

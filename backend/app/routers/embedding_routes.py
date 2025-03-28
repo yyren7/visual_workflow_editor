@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, List, Any
 
-from backend.app.database import get_db
+from database.connection import get_db
 from backend.app.embeddings.service import EmbeddingService
 from backend.app.embeddings.models import JsonEmbedding
 from backend.app.embeddings.config import embedding_config

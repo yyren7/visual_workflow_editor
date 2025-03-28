@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-# backend/create_flow_variables.py
+# backend/create_flow_variables.py - 创建多个测试全局变量用于测试
 
-import os
 import sys
+import os
 
 # 将父目录添加到Python路径以解决导入问题
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
-from backend.app.database import Base, engine, get_db
-from backend.app.models import User, Flow, FlowVariable
+from database.connection import Base, engine, get_db, SessionLocal
+from database.models import User, Flow, FlowVariable
 from backend.app.config import Config
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, UniqueConstraint
 import datetime

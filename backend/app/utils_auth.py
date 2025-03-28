@@ -5,8 +5,10 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from backend.app import models, schemas, database
-from backend.app.config import Config
+from app import schemas
+from database.connection import get_db
+from database.models import User, Flow
+from config import Config
 import json
 import os
 
@@ -41,7 +43,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, Config.SECRET_KEY, algorithm=Config.ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
     Get the current user from a JWT token.
     """
@@ -58,7 +60,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = db.query(models.User).filter(models.User.username == token_data.username).first()
+    user = db.query(User).filter(User.username == token_data.username).first()
     if user is None:
         raise credentials_exception
     return user
@@ -80,7 +82,7 @@ def verify_flow_ownership(flow_id: str, current_user: schemas.User, db: Session)
         HTTPException: 如果流程图不存在或用户不是所有者
     """
     # 先检查流程图是否存在
-    flow = db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+    flow = db.query(Flow).filter(Flow.id == flow_id).first()
     if not flow:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="流程图不存在")
     

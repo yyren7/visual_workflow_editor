@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 import logging
 
-from backend.app import models
+from database.models import UserFlowPreference
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class UserFlowPreferenceService:
             最后选择的流程图ID，如果不存在则返回None
         """
         try:
-            preference = self.db.query(models.UserFlowPreference).filter(
-                models.UserFlowPreference.user_id == user_id
+            preference = self.db.query(UserFlowPreference).filter(
+                UserFlowPreference.user_id == user_id
             ).first()
             
             if preference and preference.last_selected_flow_id:
@@ -51,8 +51,8 @@ class UserFlowPreferenceService:
         """
         try:
             # 查找现有的偏好记录
-            preference = self.db.query(models.UserFlowPreference).filter(
-                models.UserFlowPreference.user_id == user_id
+            preference = self.db.query(UserFlowPreference).filter(
+                UserFlowPreference.user_id == user_id
             ).first()
             
             if preference:
@@ -60,7 +60,7 @@ class UserFlowPreferenceService:
                 preference.last_selected_flow_id = flow_id
             else:
                 # 创建新记录
-                preference = models.UserFlowPreference(
+                preference = UserFlowPreference(
                     user_id=user_id,
                     last_selected_flow_id=flow_id
                 )

@@ -5,7 +5,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from backend.app import models, database, schemas
+from backend.app import schemas, database
+from database.models import Flow
 from backend.app.config import Config
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
@@ -22,7 +23,7 @@ async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.g
     """
     Creates a new flow. 必须登录才能创建流程。
     """
-    db_flow = models.Flow(flow_data=flow.flow_data, owner_id=current_user.id, name=flow.name)
+    db_flow = Flow(flow_data=flow.flow_data, owner_id=current_user.id, name=flow.name)
     db.add(db_flow)
     db.commit()
     db.refresh(db_flow)
@@ -82,7 +83,7 @@ async def get_flows_for_user(db: Session = Depends(database.get_db), current_use
     """
     Get all flows for the current user with pagination. 必须登录才能获取流程列表，且只能获取自己的流程。
     """
-    flows = db.query(models.Flow).filter(models.Flow.owner_id == current_user.id).order_by(models.Flow.updated_at.desc()).offset(skip).limit(limit).all()
+    flows = db.query(Flow).filter(Flow.owner_id == current_user.id).order_by(Flow.updated_at.desc()).offset(skip).limit(limit).all()
     return flows
 
 
@@ -115,16 +116,16 @@ async def get_last_selected_flow(db: Session = Depends(database.get_db), current
     
     if not flow_id:
         # 如果用户没有选择过流程图，返回最新的一个
-        flows = db.query(models.Flow).filter(models.Flow.owner_id == current_user.id).order_by(models.Flow.updated_at.desc()).first()
+        flows = db.query(Flow).filter(Flow.owner_id == current_user.id).order_by(Flow.updated_at.desc()).first()
         if not flows:
             raise HTTPException(status_code=404, detail="用户没有流程图")
         return flows
     
     # 获取流程图详情
-    flow = db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+    flow = db.query(Flow).filter(Flow.id == flow_id).first()
     if not flow:
         # 如果记录的流程图不存在，返回最新的一个
-        flows = db.query(models.Flow).filter(models.Flow.owner_id == current_user.id).order_by(models.Flow.updated_at.desc()).first()
+        flows = db.query(Flow).filter(Flow.owner_id == current_user.id).order_by(Flow.updated_at.desc()).first()
         if not flows:
             raise HTTPException(status_code=404, detail="用户没有流程图")
         

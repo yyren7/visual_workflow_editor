@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import json
 import logging
 
-from backend.app.models import FlowVariable, Flow
+from database.models import FlowVariable, Flow
 
 logger = logging.getLogger(__name__)
 

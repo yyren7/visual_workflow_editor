@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-from backend.app.database import get_db
-from backend.app.services.workflow_prompt_service import WorkflowPromptService, WorkflowProcessResponse
-from backend.app.utils import get_current_user
-from backend.app import schemas
+from database.connection import get_db
+from app.services.workflow_prompt_service import WorkflowPromptService, WorkflowProcessResponse
+from app.utils_auth import get_current_user
+from app import schemas
 import os
 import json
-from backend.app.config import Config
+from config import Config
 from langchainchat.utils.translator import translator
 
 router = APIRouter(

@@ -192,7 +192,7 @@ def create_node_tool_func(
         # 使用同步方式调用API
         try:
             # 这里我们使用内部API直接创建节点
-            from backend.app.database import get_db
+            from database.connection import get_db
             from backend.app.services.flow_service import FlowService
             
             # 获取数据库会话
@@ -346,7 +346,7 @@ def connect_nodes_tool_func(
         # 调用API创建连接
         try:
             # 这里使用内部API直接创建连接
-            from backend.app.database import get_db
+            from database.connection import get_db
             from backend.app.services.flow_service import FlowService
             
             # 获取数据库会话
@@ -449,7 +449,7 @@ def get_flow_info_tool_func(
         logger.info("获取流程图信息")
         
         # 使用内部API获取流程图信息
-        from backend.app.database import get_db
+        from database.connection import get_db
         from backend.app.services.flow_service import FlowService
         
         # 获取数据库会话

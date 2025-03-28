@@ -1,27 +1,31 @@
+version: '3'
+
 services:
   backend:
-    build: 
-      context: .
-      dockerfile: ./backend/Dockerfile
+    build:
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
     container_name: workflow-editor-backend
     volumes:
-      - ./:/app
+      - ../:/app
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./flow_editor.db
-      - PYTHONPATH=/app
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-0}
+      - DATABASE_URL=sqlite:///database/flow_editor.db
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
     command: python backend/run_backend.py
-    restart: on-failure
+    restart: unless-stopped
     deploy:
       restart_policy:
         condition: on-failure
         max_attempts: 3
 
   frontend:
-    build: 
-      context: .
-      dockerfile: ./frontend/Dockerfile
+    build:
+      context: ..
+      dockerfile: deployment/frontend.Dockerfile
     container_name: workflow-editor-frontend
     volumes:
       - ./frontend:/app
@@ -29,11 +33,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_BASE_URL=http://localhost:8000
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - DISABLE_ESLINT_PLUGIN=true
-    command: npm start
+      - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped

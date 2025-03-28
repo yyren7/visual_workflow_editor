@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from backend.app import models, database, schemas, utils
+from backend.app import schemas, utils
+from database.connection import get_db
+from database.models import User
 from backend.app.config import Config
 from datetime import timedelta
 
@@ -12,27 +14,27 @@ router = APIRouter(
 )
 
 @router.post("/register", response_model=schemas.User)
-async def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     Registers a new user.
     """
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+    db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
     hashed_password = utils.hash_password(user.password)
-    db_user = models.User(username=user.username, hashed_password=hashed_password)
+    db_user = User(username=user.username, hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
 @router.post("/login", response_model=schemas.Token)
-async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     Logs in an existing user.
     """
-    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+    user = db.query(User).filter(User.username == form_data.username).first()
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     

@@ -53,7 +53,7 @@ class PromptEmbeddingService(BasePromptService):
                 self.embedding_service = _embedding_service_instance
             else:
                 # 延迟导入，避免循环引用
-                from backend.app.embeddings.service import EmbeddingService
+                from embeddings.service import EmbeddingService
                 logger.debug("初始化全局EmbeddingService实例")
                 self.embedding_service = EmbeddingService.get_instance()
                 _embedding_service_instance = self.embedding_service

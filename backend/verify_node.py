@@ -1,4 +1,4 @@
-from backend.app.database import get_db
+from database.connection import get_db
 from backend.app.services.flow_service import FlowService
 
 flow_id = '30a17510-07bf-4371-aa18-6583ad908aa4'

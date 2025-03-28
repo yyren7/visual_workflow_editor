@@ -12,8 +12,8 @@ from pathlib import Path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
-from backend.app.database import Base, engine, SessionLocal
-from backend.app.models import VersionInfo
+from database.connection import Base, engine, SessionLocal
+from database.models import VersionInfo
 
 def update_version_from_file(file_path=None):
     """从version.json文件更新版本信息到数据库"""

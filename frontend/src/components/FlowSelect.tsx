@@ -50,12 +50,12 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const { setCurrentFlowId } = useFlowContext();
-  
+
   // 编辑流程图名称相关状态
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingFlow, setEditingFlow] = useState<FlowData | null>(null);
   const [newFlowName, setNewFlowName] = useState('');
-  
+
   // 删除流程图确认对话框相关状态
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingFlow, setDeletingFlow] = useState<FlowData | null>(null);
@@ -94,7 +94,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     if (searchTerm.trim() === '') {
       setFilteredFlows(flows);
     } else {
-      const filtered = flows.filter(flow => 
+      const filtered = flows.filter(flow =>
         flow.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredFlows(filtered);
@@ -104,29 +104,29 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const handleFlowSelect = (flowId: string | number | undefined) => {
     if (flowId !== undefined) {
       const userId = localStorage.getItem('user_id');
-      
+
       // 设置当前流程图ID到FlowContext
       setCurrentFlowId(flowId.toString());
       console.log("选择流程图：设置currentFlowId =", flowId.toString());
-      
+
       // 通知后端，将此流程图设置为最后选择的流程图
       setAsLastSelectedFlow(flowId.toString())
         .then(() => console.log("已将流程图设置为最后选择的流程图"))
         .catch(err => console.error("设置最后选择的流程图失败:", err));
-      
+
       // 使用navigate而非window.location.href，避免整页刷新
       navigate(`/flow?id=${flowId}${userId ? `&user=${userId}` : ''}`);
-      
+
       // 发布自定义事件，通知其他组件流程图已更改
-      const event = new CustomEvent('flow-changed', { 
-        detail: { flowId: flowId.toString() } 
+      const event = new CustomEvent('flow-changed', {
+        detail: { flowId: flowId.toString() }
       });
       window.dispatchEvent(event);
-      
+
       onClose(); // 关闭选择窗口
     }
   };
-  
+
   // 打开编辑流程图名称对话框
   const handleEditClick = (event: React.MouseEvent, flow: FlowData) => {
     event.stopPropagation(); // 阻止事件冒泡，避免触发流程图选择
@@ -134,21 +134,21 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     setNewFlowName(flow.name);
     setEditDialogOpen(true);
   };
-  
+
   // 关闭编辑对话框
   const handleEditDialogClose = () => {
     setEditDialogOpen(false);
     setEditingFlow(null);
   };
-  
+
   // 保存流程图新名称
   const handleSaveFlowName = async () => {
     if (!editingFlow || !editingFlow.id) return;
-    
+
     try {
       setLoading(true);
       await updateFlowName(editingFlow.id.toString(), newFlowName);
-      
+
       // 更新本地列表中的名称
       const updatedFlows = flows.map(flow => {
         if (flow.id === editingFlow.id) {
@@ -156,29 +156,29 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         }
         return flow;
       });
-      
+
       setFlows(updatedFlows);
-      setFilteredFlows(updatedFlows.filter(flow => 
+      setFilteredFlows(updatedFlows.filter(flow =>
         searchTerm.trim() === '' || flow.name.toLowerCase().includes(searchTerm.toLowerCase())
       ));
-      
+
       enqueueSnackbar(t('flowSelect.updateNameSuccess', '流程图名称已更新'), { variant: 'success' });
       handleEditDialogClose();
-      
+
       // 检查当前打开的流程图是否是正在编辑的流程图
       // 如果是，发布自定义事件通知流程图名称已更改
       const currentFlowId = new URLSearchParams(window.location.search).get('id');
       if (currentFlowId === editingFlow.id.toString()) {
         // 使用自定义事件而非页面刷新
-        const event = new CustomEvent('flow-renamed', { 
-          detail: { 
+        const event = new CustomEvent('flow-renamed', {
+          detail: {
             flowId: editingFlow.id.toString(),
             newName: newFlowName
-          } 
+          }
         });
         window.dispatchEvent(event);
       }
-      
+
     } catch (err) {
       console.error('更新流程图名称失败:', err);
       if (err instanceof Error) {
@@ -195,7 +195,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // 避免生成重复名称的流程图，添加随机数
       const randomId = Math.floor(Math.random() * 1000);
       const defaultFlow: Partial<FlowData> = {
@@ -214,12 +214,12 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
 
       const newFlow = await createFlow(defaultFlow as FlowData);
       console.log("成功创建新流程图:", newFlow);
-      
+
       if (newFlow && newFlow.id) {
         // 设置当前流程图ID到FlowContext
         setCurrentFlowId(newFlow.id.toString());
         console.log("创建流程图：设置currentFlowId =", newFlow.id.toString());
-        
+
         // 通知后端，将此流程图设置为最后选择的流程图
         try {
           await setAsLastSelectedFlow(newFlow.id.toString());
@@ -227,7 +227,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         } catch (err: any) {
           console.error("设置最后选择的流程图失败:", err);
         }
-        
+
         const userId = localStorage.getItem('user_id');
         navigate(`/flow?id=${newFlow.id}${userId ? `&user=${userId}` : ''}`);
         onClose();
@@ -262,12 +262,12 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   const handleDeleteClick = (event: React.MouseEvent, flow: FlowData) => {
     event.preventDefault(); // 使用preventDefault而不是仅停止冒泡
     event.stopPropagation(); // 仍然阻止事件冒泡
-    
+
     // 设置要删除的流程图并打开确认对话框
     setDeletingFlow(flow);
     setDeleteDialogOpen(true);
   };
-  
+
   // 关闭删除确认对话框
   const handleDeleteDialogClose = () => {
     setDeleteDialogOpen(false);
@@ -276,34 +276,34 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
       setDeletingFlow(null);
     }, 100);
   };
-  
+
   // 确认删除流程图
   const handleConfirmDelete = async () => {
     if (!deletingFlow || !deletingFlow.id) return;
-    
+
     try {
       setLoading(true);
-      
+
       // 先保存要删除的流程图ID，因为后面会清除deletingFlow
       const flowIdToDelete = deletingFlow.id.toString();
       const flowName = deletingFlow.name;
-      
+
       await deleteFlow(flowIdToDelete);
-      
+
       // 从本地列表中移除被删除的流程图
       const updatedFlows = flows.filter(flow => flow.id !== flowIdToDelete);
       setFlows(updatedFlows);
-      setFilteredFlows(updatedFlows.filter(flow => 
+      setFilteredFlows(updatedFlows.filter(flow =>
         searchTerm.trim() === '' || flow.name.toLowerCase().includes(searchTerm.toLowerCase())
       ));
-      
+
       // 先关闭对话框
       setDeleteDialogOpen(false);
-      
+
       // 延迟显示成功消息，确保对话框已关闭
       setTimeout(() => {
         enqueueSnackbar(`${t('flowSelect.deleteSuccess', '流程图已删除')}: "${flowName}"`, { variant: 'success' });
-        
+
         // 检查当前打开的流程图是否是被删除的流程图
         // 如果是，重定向到主页
         const currentFlowId = new URLSearchParams(window.location.search).get('id');
@@ -311,7 +311,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
           navigate('/flow', { replace: true });
         }
       }, 300);
-      
+
     } catch (err) {
       console.error('删除流程图失败:', err);
       if (err instanceof Error) {
@@ -331,16 +331,16 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
   // 复制流程图
   const handleDuplicateClick = async (event: React.MouseEvent, flow: FlowData) => {
     event.stopPropagation(); // 阻止事件冒泡，避免触发流程图选择
-    
+
     try {
       setLoading(true);
       const newFlow = await duplicateFlow(flow.id as string);
-      
+
       if (newFlow && newFlow.id) {
         // 设置当前流程图ID到FlowContext
         setCurrentFlowId(newFlow.id.toString());
         console.log("复制流程图：设置currentFlowId =", newFlow.id.toString());
-        
+
         // 通知后端，将此流程图设置为最后选择的流程图
         try {
           await setAsLastSelectedFlow(newFlow.id.toString());
@@ -348,16 +348,16 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         } catch (err: any) {
           console.error("设置最后选择的流程图失败:", err);
         }
-        
+
         // 刷新流程图列表
         const updatedFlows = await getFlowsForUser(0, 100);
         setFlows(updatedFlows);
-        setFilteredFlows(updatedFlows.filter(f => 
+        setFilteredFlows(updatedFlows.filter(f =>
           searchTerm.trim() === '' || f.name.toLowerCase().includes(searchTerm.toLowerCase())
         ));
-        
+
         enqueueSnackbar(t('flowSelect.duplicateSuccess', '流程图已复制'), { variant: 'success' });
-        
+
         // 导航到新流程图
         const userId = localStorage.getItem('user_id');
         navigate(`/flow?id=${newFlow.id}${userId ? `&user=${userId}` : ''}`);
@@ -495,24 +495,24 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
                     }}
                   >
                     <ListItemButton onClick={() => handleFlowSelect(flow.id)}>
-                      <ListItem 
-                        disablePadding 
+                      <ListItem
+                        disablePadding
                         sx={{ display: 'block' }}
                         secondaryAction={
                           <Box sx={{ display: 'flex' }}>
-                            <IconButton 
-                              edge="end" 
+                            <IconButton
+                              edge="end"
                               aria-label="edit"
                               onClick={(e) => handleEditClick(e, flow)}
                               sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
                             >
                               <EditIcon />
                             </IconButton>
-                            <IconButton 
-                              edge="end" 
+                            <IconButton
+                              edge="end"
                               aria-label="duplicate"
                               onClick={(e) => handleDuplicateClick(e, flow)}
-                              sx={{ 
+                              sx={{
                                 color: 'rgba(255, 255, 255, 0.7)',
                                 '&:hover': {
                                   color: '#42a5f5',
@@ -521,11 +521,11 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
                             >
                               <ContentCopyIcon />
                             </IconButton>
-                            <IconButton 
-                              edge="end" 
+                            <IconButton
+                              edge="end"
                               aria-label="delete"
                               onClick={(e) => handleDeleteClick(e, flow)}
-                              sx={{ 
+                              sx={{
                                 color: 'rgba(255, 255, 255, 0.7)',
                                 // 添加更明显的样式，确保点击触发
                                 '&:hover': {
@@ -565,7 +565,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
           )}
         </DialogContent>
       </Dialog>
-      
+
       {/* 编辑流程图名称的对话框 */}
       <Dialog
         open={editDialogOpen}
@@ -619,22 +619,22 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
           />
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 1 }}>
-          <Button 
-            onClick={handleEditDialogClose} 
+          <Button
+            onClick={handleEditDialogClose}
             sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
           >
             {t('common.cancel', '取消')}
           </Button>
-          <Button 
-            onClick={handleSaveFlowName} 
-            variant="contained" 
+          <Button
+            onClick={handleSaveFlowName}
+            variant="contained"
             disabled={!newFlowName.trim() || loading}
           >
             {t('common.save', '保存')}
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* 删除流程图确认对话框 */}
       <Dialog
         open={deleteDialogOpen}
@@ -650,8 +650,8 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         }}
         disableEscapeKeyDown
       >
-        <DialogTitle sx={{ 
-          bgcolor: '#333', 
+        <DialogTitle sx={{
+          bgcolor: '#333',
           borderBottom: '1px solid #444',
           color: '#ff5252'
         }}>
@@ -662,7 +662,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
             {t('flowEditor.deleteConfirmContent', '此操作无法撤销')}
           </Typography>
           {deletingFlow?.name && (
-            <Typography sx={{ 
+            <Typography sx={{
               fontWeight: 'bold',
               fontSize: '1.1rem',
               p: 1,
@@ -674,15 +674,15 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 1 }}>
-          <Button 
-            onClick={handleDeleteDialogClose} 
+          <Button
+            onClick={handleDeleteDialogClose}
             sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
           >
             {t('flowEditor.cancel', '取消')}
           </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            variant="contained" 
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
             color="error"
             disabled={loading}
           >

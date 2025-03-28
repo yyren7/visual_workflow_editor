@@ -1,26 +1,20 @@
 version: '3'
 
 services:
-  devcontainer:
+  dev:
     build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ..:/workspace:cached
-      - frontend-node-modules:/workspace/frontend/node_modules:delegated
-      - workflow-logs:/workspace/logs:delegated
-      - dependency-cache:/workspace/.devcontainer/cache:delegated
-    command: sleep infinity
     environment:
-      - DATABASE_URL=sqlite:///./flow_editor.db
-      - PYTHONPATH=/workspace
-      - REACT_APP_API_BASE_URL=http://localhost:8000
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - DISABLE_ESLINT_PLUGIN=true
+      - DEBUG=1
+      - SECRET_KEY=dev_secret_key
+      - DATABASE_URL=sqlite:///database/flow_editor.db
     ports:
-      - "3000:3000"
       - "8000:8000"
+      - "3000:3000"
+    command: sleep infinity
     networks:
       - workflow-editor-net
 

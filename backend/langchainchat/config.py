@@ -102,7 +102,8 @@ class LangChainSettings(BaseSettings):
     
     model_config = {
         "env_file": os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env'),
-        "env_file_encoding": "utf-8"
+        "env_file_encoding": "utf-8",
+        "extra": "ignore"  # 忽略额外的环境变量，如DATABASE_URL
     }
 
 # 创建单例设置实例

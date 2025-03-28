@@ -5,7 +5,9 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from backend.app import models, schemas, database
+from backend.app import schemas
+from backend.app import database
+from database.models import User, Flow, VersionInfo
 from backend.app.config import Config
 import json
 import os
@@ -17,7 +19,11 @@ logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 token URL
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+SECRET_KEY = Config.SECRET_KEY
+ALGORITHM = Config.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = Config.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def hash_password(password: str) -> str:
     """
@@ -41,7 +47,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, Config.SECRET_KEY, algorithm=Config.ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
@@ -50,18 +56,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="无法验证凭据",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=[Config.ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
         token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = db.query(models.User).filter(models.User.username == token_data.username).first()
+    user = db.query(User).filter(User.username == token_data.username).first()
     if user is None:
         raise credentials_exception
     return user
@@ -75,7 +81,7 @@ async def optional_current_user(token: Optional[str] = Depends(oauth2_scheme), d
         return None
         
     try:
-        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=[Config.ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             return None
@@ -83,7 +89,7 @@ async def optional_current_user(token: Optional[str] = Depends(oauth2_scheme), d
     except JWTError:
         return None
     
-    user = db.query(models.User).filter(models.User.username == token_data.username).first()
+    user = db.query(User).filter(User.username == token_data.username).first()
     return user
 
 def verify_flow_ownership(flow_id: str, current_user: schemas.User, db: Session):
@@ -103,7 +109,7 @@ def verify_flow_ownership(flow_id: str, current_user: schemas.User, db: Session)
         HTTPException: 如果流程图不存在或用户不是所有者
     """
     # 先检查流程图是否存在
-    flow = db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+    flow = db.query(Flow).filter(Flow.id == flow_id).first()
     if not flow:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="流程图不存在")
     
@@ -127,7 +133,7 @@ def get_version_info():
     try:
         db = database.SessionLocal()
         try:
-            db_version = db.query(models.VersionInfo).first()
+            db_version = db.query(VersionInfo).first()
             if db_version:
                 logger.info(f"从数据库获取版本信息: {db_version.version}")
                 return {

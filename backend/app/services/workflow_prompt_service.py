@@ -1,15 +1,32 @@
-from typing import Dict, Any, List, Optional, Tuple
+import asyncio
 import logging
+import os
+import re
 import json
+import uuid
+import time
+from datetime import datetime
+from typing import Dict, List, Any, Optional, Set, Union
+from threading import Lock
+
+from fastapi import HTTPException, Depends
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field
 
-from backend.app.services.prompt_service import BasePromptService
-from backend.app.config import Config
-from backend.app.services.deepseek_client_service import DeepSeekClientService
+# 修改数据库模型导入
+from database.models import User, Flow
 
-# 使用专门的workflow日志记录器
-logger = logging.getLogger("backend.workflow")
+from app.services.prompt_service import BasePromptService
+from app.services.deepseek_client_service import DeepSeekClientService
+from app.services.prompt_expansion_service import PromptExpansionService
+from app.services.prompt_embedding_service import PromptEmbeddingService
+# from app.services.settings_service import SettingsService  # 此服务不存在
+# from app.services.tool_service import ToolService  # 此服务不存在
+# from app.services.structured_output_service import StructuredOutputService  # 暂时注释
+# from app.services.tool_classes import ToolOptions, AvailableTool  # 暂时注释
+
+# 设置日志记录器
+logger = logging.getLogger(__name__)
 
 # 添加一个全局变量存储单例实例
 _workflow_prompt_service_instance = None
@@ -29,7 +46,7 @@ class WorkflowProcessResponse(BaseModel):
 class WorkflowPromptService(BasePromptService):
     """
     工作流Prompt服务
-    集成四个特化组件，处理用户输入到流程图的全过程
+    集成组件，处理用户输入到流程图的全过程
     """
     
     def __init__(
@@ -40,24 +57,7 @@ class WorkflowPromptService(BasePromptService):
         structured_output_service=None
     ):
         super().__init__()
-        # 延迟导入服务，避免循环引用
-        if expansion_service is None:
-            from backend.app.services.prompt_expansion_service import PromptExpansionService
-            expansion_service = PromptExpansionService()
-        
-        if embedding_service is None:
-            from backend.app.services.prompt_embedding_service import PromptEmbeddingService
-            # 使用单例实例
-            embedding_service = PromptEmbeddingService.get_instance()
-        
-        if tool_service is None:
-            from backend.app.services.tool_calling_service import ToolCallingService
-            tool_service = ToolCallingService()
-        
-        if structured_output_service is None:
-            from backend.app.services.structured_output_service import StructuredOutputService
-            structured_output_service = StructuredOutputService()
-        
+        # 简化初始化，避免导入不存在的服务
         self.expansion_service = expansion_service
         self.embedding_service = embedding_service
         self.tool_service = tool_service
@@ -234,7 +234,7 @@ class WorkflowPromptService(BasePromptService):
             print(f"扩展后的提示: {expanded_input}")
             
             # 检查是否是工具调用请求
-            is_tool_request, tool_name, tool_params = self.expansion_service.check_direct_tool_request(user_input)
+            is_tool_request, tool_name, tool_params = self.check_direct_tool_request(user_input)
             
             # 首先尝试直接运行工具（如果是直接工具请求）
             if is_tool_request:
@@ -256,7 +256,7 @@ class WorkflowPromptService(BasePromptService):
                 return self._convert_tool_result_to_response(tool_result, user_input, expanded_input)
             
             # 检查是否需要工具请求来执行任务
-            needs_tool_calling, tool_request = self.expansion_service.check_needs_tool_request(expanded_input)
+            needs_tool_calling, tool_request = self.check_needs_tool_request(expanded_input)
             
             if needs_tool_calling:
                 logger.info(f"需要进行工具调用: {tool_request}")
@@ -299,7 +299,7 @@ class WorkflowPromptService(BasePromptService):
                 interactions = []
                 
                 # 解析步骤
-                steps = self.expansion_service.extract_steps(expanded_input)
+                steps = self.extract_steps(expanded_input)
                 
                 for i, step in enumerate(steps):
                     logger.info(f"处理步骤 {i+1}: {step}")
@@ -930,9 +930,8 @@ class WorkflowPromptService(BasePromptService):
         """
         try:
             # 从数据库获取当前流程图数据
-            from backend.app.models import Flow
-            from backend.app.services.flow_service import FlowService
-            from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
+            from services.flow_service import FlowService
+            from services.user_flow_preference_service import UserFlowPreferenceService
             
             flow_service = FlowService(db)
             
@@ -1049,9 +1048,9 @@ class WorkflowPromptService(BasePromptService):
         """
         try:
             import json
-            from backend.app.services.flow_service import FlowService
-            from backend.app.services.flow_variable_service import FlowVariableService
-            from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
+            from services.flow_service import FlowService
+            from services.flow_variable_service import FlowVariableService
+            from services.user_flow_preference_service import UserFlowPreferenceService
             
             # 获取当前活动的流程图
             flow_service = FlowService(db)
@@ -1159,11 +1158,11 @@ class WorkflowPromptService(BasePromptService):
         """
         try:
             # 注意：这里只是获取基本用户信息，不包含敏感信息如密码
-            from backend.app.models import User, Flow
+            # 已经在顶部导入: from database.models import User, Flow
             
             # 尝试从最新流程图获取所有者ID
             flow_service = None
-            from backend.app.services.flow_service import FlowService
+            from services.flow_service import FlowService
             flow_service = FlowService(db)
             flows = flow_service.get_flows()
             
@@ -1241,3 +1240,176 @@ class WorkflowPromptService(BasePromptService):
         
         logger.info("成功收集所有上下文信息")
         return context_info 
+
+    def update_workflow_from_db(self, user_id: int = None, flow_id: Optional[str] = None, db: Session = None) -> dict:
+        """从数据库更新工作流数据"""
+        if not db:
+            logger.warning("未提供数据库会话，无法从数据库更新工作流")
+            return {"success": False, "message": "未提供数据库会话"}
+            
+        try:
+            # 从数据库获取当前流程图数据
+            from services.flow_service import FlowService
+            from services.user_flow_preference_service import UserFlowPreferenceService
+            
+            # 如果未指定flow_id，尝试获取用户最后使用的流程图
+            if not flow_id and user_id:
+                pref_service = UserFlowPreferenceService(db)
+                flow_id = pref_service.get_last_selected_flow_id(user_id)
+            
+            # 还是没有flow_id，尝试获取用户的第一个流程图
+            if not flow_id and user_id:
+                flow_service = FlowService(db)
+                flows = flow_service.get_flows(owner_id=user_id, limit=1)
+                if flows and len(flows) > 0:
+                    flow_id = flows[0].id
+            
+            # 如果有flow_id，获取流程图数据
+            if flow_id:
+                # 查询数据库
+                flow = db.query(Flow).filter(Flow.id == flow_id).first()
+                
+                if flow:
+                    # 更新工作流数据
+                    self.flow_id = flow_id
+                    self.user_id = flow.owner_id
+                    self.flow_data = flow.flow_data or {}
+                    self.flow_name = flow.name
+                    
+                    logger.info(f"已从数据库加载流程图 {flow_id}")
+                    return {"success": True, "message": f"已加载流程图 {flow.name}"}
+                else:
+                    logger.warning(f"流程图 {flow_id} 不存在")
+                    return {"success": False, "message": f"流程图 {flow_id} 不存在"}
+            else:
+                logger.warning("未找到可用的流程图")
+                return {"success": False, "message": "未找到可用的流程图"}
+                
+        except Exception as e:
+            logger.error(f"从数据库更新工作流时出错: {str(e)}")
+            return {"success": False, "message": f"更新工作流失败: {str(e)}"}
+            
+    def get_user_info(self, db: Session = None) -> dict:
+        """获取用户信息"""
+        if not db or not self.user_id:
+            return {"username": "未知用户", "id": self.user_id}
+            
+        try:
+            # 查询数据库获取用户信息
+            user = db.query(User).filter(User.id == self.user_id).first()
+            
+            if user:
+                return {
+                    "username": user.username,
+                    "id": user.id
+                }
+            else:
+                return {"username": "未知用户", "id": self.user_id}
+                
+        except Exception as e:
+            logger.error(f"获取用户信息时出错: {str(e)}")
+            return {"username": "未知用户", "id": self.user_id}
+
+    def check_direct_tool_request(self, user_input: str) -> tuple[bool, str, dict]:
+        """
+        检查用户输入是否是直接的工具调用请求
+        例如："创建一个process节点"，"添加decision节点"等
+        
+        Args:
+            user_input: 用户输入
+            
+        Returns:
+            (是否是工具请求, 工具名称, 工具参数)
+        """
+        # 简单的检查，只检查创建节点请求
+        is_tool_request = False
+        tool_name = ""
+        tool_params = {}
+        
+        # 创建节点的关键词
+        create_node_keywords = ["创建", "添加", "新增", "插入", "新建", "create", "add", "新しい", "ノードを作成"]
+        node_types = ["process", "decision", "movel", "moveL", "start", "end", "处理", "决策", "移动"]
+        
+        # 转换为小写以便检查
+        input_lower = user_input.lower()
+        
+        # 检查是否包含创建节点的关键词
+        if any(keyword in input_lower for keyword in create_node_keywords) and any(node_type.lower() in input_lower for node_type in node_types):
+            is_tool_request = True
+            tool_name = "create_node"
+            
+            # 尝试提取节点类型和标签
+            node_type = None
+            for nt in node_types:
+                if nt.lower() in input_lower:
+                    node_type = nt
+                    break
+            
+            # 提取标签，默认使用节点类型作为标签
+            node_label = node_type
+            label_match = re.search(r'名[为称叫]"?([^"]+)"?', user_input)
+            if label_match:
+                node_label = label_match.group(1)
+            
+            # 设置参数
+            tool_params = {
+                "node_type": node_type,
+                "node_label": node_label,
+                "properties": {}
+            }
+            
+        return is_tool_request, tool_name, tool_params
+    
+    def check_needs_tool_request(self, expanded_input: str) -> tuple[bool, dict]:
+        """
+        检查扩展后的输入是否需要工具调用
+        
+        Args:
+            expanded_input: 扩展后的用户输入
+            
+        Returns:
+            (是否需要工具调用, 工具请求信息)
+        """
+        # 默认不需要工具调用
+        needs_tool_calling = False
+        tool_request = {}
+        
+        # 如果包含"创建"、"添加"等关键词，可能需要工具调用
+        create_keywords = ["创建", "添加", "新增", "新建", "create", "add"]
+        
+        # 检查是否包含创建关键词
+        if any(keyword in expanded_input.lower() for keyword in create_keywords):
+            needs_tool_calling = True
+            
+            # 这里只是一个简单的标记，实际工具调用将由其他组件处理
+            tool_request = {
+                "intent": "create_node",
+                "expanded_input": expanded_input
+            }
+        
+        return needs_tool_calling, tool_request
+        
+    def extract_steps(self, expanded_input: str) -> list:
+        """
+        从扩展后的输入中提取步骤
+        
+        Args:
+            expanded_input: 扩展后的用户输入
+            
+        Returns:
+            步骤列表
+        """
+        steps = []
+        
+        # 使用正则表达式提取步骤
+        step_pattern = r'步骤\s*\d+\s*[:：]\s*(.+?)(?=步骤\s*\d+\s*[:：]|$)'
+        matches = re.findall(step_pattern, expanded_input, re.DOTALL)
+        
+        if matches:
+            steps = [step.strip() for step in matches]
+        else:
+            # 如果没有匹配到步骤格式，尝试按行分割
+            lines = expanded_input.split('\n')
+            steps = [line.strip() for line in lines if line.strip()]
+        
+        return steps 

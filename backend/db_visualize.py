@@ -15,9 +15,9 @@ import subprocess
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
-from backend.app.database import engine, Base
+from database.connection import engine, Base
 from backend.app.config import Config
-from backend.app.models import User, Flow, FlowVariable, VersionInfo
+from database.models import User, Flow, FlowVariable, VersionInfo
 
 def get_table_info():
     """获取数据库中所有表的信息"""

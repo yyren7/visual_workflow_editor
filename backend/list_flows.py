@@ -1,4 +1,4 @@
-from backend.app.database import get_db
+from database.connection import get_db
 from backend.app.services.flow_service import FlowService
 
 flow_service = FlowService(next(get_db()))

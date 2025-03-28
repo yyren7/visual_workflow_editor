@@ -4,7 +4,7 @@ import logging
 import datetime
 import uuid
 
-from backend.app import models
+from database.models import Flow
 from backend.app.services.flow_variable_service import FlowVariableService
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class FlowService:
     def __init__(self, db: Session):
         self.db = db
     
-    def get_flows(self, owner_id: Optional[int] = None, limit: int = 100) -> List[models.Flow]:
+    def get_flows(self, owner_id: Optional[int] = None, limit: int = 100) -> List[Flow]:
         """
         获取流程图列表
         
@@ -26,12 +26,12 @@ class FlowService:
         Returns:
             流程图列表
         """
-        query = self.db.query(models.Flow)
+        query = self.db.query(Flow)
         
         if owner_id is not None:
-            query = query.filter(models.Flow.owner_id == owner_id)
+            query = query.filter(Flow.owner_id == owner_id)
             
-        query = query.order_by(models.Flow.updated_at.desc()).limit(limit)
+        query = query.order_by(Flow.updated_at.desc()).limit(limit)
         return query.all()
     
     def get_flow(self, flow_id: int) -> Optional[Dict[str, Any]]:
@@ -44,7 +44,7 @@ class FlowService:
         Returns:
             流程图详情，如果不存在则返回None
         """
-        flow = self.db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+        flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
         if not flow:
             return None
             
@@ -63,7 +63,7 @@ class FlowService:
         
         return result
     
-    def create_flow(self, owner_id: int, name: str = None, data: dict = None) -> models.Flow:
+    def create_flow(self, owner_id: int, name: str = None, data: dict = None) -> Flow:
         """
         创建新的流程图
         
@@ -81,7 +81,7 @@ class FlowService:
                 name = f"Untitled Flow {datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
                 
             # 创建新的流程图
-            flow = models.Flow(
+            flow = Flow(
                 owner_id=owner_id,
                 name=name,
                 flow_data=data or {},
@@ -117,7 +117,7 @@ class FlowService:
         """
         try:
             # 查找流程图
-            flow = self.db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+            flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
             if not flow:
                 logger.warning(f"要更新的流程图不存在: {flow_id}")
                 return False
@@ -151,7 +151,7 @@ class FlowService:
         """
         try:
             # 查找流程图
-            flow = self.db.query(models.Flow).filter(models.Flow.id == flow_id).first()
+            flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
             if not flow:
                 logger.warning(f"要删除的流程图不存在: {flow_id}")
                 return False

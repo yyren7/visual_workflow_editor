@@ -8,9 +8,16 @@ import warnings
 import argparse
 from pathlib import Path
 from dotenv import load_dotenv
+# 添加后端目录到Python模块搜索路径
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(backend_dir)
+
 import re
 import subprocess
 import json
+
+# 确保使用新的数据库路径
+os.environ["DATABASE_URL"] = "sqlite:///database/flow_editor.db"
 
 # 显式加载项目根目录的.env文件，确保所有环境变量统一配置
 workspace_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
@@ -68,9 +75,9 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # 导入数据库模型和引擎，确保表结构会被创建
-from backend.app.database import Base, engine, SessionLocal
-from backend.app.models import User, Flow, FlowVariable, VersionInfo
-from backend.app.config import Config
+from database.connection import Base, engine, SessionLocal
+from database.models import User, Flow, FlowVariable, VersionInfo
+from config import Config
 
 # 创建数据库表结构，如果表不存在
 try:
