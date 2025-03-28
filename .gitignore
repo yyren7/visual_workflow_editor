@@ -35,3 +35,9 @@ yarn-error.log
 # 操作系统
 .DS_Store
 Thumbs.db
+.env
+backend/app/logs/*
+backend/database/flow_editor.db
+database/flow_editor.db
+backend/backend/*
+backend/langchainchat/sessions/*
