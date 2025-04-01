@@ -1,12 +1,16 @@
+"""
+嵌入向量配置
+"""
+
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 class EmbeddingConfig(BaseSettings):
-    """Embedding配置"""
+    """嵌入向量配置"""
     
     # 默认配置
-    DEFAULT_MODEL_NAME: str = "keyword_matching"  # 改为更准确的名称，表示使用关键词匹配
-    VECTOR_DIMENSION: int = 768  # 保持向量维度以兼容现有代码
+    DEFAULT_MODEL_NAME: str = "keyword_matching"  # 使用关键词匹配作为默认方法
+    VECTOR_DIMENSION: int = 768  # 嵌入向量维度
     
     # 相似度搜索配置
     DEFAULT_SIMILARITY_THRESHOLD: float = 0.5
@@ -20,5 +24,5 @@ class EmbeddingConfig(BaseSettings):
     class Config:
         env_prefix = "EMBEDDING_"  # 环境变量前缀
 
-# 创建配置实例
+# 创建全局配置实例
 embedding_config = EmbeddingConfig() 

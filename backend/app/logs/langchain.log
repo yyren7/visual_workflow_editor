@@ -1193,3 +1193,804 @@ openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authenticat
 2025-03-28 06:07:28 - langchain_chat - INFO - 对话历史已保存: backend/langchainchat/sessions/27c83191-caae-4df4-a217-b6398a62061b/3d40b759-d66d-418f-905f-761f65f9e59f.json
 2025-03-28 06:07:28 - langchain_chat - INFO - 成功处理节点创建请求: 会话=3d40b759-d66d-418f-905f-761f65f9e59f
 2025-03-28 06:07:29 - langchain_chat - INFO - 列出对话历史: 总数=1
+2025-03-31 05:15:49 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 05:15:49 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 05:15:49 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 05:15:49 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 05:15:49 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 05:15:49 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 05:15:49 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 05:15:49 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 05:15:49 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:15:49 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:15:49 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:15:49 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:15:49 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:15:49 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:15:49 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 05:15:49 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 05:15:49 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 05:15:49 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 05:15:49 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 05:15:49 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 05:15:49 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:15:49 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:15:49 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:15:49 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:15:49 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:15:49 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:15:49 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 05:15:49 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 05:15:49 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 05:53:31 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 05:53:31 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 05:53:31 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 05:53:31 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 05:53:31 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 05:53:31 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 05:53:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 05:53:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 05:53:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:53:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:53:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:53:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:53:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:53:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:53:31 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 05:53:31 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 05:53:31 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 05:53:31 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 05:53:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 05:53:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 05:53:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:53:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:53:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:53:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 05:53:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 05:53:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 05:53:31 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 05:53:31 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 05:53:31 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 05:53:42 - langchain_chat - INFO - 列出对话历史: 总数=1
+2025-03-31 05:53:42 - langchain_chat - INFO - 列出对话历史: 总数=1
+2025-03-31 05:53:50 - langchain_chat - INFO - 处理聊天消息: 会话=3d40b759-d66d-418f-905f-761f65f9e59f, 使用上下文=True, 使用工具=True, 语言=ja
+2025-03-31 05:53:50 - langchain_chat - INFO - 初始化增强对话记忆: ID=3d40b759-d66d-418f-905f-761f65f9e59f, 用户=27c83191-caae-4df4-a217-b6398a62061b
+2025-03-31 05:53:50 - langchain_chat - INFO - 成功加载对话历史: 3d40b759-d66d-418f-905f-761f65f9e59f, 消息数量: 3
+2025-03-31 05:53:50 - langchain_chat - INFO - 加载现有对话: 3d40b759-d66d-418f-905f-761f65f9e59f
+2025-03-31 05:53:50 - langchain_chat - INFO - 检测到节点创建请求，使用工具调用
+2025-03-31 05:53:50 - langchain_chat - INFO - 从元数据中获取流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 设置当前活动流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 开始收集上下文信息
+2025-03-31 05:53:50 - langchain_chat - INFO - 收集系统信息
+2025-03-31 05:53:50 - langchain_chat - INFO - 系统信息收集完成
+2025-03-31 05:53:50 - langchain_chat - INFO - 收集当前流程图信息
+2025-03-31 05:53:50 - langchain_chat - INFO - 获取流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 成功收集流程图信息: 新流程图 03/31 14:38-701
+2025-03-31 05:53:50 - langchain_chat - INFO - 上下文信息收集完成
+2025-03-31 05:53:50 - langchain_chat - INFO - 使用工具处理用户输入
+2025-03-31 05:53:50 - langchain_chat - INFO - 获取流程工具列表
+2025-03-31 05:53:50 - langchain_chat - INFO - 当前流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 设置当前活动流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 设置当前活动流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 成功从节点模板服务获取 6 个模板
+2025-03-31 05:53:50 - langchain_chat - INFO - 可用节点模板: ['moveL', 'condition', 'set_motor', 'loop', 'select_robot', 'return']
+2025-03-31 05:53:50 - langchain_chat - INFO - 日语创建关键词匹配成功: '生成'
+2025-03-31 05:53:50 - langchain_chat - INFO - 用户输入: '生成move 节点'
+2025-03-31 05:53:50 - langchain_chat - INFO - 是否识别为节点创建请求: True
+2025-03-31 05:53:50 - langchain_chat - INFO - 检测到的节点类型: None
+2025-03-31 05:53:50 - langchain_chat - INFO - 语言设置: None
+2025-03-31 05:53:50 - langchain_chat - INFO - 创建节点类型: moveL, 标签: Movel
+2025-03-31 05:53:50 - langchain_chat - INFO - ========================================
+2025-03-31 05:53:50 - langchain_chat - INFO - 创建节点工具函数被调用
+2025-03-31 05:53:50 - langchain_chat - INFO - 节点类型参数: node_type=moveL, type=None
+2025-03-31 05:53:50 - langchain_chat - INFO - 节点标签参数: node_label=Movel, node_name=None, label=None
+2025-03-31 05:53:50 - langchain_chat - INFO - 流程图ID: flow_id=b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 其他参数: kwargs={}
+2025-03-31 05:53:50 - langchain_chat - INFO - 创建节点: 类型=moveL, 标签=Movel
+2025-03-31 05:53:50 - langchain_chat - INFO - 使用提供的属性: {'description': 'Movel - 由AI助手创建', 'point_name_list': 'P1', 'control_x': 'enable', 'control_y': 'enable', 'control_z': 'enable', 'control_rz': 'enable', 'control_ry': 'enable', 'control_rx': 'enable', 'pallet_list': 'none', 'camera_list': 'none', 'inputs': [{'id': 'input', 'label': 'Input', 'position': 0}], 'outputs': [{'id': 'output', 'label': 'Output', 'position': 0}], 'nodeType': 'moveL'}
+2025-03-31 05:53:50 - langchain_chat - INFO - 生成节点ID: moveL-1743400430172
+2025-03-31 05:53:50 - langchain_chat - INFO - 生成随机位置: {'x': 180, 'y': 159}
+2025-03-31 05:53:50 - langchain_chat - INFO - 最终节点属性: {'control_x': 'enable', 'control_y': 'enable', 'description': 'Movel - 由AI助手创建', 'fields': [], 'inputs': [{'id': 'input', 'label': 'Input', 'position': 0}], 'outputs': [{'id': 'output', 'label': 'Output', 'position': 0}], 'point_name_list': 'P1', 'pallet_list': 'none', 'camera_list': 'none', 'control_z': 'enable', 'control_rz': 'enable', 'control_ry': 'enable', 'control_rx': 'enable', 'nodeType': 'moveL'}
+2025-03-31 05:53:50 - langchain_chat - INFO - 创建节点数据: id=moveL-1743400430172, type=moveL, label=Movel
+2025-03-31 05:53:50 - langchain_chat - INFO - 使用流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-03-31 05:53:50 - langchain_chat - INFO - 节点创建成功: moveL-1743400430172
+2025-03-31 05:53:50 - langchain_chat - INFO - ========================================
+2025-03-31 05:53:50 - langchain_chat - INFO - 对话历史已保存: backend/langchainchat/sessions/27c83191-caae-4df4-a217-b6398a62061b/3d40b759-d66d-418f-905f-761f65f9e59f.json
+2025-03-31 05:53:50 - langchain_chat - INFO - 成功处理节点创建请求: 会话=3d40b759-d66d-418f-905f-761f65f9e59f
+2025-03-31 05:53:50 - langchain_chat - INFO - 列出对话历史: 总数=1
+2025-03-31 07:56:33 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 07:56:33 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 07:56:33 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 07:56:33 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 07:56:33 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 07:56:33 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 07:56:33 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 07:56:33 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 07:56:33 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:33 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:33 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:33 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:33 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:33 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:33 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 07:56:34 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 07:56:34 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 07:56:34 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 07:56:34 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 07:56:34 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 07:56:34 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:34 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:34 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:34 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:34 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:34 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:34 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 07:56:34 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 07:56:34 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 07:56:41 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 07:56:41 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 07:56:41 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 07:56:41 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 07:56:41 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 07:56:41 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 07:56:41 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 07:56:41 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 07:56:41 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:41 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:41 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:41 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:41 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:41 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:41 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 07:56:42 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 07:56:42 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 07:56:42 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 07:56:42 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 07:56:42 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 07:56:42 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:42 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:42 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:42 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 07:56:42 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 07:56:42 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 07:56:42 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 07:56:42 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 07:56:42 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:20:57 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:20:57 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:20:57 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:20:57 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:20:57 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:20:57 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:20:57 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:20:57 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:20:57 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:20:57 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:20:57 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:20:57 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:20:57 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:20:57 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:20:57 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:20:58 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:20:58 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:20:58 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:20:58 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:20:58 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:20:58 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:20:58 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:20:58 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:20:58 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:20:58 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:20:58 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:20:58 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:20:58 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:20:58 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:33:02 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:33:02 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:33:02 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:33:02 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:33:02 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:02 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:02 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:02 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:02 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:02 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:02 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:02 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:02 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:02 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:02 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:02 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:33:02 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:02 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:02 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:02 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:02 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:02 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:02 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:02 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:02 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:02 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:02 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:02 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:33:02 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:33:11 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:33:11 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:33:11 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:33:11 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:33:11 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:11 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:11 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:11 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:11 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:11 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:11 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:11 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:11 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:11 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:11 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:12 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:33:12 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:12 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:12 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:12 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:12 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:12 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:12 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:12 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:12 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:12 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:12 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:12 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:33:12 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:33:24 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:33:24 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:33:24 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:33:24 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:33:24 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:24 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:24 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:24 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:24 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:24 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:24 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:24 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:24 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:24 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:24 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:25 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:33:25 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:25 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:25 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:25 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:25 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:25 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:25 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:25 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:25 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:25 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:25 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:25 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:33:25 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:33:44 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:33:44 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:33:44 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:33:44 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:33:44 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:44 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:44 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:44 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:44 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:44 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:44 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:44 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:44 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:44 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:44 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:44 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:33:44 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:33:44 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:33:44 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:33:44 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:33:44 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:44 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:44 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:44 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:33:44 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:33:44 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:33:44 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:33:44 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:33:44 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:34:21 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:34:21 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:34:21 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:34:21 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:34:21 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:34:21 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:34:21 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:34:21 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:34:21 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:21 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:21 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:21 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:21 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:21 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:21 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:34:21 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:34:21 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:34:21 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:34:21 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:34:21 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:34:21 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:21 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:21 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:21 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:21 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:21 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:21 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:34:21 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:34:21 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:34:52 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:34:52 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:34:52 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:34:52 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:34:52 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:34:52 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:34:52 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:34:52 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:34:52 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:52 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:52 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:52 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:52 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:52 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:52 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:34:52 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:34:52 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:34:52 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:34:52 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:34:52 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:34:52 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:52 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:52 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:52 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:34:52 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:34:52 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:34:52 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:34:52 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:34:52 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:35:13 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:35:13 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:35:13 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:35:13 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:35:13 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:35:13 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:35:13 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:35:13 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:35:13 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:13 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:13 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:13 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:13 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:13 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:14 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:35:14 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:35:14 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:35:14 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:35:14 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:35:14 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:35:14 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:14 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:14 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:14 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:14 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:14 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:14 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:35:14 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:35:14 - langchain_chat - INFO - 聊天服务初始化完成
+2025-03-31 08:35:31 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-03-31 08:35:31 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-03-31 08:35:31 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-03-31 08:35:31 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-03-31 08:35:31 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:35:31 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:35:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:35:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:35:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:31 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:35:31 - langchain_chat - INFO - 初始化聊天服务
+2025-03-31 08:35:31 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-03-31 08:35:31 - langchain_chat - INFO - 使用DeepSeek模型
+2025-03-31 08:35:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-03-31 08:35:31 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-03-31 08:35:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:31 - langchain_chat - INFO - API配置验证通过: 
+2025-03-31 08:35:31 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-03-31 08:35:31 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-03-31 08:35:31 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-03-31 08:35:31 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-03-31 08:35:31 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 00:20:12 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 00:20:12 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 00:20:12 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 00:20:12 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 00:20:12 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:20:12 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:20:12 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:20:12 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:20:12 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:12 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:12 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:12 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:12 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:12 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:12 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:20:12 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 00:20:12 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:20:12 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:20:12 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:20:12 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:20:12 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:12 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:12 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:12 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:12 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:12 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:12 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:20:12 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 00:20:12 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 00:20:39 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 00:20:39 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 00:20:39 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 00:20:39 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 00:20:39 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:20:39 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:20:39 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:20:39 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:20:39 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:39 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:39 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:39 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:39 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:39 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:39 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:20:40 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 00:20:40 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:20:40 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:20:40 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:20:40 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:20:40 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:40 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:40 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:40 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:20:40 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:20:40 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:20:40 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:20:40 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 00:20:40 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 00:21:08 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 00:21:08 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 00:21:08 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 00:21:08 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 00:21:08 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:21:08 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:21:08 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:21:08 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:21:08 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:08 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:08 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:08 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:08 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:08 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:08 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:21:08 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 00:21:08 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:21:08 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:21:08 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:21:08 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:21:08 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:08 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:08 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:08 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:08 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:08 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:08 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:21:08 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 00:21:08 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 00:21:36 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 00:21:36 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 00:21:36 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 00:21:36 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 00:21:36 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:21:36 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:21:37 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:21:37 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:21:37 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:37 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:37 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:37 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:37 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:37 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:37 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:21:37 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 00:21:37 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:21:37 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:21:37 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:21:37 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:21:37 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:37 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:37 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:37 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:37 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:37 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:37 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:21:37 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 00:21:37 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 00:21:57 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 00:21:57 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 00:21:57 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 00:21:57 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 00:21:57 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:21:57 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:21:57 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:21:57 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:21:57 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:57 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:57 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:57 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:57 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:57 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:57 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:21:58 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 00:21:58 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 00:21:58 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 00:21:58 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 00:21:58 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 00:21:58 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:58 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:58 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:58 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 00:21:58 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 00:21:58 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 00:21:58 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 00:21:58 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 00:21:58 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:05:22 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:05:22 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:05:22 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:05:22 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:05:22 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:05:22 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:05:22 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:05:22 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:05:22 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:05:22 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:05:22 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:05:22 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:05:22 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:05:22 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:05:22 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:05:23 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:05:23 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:05:23 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:05:23 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:05:23 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:05:23 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:05:23 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:05:23 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:05:23 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:05:23 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:05:23 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:05:23 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:05:23 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:05:23 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:08:40 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:08:40 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:08:40 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:08:40 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:08:40 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:08:40 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:08:40 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:08:40 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:08:40 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:40 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:40 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:40 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:40 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:40 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:40 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:08:41 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:08:41 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:08:41 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:08:41 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:08:41 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:08:41 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:41 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:41 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:41 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:41 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:41 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:41 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:08:41 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:08:41 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:08:53 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:08:53 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:08:53 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:08:53 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:08:53 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:08:53 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:08:53 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:08:53 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:08:53 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:53 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:53 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:53 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:53 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:53 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:53 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:08:53 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:08:53 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:08:53 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:08:53 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:08:53 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:08:53 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:53 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:53 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:53 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:08:53 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:08:53 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:08:53 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:08:53 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:08:53 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:09:02 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:09:02 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:09:02 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:09:02 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:09:02 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:09:02 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:09:02 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:09:02 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:09:02 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:02 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:02 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:02 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:02 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:02 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:02 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:09:03 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:09:03 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:09:03 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:09:03 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:09:03 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:09:03 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:03 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:03 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:03 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:03 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:03 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:03 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:09:03 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:09:03 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:09:38 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:09:38 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:09:38 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:09:38 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:09:38 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:09:38 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:09:38 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:09:38 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:09:38 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:38 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:38 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:38 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:38 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:38 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:38 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:09:38 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:09:38 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:09:38 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:09:38 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:09:38 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:09:38 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:38 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:38 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:38 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:38 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:38 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:38 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:09:38 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:09:38 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:09:48 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:09:48 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:09:48 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:09:48 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:09:48 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:09:48 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:09:48 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:09:48 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:09:48 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:48 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:48 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:48 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:48 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:48 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:48 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:09:48 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:09:48 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:09:48 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:09:48 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:09:48 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:09:48 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:48 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:48 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:48 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:09:48 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:09:48 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:09:48 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:09:48 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:09:48 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:10:09 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:10:09 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:10:09 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:10:09 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:10:09 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:10:09 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:10:09 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:10:09 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:10:09 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:10:09 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:10:09 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:10:09 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:10:09 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:10:09 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:10:09 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:10:10 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:10:10 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:10:10 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:10:10 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:10:10 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:10:10 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:10:10 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:10:10 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:10:10 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:10:10 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:10:10 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:10:10 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:10:10 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:10:10 - langchain_chat - INFO - 聊天服务初始化完成
+2025-04-01 01:11:26 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-01 01:11:26 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-01 01:11:26 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-01 01:11:26 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-01 01:11:26 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:11:26 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:11:26 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:11:26 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:11:26 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:11:26 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:11:26 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:11:26 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:11:26 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:11:26 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:11:26 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:11:26 - langchain_chat - INFO - 初始化聊天服务
+2025-04-01 01:11:26 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-01 01:11:26 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-01 01:11:26 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-01 01:11:26 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-01 01:11:26 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:11:26 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:11:26 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:11:26 - langchain_chat - INFO - API配置验证通过: 
+2025-04-01 01:11:26 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com
+2025-04-01 01:11:26 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-01 01:11:26 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com
+2025-04-01 01:11:26 - langchain_chat - INFO - 创建聊天模型: deepseek-chat
+2025-04-01 01:11:26 - langchain_chat - INFO - 聊天服务初始化完成

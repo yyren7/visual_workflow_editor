@@ -813,16 +813,29 @@ class ChatService:
         """
         logger.info("使用上下文处理用户输入")
         
-        # 收集上下文信息
-        context = await context_collector.collect_all(db)
-        
-        # 使用增强聊天链
-        response = await self.enhanced_chat_chain.ainvoke({
-            "context": context,
-            "input": user_input
-        })
-        
-        return response
+        # 尝试使用QA服务处理
+        try:
+            from .qa_service import get_qa_service
+            qa_service = get_qa_service()
+            
+            # 使用QA服务进行问答
+            response = await qa_service.query_with_context(db, user_input, context_limit=3)
+            logger.info("使用QA服务生成回答")
+            return response
+        except Exception as e:
+            logger.error(f"使用QA服务失败，回退到基本上下文处理: {str(e)}")
+            
+            # 回退到基本处理
+            # 收集上下文信息
+            context = await context_collector.collect_all(db)
+            
+            # 使用增强聊天链
+            response = await self.enhanced_chat_chain.ainvoke({
+                "context": context,
+                "input": user_input
+            })
+            
+            return response
     
     async def _process_without_context(self, user_input: str, language: str = "en") -> str:
         """

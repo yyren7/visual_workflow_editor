@@ -84,7 +84,7 @@ try:
     from backend.app.config import Config
     logger.info("导入config成功")
     from backend.app.routers import (
-        user, flow, llm, email, auth, embedding_routes, node_templates,
+        user, flow, llm, email, auth, node_templates,
         flow_router, flow_variables_router
     )
     logger.info("导入基本路由成功")
@@ -150,8 +150,6 @@ try:
     logger.info("注册email路由成功")
     app.include_router(auth.router)
     logger.info("注册auth路由成功")
-    app.include_router(embedding_routes.router)  # 添加 embedding 路由
-    logger.info("注册embedding路由成功")
     app.include_router(node_templates.router)  # 添加节点模板路由
     logger.info("注册node_templates路由成功")
     
