@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 
@@ -86,3 +86,33 @@ class GlobalVariable(BaseModel):
     
 class GlobalVariablesFile(BaseModel):
     variables: Dict[str, Any]
+
+# 聊天相关的模型
+class ChatBase(BaseModel):
+    """聊天基础模型"""
+    name: str = "未命名聊天"
+    chat_data: Dict[str, Any] = Field(default_factory=dict)
+
+class ChatCreate(ChatBase):
+    """创建聊天模型"""
+    flow_id: str
+
+class ChatUpdate(BaseModel):
+    """更新聊天模型"""
+    name: Optional[str] = None
+    chat_data: Optional[Dict[str, Any]] = None
+
+class ChatAddMessage(BaseModel):
+    """向聊天添加消息模型"""
+    role: str  # user, assistant, system
+    content: str
+
+class Chat(ChatBase):
+    """聊天响应模型"""
+    id: str
+    flow_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True

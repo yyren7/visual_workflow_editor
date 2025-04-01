@@ -77,13 +77,9 @@ RUN mkdir -p /workspace/logs && \
     chown -R vscode:vscode /workspace/.devcontainer/scripts
 
 # 创建启动脚本
-COPY .devcontainer/post-create-contents/start-dev.sh /workspace/start-dev.sh
-RUN cp /workspace/start-dev.sh /workspace/scripts/start-dev.sh && \
-    chmod +x /workspace/start-dev.sh && \
-    chmod +x /workspace/scripts/start-dev.sh && \
-    chown vscode:vscode /workspace/start-dev.sh && \
-    chown vscode:vscode /workspace/scripts/start-dev.sh
-
+COPY .devcontainer/scripts/start-dev.sh /workspace/start-dev.sh
+RUN chmod +x /workspace/start-dev.sh && \
+    chown vscode:vscode /workspace/start-dev.sh
 # 预安装后端和前端依赖（仅安装不变的核心依赖）
 USER vscode
 # 安装核心Python依赖

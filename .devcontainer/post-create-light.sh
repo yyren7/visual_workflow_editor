@@ -5,6 +5,12 @@ echo "正在设置开发环境（轻量版）..."
 
 # 检查当前用户和权限
 echo "当前用户: $(whoami)"
+echo "用户权限: $(id)"
+
+# 检查 Python 环境
+echo "检查 Python 环境..."
+python3 --version
+pip3 --version
 
 # 创建持久化目录来存储MD5校验值
 CACHE_DIR="/workspace/.devcontainer/cache"
@@ -67,9 +73,9 @@ echo "依赖状态更新完成"
 # 设置SQLite数据库文件权限
 echo "正在设置数据库文件权限..."
 # 设置现有数据库文件权限
-if [ -f "/workspace/flow_editor.db" ]; then
-  echo "设置数据库文件 /workspace/flow_editor.db 权限为666 (可读写)"
-  chmod 666 /workspace/flow_editor.db
+if [ -f "/workspace/database/flow_editor.db" ]; then
+  echo "设置数据库文件 /workspace/database/flow_editor.db 权限为666 (可读写)"
+  chmod 666 /workspace/database/flow_editor.db
 fi
 
 # 设置数据库目录权限
@@ -81,22 +87,3 @@ fi
 # 确保数据库所在目录有写入权限
 chmod 777 /workspace
 
-# 添加一个小函数到.bashrc，方便随时修复权限
-cat << 'EOF' | sudo tee /usr/local/bin/fix-db-permissions > /dev/null
-#!/bin/bash
-echo "正在修复数据库权限..."
-if [ -f "/workspace/flow_editor.db" ]; then
-  chmod 666 /workspace/flow_editor.db
-  echo "已设置 /workspace/flow_editor.db 权限为666 (可读写)"
-fi
-if [ -d "/workspace/database" ]; then
-  chmod -R 777 /workspace/database
-  echo "已设置 /workspace/database 目录权限为777 (完全访问)"
-fi
-echo "数据库权限修复完成！"
-EOF
-
-sudo chmod +x /usr/local/bin/fix-db-permissions
-echo "alias fixdb='fix-db-permissions'" >> ~/.bashrc
-
-echo "数据库权限设置完成！您可以随时使用 'fixdb' 命令修复权限" 

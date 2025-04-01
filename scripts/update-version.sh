@@ -21,25 +21,16 @@ function print_red {
 
 # 确定项目根目录
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION_JSON_ROOT="$PROJECT_ROOT/version.json"
-VERSION_JSON_SCRIPTS="$PROJECT_ROOT/scripts/version.json"
-VERSION_JSON_CONFIG="$PROJECT_ROOT/config/version.json"
+VERSION_JSON="$PROJECT_ROOT/workspace/database/version.json"
 
-# 首先检查项目根目录下的version.json文件
-if [ ! -f "$VERSION_JSON_ROOT" ]; then
-    print_yellow "警告: 项目根目录下的version.json文件不存在，将尝试从scripts目录复制"
-    
-    if [ -f "$VERSION_JSON_SCRIPTS" ]; then
-        cp "$VERSION_JSON_SCRIPTS" "$VERSION_JSON_ROOT"
-        print_green "已从scripts目录复制version.json到项目根目录"
-    else
-        print_red "错误: 在scripts目录中也找不到version.json文件！"
-        exit 1
-    fi
+# 检查version.json文件是否存在
+if [ ! -f "$VERSION_JSON" ]; then
+    print_red "错误: $VERSION_JSON 文件不存在！"
+    exit 1
 fi
 
 # 读取当前版本
-CURRENT_VERSION=$(cat "$VERSION_JSON_ROOT" | grep -o '"version": *"[^"]*"' | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+CURRENT_VERSION=$(cat "$VERSION_JSON" | grep -o '"version": *"[^"]*"' | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 if [ -z "$CURRENT_VERSION" ]; then
     print_red "错误: 无法从version.json读取版本号"
     exit 1
@@ -83,20 +74,8 @@ print_yellow "新版本: $NEW_VERSION"
 # 更新版本文件
 TODAY=$(date +%Y-%m-%d)
 TMP_FILE=$(mktemp)
-cat "$VERSION_JSON_ROOT" | sed "s/\"version\": *\"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" | sed "s/\"lastUpdated\": *\"[^\"]*\"/\"lastUpdated\": \"$TODAY\"/" > $TMP_FILE
-mv $TMP_FILE "$VERSION_JSON_ROOT"
-
-# 同时更新scripts目录中的version.json文件
-if [ -d "$(dirname "$VERSION_JSON_SCRIPTS")" ]; then
-    cp "$VERSION_JSON_ROOT" "$VERSION_JSON_SCRIPTS"
-    print_green "已同步更新scripts目录中的version.json文件"
-fi
-
-# 同时更新config目录中的version.json文件
-if [ -d "$(dirname "$VERSION_JSON_CONFIG")" ]; then
-    cp "$VERSION_JSON_ROOT" "$VERSION_JSON_CONFIG"
-    print_green "已同步更新config目录中的version.json文件"
-fi
+cat "$VERSION_JSON" | sed "s/\"version\": *\"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" | sed "s/\"lastUpdated\": *\"[^\"]*\"/\"lastUpdated\": \"$TODAY\"/" > $TMP_FILE
+mv $TMP_FILE "$VERSION_JSON"
 
 print_green "version.json已更新"
 
@@ -104,7 +83,7 @@ print_green "version.json已更新"
 read -p "是否要提交并推送更改？ (y/n): " SHOULD_COMMIT
 if [[ $SHOULD_COMMIT == "y" || $SHOULD_COMMIT == "Y" ]]; then
     # 添加到Git
-    git add "$VERSION_JSON_ROOT" "$VERSION_JSON_SCRIPTS" "$VERSION_JSON_CONFIG" 2>/dev/null || true
+    git add "$VERSION_JSON"
     git commit -m "$COMMIT_MSG: v$NEW_VERSION"
     
     # 创建版本标签

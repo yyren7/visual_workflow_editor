@@ -16,7 +16,6 @@ pip3 --version
 echo "注意: 跳过目录创建和权限设置，这些在Windows挂载卷上不起作用"
 
 # 确保 scripts 目录存在
-mkdir -p /workspace/.devcontainer/scripts
 mkdir -p /workspace/scripts
 
 # 直接创建主工作区中的启动脚本（避免使用符号链接）
@@ -89,13 +88,8 @@ case "$1" in
 esac
 EOF
 
-# 同时也创建脚本目录中的副本
-cp /workspace/start-dev.sh /workspace/scripts/start-dev.sh || { echo "复制启动脚本失败"; }
-
 # 确保脚本有执行权限
 chmod +x /workspace/start-dev.sh || { echo "修改启动脚本权限失败"; }
-chmod +x /workspace/scripts/start-dev.sh || { echo "修改脚本目录中的启动脚本权限失败"; }
-
 # 切换到 vscode 用户执行后续操作
 if [ "$(whoami)" != "vscode" ]; then
   echo "切换到 vscode 用户执行安装..."

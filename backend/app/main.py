@@ -73,7 +73,7 @@ try:
     logger.info("导入database成功")
     
     # 导入数据库模型
-    from database.models import User, Flow, FlowVariable, VersionInfo, UserFlowPreference
+    from database.models import User, Flow, FlowVariable, VersionInfo, Chat
     logger.info("导入models成功")
     
     # 导入embeddings模型
@@ -85,7 +85,7 @@ try:
     logger.info("导入config成功")
     from backend.app.routers import (
         user, flow, llm, email, auth, node_templates,
-        flow_router, flow_variables_router
+        flow_router, flow_variables_router, chat
     )
     logger.info("导入基本路由成功")
     
@@ -166,7 +166,9 @@ try:
     # 加载API路由
     app.include_router(flow_router.router)
     app.include_router(flow_variables_router.router)  # 添加流程图变量路由
+    app.include_router(chat.router)  # 添加聊天路由
     logger.info("注册flow_variables路由成功")
+    logger.info("注册chat路由成功")
 except Exception as e:
     logger.error(f"注册路由时出错: {e}")
     raise

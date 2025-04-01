@@ -19,7 +19,9 @@ class User(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    flows = relationship("Flow", back_populates="owner")
+    last_selected_flow_id = Column(String(36), ForeignKey("flows.id", ondelete="SET NULL"), nullable=True)
+    flows = relationship("Flow", back_populates="owner", foreign_keys="Flow.owner_id")
+    last_selected_flow = relationship("Flow", foreign_keys=[last_selected_flow_id])
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -38,14 +40,35 @@ class Flow(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     flow_data = Column(JSON, nullable=False, default={})  # Stores the flow data as a JSON object
     owner_id = Column(String(36), ForeignKey("users.id"))
-    owner = relationship("User", back_populates="flows")
+    owner = relationship("User", back_populates="flows", foreign_keys=[owner_id])
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     name = Column(String, nullable=False, default="Untitled Flow")  # Added flow name
     variables = relationship("FlowVariable", back_populates="flow")
+    chats = relationship("Chat", back_populates="flow")  # 添加与Chat的关系
 
     def __repr__(self):
         return f"<Flow(id={self.id}, name='{self.name}', owner_id={self.owner_id})>"
+
+
+class Chat(Base):
+    """
+    聊天记录模型，每个聊天从属于一个流程图
+    """
+    __tablename__ = "chats"
+    __table_args__ = {'extend_existing': True}
+
+    # 使用String类型存储UUID，适用于SQLite
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
+    chat_data = Column(JSON, nullable=False, default={})  # 存储聊天数据，JSON格式
+    flow_id = Column(String(36), ForeignKey("flows.id", ondelete="CASCADE"), nullable=False)
+    flow = relationship("Flow", back_populates="chats")  # 与Flow的关系
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    name = Column(String, nullable=False, default="未命名聊天")  # 聊天名称
+
+    def __repr__(self):
+        return f"<Chat(id={self.id}, name='{self.name}', flow_id={self.flow_id})>"
 
 
 class FlowVariable(Base):
@@ -77,25 +100,4 @@ class VersionInfo(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
     def __repr__(self):
-        return f"<VersionInfo(version='{self.version}', last_updated='{self.last_updated}')>"
-
-
-class UserFlowPreference(Base):
-    """用户流程图偏好模型，用于记录用户最后选择的流程图"""
-    __tablename__ = "user_flow_preferences"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    last_selected_flow_id = Column(String(36), ForeignKey("flows.id", ondelete="SET NULL"), nullable=True)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-
-    # 建立与User的关系
-    user = relationship("User", backref="flow_preference")
-    # 建立与Flow的关系
-    flow = relationship("Flow")
-
-    # 确保每个用户只有一个偏好记录
-    __table_args__ = (UniqueConstraint('user_id', name='uix_user_flow_preference'),)
-
-    def __repr__(self):
-        return f"<UserFlowPreference(user_id={self.user_id}, last_selected_flow_id={self.last_selected_flow_id})>" 
+        return f"<VersionInfo(version='{self.version}', last_updated='{self.last_updated}')>" 

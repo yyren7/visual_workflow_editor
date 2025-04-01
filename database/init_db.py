@@ -10,9 +10,10 @@ import argparse
 from sqlalchemy.exc import SQLAlchemyError
 
 from database.connection import engine, Base, get_db_context
-from database.models import User, Flow, FlowVariable, VersionInfo, UserFlowPreference
-# 导入迁移脚本如有必要
-from database.migrations.fix_flow_variables import migrate_flow_variables, create_user_flow_preferences
+from database.models import User, Flow, FlowVariable, VersionInfo, Chat
+# 导入迁移脚本
+from database.migrations.fix_flow_variables import migrate_flow_variables
+from database.migrations.migrate_user_preference import migrate_user_preferences
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
@@ -44,12 +45,12 @@ def init_database():
     success = migrate_flow_variables()
     if not success:
         logger.error("修复flow_variables表失败")
-        
-    # 创建user_flow_preferences表和数据
-    logger.info("创建用户流程图偏好...")
-    success = create_user_flow_preferences()
+    
+    # 迁移用户偏好数据
+    logger.info("迁移用户流程图偏好数据...")
+    success = migrate_user_preferences()
     if not success:
-        logger.error("创建用户流程图偏好失败")
+        logger.error("迁移用户流程图偏好数据失败")
     
     # 初始化版本信息如果需要
     with get_db_context() as db:

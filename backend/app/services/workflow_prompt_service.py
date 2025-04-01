@@ -931,7 +931,7 @@ class WorkflowPromptService(BasePromptService):
         try:
             # 从数据库获取当前流程图数据
             from services.flow_service import FlowService
-            from services.user_flow_preference_service import UserFlowPreferenceService
+            from database.models import User
             
             flow_service = FlowService(db)
             
@@ -953,8 +953,8 @@ class WorkflowPromptService(BasePromptService):
                 
                 if owner_id:
                     # 获取用户最后选择的流程图
-                    preference_service = UserFlowPreferenceService(db)
-                    last_selected_flow_id = preference_service.get_last_selected_flow_id(owner_id)
+                    user = db.query(User).filter(User.id == owner_id).first()
+                    last_selected_flow_id = user.last_selected_flow_id if user else None
                     
                     if last_selected_flow_id:
                         # 检查流程图是否存在
@@ -1050,7 +1050,6 @@ class WorkflowPromptService(BasePromptService):
             import json
             from services.flow_service import FlowService
             from services.flow_variable_service import FlowVariableService
-            from services.user_flow_preference_service import UserFlowPreferenceService
             
             # 获取当前活动的流程图
             flow_service = FlowService(db)
@@ -1072,8 +1071,8 @@ class WorkflowPromptService(BasePromptService):
                 
                 if owner_id:
                     # 获取用户最后选择的流程图
-                    preference_service = UserFlowPreferenceService(db)
-                    last_selected_flow_id = preference_service.get_last_selected_flow_id(owner_id)
+                    user = db.query(User).filter(User.id == owner_id).first()
+                    last_selected_flow_id = user.last_selected_flow_id if user else None
                     
                     if last_selected_flow_id:
                         flow_id = last_selected_flow_id
@@ -1250,12 +1249,12 @@ class WorkflowPromptService(BasePromptService):
         try:
             # 从数据库获取当前流程图数据
             from services.flow_service import FlowService
-            from services.user_flow_preference_service import UserFlowPreferenceService
+            from database.models import User
             
             # 如果未指定flow_id，尝试获取用户最后使用的流程图
             if not flow_id and user_id:
-                pref_service = UserFlowPreferenceService(db)
-                flow_id = pref_service.get_last_selected_flow_id(user_id)
+                user = db.query(User).filter(User.id == user_id).first()
+                flow_id = user.last_selected_flow_id if user else None
             
             # 还是没有flow_id，尝试获取用户的第一个流程图
             if not flow_id and user_id:

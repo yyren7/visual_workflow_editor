@@ -9,7 +9,7 @@ from backend.app import schemas, database
 from database.models import Flow
 from backend.app.config import Config
 from backend.app.utils import get_current_user, verify_flow_ownership
-from backend.app.services.user_flow_preference_service import UserFlowPreferenceService
+from backend.app.services.user_flow_service import UserFlowService
 
 router = APIRouter(
     prefix="/flows",
@@ -29,8 +29,8 @@ async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.g
     db.refresh(db_flow)
     
     # 设置为用户最后选择的流程图
-    preference_service = UserFlowPreferenceService(db)
-    preference_service.set_last_selected_flow_id(current_user.id, db_flow.id)
+    flow_service = UserFlowService(db)
+    flow_service.set_last_selected_flow_id(current_user.id, db_flow.id)
     
     return db_flow
 
@@ -43,8 +43,8 @@ async def get_flow(flow_id: str, db: Session = Depends(database.get_db), current
     flow = verify_flow_ownership(flow_id, current_user, db)
     
     # 记录用户最后访问的流程图
-    preference_service = UserFlowPreferenceService(db)
-    preference_service.set_last_selected_flow_id(current_user.id, flow_id)
+    flow_service = UserFlowService(db)
+    flow_service.set_last_selected_flow_id(current_user.id, flow_id)
     
     return flow
 
@@ -96,8 +96,8 @@ async def set_as_last_selected(flow_id: str, db: Session = Depends(database.get_
     verify_flow_ownership(flow_id, current_user, db)
     
     # 设置为用户最后选择的流程图
-    preference_service = UserFlowPreferenceService(db)
-    success = preference_service.set_last_selected_flow_id(current_user.id, flow_id)
+    flow_service = UserFlowService(db)
+    success = flow_service.set_last_selected_flow_id(current_user.id, flow_id)
     
     if not success:
         raise HTTPException(status_code=500, detail="无法更新用户流程图偏好")
@@ -111,8 +111,8 @@ async def get_last_selected_flow(db: Session = Depends(database.get_db), current
     Gets the user's last selected flow. 必须登录才能获取。
     """
     # 获取用户最后选择的流程图ID
-    preference_service = UserFlowPreferenceService(db)
-    flow_id = preference_service.get_last_selected_flow_id(current_user.id)
+    flow_service = UserFlowService(db)
+    flow_id = flow_service.get_last_selected_flow_id(current_user.id)
     
     if not flow_id:
         # 如果用户没有选择过流程图，返回最新的一个
@@ -130,7 +130,7 @@ async def get_last_selected_flow(db: Session = Depends(database.get_db), current
             raise HTTPException(status_code=404, detail="用户没有流程图")
         
         # 更新用户偏好
-        preference_service.set_last_selected_flow_id(current_user.id, flows.id)
+        flow_service.set_last_selected_flow_id(current_user.id, flows.id)
         return flows
     
     return flow

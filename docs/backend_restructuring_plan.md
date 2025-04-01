@@ -195,38 +195,37 @@
 
 ```
 backend/
-├── app/
-│   ├── routers/              # API路由（无变化）
-│   ├── services/             # 业务逻辑服务（重构）
-│   │   ├── flow_service.py   # 流程图业务逻辑
-│   │   ├── workflow_service.py # 工作流业务逻辑（重构后）
-│   │   ├── flow_variable_service.py # 变量管理服务
-│   │   └── ...               # 其他业务服务
-│   ├── langchainchat/        # LLM交互统一层（强化）
-│   │   ├── config.py         # 统一LLM配置
-│   │   ├── base.py           # 核心抽象类和接口
-│   │   ├── models/           # LLM模型管理
-│   │   │   ├── deepseek.py   # 从service迁移
-│   │   │   └── ...
-│   │   ├── prompts/          # 提示模板管理
-│   │   │   ├── expansion.py  # 从service迁移
-│   │   │   └── ...
-│   │   ├── tools/            # 工具系统
-│   │   │   ├── tool_manager.py # 从service迁移
-│   │   │   └── ...
-│   │   ├── chains/           # 推理链
-│   │   ├── services/         # 面向业务的服务
-│   │   │   ├── workflow_service.py # 从workflow_prompt_service.py迁移
-│   │   │   └── ...
-│   │   ├── sessions/         # 会话管理
-│   │   ├── memory/           # 记忆管理
-│   │   ├── retrievers/       # 检索系统
-│   │   └── agents/           # 代理系统
-│   ├── models.py             # 数据库模型（无变化）
-│   ├── schemas.py            # Pydantic模式（无变化）
-│   ├── database.py           # 数据库连接（无变化）
-│   ├── config.py             # 应用配置（无变化）
-│   └── main.py               # 应用入口（无变化）
+├── app/                     # 核心业务逻辑 (FastAPI)
+│   ├── alembic/             # 数据库迁移
+│   ├── api/                 # API 路由和端点
+│   │   └── endpoints/
+│   ├── core/                # 核心配置、安全、日志等
+│   ├── crud/                # 数据访问层 (CRUD 操作)
+│   ├── db/                  # 数据库连接、会话、模型基类
+│   ├── models/              # SQLAlchemy 数据模型 (无变化)
+│   ├── schemas/             # Pydantic 数据验证模式 (无变化)
+│   ├── services/            # 核心业务逻辑服务 (重构, 不含 LLM 交互)
+│   │   ├── flow_service.py
+│   │   ├── node_service.py
+│   │   └── ...
+│   ├── utils/               # 工具函数
+│   ├── main.py              # FastAPI 应用入口 (无变化)
+│   └── dependencies.py      # 依赖项注入
+├── langchainchat/           # LLM 交互统一层 (强化)
+│   ├── agents/              # LangChain Agents (可选)
+│   ├── base.py              # 核心抽象类和接口 (可选)
+│   ├── chains/              # LangChain Chains
+│   ├── config.py            # LLM 相关配置 (从 app 迁移整合)
+│   ├── memory/              # 对话记忆管理
+│   ├── models/              # LLM 模型封装和适配器 (从 app/services 迁移)
+│   ├── prompts/             # Prompt 模板管理 (从 app/services 迁移)
+│   ├── retrievers/          # 检索器 (可选, 用于 RAG)
+│   ├── services/            # 面向业务的 LLM 服务接口 (从 app/services 迁移整合)
+│   ├── sessions/            # 会话管理 (可选)
+│   ├── tools/               # LangChain Tools (从 app/services 迁移)
+│   └── utils/               # LLM 相关工具函数
+├── tests/                   # 单元和集成测试
+└── pyproject.toml           # 项目配置和依赖
 ```
 
 ## 总结

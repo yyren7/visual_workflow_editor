@@ -1,0 +1,419 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>数据库内容摘要</title>
+        <meta charset="UTF-8">
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; }
+            .table-info { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .visualization { margin-top: 10px; }
+            img { max-width: 100%; border: 1px solid #ddd; }
+            .data-section { margin-top: 20px; }
+            .json-data { background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; border-radius: 5px; overflow: auto; max-height: 300px; }
+            pre { margin: 0; white-space: pre-wrap; }
+            .toggle-btn { padding: 5px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        </style>
+        <script>
+            function toggleDataDisplay(tableId) {
+                var dataDiv = document.getElementById(tableId);
+                if (dataDiv.style.display === "none") {
+                    dataDiv.style.display = "block";
+                } else {
+                    dataDiv.style.display = "none";
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>数据库内容摘要</h1>
+    
+        <div class="table-info">
+            <h2>数据库概览</h2>
+            <p>表数量: 5</p>
+            <p>生成时间: 2025-04-01 05:28:29</p>
+        </div>
+        
+        <div class="table-info">
+            <h2>表关系图</h2>
+            <div class="visualization">
+                <img src="db_relationships.png" alt="数据库关系图">
+            </div>
+        </div>
+    
+        <div class="table-info">
+            <h2>表: users</h2>
+            <p>行数: 1</p>
+            
+            <h3>列信息</h3>
+            <table>
+                <tr>
+                    <th>列名</th>
+                    <th>数据类型</th>
+                </tr>
+        
+                <tr>
+                    <td>id</td>
+                    <td>VARCHAR(36)</td>
+                </tr>
+            
+                <tr>
+                    <td>username</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>hashed_password</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>created_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+                <tr>
+                    <td>updated_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+                <tr>
+                    <td>last_selected_flow_id</td>
+                    <td>VARCHAR(36)</td>
+                </tr>
+            
+            </table>
+        
+            <h3>可视化</h3>
+            <div class="visualization">
+        
+                <div>
+                    <h4>列数据类型分布</h4>
+                    <img src="users_column_types.png" alt="users 列类型">
+                </div>
+            
+                <div>
+                    <h4>创建时间分布</h4>
+                    <img src="users_creation_timeline.png" alt="users 创建时间">
+                </div>
+            
+            </div>
+        
+            <div class="data-section">
+                <h3>表数据 <button class="toggle-btn" onclick="toggleDataDisplay('users_data')">显示/隐藏数据</button></h3>
+                <div class="json-data" id="users_data" style="display: none;">
+        <table><tr><th>id</th><th>username</th><th>hashed_password</th><th>created_at</th><th>updated_at</th><th>last_selected_flow_id</th></tr><tr><td>27c83191-caae-4df4-a217-b6398a62061b</td><td>123</td><td>$2b$12$8kd2UVhQqnWb5qk0rvDcKOaxqwvTIvZ./nBqqCb9jYbhU/QuepupK</td><td>2025-03-26 07:29:25</td><td>None</td><td>b86dbc31-26fe-45bd-9c3a-7c807cc59d53</td></tr></table>
+                            <h4>原始JSON数据</h4>
+                            <pre>[
+  {
+    "id": "27c83191-caae-4df4-a217-b6398a62061b",
+    "username": "123",
+    "hashed_password": "$2b$12$8kd2UVhQqnWb5qk0rvDcKOaxqwvTIvZ./nBqqCb9jYbhU/QuepupK",
+    "created_at": "2025-03-26 07:29:25",
+    "updated_at": null,
+    "last_selected_flow_id": "b86dbc31-26fe-45bd-9c3a-7c807cc59d53"
+  }
+]</pre>
+                        
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-info">
+            <h2>表: flows</h2>
+            <p>行数: 4</p>
+            
+            <h3>列信息</h3>
+            <table>
+                <tr>
+                    <th>列名</th>
+                    <th>数据类型</th>
+                </tr>
+        
+                <tr>
+                    <td>id</td>
+                    <td>VARCHAR(36)</td>
+                </tr>
+            
+                <tr>
+                    <td>flow_data</td>
+                    <td>JSON</td>
+                </tr>
+            
+                <tr>
+                    <td>owner_id</td>
+                    <td>VARCHAR(36)</td>
+                </tr>
+            
+                <tr>
+                    <td>created_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+                <tr>
+                    <td>updated_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+                <tr>
+                    <td>name</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+            </table>
+        
+            <h3>可视化</h3>
+            <div class="visualization">
+        
+                <div>
+                    <h4>列数据类型分布</h4>
+                    <img src="flows_column_types.png" alt="flows 列类型">
+                </div>
+            
+                <div>
+                    <h4>创建时间分布</h4>
+                    <img src="flows_creation_timeline.png" alt="flows 创建时间">
+                </div>
+            
+            </div>
+        
+            <div class="data-section">
+                <h3>表数据 <button class="toggle-btn" onclick="toggleDataDisplay('flows_data')">显示/隐藏数据</button></h3>
+                <div class="json-data" id="flows_data" style="display: none;">
+        <table><tr><th>id</th><th>flow_data</th><th>owner_id</th><th>created_at</th><th>updated_at</th><th>name</th></tr><tr><td>d414b7dd-b903-4edf-aef9-475e67791277</td><td>{JSON数据}</td><td>27c83191-caae-4df4-a217-b6398a62061b</td><td>2025-03-26 07:29:29</td><td>2025-03-28 07:37:27</td><td>新流程图 03/26 16:29-755</td></tr><tr><td>30a17510-07bf-4371-aa18-6583ad908aa4</td><td>{JSON数据}</td><td>27c83191-caae-4df4-a217-b6398a62061b</td><td>2025-03-26 08:21:14</td><td>2025-03-31 05:38:37</td><td>新流程图 03/26 17:21-763</td></tr><tr><td>61751c36-5c34-4dcb-90ac-73480ce54638</td><td>{JSON数据}</td><td>27c83191-caae-4df4-a217-b6398a62061b</td><td>2025-03-27 05:02:10</td><td>None</td><td>新流程图 03/27 14:02-924</td></tr><tr><td>b86dbc31-26fe-45bd-9c3a-7c807cc59d53</td><td>{JSON数据}</td><td>27c83191-caae-4df4-a217-b6398a62061b</td><td>2025-03-31 05:38:41</td><td>2025-04-01 03:38:15</td><td>新流程图 03/31 14:38-701</td></tr></table>
+                            <h4>原始JSON数据</h4>
+                            <pre>[
+  {
+    "id": "d414b7dd-b903-4edf-aef9-475e67791277",
+    "flow_data": "{\"nodes\": [{\"id\": \"moveL-1742977738249\", \"type\": \"generic\", \"position\": {\"x\": -271, \"y\": -50}, \"data\": {\"label\": \"Movel\", \"description\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"fields\": [{\"name\": \"point_name_list\", \"value\": \"P1\", \"type\": \"string\"}, {\"name\": \"control_x\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_y\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_z\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_rz\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_ry\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_rx\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"pallet_list\", \"value\": \"none\", \"type\": \"none\"}, {\"name\": \"camera_list\", \"value\": \"none\", \"type\": \"none\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\", \"pallet_list\": \"none\", \"camera_list\": \"none\"}, \"width\": 120, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": -271, \"y\": -50}, \"dragging\": false}, {\"id\": \"condition-1742977738986\", \"type\": \"generic\", \"position\": {\"x\": 25, \"y\": 0}, \"data\": {\"label\": \"Condition\", \"description\": \"Condition\", \"nodeType\": \"condition\", \"type\": \"condition\", \"fields\": [{\"name\": \"CONDITION\", \"value\": \"true\", \"type\": \"boolean\"}, {\"name\": \"DESCRIPTION\", \"value\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\", \"type\": \"string\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"true\", \"label\": \"True\", \"position\": 0}, {\"id\": \"false\", \"label\": \"False\", \"position\": 1}], \"CONDITION\": \"true\", \"DESCRIPTION\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\"}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": 25, \"y\": 0}}, {\"id\": \"loop-1742977740356\", \"type\": \"generic\", \"position\": {\"x\": 275, \"y\": 0}, \"data\": {\"label\": \"Loop\", \"description\": \"Loop\", \"nodeType\": \"loop\", \"type\": \"loop\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}, {\"id\": \"input_DO\", \"label\": \"Do\", \"position\": 1}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}]}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": 275, \"y\": 0}}, {\"id\": \"moveL-1743063494164\", \"type\": \"generic\", \"position\": {\"x\": -92, \"y\": -167.75}, \"data\": {\"label\": \"Movel\", \"description\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"fields\": [{\"name\": \"point_name_list\", \"value\": \"P1\", \"type\": \"string\"}, {\"name\": \"control_x\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_y\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_z\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_rz\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_ry\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_rx\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"pallet_list\", \"value\": \"none\", \"type\": \"none\"}, {\"name\": \"camera_list\", \"value\": \"none\", \"type\": \"none\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\", \"pallet_list\": \"none\", \"camera_list\": \"none\"}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": -92, \"y\": -167.75}, \"selected\": false, \"dragging\": false}, {\"id\": \"condition-1743063495182\", \"type\": \"generic\", \"position\": {\"x\": 208.5, \"y\": -96.75}, \"data\": {\"label\": \"Condition\", \"description\": \"Condition\", \"nodeType\": \"condition\", \"type\": \"condition\", \"fields\": [{\"name\": \"CONDITION\", \"value\": \"true\", \"type\": \"boolean\"}, {\"name\": \"DESCRIPTION\", \"value\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\", \"type\": \"string\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"true\", \"label\": \"True\", \"position\": 0}, {\"id\": \"false\", \"label\": \"False\", \"position\": 1}], \"CONDITION\": \"true\", \"DESCRIPTION\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\"}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": 208.5, \"y\": -96.75}}, {\"id\": \"moveL-1743142048950\", \"type\": \"generic\", \"position\": {\"x\": 287, \"y\": -216.10000000000002}, \"data\": {\"label\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"moveL-1743142048950\", \"nodeType\": \"moveL\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"width\": 134, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": 287, \"y\": -216.10000000000002}, \"dragging\": false}], \"edges\": [{\"animated\": false, \"style\": {\"stroke\": \"#888\", \"strokeWidth\": 2}, \"markerEnd\": {\"type\": \"arrowclosed\", \"color\": \"#888\", \"width\": 20, \"height\": 20}, \"type\": \"smoothstep\", \"source\": \"moveL-1742977738249\", \"sourceHandle\": \"output\", \"target\": \"condition-1742977738986\", \"targetHandle\": \"input\", \"className\": \"\", \"id\": \"reactflow__edge-moveL-1742977738249output-condition-1742977738986input\"}, {\"animated\": false, \"style\": {\"stroke\": \"#888\", \"strokeWidth\": 2}, \"markerEnd\": {\"type\": \"arrowclosed\", \"color\": \"#888\", \"width\": 20, \"height\": 20}, \"type\": \"smoothstep\", \"source\": \"moveL-1743063494164\", \"sourceHandle\": \"output\", \"target\": \"condition-1743063495182\", \"targetHandle\": \"input\", \"className\": \"\", \"id\": \"reactflow__edge-moveL-1743063494164output-condition-1743063495182input\"}], \"viewport\": {\"x\": 775, \"y\": 595.6, \"zoom\": 2}}",
+    "owner_id": "27c83191-caae-4df4-a217-b6398a62061b",
+    "created_at": "2025-03-26 07:29:29",
+    "updated_at": "2025-03-28 07:37:27",
+    "name": "新流程图 03/26 16:29-755"
+  },
+  {
+    "id": "30a17510-07bf-4371-aa18-6583ad908aa4",
+    "flow_data": "{\"nodes\": [{\"id\": \"loop-1742977754413\", \"type\": \"generic\", \"position\": {\"x\": -250, \"y\": 0.6813945622589586}, \"data\": {\"label\": \"Loop\", \"description\": \"Loop\", \"nodeType\": \"loop\", \"type\": \"loop\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}, {\"id\": \"input_DO\", \"label\": \"Do\", \"position\": 1}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}]}, \"width\": 180, \"height\": 121, \"positionAbsolute\": {\"x\": -250, \"y\": 0.6813945622589586}, \"selected\": true, \"dragging\": false}, {\"id\": \"select_robot-1742977755060\", \"type\": \"generic\", \"position\": {\"x\": 0, \"y\": 0}, \"data\": {\"label\": \"Select Robot\", \"description\": \"Select Robot\", \"nodeType\": \"select_robot\", \"type\": \"select_robot\", \"fields\": [{\"name\": \"robotName\", \"value\": \"fairino_FR\", \"type\": \"string\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"robotName\": \"fairino_FR\"}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": 0, \"y\": 0}, \"selected\": false, \"dragging\": false}, {\"id\": \"return-1742977755971\", \"type\": \"generic\", \"position\": {\"x\": -31.74097318236528, \"y\": -189.96039352467227}, \"data\": {\"label\": \"Return\", \"description\": \"Return\", \"nodeType\": \"return\", \"type\": \"return\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": []}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": -31.74097318236528, \"y\": -189.96039352467227}, \"selected\": false, \"dragging\": false}, {\"id\": \"moveL-1743058159083\", \"type\": \"generic\", \"position\": {\"x\": 141, \"y\": 109}, \"data\": {\"label\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"moveL-1743058159083\", \"nodeType\": \"moveL\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"positionAbsolute\": {\"x\": 141, \"y\": 109}, \"width\": 134, \"height\": 80}, {\"id\": \"moveL-1743058353641\", \"type\": \"generic\", \"position\": {\"x\": 55.299318782890296, \"y\": 210.90009841946912}, \"data\": {\"label\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"moveL-1743058353641\", \"nodeType\": \"moveL\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"width\": 134, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": 55.299318782890296, \"y\": 210.90009841946912}, \"dragging\": false}, {\"id\": \"moveL-1743058373982\", \"type\": \"generic\", \"position\": {\"x\": 189.40018526017712, \"y\": -100.30084331976468}, \"data\": {\"label\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"moveL-1743058373982\", \"nodeType\": \"moveL\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"width\": 134, \"height\": 80, \"selected\": false, \"dragging\": false, \"positionAbsolute\": {\"x\": 189.40018526017712, \"y\": -100.30084331976468}}, {\"id\": \"condition-1743058389275\", \"type\": \"generic\", \"position\": {\"x\": 101.22196486089692, \"y\": -278.37408586778764}, \"data\": {\"label\": \"Condition\", \"nodeType\": \"condition\", \"type\": \"condition\", \"description\": \"Condition - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"true\", \"label\": \"True\", \"position\": 0}, {\"id\": \"false\", \"label\": \"False\", \"position\": 1}], \"nodeProperties\": {\"nodeId\": \"condition-1743058389275\", \"nodeType\": \"condition\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Condition - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"true\", \"label\": \"True\", \"position\": 0}, {\"id\": \"false\", \"label\": \"False\", \"position\": 1}], \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": [], \"CONDITION\": \"true\", \"DESCRIPTION\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": [], \"CONDITION\": \"true\", \"DESCRIPTION\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\"}, \"width\": 150, \"height\": 96, \"selected\": false, \"positionAbsolute\": {\"x\": 101.22196486089692, \"y\": -278.37408586778764}, \"dragging\": false}, {\"id\": \"loop-1743058403770\", \"type\": \"generic\", \"position\": {\"x\": 449.64450546272195, \"y\": -52.38266456768093}, \"data\": {\"label\": \"Loop\", \"nodeType\": \"loop\", \"type\": \"loop\", \"description\": \"Loop - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}, {\"id\": \"input_DO\", \"label\": \"Do\", \"position\": 1}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"loop-1743058403770\", \"nodeType\": \"loop\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Loop - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}, {\"id\": \"input_DO\", \"label\": \"Do\", \"position\": 1}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": []}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": []}, \"width\": 129, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": 449.64450546272195, \"y\": -52.38266456768093}, \"dragging\": false}, {\"id\": \"return-1743058412766\", \"type\": \"generic\", \"position\": {\"x\": 333.4442819375981, \"y\": 159.03519090894815}, \"data\": {\"label\": \"Return\", \"nodeType\": \"return\", \"type\": \"return\", \"description\": \"Return - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [], \"nodeProperties\": {\"nodeId\": \"return-1743058412766\", \"nodeType\": \"return\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Return - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [], \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": []}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": []}, \"width\": 138, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": 333.4442819375981, \"y\": 159.03519090894815}, \"dragging\": false}, {\"id\": \"moveL-1743063115955\", \"type\": \"generic\", \"position\": {\"x\": 227.50258357906182, \"y\": -14.295137247659689}, \"data\": {\"label\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"moveL-1743063115955\", \"nodeType\": \"moveL\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"width\": 134, \"height\": 80, \"positionAbsolute\": {\"x\": 227.50258357906182, \"y\": -14.295137247659689}, \"selected\": false, \"dragging\": false}, {\"id\": \"loop-1743063137114\", \"type\": \"generic\", \"position\": {\"x\": 440.809116693114, \"y\": -192.17639651845943}, \"data\": {\"label\": \"Loop\", \"nodeType\": \"loop\", \"type\": \"loop\", \"description\": \"Loop - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}, {\"id\": \"input_DO\", \"label\": \"Do\", \"position\": 1}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"loop-1743063137114\", \"nodeType\": \"loop\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Loop - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}, {\"id\": \"input_DO\", \"label\": \"Do\", \"position\": 1}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": []}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": [], \"pallet_list\": [], \"camera_list\": []}, \"width\": 129, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": 440.809116693114, \"y\": -192.17639651845943}, \"dragging\": false}, {\"id\": \"condition-1743063248244\", \"type\": \"generic\", \"position\": {\"x\": -245.58887255211317, \"y\": -207.35418899234259}, \"data\": {\"label\": \"Condition\", \"description\": \"Condition\", \"nodeType\": \"condition\", \"type\": \"condition\", \"fields\": [{\"name\": \"CONDITION\", \"value\": \"true\", \"type\": \"boolean\"}, {\"name\": \"DESCRIPTION\", \"value\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\", \"type\": \"string\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"true\", \"label\": \"True\", \"position\": 0}, {\"id\": \"false\", \"label\": \"False\", \"position\": 1}], \"CONDITION\": \"true\", \"DESCRIPTION\": \"\\u6761\\u4ef6\\u5224\\u65ad\\u8282\\u70b9\"}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": -245.58887255211317, \"y\": -207.35418899234259}, \"selected\": false, \"dragging\": false}, {\"id\": \"set_motor-1743063249496\", \"type\": \"generic\", \"position\": {\"x\": -65.70070811574824, \"y\": -73.80085478958682}, \"data\": {\"label\": \"Set Motor\", \"description\": \"Set Motor\", \"nodeType\": \"set_motor\", \"type\": \"set_motor\", \"fields\": [{\"name\": \"state_list\", \"value\": \"on\", \"type\": \"boolean\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"state_list\": \"on\"}, \"width\": 120, \"height\": 80, \"positionAbsolute\": {\"x\": -65.70070811574824, \"y\": -73.80085478958682}, \"selected\": false, \"dragging\": false}], \"edges\": [{\"animated\": false, \"style\": {\"stroke\": \"#888\", \"strokeWidth\": 2}, \"markerEnd\": {\"type\": \"arrowclosed\", \"color\": \"#888\", \"width\": 20, \"height\": 20}, \"type\": \"smoothstep\", \"source\": \"loop-1742977754413\", \"sourceHandle\": \"output\", \"target\": \"select_robot-1742977755060\", \"targetHandle\": \"input\", \"className\": \"\", \"id\": \"reactflow__edge-loop-1742977754413output-select_robot-1742977755060input\"}, {\"animated\": false, \"style\": {\"stroke\": \"#888\", \"strokeWidth\": 2}, \"markerEnd\": {\"type\": \"arrowclosed\", \"color\": \"#888\", \"width\": 20, \"height\": 20}, \"type\": \"smoothstep\", \"source\": \"moveL-1743063115955\", \"sourceHandle\": \"output\", \"target\": \"loop-1743058403770\", \"targetHandle\": \"input\", \"className\": \"\", \"id\": \"reactflow__edge-moveL-1743063115955output-loop-1743058403770input\"}, {\"animated\": false, \"style\": {\"stroke\": \"#888\", \"strokeWidth\": 2}, \"markerEnd\": {\"type\": \"arrowclosed\", \"color\": \"#888\", \"width\": 20, \"height\": 20}, \"type\": \"smoothstep\", \"source\": \"moveL-1743058373982\", \"sourceHandle\": \"output\", \"target\": \"loop-1743063137114\", \"targetHandle\": \"input\", \"className\": \"\", \"id\": \"reactflow__edge-moveL-1743058373982output-loop-1743063137114input\"}], \"viewport\": {\"x\": 683.8441971321283, \"y\": 450.3085467323402, \"zoom\": 1.4675784859286254}}",
+    "owner_id": "27c83191-caae-4df4-a217-b6398a62061b",
+    "created_at": "2025-03-26 08:21:14",
+    "updated_at": "2025-03-31 05:38:37",
+    "name": "新流程图 03/26 17:21-763"
+  },
+  {
+    "id": "61751c36-5c34-4dcb-90ac-73480ce54638",
+    "flow_data": "{\"nodes\": [], \"edges\": [], \"viewport\": {\"x\": 0, \"y\": 0, \"zoom\": 1}}",
+    "owner_id": "27c83191-caae-4df4-a217-b6398a62061b",
+    "created_at": "2025-03-27 05:02:10",
+    "updated_at": null,
+    "name": "新流程图 03/27 14:02-924"
+  },
+  {
+    "id": "b86dbc31-26fe-45bd-9c3a-7c807cc59d53",
+    "flow_data": "{\"nodes\": [{\"id\": \"moveL-1743400430172\", \"type\": \"generic\", \"position\": {\"x\": -47, \"y\": -10.5}, \"data\": {\"label\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"nodeProperties\": {\"nodeId\": \"moveL-1743400430172\", \"nodeType\": \"moveL\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"description\": \"Movel - \\u7531AI\\u52a9\\u624b\\u521b\\u5efa\", \"fields\": [], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"control_x\": \"enable\", \"control_y\": \"enable\", \"point_name_list\": \"P1\", \"pallet_list\": \"none\", \"camera_list\": \"none\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\"}, \"width\": 180, \"height\": 121, \"selected\": true, \"positionAbsolute\": {\"x\": -47, \"y\": -10.5}, \"dragging\": false}, {\"id\": \"moveL-1743400459115\", \"type\": \"generic\", \"position\": {\"x\": 316.5, \"y\": 62.75}, \"data\": {\"label\": \"Movel\", \"description\": \"Movel\", \"nodeType\": \"moveL\", \"type\": \"moveL\", \"fields\": [{\"name\": \"point_name_list\", \"value\": \"P1\", \"type\": \"string\"}, {\"name\": \"control_x\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_y\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_z\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_rz\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_ry\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"control_rx\", \"value\": \"enable\", \"type\": \"boolean\"}, {\"name\": \"pallet_list\", \"value\": \"none\", \"type\": \"none\"}, {\"name\": \"camera_list\", \"value\": \"none\", \"type\": \"none\"}], \"inputs\": [{\"id\": \"input\", \"label\": \"Input\", \"position\": 0}], \"outputs\": [{\"id\": \"output\", \"label\": \"Output\", \"position\": 0}], \"point_name_list\": \"P1\", \"control_x\": \"enable\", \"control_y\": \"enable\", \"control_z\": \"enable\", \"control_rz\": \"enable\", \"control_ry\": \"enable\", \"control_rx\": \"enable\", \"pallet_list\": \"none\", \"camera_list\": \"none\"}, \"width\": 120, \"height\": 80, \"selected\": false, \"positionAbsolute\": {\"x\": 316.5, \"y\": 62.75}, \"dragging\": false}], \"edges\": [{\"animated\": false, \"style\": {\"stroke\": \"#888\", \"strokeWidth\": 2}, \"markerEnd\": {\"type\": \"arrowclosed\", \"color\": \"#888\", \"width\": 20, \"height\": 20}, \"type\": \"smoothstep\", \"source\": \"moveL-1743400430172\", \"sourceHandle\": \"output\", \"target\": \"moveL-1743400459115\", \"targetHandle\": \"input\", \"className\": \"\", \"id\": \"reactflow__edge-moveL-1743400430172output-moveL-1743400459115input\"}], \"viewport\": {\"x\": 535.5, \"y\": 327.25, \"zoom\": 2}}",
+    "owner_id": "27c83191-caae-4df4-a217-b6398a62061b",
+    "created_at": "2025-03-31 05:38:41",
+    "updated_at": "2025-04-01 03:38:15",
+    "name": "新流程图 03/31 14:38-701"
+  }
+]</pre>
+                        
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-info">
+            <h2>表: flow_variables</h2>
+            <p>行数: 0</p>
+            
+            <h3>列信息</h3>
+            <table>
+                <tr>
+                    <th>列名</th>
+                    <th>数据类型</th>
+                </tr>
+        
+                <tr>
+                    <td>id</td>
+                    <td>INTEGER</td>
+                </tr>
+            
+                <tr>
+                    <td>flow_id</td>
+                    <td>INTEGER</td>
+                </tr>
+            
+                <tr>
+                    <td>key</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>value</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>created_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+                <tr>
+                    <td>updated_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+            </table>
+        
+            <h3>可视化</h3>
+            <div class="visualization">
+        
+            </div>
+        
+            <div class="data-section">
+                <h3>表数据 <button class="toggle-btn" onclick="toggleDataDisplay('flow_variables_data')">显示/隐藏数据</button></h3>
+                <div class="json-data" id="flow_variables_data" style="display: none;">
+        <p>表中没有数据</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-info">
+            <h2>表: version_info</h2>
+            <p>行数: 1</p>
+            
+            <h3>列信息</h3>
+            <table>
+                <tr>
+                    <th>列名</th>
+                    <th>数据类型</th>
+                </tr>
+        
+                <tr>
+                    <td>id</td>
+                    <td>INTEGER</td>
+                </tr>
+            
+                <tr>
+                    <td>version</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>last_updated</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>created_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+                <tr>
+                    <td>updated_at</td>
+                    <td>DATETIME</td>
+                </tr>
+            
+            </table>
+        
+            <h3>可视化</h3>
+            <div class="visualization">
+        
+                <div>
+                    <h4>列数据类型分布</h4>
+                    <img src="version_info_column_types.png" alt="version_info 列类型">
+                </div>
+            
+                <div>
+                    <h4>创建时间分布</h4>
+                    <img src="version_info_creation_timeline.png" alt="version_info 创建时间">
+                </div>
+            
+            </div>
+        
+            <div class="data-section">
+                <h3>表数据 <button class="toggle-btn" onclick="toggleDataDisplay('version_info_data')">显示/隐藏数据</button></h3>
+                <div class="json-data" id="version_info_data" style="display: none;">
+        <table><tr><th>id</th><th>version</th><th>last_updated</th><th>created_at</th><th>updated_at</th></tr><tr><td>1</td><td>0.3.4</td><td>2025-03-11</td><td>2025-03-27 03:07:46.766007</td><td>2025-03-27 03:07:46.766009</td></tr></table>
+                            <h4>原始JSON数据</h4>
+                            <pre>[
+  {
+    "id": 1,
+    "version": "0.3.4",
+    "last_updated": "2025-03-11",
+    "created_at": "2025-03-27 03:07:46.766007",
+    "updated_at": "2025-03-27 03:07:46.766009"
+  }
+]</pre>
+                        
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-info">
+            <h2>表: json_embeddings</h2>
+            <p>行数: 0</p>
+            
+            <h3>列信息</h3>
+            <table>
+                <tr>
+                    <th>列名</th>
+                    <th>数据类型</th>
+                </tr>
+        
+                <tr>
+                    <td>id</td>
+                    <td>INTEGER</td>
+                </tr>
+            
+                <tr>
+                    <td>json_data</td>
+                    <td>JSON</td>
+                </tr>
+            
+                <tr>
+                    <td>embedding_vector</td>
+                    <td>JSON</td>
+                </tr>
+            
+                <tr>
+                    <td>embedding_metadata</td>
+                    <td>JSON</td>
+                </tr>
+            
+                <tr>
+                    <td>model_name</td>
+                    <td>VARCHAR</td>
+                </tr>
+            
+                <tr>
+                    <td>created_at</td>
+                    <td>FLOAT</td>
+                </tr>
+            
+                <tr>
+                    <td>updated_at</td>
+                    <td>FLOAT</td>
+                </tr>
+            
+            </table>
+        
+            <h3>可视化</h3>
+            <div class="visualization">
+        
+            </div>
+        
+            <div class="data-section">
+                <h3>表数据 <button class="toggle-btn" onclick="toggleDataDisplay('json_embeddings_data')">显示/隐藏数据</button></h3>
+                <div class="json-data" id="json_embeddings_data" style="display: none;">
+        <p>表中没有数据</p>
+                </div>
+            </div>
+        </div>
+        
+    </body>
+    </html>
+    

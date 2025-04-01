@@ -19,8 +19,7 @@
         "mtxr.sqltools-driver-sqlite",
         "mhutchie.git-graph",
         "gruntfuggly.todo-tree",
-        "pkief.material-icon-theme",
-        "ms-azuretools.vscode-docker"
+        "pkief.material-icon-theme"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
@@ -42,7 +41,7 @@
           {
             "name": "SQLite Database",
             "driver": "SQLite",
-            "database": "/workspace/flow_editor.db"
+            "database": "/workspace/database/flow_editor.db"
           }
         ]
       }

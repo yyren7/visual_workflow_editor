@@ -109,61 +109,8 @@ def migrate_flow_variables():
         if conn:
             conn.close()
 
-def create_user_flow_preferences():
-    """创建user_flow_preferences表"""
-    logger.info("检查user_flow_preferences表...")
-    
-    if not os.path.exists(DB_PATH):
-        logger.error(f"数据库文件不存在: {DB_PATH}")
-        return False
-    
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        
-        # 检查表是否已存在
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_flow_preferences'")
-        if cursor.fetchone():
-            logger.info("user_flow_preferences表已存在，无需创建")
-            return True
-        
-        # 创建表
-        logger.info("创建user_flow_preferences表...")
-        cursor.execute("""
-        CREATE TABLE user_flow_preferences (
-            id INTEGER NOT NULL, 
-            user_id VARCHAR(36) NOT NULL, 
-            last_selected_flow_id VARCHAR(36), 
-            updated_at DATETIME, 
-            PRIMARY KEY (id), 
-            CONSTRAINT uix_user_flow_preference UNIQUE (user_id), 
-            FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
-            FOREIGN KEY(last_selected_flow_id) REFERENCES flows (id) ON DELETE SET NULL
-        )
-        """)
-        
-        # 创建索引
-        logger.info("创建索引...")
-        cursor.execute("CREATE INDEX ix_user_flow_preferences_id ON user_flow_preferences (id)")
-        
-        conn.commit()
-        logger.info("user_flow_preferences表创建成功")
-        return True
-        
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        logger.error(f"创建user_flow_preferences表时出错: {str(e)}")
-        return False
-    finally:
-        if conn:
-            conn.close()
-
 if __name__ == "__main__":
     success = migrate_flow_variables()
-    if success:
-        success = create_user_flow_preferences()
     
     if success:
         logger.info("数据库迁移成功!")
