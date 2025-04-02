@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from backend.app import schemas
-from backend.app import database
+from database.connection import get_db, SessionLocal
 from database.models import User, Flow, VersionInfo
 from backend.app.config import Config
 import json
@@ -50,7 +50,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
     Get the current user from a JWT token.
     """
@@ -59,6 +59,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         detail="无法验证凭据",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # 添加对token的空值检查
+    if token is None:
+        raise credentials_exception
+        
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -72,7 +77,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-async def optional_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+async def optional_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
     Get the current user from a JWT token.
     Returns None if the token is invalid or missing.
@@ -131,7 +136,7 @@ def get_version_info():
     """
     # 1. 优先从数据库读取
     try:
-        db = database.SessionLocal()
+        db = SessionLocal()
         try:
             db_version = db.query(VersionInfo).first()
             if db_version:

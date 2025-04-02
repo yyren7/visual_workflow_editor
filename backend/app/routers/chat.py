@@ -2,7 +2,8 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from backend.app import schemas, database
+from backend.app import schemas
+from database.connection import get_db
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.chat_service import ChatService
 
@@ -16,7 +17,7 @@ router = APIRouter(
 @router.post("/", response_model=schemas.Chat)
 async def create_chat(
     chat: schemas.ChatCreate, 
-    db: Session = Depends(database.get_db), 
+    db: Session = Depends(get_db), 
     current_user: schemas.User = Depends(get_current_user)
 ):
     """
@@ -45,7 +46,7 @@ async def create_chat(
 @router.get("/{chat_id}", response_model=schemas.Chat)
 async def get_chat(
     chat_id: str, 
-    db: Session = Depends(database.get_db), 
+    db: Session = Depends(get_db), 
     current_user: schemas.User = Depends(get_current_user)
 ):
     """
@@ -71,7 +72,7 @@ async def get_flow_chats(
     flow_id: str, 
     skip: int = Query(0, ge=0), 
     limit: int = Query(100, le=1000),
-    db: Session = Depends(database.get_db), 
+    db: Session = Depends(get_db), 
     current_user: schemas.User = Depends(get_current_user)
 ):
     """
@@ -91,7 +92,7 @@ async def get_flow_chats(
 async def update_chat(
     chat_id: str,
     chat_update: schemas.ChatUpdate,
-    db: Session = Depends(database.get_db), 
+    db: Session = Depends(get_db), 
     current_user: schemas.User = Depends(get_current_user)
 ):
     """
@@ -129,7 +130,7 @@ async def update_chat(
 async def add_message(
     chat_id: str,
     message: schemas.ChatAddMessage,
-    db: Session = Depends(database.get_db), 
+    db: Session = Depends(get_db), 
     current_user: schemas.User = Depends(get_current_user)
 ):
     """
@@ -166,7 +167,7 @@ async def add_message(
 @router.delete("/{chat_id}", response_model=bool)
 async def delete_chat(
     chat_id: str,
-    db: Session = Depends(database.get_db), 
+    db: Session = Depends(get_db), 
     current_user: schemas.User = Depends(get_current_user)
 ):
     """

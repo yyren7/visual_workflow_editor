@@ -12,7 +12,7 @@ import sys
 
 from langchainchat.config import settings
 from langchainchat.utils.logging import logger
-from app.database import get_db
+from database.connection import get_db
 from langchainchat.tools.flow_tools import get_active_flow_id
 
 class ContextCollector:

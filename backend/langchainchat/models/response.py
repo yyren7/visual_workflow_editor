@@ -14,7 +14,7 @@ class ChatResponse(BaseModel):
     
     class Config:
         """配置类"""
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "conversation_id": "7a0720fe-d63b-4253-b587-5e3f8f1bffd2",
                 "message": "你好，我是流程图设计助手。我可以帮你设计和创建工作流流程图。",

@@ -5,8 +5,9 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from backend.app import schemas, database
+from backend.app import schemas
 from database.models import Flow
+from database.connection import get_db
 from backend.app.config import Config
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.user_flow_service import UserFlowService
@@ -19,7 +20,7 @@ router = APIRouter(
 
 
 @router.post("/", response_model=schemas.Flow)
-async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Creates a new flow. 必须登录才能创建流程。
     """
@@ -36,7 +37,7 @@ async def create_flow(flow: schemas.FlowCreate, db: Session = Depends(database.g
 
 
 @router.get("/{flow_id}", response_model=schemas.Flow)
-async def get_flow(flow_id: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def get_flow(flow_id: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Gets a flow by ID. 必须登录并且只能访问自己的流程。
     """
@@ -50,7 +51,7 @@ async def get_flow(flow_id: str, db: Session = Depends(database.get_db), current
 
 
 @router.put("/{flow_id}", response_model=schemas.Flow)
-async def update_flow(flow_id: str, flow: schemas.FlowUpdate, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def update_flow(flow_id: str, flow: schemas.FlowUpdate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Updates a flow. 必须登录并且只能更新自己的流程。
     """
@@ -68,7 +69,7 @@ async def update_flow(flow_id: str, flow: schemas.FlowUpdate, db: Session = Depe
 
 
 @router.delete("/{flow_id}", response_model=bool)
-async def delete_flow(flow_id: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def delete_flow(flow_id: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Deletes a flow. 必须登录并且只能删除自己的流程。
     """
@@ -79,7 +80,7 @@ async def delete_flow(flow_id: str, db: Session = Depends(database.get_db), curr
 
 
 @router.get("/", response_model=List[schemas.Flow])
-async def get_flows_for_user(db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user), skip: int = Query(default=0, ge=0), limit: int = Query(default=10, le=100)):
+async def get_flows_for_user(db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user), skip: int = Query(default=0, ge=0), limit: int = Query(default=10, le=100)):
     """
     Get all flows for the current user with pagination. 必须登录才能获取流程列表，且只能获取自己的流程。
     """
@@ -88,7 +89,7 @@ async def get_flows_for_user(db: Session = Depends(database.get_db), current_use
 
 
 @router.post("/{flow_id}/set-as-last-selected", response_model=bool)
-async def set_as_last_selected(flow_id: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def set_as_last_selected(flow_id: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Sets a flow as the user's last selected flow. 必须登录并且只能选择自己的流程。
     """
@@ -106,7 +107,7 @@ async def set_as_last_selected(flow_id: str, db: Session = Depends(database.get_
 
 
 @router.get("/user/last-selected", response_model=schemas.Flow)
-async def get_last_selected_flow(db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def get_last_selected_flow(db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Gets the user's last selected flow. 必须登录才能获取。
     """

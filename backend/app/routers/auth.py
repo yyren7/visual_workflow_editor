@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError, jwt
 from backend.app.config import Config
-from backend.app import database, models, schemas
+from backend.app import schemas
+from database import models
+from database.connection import get_db
 from sqlalchemy.orm import Session
 from backend.app.utils import get_current_user
 

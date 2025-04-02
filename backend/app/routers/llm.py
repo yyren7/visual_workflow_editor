@@ -1,7 +1,8 @@
 ## Code: backend/app/routers/llm.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.app import database, schemas
+from backend.app import schemas
+from database.connection import get_db
 from backend.app.config import Config
 from backend.app.utils import get_current_user
 import httpx  # For making HTTP requests to the LLM API
@@ -39,7 +40,7 @@ async def call_llm_api(endpoint: str, data: dict):
 
 
 @router.post("/generate_node", response_model=schemas.NodeData, description="Generate a new node using LLM")
-async def generate_node(prompt: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def generate_node(prompt: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Generates a new node using the LLM based on the provided prompt.
     """
@@ -62,7 +63,7 @@ async def generate_node(prompt: str, db: Session = Depends(database.get_db), cur
 
 
 @router.post("/update_node/{node_id}", description="Update a node using LLM")
-async def update_node_by_llm(node_id: str, prompt: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(get_current_user)):
+async def update_node_by_llm(node_id: str, prompt: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     """
     Updates an existing node using the LLM based on the provided prompt and node ID.
     """
