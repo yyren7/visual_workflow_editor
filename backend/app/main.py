@@ -144,8 +144,8 @@ try:
     logger.info("注册user路由成功")
     app.include_router(flow.router)
     logger.info("注册flow路由成功")
-    app.include_router(llm.router)
-    logger.info("注册llm路由成功")
+    # app.include_router(llm.router) # 移除LLM路由
+    # logger.info("注册llm路由成功") # 移除相关日志
     app.include_router(email.router)
     logger.info("注册email路由成功")
     app.include_router(auth.router)

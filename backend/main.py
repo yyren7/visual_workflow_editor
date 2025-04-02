@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import user, flow, llm, email, auth, node_templates, workflow_router
+from app.routers import user, flow, email, auth, node_templates, workflow_router
 
 # 导入LangChain聊天路由
 from langchainchat.api.chat_router import router as chat_router
@@ -26,7 +26,6 @@ def create_application() -> FastAPI:
     # 注册路由
     application.include_router(user.router)
     application.include_router(flow.router)
-    application.include_router(llm.router)
     application.include_router(email.router)
     application.include_router(auth.router)
     # application.include_router(embedding_routes.router)
