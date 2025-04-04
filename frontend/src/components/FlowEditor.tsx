@@ -629,6 +629,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     type DebouncedFunction = {
       (...args: any[]): void;
       flush?: () => void;
+      cancel?: () => void;  // 添加取消方法
     };
     
     const debounce = (func: Function, delay: number): DebouncedFunction => {
@@ -644,6 +645,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         func();
       };
       
+      // 添加取消方法
+      debouncedFunc.cancel = () => {
+        clearTimeout(timer);
+      };
+      
       return debouncedFunc;
     };
 
@@ -655,6 +661,13 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     // 创建防抖的保存函数
     const debouncedSave = debounce(async () => {
       try {
+        // 检查登录状态，如果未登录则不保存
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          console.log('用户已退出登录，取消保存操作');
+          return;
+        }
+        
         const flowData = reactFlowInstance.toObject();
         await updateFlow(flowId, { flow_data: flowData, name: flowName });
         console.log('流程图已自动保存');
@@ -669,13 +682,32 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       }
     }, 2000); // 设置2秒延迟，避免频繁保存
 
+    // 创建用户注销事件处理函数
+    const handleUserLogout = () => {
+      console.log('检测到用户注销事件，取消未完成的保存操作');
+      debouncedSave.cancel?.();
+    };
+
     // 只要nodes或edges变化，就触发自动保存
     debouncedSave();
+    
+    // 添加用户注销事件监听
+    window.addEventListener('user-logout', handleUserLogout);
 
     // 清理函数
     return () => {
-      // 组件卸载时如果有待处理的保存，立即执行
-      debouncedSave.flush?.();
+      // 移除事件监听
+      window.removeEventListener('user-logout', handleUserLogout);
+      
+      // 检查用户是否仍然登录
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        // 组件卸载时如果有待处理的保存且用户仍然登录，立即执行
+        debouncedSave.flush?.();
+      } else {
+        // 如果用户已经注销，取消保存操作
+        debouncedSave.cancel?.();
+      }
     };
   }, [nodes, edges, flowId, reactFlowInstance, flowName, enqueueSnackbar, t]);
 

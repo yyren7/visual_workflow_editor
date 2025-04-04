@@ -129,7 +129,6 @@ app.add_middleware(
         "http://localhost:8000",      # 后端API地址
         "http://172.18.0.3:3000",     # Docker网络中的前端容器
         "http://workflow-editor-frontend:3000",  # 容器名称访问
-        "*"                          # 允许所有源
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -202,10 +201,8 @@ async def version(request: Request):
     version_data = get_version_info()
     print(f"返回版本信息: {version_data}")
     
-    # 明确设置CORS响应头
-    response = JSONResponse(content=version_data)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
+    # 返回版本信息，使用全局CORS配置
+    return version_data
 
 # 在应用启动前验证API配置
 @app.on_event("startup")

@@ -5,7 +5,8 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:800
 
 // 创建axios实例
 const apiClient = axios.create({
-    baseURL: API_BASE_URL
+    baseURL: API_BASE_URL,
+    withCredentials: true  // 添加凭证支持
 });
 
 // 添加请求拦截器，自动附加认证token

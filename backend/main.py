@@ -17,7 +17,13 @@ def create_application() -> FastAPI:
     # 配置跨域
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # 生产环境应指定域名
+        allow_origins=[
+            "http://localhost:3000",      # 本地开发环境
+            "http://127.0.0.1:3000",      # 本地开发环境(另一种URL)
+            "http://localhost:8000",      # 后端API地址
+            "http://172.18.0.2:3000",     # Docker网络中的前端容器
+            "http://workflow-editor-frontend:3000"  # 容器名称访问
+        ],  # 移除"*"通配符
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

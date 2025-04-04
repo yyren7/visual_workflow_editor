@@ -95,7 +95,8 @@ export interface LoginResponse {
 
 // 创建axios实例
 const apiClient: AxiosInstance = axios.create({
-    baseURL: API_BASE_URL
+    baseURL: API_BASE_URL,
+    withCredentials: true  // 添加凭证支持
 });
 
 // 添加请求拦截器，自动附加认证token
@@ -240,7 +241,9 @@ export const updateNodeByLLM = async (nodeId: string, prompt: string): Promise<N
 export const registerUser = async (userData: UserRegisterData): Promise<any> => {
     console.log("registerUser request:", userData);
     try {
-        const response: AxiosResponse<any> = await axios.post(`${API_BASE_URL}/users/register`, userData);
+        const response: AxiosResponse<any> = await axios.post(`${API_BASE_URL}/users/register`, userData, {
+            withCredentials: true
+        });
         return response.data;
     } catch (error) {
         console.error("Error registering user:", error);
@@ -264,7 +267,8 @@ export const loginUser = async (userData: UserLoginData): Promise<LoginResponse>
         const response: AxiosResponse<LoginResponse> = await axios.post(`${API_BASE_URL}/users/login`, formData, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
-            }
+            },
+            withCredentials: true
         });
 
         console.log('Login Response:', response.data);

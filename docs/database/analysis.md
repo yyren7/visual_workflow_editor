@@ -39,7 +39,7 @@ graph TD
         EmbeddingServiceBE["Embedding Service (from /langchainchat or /app)"]
     end
 
-    subgraph "Database Layer (database)"
+    subgraph "Database Layer (`database`)"
         SQLAlchemy["SQLAlchemy ORM (models.py, connection.py)"]
         Alembic["Alembic (migrations/)"]
         SQLiteDB["SQLite Database (flow_editor.db)"]

@@ -28,7 +28,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axios.get(`${API_BASE_URL}/auth/verify-token`, {
         headers: {
           Authorization: `Bearer ${token}`
-        }
+        },
+        withCredentials: true
       });
       console.log('Token验证成功');
       return response.status === 200;
@@ -47,10 +48,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 登出函数 - 只设置状态，并在确定状态后使用统一的路由处理
   const logout = () => {
-    console.log('移除认证token，设置为未认证状态');
-    localStorage.removeItem('access_token');
-    setIsAuthenticated(false);
-    navigate('/login', { replace: true });
+    console.log('触发退出登录事件，让组件可以取消未完成的请求');
+    // 发送自定义事件通知所有组件用户即将注销
+    window.dispatchEvent(new CustomEvent('user-logout'));
+    
+    // 给组件一点时间处理退出事件 (50ms应该足够)
+    setTimeout(() => {
+      console.log('移除认证token，设置为未认证状态');
+      localStorage.removeItem('access_token');
+      setIsAuthenticated(false);
+      navigate('/login', { replace: true });
+    }, 50);
   };
 
   // 初始加载时验证token - 使用async/await提高可读性

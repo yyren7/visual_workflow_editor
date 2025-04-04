@@ -1,66 +1,147 @@
 // visual_workflow_editor/frontend/src/components/Login.tsx
-import React, { useState, FormEvent } from 'react';
-import { Container, TextField, Button, Typography, Box } from '@mui/material';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { Container, TextField, Button, Typography, Box, CircularProgress } from '@mui/material';
 import { loginUser, UserLoginData, LoginResponse } from '../api/api.ts';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
+// 定义表单验证的接口
+interface FormErrors {
+  username?: string;
+  password?: string;
+}
+
 const Login: React.FC = () => {
   const { t } = useTranslation();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [errors, setErrors] = useState<FormErrors>({});
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
+  // 清理表单错误
+  useEffect(() => {
+    if (username) {
+      setErrors(prev => ({ ...prev, username: undefined }));
+    }
+    if (password) {
+      setErrors(prev => ({ ...prev, password: undefined }));
+    }
+  }, [username, password]);
+
+  // 验证表单数据
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+
+    if (!username.trim()) {
+      newErrors.username = t('login.errors.usernameRequired');
+      isValid = false;
+    }
+
+    if (!password) {
+      newErrors.password = t('login.errors.passwordRequired');
+      isValid = false;
+    } else if (password.length < 1) {
+      newErrors.password = t('login.errors.passwordLength');
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // 存储认证信息
+  const saveAuthData = (token: string, userId: string): boolean => {
+    try {
+      // 主要存储方式
+      localStorage.setItem('access_token', token);
+      localStorage.setItem('user_id', userId);
+      
+      // 触发登录状态变化事件，通知NavBar更新
+      window.dispatchEvent(new Event('loginChange'));
+      return true;
+    } catch (e) {
+      console.error('Error saving authentication data:', e);
+      return false;
+    }
+  };
+
+  // 处理登录成功
+  const handleLoginSuccess = (response: LoginResponse): void => {
+    if (!response.access_token || !response.user_id) {
+      enqueueSnackbar(t('login.noToken'), { variant: 'warning' });
+      return;
+    }
+    
+    const saved = saveAuthData(response.access_token, response.user_id);
+    
+    if (saved) {
+      enqueueSnackbar(t('login.success'), { variant: 'success' });
+      navigate('/select');
+    } else {
+      enqueueSnackbar(t('login.tokenError'), { variant: 'warning' });
+    }
+  };
+
+  // 处理登录错误
+  const handleLoginError = (error: unknown): void => {
+    let errorMessage = t('common.unknown');
+    
+    if (error instanceof AxiosError) {
+      if (error.response?.data?.detail) {
+        // 处理后端返回的详细错误信息，但不直接显示后端原始错误
+        const backendError = error.response.data.detail;
+        if (typeof backendError === 'string' && backendError.includes('Incorrect')) {
+          errorMessage = t('login.errors.invalidCredentials');
+        } else {
+          errorMessage = t('login.errors.serverError');
+        }
+      } else if (error.response?.status === 401) {
+        errorMessage = t('login.errors.unauthorized');
+      } else if (error.response?.status === 404) {
+        errorMessage = t('login.errors.serviceUnavailable');
+      } else if (error.request) {
+        errorMessage = t('login.errors.noResponse');
+      }
+    } else if (error instanceof Error) {
+      errorMessage = t('login.errors.networkError');
+    }
+    
+    enqueueSnackbar(`${t('login.failed')}: ${errorMessage}`, { variant: 'error' });
+  };
+
+  // 提交表单
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    // 表单验证
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      // 直接传递用户名和密码对象，api.js中会将其转换为表单数据
+      // 准备用户数据
       const userData: UserLoginData = {
         username,
         password
       };
       
+      // 调用登录API
       const response: LoginResponse = await loginUser(userData);
       
-      // 先判断并存储token
-      if (response.access_token) {
-        try {
-          localStorage.setItem('access_token', response.access_token); // 存储 token
-          
-          // 存储用户ID，用于获取流程图
-          if (response.user_id) {
-            localStorage.setItem('user_id', response.user_id);
-          }
-          
-          // 触发登录状态变化事件，通知NavBar更新
-          window.dispatchEvent(new Event('loginChange'));
-          
-          enqueueSnackbar(t('login.success'), { variant: 'success' });
-          // 成功存储token后导航到选择页面
-          navigate('/select');
-        } catch (e) { // 捕获 localStorage.setItem 异常
-          console.error('Error saving access token to localStorage:', e);
-          enqueueSnackbar(t('login.tokenError'), { variant: 'warning' }); // 提示警告 Snackbar
-        }
-      } else {
-        console.error('Access token not found in response');
-        enqueueSnackbar(t('login.noToken'), { variant: 'warning' });
-      }
+      // 处理登录成功
+      handleLoginSuccess(response);
     } catch (error) {
-      console.error('Login Error:', error);
-      
-      // 处理错误信息，确保类型安全
-      let errorMessage = t('common.unknown');
-      if (error instanceof AxiosError && error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      enqueueSnackbar(`${t('login.failed')}: ${errorMessage}`, { variant: 'error' });
+      // 处理登录错误
+      handleLoginError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,6 +170,9 @@ const Login: React.FC = () => {
             autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            error={!!errors.username}
+            helperText={errors.username}
+            disabled={loading}
           />
           <TextField
             margin="normal"
@@ -101,20 +185,25 @@ const Login: React.FC = () => {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password}
+            disabled={loading}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={loading}
           >
-            {t('login.submit')}
+            {loading ? <CircularProgress size={24} /> : t('login.submit')}
           </Button>
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
             <Button
               variant="text"
               color="primary"
               onClick={() => navigate('/register')}
+              disabled={loading}
             >
               {t('login.noAccount')}
             </Button>
@@ -124,6 +213,7 @@ const Login: React.FC = () => {
               color="secondary"
               onClick={() => navigate('/submit')}
               sx={{ mt: 2, width: '100%' }}
+              disabled={loading}
             >
               {t('login.goSubmit')}
             </Button>
