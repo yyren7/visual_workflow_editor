@@ -14,9 +14,9 @@ yarn-error.log
 .pnp.js
 
 # 前端构建目录
-/build
-/dist
-/coverage
+frontend/build/*
+frontend/dist
+frontend/coverage
 
 # 环境变量文件
 .env
@@ -39,5 +39,4 @@ Thumbs.db
 backend/app/logs/*
 backend/database/flow_editor.db
 database/flow_editor.db
-backend/backend/*
 backend/langchainchat/sessions/*
