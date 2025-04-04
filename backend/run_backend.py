@@ -136,9 +136,9 @@ def save_version_to_db(version_data):
 if __name__ == "__main__":
     # 读取版本信息
     try:
-        # 直接从workspace目录读取version.json
+        # 从database目录读取version.json
         workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        version_path = os.path.join(workspace_dir, 'version.json')
+        version_path = os.path.join(workspace_dir, 'database', 'version.json')
         
         version_info = {"version": "0.0.0", "lastUpdated": "未知"}
         if os.path.exists(version_path):
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     
     # 使用uvicorn直接运行FastAPI应用
     uvicorn.run(
-        "main:app",  # 使用当前目录下的main.py入口
+        "app.main:app",  # 使用app目录下的main.py入口
         host="0.0.0.0",
         port=args.port,
         reload=True,

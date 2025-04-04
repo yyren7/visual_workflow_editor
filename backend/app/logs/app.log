@@ -2040,3 +2040,182 @@ AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_t
 2025-03-26 03:50:47,282 - backend.app.startup - INFO - ✓ 调试模式已禁用
 2025-03-26 03:50:47,282 - backend.app.startup - INFO - API前缀: /api
 2025-03-26 03:50:47,282 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-04 08:55:34,422 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:55:34,430 - app.main - INFO - 开始导入模块...
+2025-04-04 08:55:34,430 - app.main - INFO - 导入database成功
+2025-04-04 08:55:34,430 - app.main - INFO - 导入models成功
+2025-04-04 08:55:34,430 - app.main - ERROR - 导入模块时出错: No module named 'backend.app.embeddings'
+2025-04-04 08:55:55,897 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:55:55,898 - app.main - INFO - 开始导入模块...
+2025-04-04 08:55:55,898 - app.main - INFO - 导入database成功
+2025-04-04 08:55:55,898 - app.main - INFO - 导入models成功
+2025-04-04 08:55:55,898 - app.main - ERROR - 导入模块时出错: No module named 'backend.app.embeddings'
+2025-04-04 08:56:18,603 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:56:18,603 - app.main - INFO - 开始导入模块...
+2025-04-04 08:56:18,603 - app.main - INFO - 导入database成功
+2025-04-04 08:56:18,603 - app.main - INFO - 导入models成功
+2025-04-04 08:56:18,603 - app.main - INFO - 导入config成功
+2025-04-04 08:56:18,701 - app.main - ERROR - 导入模块时出错: cannot import name 'llm' from 'backend.app.routers' (/workspace/backend/app/routers/__init__.py)
+2025-04-04 08:56:32,480 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:56:32,480 - app.main - INFO - 开始导入模块...
+2025-04-04 08:56:32,480 - app.main - INFO - 导入database成功
+2025-04-04 08:56:32,480 - app.main - INFO - 导入models成功
+2025-04-04 08:56:32,480 - app.main - INFO - 导入config成功
+2025-04-04 08:56:32,558 - app.main - ERROR - 导入模块时出错: cannot import name 'llm' from 'backend.app.routers' (/workspace/backend/app/routers/__init__.py)
+2025-04-04 08:56:47,988 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:56:47,988 - app.main - INFO - 开始导入模块...
+2025-04-04 08:56:47,988 - app.main - INFO - 导入database成功
+2025-04-04 08:56:47,988 - app.main - INFO - 导入models成功
+2025-04-04 08:56:47,988 - app.main - INFO - 导入config成功
+2025-04-04 08:56:48,065 - app.main - ERROR - 导入模块时出错: cannot import name 'llm' from 'backend.app.routers' (/workspace/backend/app/routers/__init__.py)
+2025-04-04 08:57:07,735 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:57:07,735 - app.main - INFO - 开始导入模块...
+2025-04-04 08:57:07,735 - app.main - INFO - 导入database成功
+2025-04-04 08:57:07,735 - app.main - INFO - 导入models成功
+2025-04-04 08:57:07,735 - app.main - INFO - 导入config成功
+2025-04-04 08:57:07,813 - app.main - ERROR - 导入模块时出错: cannot import name 'flow_router' from 'backend.app.routers' (/workspace/backend/app/routers/__init__.py)
+2025-04-04 08:57:19,051 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:57:19,051 - app.main - INFO - 开始导入模块...
+2025-04-04 08:57:19,051 - app.main - INFO - 导入database成功
+2025-04-04 08:57:19,051 - app.main - INFO - 导入models成功
+2025-04-04 08:57:19,051 - app.main - INFO - 导入config成功
+2025-04-04 08:57:19,134 - app.main - ERROR - 导入模块时出错: cannot import name 'flow_router' from 'backend.app.routers' (/workspace/backend/app/routers/__init__.py)
+2025-04-04 08:57:34,448 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:57:34,448 - app.main - INFO - 开始导入模块...
+2025-04-04 08:57:34,448 - app.main - INFO - 导入database成功
+2025-04-04 08:57:34,448 - app.main - INFO - 导入models成功
+2025-04-04 08:57:34,448 - app.main - INFO - 导入config成功
+2025-04-04 08:57:34,528 - app.main - ERROR - 导入模块时出错: cannot import name 'flow_router' from 'backend.app.routers' (/workspace/backend/app/routers/__init__.py)
+2025-04-04 08:57:51,042 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:57:51,042 - app.main - INFO - 开始导入模块...
+2025-04-04 08:57:51,042 - app.main - INFO - 导入database成功
+2025-04-04 08:57:51,042 - app.main - INFO - 导入models成功
+2025-04-04 08:57:51,042 - app.main - INFO - 导入config成功
+2025-04-04 08:57:51,126 - app.main - INFO - 导入基本路由成功
+2025-04-04 08:57:51,612 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-04 08:57:51,612 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-04 08:57:51,612 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-04 08:57:51,612 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-04 08:57:51,617 - langchainchat.utils.translator - INFO - 初始化DeepSeek翻译器
+2025-04-04 08:57:51,617 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-04 08:57:51,617 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-04 08:57:51,618 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-04 08:57:51,619 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-04 08:57:51,619 - langchain_chat - INFO - API配置验证通过: 
+2025-04-04 08:57:51,619 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com/v1
+2025-04-04 08:57:51,619 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-04 08:57:51,619 - langchain_chat - INFO - API配置验证通过: 
+2025-04-04 08:57:51,619 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com/v1
+2025-04-04 08:57:51,619 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-04 08:57:51,650 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com/v1
+2025-04-04 08:57:51,651 - langchainchat.utils.translator - INFO - 成功初始化DeepSeek翻译器
+2025-04-04 08:57:51,656 - app.main - INFO - 导入workflow_router成功
+2025-04-04 08:57:51,656 - app.main - INFO - 导入utils成功
+2025-04-04 08:57:51,656 - app.main - INFO - 导入dependencies成功
+2025-04-04 08:57:51,656 - app.main - INFO - 创建数据库表...
+2025-04-04 08:57:51,656 - app.main - INFO - 数据库表创建成功
+2025-04-04 08:57:51,656 - app.main - INFO - 初始化FastAPI应用...
+2025-04-04 08:57:51,664 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:57:51,664 - app.main - INFO - 注册路由...
+2025-04-04 08:57:51,669 - app.main - INFO - 注册user路由成功
+2025-04-04 08:57:51,673 - app.main - INFO - 注册flow路由成功
+2025-04-04 08:57:51,674 - app.main - INFO - 注册email路由成功
+2025-04-04 08:57:51,675 - app.main - INFO - 注册auth路由成功
+2025-04-04 08:57:51,675 - app.main - INFO - 注册node_templates路由成功
+2025-04-04 08:57:51,678 - app.main - INFO - 注册workflow路由成功
+2025-04-04 08:57:51,687 - app.main - INFO - 注册flow_variables路由成功
+2025-04-04 08:57:51,687 - app.main - INFO - 注册chat路由成功
+2025-04-04 08:57:51,687 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-04 08:57:51,728 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-04 08:57:51,728 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-04 08:57:51,728 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-04 08:57:51,728 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-04 08:57:51,728 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-04 08:57:51,728 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-04 08:57:51,728 - backend.deepseek - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-04 08:57:51,738 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-04 08:57:51,738 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-04 08:57:51,777 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-04-04 08:57:51,777 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-04 08:57:51,777 - backend.app.startup - INFO - 数据库URL: sqlite:///database/flow_editor.db
+2025-04-04 08:57:51,777 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-04 08:57:51,777 - backend.app.startup - INFO - API前缀: /api
+2025-04-04 08:57:51,777 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-04 08:58:02,819 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-04 08:58:02,819 - app.main - INFO - 开始导入模块...
+2025-04-04 08:58:02,819 - app.main - INFO - 导入database成功
+2025-04-04 08:58:02,819 - app.main - INFO - 导入models成功
+2025-04-04 08:58:02,819 - app.main - INFO - 导入config成功
+2025-04-04 08:58:02,899 - app.main - INFO - 导入基本路由成功
+2025-04-04 08:58:03,379 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-04 08:58:03,380 - langchain_chat - INFO - LangChain模块配置: DeepSeek模型=deepseek-chat
+2025-04-04 08:58:03,380 - langchain_chat - INFO - 向量存储设置: 类型=chroma, 路径=backend/langchainchat/vector_store
+2025-04-04 08:58:03,380 - langchain_chat - INFO - 记忆设置: 最大历史长度=10
+2025-04-04 08:58:03,386 - langchainchat.utils.translator - INFO - 初始化DeepSeek翻译器
+2025-04-04 08:58:03,386 - langchain_chat - INFO - 初始化聊天模型: deepseek-chat
+2025-04-04 08:58:03,386 - langchain_chat - INFO - 使用DeepSeek模型
+2025-04-04 08:58:03,388 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_API_KEY
+2025-04-04 08:58:03,388 - langchain_chat - INFO - 从环境变量读取DEEPSEEK_BASE_URL
+2025-04-04 08:58:03,388 - langchain_chat - INFO - API配置验证通过: 
+2025-04-04 08:58:03,388 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com/v1
+2025-04-04 08:58:03,388 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-04 08:58:03,388 - langchain_chat - INFO - API配置验证通过: 
+2025-04-04 08:58:03,388 - langchain_chat - INFO - - 基础URL: https://api.deepseek.com/v1
+2025-04-04 08:58:03,388 - langchain_chat - INFO - - API密钥: sk-fa08f...3fa5 (长度: 35字符)
+2025-04-04 08:58:03,419 - langchain_chat - INFO - 已创建API客户端: 基础URL=https://api.deepseek.com/v1
+2025-04-04 08:58:03,419 - langchainchat.utils.translator - INFO - 成功初始化DeepSeek翻译器
+2025-04-04 08:58:03,424 - app.main - INFO - 导入workflow_router成功
+2025-04-04 08:58:03,424 - app.main - INFO - 导入utils成功
+2025-04-04 08:58:03,424 - app.main - INFO - 导入dependencies成功
+2025-04-04 08:58:03,424 - app.main - INFO - 创建数据库表...
+2025-04-04 08:58:03,425 - app.main - INFO - 数据库表创建成功
+2025-04-04 08:58:03,425 - app.main - INFO - 初始化FastAPI应用...
+2025-04-04 08:58:03,432 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:58:03,432 - app.main - INFO - 注册路由...
+2025-04-04 08:58:03,437 - app.main - INFO - 注册user路由成功
+2025-04-04 08:58:03,442 - app.main - INFO - 注册flow路由成功
+2025-04-04 08:58:03,442 - app.main - INFO - 注册email路由成功
+2025-04-04 08:58:03,443 - app.main - INFO - 注册auth路由成功
+2025-04-04 08:58:03,443 - app.main - INFO - 注册node_templates路由成功
+2025-04-04 08:58:03,445 - app.main - INFO - 注册workflow路由成功
+2025-04-04 08:58:03,455 - app.main - INFO - 注册flow_variables路由成功
+2025-04-04 08:58:03,455 - app.main - INFO - 注册chat路由成功
+2025-04-04 08:58:03,455 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-04 08:58:03,494 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-04 08:58:03,494 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-04 08:58:03,494 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-04 08:58:03,494 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-04 08:58:03,494 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-04 08:58:03,494 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-04 08:58:03,494 - backend.deepseek - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-04 08:58:03,494 - backend.deepseek - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-04 08:58:03,494 - backend.deepseek - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-04 08:58:03,525 - backend.deepseek - INFO - DeepSeek客户端初始化成功
+2025-04-04 08:58:03,525 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-04 08:58:03,526 - backend.app.startup - INFO - 数据库URL: sqlite:///database/flow_editor.db
+2025-04-04 08:58:03,526 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-04 08:58:03,526 - backend.app.startup - INFO - API前缀: /api
+2025-04-04 08:58:03,526 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-04 08:58:10,712 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:58:18,558 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:58:25,063 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:58:46,064 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:59:00,338 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:59:49,398 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:59:49,399 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:59:50,782 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 08:59:50,792 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 08:59:50,832 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:59:50,834 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 08:59:50,851 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 08:59:50,855 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 09:00:01,313 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 09:00:01,315 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 09:00:01,369 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 09:00:01,375 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 09:00:02,546 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 09:00:02,551 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 09:00:02,587 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 09:00:02,589 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-04 09:00:02,602 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-04 09:00:02,604 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53

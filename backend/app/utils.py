@@ -160,9 +160,9 @@ def get_version_info():
     
     # 3. 尝试从文件读取
     try:
-        # 从workspace目录读取version.json
+        # 从database目录读取version.json
         workspace_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        version_path = os.path.join(workspace_dir, 'version.json')
+        version_path = os.path.join(workspace_dir, 'database', 'version.json')
         
         if os.path.exists(version_path):
             with open(version_path, 'r') as f:

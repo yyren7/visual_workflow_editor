@@ -42,6 +42,7 @@ class Config:
     # CORS settings
     CORS_ORIGINS: list = [
         "http://localhost:3000",      # 本地开发环境
+        "http://127.0.0.1:3000",      # 本地开发环境(另一种URL)
         "http://172.18.0.3:3000",     # Docker网络中的前端容器
         "http://workflow-editor-frontend:3000",  # 容器名称访问
         "*"                          # 允许所有源（生产环境应该更严格）

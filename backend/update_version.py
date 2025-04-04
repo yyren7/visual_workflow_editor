@@ -19,9 +19,9 @@ def update_version_from_file(file_path=None):
     """从version.json文件更新版本信息到数据库"""
     try:
         if file_path is None:
-            # 默认使用workspace目录下的version.json
+            # 默认使用database目录下的version.json
             workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            file_path = os.path.join(workspace_dir, 'version.json')
+            file_path = os.path.join(workspace_dir, 'database', 'version.json')
         
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
@@ -93,7 +93,7 @@ def update_version_file(version, last_updated=None):
         
         # 保存到文件
         workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        file_path = os.path.join(workspace_dir, 'version.json')
+        file_path = os.path.join(workspace_dir, 'database', 'version.json')
         
         with open(file_path, 'w') as f:
             json.dump(version_data, f, indent=2)
@@ -125,7 +125,7 @@ def display_current_version():
             
         # 查看文件中的版本
         workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        file_path = os.path.join(workspace_dir, 'version.json')
+        file_path = os.path.join(workspace_dir, 'database', 'version.json')
         
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:

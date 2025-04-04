@@ -103,9 +103,9 @@ def get_version_info():
         dict: 包含'version'和'lastUpdated'的字典，如果读取失败则返回默认值
     """
     try:
-        # 尝试找到项目根目录的version.json（相对于当前文件的位置）
+        # 尝试找到database目录的version.json（相对于当前文件的位置）
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        version_path = os.path.join(base_dir, 'version.json')
+        version_path = os.path.join(base_dir, 'database', 'version.json')
         
         with open(version_path, 'r') as f:
             version_data = json.load(f)

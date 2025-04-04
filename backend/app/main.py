@@ -77,15 +77,16 @@ try:
     logger.info("导入models成功")
     
     # 导入embeddings模型
-    from backend.app.embeddings.models import JsonEmbedding
-    logger.info("导入embedding模型成功")
+    # 注释掉不存在的embeddings模块
+    # from backend.app.embeddings.models import JsonEmbedding
+    # logger.info("导入embedding模型成功")
     
     # 现在可以导入backend包
     from backend.app.config import Config
     logger.info("导入config成功")
     from backend.app.routers import (
-        user, flow, llm, email, auth, node_templates,
-        flow_router, flow_variables_router, chat
+        user, flow, email, auth, node_templates,
+        flow_variables_router, chat
     )
     logger.info("导入基本路由成功")
     
@@ -126,7 +127,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",      # 本地开发环境
-        "http://localhost:8000",      # 后端API地址
+        "http://127.0.0.1:3000",      # 本地开发环境(另一种URL)
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",      # 后端API地址
         "http://172.18.0.3:3000",     # Docker网络中的前端容器
         "http://workflow-editor-frontend:3000",  # 容器名称访问
     ],
@@ -143,8 +146,6 @@ try:
     logger.info("注册user路由成功")
     app.include_router(flow.router)
     logger.info("注册flow路由成功")
-    # app.include_router(llm.router) # 移除LLM路由
-    # logger.info("注册llm路由成功") # 移除相关日志
     app.include_router(email.router)
     logger.info("注册email路由成功")
     app.include_router(auth.router)
@@ -163,7 +164,6 @@ try:
         logger.info("跳过注册workflow路由")
 
     # 加载API路由
-    app.include_router(flow_router.router)
     app.include_router(flow_variables_router.router)  # 添加流程图变量路由
     app.include_router(chat.router)  # 添加聊天路由
     logger.info("注册flow_variables路由成功")
