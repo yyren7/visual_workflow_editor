@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from backend.app import schemas, utils
 from database.connection import get_db
 from database.models import User
-from backend.app.config import Config
+from backend.config import APP_CONFIG
 from datetime import timedelta
 
 router = APIRouter(
@@ -41,7 +41,7 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Sessi
     if not utils.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
-    access_token_expires = timedelta(minutes=Config.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=APP_CONFIG['ACCESS_TOKEN_EXPIRE_MINUTES'])
     access_token = utils.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )

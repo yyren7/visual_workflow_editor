@@ -5,7 +5,7 @@ import httpx
 import os
 from openai import OpenAI
 from pydantic import BaseModel
-from backend.app.config import Config
+from backend.config import AI_CONFIG
 from backend.app.services.prompt_service import BasePromptService
 from backend.app.services.deepseek_client_service import DeepSeekClientService
 
@@ -227,7 +227,7 @@ class StructuredOutputService(BasePromptService):
     async def _call_llm_api(self, prompt: str) -> str:
         """调用LLM API"""
         # 判断是否使用DeepSeek API
-        if Config.USE_DEEPSEEK:
+        if AI_CONFIG['USE_DEEPSEEK']:
             return await self._call_deepseek_api(prompt)
         # 原有的本地LLM逻辑保留作为备选
         else:

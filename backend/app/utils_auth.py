@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from database.connection import get_db
 from database.models import User, Flow
-from config import Config
+from backend.config import APP_CONFIG
 import json
 import os
 
@@ -40,7 +40,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, Config.SECRET_KEY, algorithm=Config.ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, APP_CONFIG['SECRET_KEY'], algorithm=APP_CONFIG['ALGORITHM'])
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -53,7 +53,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=[Config.ALGORITHM])
+        payload = jwt.decode(token, APP_CONFIG['SECRET_KEY'], algorithms=[APP_CONFIG['ALGORITHM']])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception

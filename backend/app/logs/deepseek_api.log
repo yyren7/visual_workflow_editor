@@ -176,3 +176,53 @@
 2025-04-07 02:37:05,878 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
 2025-04-07 02:37:05,878 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
 2025-04-07 02:37:05,908 - INFO - DeepSeek客户端初始化成功
+2025-04-07 04:53:44,765 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 04:53:44,765 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 04:53:44,765 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 04:53:44,796 - INFO - DeepSeek客户端初始化成功
+2025-04-07 04:54:47,074 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 04:54:47,074 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 04:54:47,074 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 04:54:47,105 - INFO - DeepSeek客户端初始化成功
+2025-04-07 04:55:03,735 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 04:55:03,735 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 04:55:03,735 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 04:55:03,766 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:05:53,061 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:05:53,061 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:05:53,061 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:05:53,093 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:06:07,517 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:06:07,517 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:06:07,517 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:06:07,549 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:06:09,872 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:06:09,872 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:06:09,872 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:06:09,903 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:06:22,241 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:06:22,241 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:06:22,241 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:06:22,272 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:06:30,781 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:06:30,781 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:06:30,781 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:06:30,813 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:06:45,915 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:06:45,915 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:06:45,915 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:06:45,946 - INFO - DeepSeek客户端初始化成功
+2025-04-07 05:07:00,901 - WARNING - 检测到基础URL已包含/v1路径: https://api.deepseek.com/v1，将使用此路径
+2025-04-07 05:07:00,901 - INFO - 初始化DeepSeek客户端，模型: deepseek-chat, 基础URL: https://api.deepseek.com/v1, API密钥: sk-f***
+2025-04-07 05:07:00,901 - INFO - 环境变量配置: DEEPSEEK_MODEL=deepseek-chat, DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+2025-04-07 05:07:00,931 - INFO - DeepSeek客户端初始化成功
+2025-04-07 07:05:01,321 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 07:05:01,321 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 07:05:01,321 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 07:05:07,029 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 07:05:07,029 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 07:06:01,941 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 07:06:01,941 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 08:41:02,817 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 08:41:02,817 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-07 08:41:02,817 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat

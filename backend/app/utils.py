@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from backend.app import schemas
 from database.connection import get_db, SessionLocal
 from database.models import User, Flow, VersionInfo
-from backend.app.config import Config
+from backend.config import APP_CONFIG
 import json
 import os
 import logging
@@ -21,9 +21,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # OAuth2 token URL
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
-SECRET_KEY = Config.SECRET_KEY
-ALGORITHM = Config.ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = Config.ACCESS_TOKEN_EXPIRE_MINUTES
+SECRET_KEY = APP_CONFIG['SECRET_KEY']
+ALGORITHM = APP_CONFIG['ALGORITHM']
+ACCESS_TOKEN_EXPIRE_MINUTES = APP_CONFIG['ACCESS_TOKEN_EXPIRE_MINUTES']
 
 def hash_password(password: str) -> str:
     """

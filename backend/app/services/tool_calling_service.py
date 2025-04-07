@@ -6,7 +6,7 @@ import os
 from openai import OpenAI
 from enum import Enum
 from pydantic import BaseModel, Field
-from backend.app.config import Config
+from backend.config import AI_CONFIG
 from backend.app.services.prompt_service import BasePromptService
 from backend.app.services.deepseek_client_service import DeepSeekClientService
 import uuid

@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import os
 
 # 导入配置 - 需要修改为新位置
-from backend.app.config import Config
+from backend.config import DB_CONFIG
 
 # 设置日志
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # 默认数据库URL，使用新的路径
 DEFAULT_DATABASE_URL = "sqlite:///database/flow_editor.db"
 # Database URL from config or default
-DATABASE_URL = Config.DATABASE_URL if hasattr(Config, 'DATABASE_URL') else DEFAULT_DATABASE_URL
+DATABASE_URL = DB_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in DB_CONFIG else DEFAULT_DATABASE_URL
 
 # 确保使用新路径
 if DATABASE_URL != DEFAULT_DATABASE_URL:

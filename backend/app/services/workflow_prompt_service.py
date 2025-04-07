@@ -25,6 +25,8 @@ from app.services.prompt_embedding_service import PromptEmbeddingService
 # from app.services.structured_output_service import StructuredOutputService  # 暂时注释
 # from app.services.tool_classes import ToolOptions, AvailableTool  # 暂时注释
 
+from backend.config import APP_CONFIG
+
 # 设置日志记录器
 logger = logging.getLogger(__name__)
 
@@ -1119,13 +1121,13 @@ class WorkflowPromptService(BasePromptService):
         """
         try:
             import platform
-            from backend.app.config import Config
+            from backend.config import APP_CONFIG, AI_CONFIG
             
             system_info = "系统信息:\n"
-            system_info += f"- 项目名称: {Config.PROJECT_NAME}\n"
+            system_info += f"- 项目名称: {APP_CONFIG['PROJECT_NAME']}\n"
             system_info += f"- 操作系统: {platform.system()} {platform.release()}\n"
             system_info += f"- Python版本: {platform.python_version()}\n"
-            system_info += f"- 调试模式: {'启用' if Config.DEBUG else '禁用'}\n"
+            system_info += f"- 调试模式: {'启用' if APP_CONFIG['DEBUG'] else '禁用'}\n"
             
             # 尝试获取版本信息
             try:

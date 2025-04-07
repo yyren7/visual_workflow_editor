@@ -1,16 +1,32 @@
+"""
+DeepSeek API客户端服务模块
+提供与DeepSeek API交互的功能
+"""
+
 import logging
 import time
 import uuid
 import json
+import os
 from typing import Dict, List, Any, Optional, Union, Tuple
 from datetime import datetime
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
 from openai._exceptions import OpenAIError, APIConnectionError, APITimeoutError
-from backend.app.config import Config
+from backend.config import AI_CONFIG, get_log_file_path
 
 # 使用专门的deepseek日志记录器
 logger = logging.getLogger("backend.deepseek")
+
+# 日志文件路径
+DEEPSEEK_LOG_FILE = get_log_file_path("deepseek_api.log")
+
+# 设置文件日志处理器
+file_handler = logging.FileHandler(DEEPSEEK_LOG_FILE)
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 # 单例管理器
 _deepseek_client_instance = None
@@ -23,74 +39,32 @@ class DeepSeekClientService:
     负责DeepSeek API的客户端管理、多轮对话历史和错误处理
     """
     
-    def __init__(self, model_name: str = None, api_key: str = None, base_url: str = None):
-        """
-        初始化DeepSeek客户端服务
+    def __init__(self):
+        """初始化DeepSeek客户端"""
+        self.api_key = AI_CONFIG['DEEPSEEK_API_KEY']
+        self.base_url = AI_CONFIG['DEEPSEEK_BASE_URL']
+        self.model = AI_CONFIG['DEEPSEEK_MODEL']
         
-        Args:
-            model_name: 使用的模型名称，默认使用配置中的DEEPSEEK_MODEL
-            api_key: API密钥，默认使用配置中的DEEPSEEK_API_KEY
-            base_url: API基础URL，默认使用配置中的DEEPSEEK_BASE_URL
-        """
-        self.model_name = model_name or Config.DEEPSEEK_MODEL
-        self.api_key = api_key or Config.DEEPSEEK_API_KEY
-        self.base_url = base_url or Config.DEEPSEEK_BASE_URL
-        self.client = None
+        # 验证配置
+        if not self.api_key:
+            logger.warning("DeepSeek API密钥未设置")
+            
+        logger.info(f"初始化DeepSeek客户端，使用模型: {self.model}")
+        
+        # 创建客户端
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url
+        )
         self.max_retries = 3
         self.retry_delay = 1.0  # 初始重试延迟(秒)
-        
-        # 初始化客户端
-        self._init_client()
-    
-    def _init_client(self):
-        """初始化DeepSeek API客户端"""
-        try:
-            # 确保API密钥有效
-            if not self.api_key or self.api_key == "your_deepseek_api_key_here":
-                logger.error("无效的API密钥：未设置或使用了占位符值")
-                raise ValueError("DeepSeek API密钥未设置或无效")
-            
-            # 确保基础URL正确
-            base_url = self.base_url.rstrip('/')  # 移除尾部的斜杠
-            # 检查URL中是否已包含/v1路径，避免重复
-            if base_url.endswith('/v1'):
-                logger.warning(f"检测到基础URL已包含/v1路径: {base_url}，将使用此路径")
-            elif '/v1/' in base_url:
-                logger.warning(f"检测到基础URL包含/v1/路径: {base_url}，可能导致API调用问题")
-            
-            logger.info(f"初始化DeepSeek客户端，模型: {self.model_name}, 基础URL: {base_url}, API密钥: {self.api_key[:4]}***")
-            # 记录当前环境信息
-            logger.info(f"环境变量配置: DEEPSEEK_MODEL={Config.DEEPSEEK_MODEL}, DEEPSEEK_BASE_URL={Config.DEEPSEEK_BASE_URL}")
-            
-            self.client = OpenAI(
-                api_key=self.api_key,
-                base_url=base_url,
-                timeout=60.0  # 设置较长的超时时间
-            )
-            logger.info("DeepSeek客户端初始化成功")
-        except Exception as e:
-            logger.error(f"初始化DeepSeek客户端时出错: {str(e)}")
-            logger.error(f"错误详情: {type(e).__name__}")
-            import traceback
-            logger.error(f"堆栈跟踪: {traceback.format_exc()}")
-            raise
     
     @classmethod
-    def get_instance(cls, model_name: str = None, api_key: str = None, base_url: str = None):
-        """
-        获取DeepSeekClientService的单例实例
-        
-        Args:
-            model_name: 模型名称，默认使用配置
-            api_key: API密钥，默认使用配置
-            base_url: API基础URL，默认使用配置
-            
-        Returns:
-            DeepSeekClientService实例
-        """
+    def get_instance(cls):
+        """获取单例实例"""
         global _deepseek_client_instance
         if _deepseek_client_instance is None:
-            _deepseek_client_instance = cls(model_name, api_key, base_url)
+            _deepseek_client_instance = cls()
         return _deepseek_client_instance
     
     def create_conversation(self, conversation_id: str = None, system_message: str = None) -> str:
@@ -240,7 +214,7 @@ class DeepSeekClientService:
                 print(f"\n工具定义: {json.dumps(tools, ensure_ascii=False, indent=2)}")
             
             # 记录其他参数
-            print(f"\n模型: {model_name or self.model_name}")
+            print(f"\n模型: {model_name or self.model}")
             print(f"温度: {temperature}")
             print(f"最大令牌数: {max_tokens}")
             print(f"JSON模式: {json_mode}")
@@ -263,7 +237,7 @@ class DeepSeekClientService:
             if tools:
                 logger.info(f"工具定义: {json.dumps(tools, ensure_ascii=False)}")
             
-            logger.info(f"模型: {model_name or self.model_name}")
+            logger.info(f"模型: {model_name or self.model}")
             logger.info(f"温度: {temperature}")
             logger.info(f"最大令牌数: {max_tokens}")
             logger.info(f"JSON模式: {json_mode}")
@@ -271,7 +245,7 @@ class DeepSeekClientService:
             logger.info("==================================")
             
             # 使用指定的模型或默认模型
-            model = model_name or self.model_name
+            model = model_name or self.model
             
             # 执行API调用，带有重试机制
             retries = 0
@@ -309,7 +283,7 @@ class DeepSeekClientService:
                     # 检查客户端是否初始化
                     if self.client is None:
                         logger.warning("DeepSeek客户端未初始化，尝试重新初始化")
-                        self._init_client()
+                        self.__init__()
                     
                     # 调用API
                     if stream:

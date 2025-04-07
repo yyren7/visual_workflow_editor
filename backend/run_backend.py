@@ -78,7 +78,7 @@ sys.path.append(parent_dir)
 # 导入数据库模型和引擎，确保表结构会被创建
 from database.connection import Base, engine, SessionLocal
 from database.models import User, Flow, FlowVariable, VersionInfo
-from config import Config
+from backend.config import APP_CONFIG
 
 # 创建数据库表结构，如果表不存在
 try:

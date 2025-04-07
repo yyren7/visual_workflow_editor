@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from openai import OpenAI
-from backend.app.config import Config
+from backend.config import AI_CONFIG
 from backend.app.services.prompt_service import BasePromptService
 
 logger = logging.getLogger(__name__)
@@ -15,18 +15,14 @@ class PromptExpansionService(BasePromptService):
     将用户简单输入扩展为详细的专业步骤
     """
     
-    def __init__(self, config: Optional[Config] = None):
+    def __init__(self):
         """初始化提示扩展服务"""
         super().__init__()
         
-        # 加载配置
-        if config is None:
-            config = Config()
-            
         # 获取DeepSeek API配置
-        self.deepseek_api_key = config.DEEPSEEK_API_KEY
-        self.deepseek_base_url = config.DEEPSEEK_BASE_URL
-        self.deepseek_model = config.DEEPSEEK_MODEL
+        self.deepseek_api_key = AI_CONFIG['DEEPSEEK_API_KEY']
+        self.deepseek_base_url = AI_CONFIG['DEEPSEEK_BASE_URL']
+        self.deepseek_model = AI_CONFIG['DEEPSEEK_MODEL']
         
         # 提示扩展模板
         self.prompt_expansion_template = """
@@ -77,13 +73,13 @@ class PromptExpansionService(BasePromptService):
 注意: 请直接输出步骤列表，不要添加额外的解释或前置文字。仅输出步骤序列。
 """
         
-        self.llm_api_url = Config.LLM_API_URL
-        self.llm_api_key = Config.LLM_API_KEY
+        self.llm_api_url = AI_CONFIG['LLM_API_URL']
+        self.llm_api_key = AI_CONFIG['LLM_API_KEY']
         # 初始化DeepSeek客户端
-        if Config.USE_DEEPSEEK:
+        if AI_CONFIG['USE_DEEPSEEK']:
             self.deepseek_client = OpenAI(
-                api_key=Config.DEEPSEEK_API_KEY, 
-                base_url=Config.DEEPSEEK_BASE_URL
+                api_key=AI_CONFIG['DEEPSEEK_API_KEY'], 
+                base_url=AI_CONFIG['DEEPSEEK_BASE_URL']
             )
         else:
             self.deepseek_client = None
@@ -232,7 +228,7 @@ class PromptExpansionService(BasePromptService):
     async def _call_llm_api(self, prompt: str) -> str:
         """调用LLM API"""
         # 判断是否使用DeepSeek API
-        if Config.USE_DEEPSEEK:
+        if AI_CONFIG['USE_DEEPSEEK']:
             return await self._call_deepseek_api(prompt)
         # 原有的本地LLM逻辑保留作为备选
         else:
@@ -263,20 +259,20 @@ class PromptExpansionService(BasePromptService):
                 return result.get("text", "")
         except Exception as e:
             logger.error(f"调用本地LLM API时出错: {str(e)}")
-            if Config.DEBUG:
+            if AI_CONFIG['DEBUG']:
                 logger.error(f"API URL: {self.llm_api_url}, Payload: {payload}")
             raise
             
     async def _call_deepseek_api(self, prompt: str) -> str:
         """调用DeepSeek API"""
         try:
-            logger.info(f"调用DeepSeek API，模型: {Config.DEEPSEEK_MODEL}, API基础URL: {Config.DEEPSEEK_BASE_URL}")
+            logger.info(f"调用DeepSeek API，模型: {AI_CONFIG['DEEPSEEK_MODEL']}, API基础URL: {AI_CONFIG['DEEPSEEK_BASE_URL']}")
             
             if not self.deepseek_client:
                 logger.error("DeepSeek客户端未初始化，尝试重新初始化")
                 self.deepseek_client = OpenAI(
-                    api_key=Config.DEEPSEEK_API_KEY, 
-                    base_url=Config.DEEPSEEK_BASE_URL
+                    api_key=AI_CONFIG['DEEPSEEK_API_KEY'], 
+                    base_url=AI_CONFIG['DEEPSEEK_BASE_URL']
                 )
                 logger.info("DeepSeek客户端初始化完成")
             
@@ -286,12 +282,12 @@ class PromptExpansionService(BasePromptService):
             ]
             
             logger.info(f"准备向DeepSeek API发送请求，消息长度: {len(str(messages))}")
-            logger.info(f"API密钥前4位: {Config.DEEPSEEK_API_KEY[:4] if Config.DEEPSEEK_API_KEY else '未设置'}")
+            logger.info(f"API密钥前4位: {AI_CONFIG['DEEPSEEK_API_KEY'][:4] if AI_CONFIG['DEEPSEEK_API_KEY'] else '未设置'}")
             
             try:
                 # 使用非流式响应进行测试，简化调试过程
                 response = self.deepseek_client.chat.completions.create(
-                    model=Config.DEEPSEEK_MODEL,
+                    model=AI_CONFIG['DEEPSEEK_MODEL'],
                     messages=messages,
                     max_tokens=1000,
                     temperature=0.2,
@@ -317,8 +313,8 @@ class PromptExpansionService(BasePromptService):
             logger.error(f"调用DeepSeek API时出错: {str(e)}")
             logger.error(f"错误详细信息: {error_trace}")
             
-            if Config.DEBUG:
-                logger.error(f"API URL: {Config.DEEPSEEK_BASE_URL}")
+            if AI_CONFIG['DEBUG']:
+                logger.error(f"API URL: {AI_CONFIG['DEEPSEEK_BASE_URL']}")
                 logger.error(f"调用堆栈: {error_trace}")
             
             # 返回明确的错误信息，而不是抛出异常
@@ -337,28 +333,28 @@ class PromptExpansionService(BasePromptService):
             logger.info("使用httpx直接调用DeepSeek API")
             
             # 构建正确的URL路径
-            base_url = Config.DEEPSEEK_BASE_URL.rstrip('/')  # 移除尾部的斜杠(如果有)
+            base_url = AI_CONFIG['DEEPSEEK_BASE_URL'].rstrip('/')  # 移除尾部的斜杠(如果有)
             url = f"{base_url}/v1/chat/completions"
             
             logger.info(f"调用API URL: {url}")
             
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {Config.DEEPSEEK_API_KEY}"
+                "Authorization": f"Bearer {AI_CONFIG['DEEPSEEK_API_KEY']}"
             }
             payload = {
-                "model": Config.DEEPSEEK_MODEL,
+                "model": AI_CONFIG['DEEPSEEK_MODEL'],
                 "messages": messages,
                 "max_tokens": 1000,
                 "temperature": 0.2
             }
             
             # 检查API密钥是否有效
-            if not Config.DEEPSEEK_API_KEY or Config.DEEPSEEK_API_KEY == "your_deepseek_api_key_here":
+            if not AI_CONFIG['DEEPSEEK_API_KEY'] or AI_CONFIG['DEEPSEEK_API_KEY'] == "your_deepseek_api_key_here":
                 logger.error("无效的API密钥：未设置或使用了占位符值")
                 return "DeepSeek API密钥未设置或无效。请设置有效的API密钥。"
                 
-            logger.info(f"Authorization头: Bearer {Config.DEEPSEEK_API_KEY[:4]}***")
+            logger.info(f"Authorization头: Bearer {AI_CONFIG['DEEPSEEK_API_KEY'][:4]}***")
             
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(url, json=payload, headers=headers)

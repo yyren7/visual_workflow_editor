@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError, jwt
-from backend.app.config import Config
-from backend.app import schemas
+from backend.config import APP_CONFIG
+from backend.app import schemas, utils
 from database import models
 from database.connection import get_db
 from sqlalchemy.orm import Session
 from backend.app.utils import get_current_user
+from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
 
 router = APIRouter(
     prefix="/auth",

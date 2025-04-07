@@ -82,7 +82,7 @@ try:
     # logger.info("导入embedding模型成功")
     
     # 现在可以导入backend包
-    from backend.app.config import Config
+    from backend.config import APP_CONFIG
     logger.info("导入config成功")
     from backend.app.routers import (
         user, flow, email, auth, node_templates,
@@ -118,7 +118,7 @@ except Exception as e:
 logger.info("初始化FastAPI应用...")
 # Initialize FastAPI app
 app = FastAPI(
-    title=Config.PROJECT_NAME,
+    title=APP_CONFIG['PROJECT_NAME'],
     version=get_version(),  # 动态读取版本号
 )
 
@@ -211,29 +211,29 @@ async def validate_api_configuration():
     import logging
     logger = logging.getLogger("backend.app.startup")
     
-    from backend.app.config import Config
+    from backend.config import APP_CONFIG, AI_CONFIG
     
     # 验证DeepSeek配置
-    if Config.USE_DEEPSEEK:
+    if AI_CONFIG['USE_DEEPSEEK']:
         logger.info("正在验证DeepSeek API配置")
         
-        invalid_key = not Config.DEEPSEEK_API_KEY or Config.DEEPSEEK_API_KEY == "your_deepseek_api_key_here" or Config.DEEPSEEK_API_KEY.startswith("sk-if-you-see-this")
+        invalid_key = not AI_CONFIG['DEEPSEEK_API_KEY'] or AI_CONFIG['DEEPSEEK_API_KEY'] == "your_deepseek_api_key_here" or AI_CONFIG['DEEPSEEK_API_KEY'].startswith("sk-if-you-see-this")
         
         if invalid_key:
             logger.warning("⚠️ 未设置有效的DeepSeek API密钥，请设置DEEPSEEK_API_KEY环境变量")
             logger.warning("⚠️ 当前API密钥值不是有效的密钥，API调用将失败")
         else:
-            logger.info(f"✓ DeepSeek API密钥已设置 (前4位: {Config.DEEPSEEK_API_KEY[:4]}***)")
+            logger.info(f"✓ DeepSeek API密钥已设置 (前4位: {AI_CONFIG['DEEPSEEK_API_KEY'][:4]}***)")
             
         # 检查基础URL是否正确
-        base_url = Config.DEEPSEEK_BASE_URL.rstrip('/')
+        base_url = AI_CONFIG['DEEPSEEK_BASE_URL'].rstrip('/')
         logger.info(f"DeepSeek API基础URL: {base_url}")
         
         if '/v1/' in base_url or base_url.endswith('/v1'):
             logger.warning(f"⚠️ 检测到基础URL中包含/v1路径: {base_url}")
             logger.warning("⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions")
             
-        logger.info(f"DeepSeek模型: {Config.DEEPSEEK_MODEL}")
+        logger.info(f"DeepSeek模型: {AI_CONFIG['DEEPSEEK_MODEL']}")
         
         # 尝试初始化客户端
         try:
@@ -244,16 +244,16 @@ async def validate_api_configuration():
             logger.error(f"⚠️ DeepSeek客户端服务初始化失败: {str(e)}")
     
     # 验证数据库配置
-    logger.info(f"数据库URL: {Config.DATABASE_URL}")
+    logger.info(f"数据库URL: {APP_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in APP_CONFIG else '未设置'}")
     
     # 记录调试模式状态
-    if Config.DEBUG:
+    if APP_CONFIG['DEBUG']:
         logger.info("⚠️ 调试模式已启用")
     else:
         logger.info("✓ 调试模式已禁用")
         
     # 记录API前缀
-    logger.info(f"API前缀: {Config.API_PREFIX}")
+    logger.info(f"API前缀: {APP_CONFIG['API_PREFIX']}")
     
     # 验证CORS配置
-    logger.info(f"CORS允许的源: {', '.join(Config.CORS_ORIGINS)}")
+    logger.info(f"CORS允许的源: {', '.join(APP_CONFIG['CORS_ORIGINS'])}")

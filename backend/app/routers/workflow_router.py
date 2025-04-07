@@ -8,7 +8,7 @@ from app.utils_auth import get_current_user
 from app import schemas
 import os
 import json
-from config import Config
+from backend.config import APP_CONFIG
 from langchainchat.utils.translator import translator
 
 router = APIRouter(
@@ -37,7 +37,7 @@ def get_workflow_service():
 
 # 获取全局变量文件路径
 def get_global_variables_path():
-    path = Config.GLOBAL_VARIABLES_PATH
+    path = APP_CONFIG['GLOBAL_VARIABLES_PATH']
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
     return path

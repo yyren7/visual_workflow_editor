@@ -10,12 +10,9 @@ from datetime import datetime
 from openai import OpenAI
 
 # 导入必要的配置和工具
-from backend.langchainchat.config import Settings
+from backend.config import LANGCHAIN_CONFIG, AI_CONFIG
 from backend.langchainchat.embeddings.semantic_search import search_by_text
 from backend.langchainchat.embeddings.node_search import search_nodes
-
-# 获取配置
-settings = Settings()
 
 # 设置logger
 logger = logging.getLogger(__name__)
@@ -39,17 +36,17 @@ class QAService:
             return
             
         # 检查是否使用DeepSeek
-        if settings.USE_DEEPSEEK:
+        if AI_CONFIG['USE_DEEPSEEK']:
             logger.info("初始化DeepSeek客户端")
             _llm_client = OpenAI(
-                api_key=settings.DEEPSEEK_API_KEY, 
-                base_url=settings.DEEPSEEK_BASE_URL
+                api_key=AI_CONFIG['DEEPSEEK_API_KEY'], 
+                base_url=AI_CONFIG['DEEPSEEK_BASE_URL']
             )
         else:
             # 使用OpenAI
             logger.info("初始化OpenAI客户端")
             _llm_client = OpenAI(
-                api_key=settings.OPENAI_API_KEY
+                api_key=AI_CONFIG.get('OPENAI_API_KEY', '')
             )
     
     async def query_with_context(
@@ -143,7 +140,7 @@ class QAService:
             client = _llm_client
             
             # 确定使用的模型
-            model_name = model or settings.CHAT_MODEL_NAME
+            model_name = model or LANGCHAIN_CONFIG['CHAT_MODEL_NAME']
             
             # 构建提示
             system_message = "你是一个有帮助的AI助手。"

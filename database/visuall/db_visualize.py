@@ -16,7 +16,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 from database.connection import engine, Base
-from backend.app.config import Config
+from backend.config import DB_CONFIG, APP_CONFIG
 from database.models import User, Flow, FlowVariable, VersionInfo
 
 def get_table_info():
@@ -117,7 +117,7 @@ def generate_text_report(table_info, file_path):
         f.write("数据库表结构报告\n")
         f.write("=" * 80 + "\n")
         f.write(f"日期: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"数据库URL: {Config.DATABASE_URL}\n")
+        f.write(f"数据库URL: {DB_CONFIG['DATABASE_URL']}\n")
         f.write("=" * 80 + "\n\n")
         
         for table_name, info in table_info.items():
@@ -190,7 +190,7 @@ def generate_markdown_report(table_info, file_path):
     with open(file_path, 'w') as f:
         f.write("# 数据库表结构报告\n\n")
         f.write(f"**日期:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n")
-        f.write(f"**数据库URL:** `{Config.DATABASE_URL}`\n\n")
+        f.write(f"**数据库URL:** `{DB_CONFIG['DATABASE_URL']}`\n\n")
         
         # 目录
         f.write("## 目录\n\n")
@@ -356,7 +356,7 @@ def generate_html_report(table_info, file_path):
     <p><strong>日期:</strong> """)
         
         f.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        f.write(f"</p><p><strong>数据库URL:</strong> <code>{Config.DATABASE_URL}</code></p>")
+        f.write(f"</p><p><strong>数据库URL:</strong> <code>{DB_CONFIG['DATABASE_URL']}</code></p>")
         
         # 目录
         f.write('<div class="toc"><h2>目录</h2><ul>')
@@ -440,7 +440,7 @@ def generate_json_report(table_info, file_path):
     """生成JSON格式的表结构报告"""
     report = {
         "generated_at": datetime.datetime.now().isoformat(),
-        "database_url": Config.DATABASE_URL,
+        "database_url": DB_CONFIG['DATABASE_URL'],
         "tables": table_info
     }
     
