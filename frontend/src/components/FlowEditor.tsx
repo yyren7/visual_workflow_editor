@@ -165,6 +165,10 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight;
       
+      // 顶部导航栏高度和底部安全边距
+      const topNavHeight = 48; // 顶部导航栏高度
+      const bottomSafetyMargin = topNavHeight + 10;
+      
       setWindowSize({
         width: newWidth,
         height: newHeight
@@ -172,14 +176,14 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       
       // 更新聊天框位置，确保其完全在可视区域内
       setChatPosition(prev => {
-        // 确保不超出右边界
-        const maxX = newWidth - 720; // 700宽度 + 20右边距
-        // 确保不超出下边界
-        const maxY = newHeight - 620; // 600高度 + 20底部边距
-        // 确保不超出左边界（至少20px在可视区域内）
-        const minX = -680; // -700 + 20左边距
-        // 确保不超出上边界（至少顶部栏40px在可视区域内）
-        const minY = -560; // -600 + 40顶部栏高度
+        // 确保不超出右边界，并且至少部分在可视区域内
+        const maxX = newWidth - 120; // 确保至少120px在可视区域内
+        // 确保不超出下边界，并且考虑安全边距
+        const maxY = newHeight - 600 - bottomSafetyMargin; // 聊天窗口高度为600，加上安全边距
+        // 确保不超出左边界（至少标题栏在可视区域内）
+        const minX = -580; // 确保至少120px在可视区域内
+        // 确保不超出上边界（顶部栏必须在可视区域内）
+        const minY = topNavHeight + 5; // 顶部导航栏高度加5px额外空间
         
         return {
           x: Math.min(Math.max(prev.x, minX), maxX),
@@ -189,10 +193,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       
       // 更新全局变量面板位置
       setGlobalVarsPosition(prev => {
-        const maxX = newWidth - 370; // 350宽度 + 20右边距
-        const maxY = newHeight - 420; // 400高度 + 20底部边距
-        const minX = -330; // -350 + 20左边距
-        const minY = -360; // -400 + 40顶部栏高度
+        const maxX = newWidth - 120; // 确保至少120px在可视区域内
+        // 确保不超出下边界，并且考虑安全边距
+        const maxY = newHeight - 320 - bottomSafetyMargin; // 变量窗口高度为320，加上安全边距
+        const minX = -480; // 确保至少120px在可视区域内
+        const minY = topNavHeight + 5; // 顶部导航栏高度加5px额外空间
         
         return {
           x: Math.min(Math.max(prev.x, minX), maxX),
@@ -200,11 +205,91 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
         };
       });
     };
-
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // 设置初始窗口位置，确保在可视区域内
+  useEffect(() => {
+    // 顶部导航栏高度和底部安全边距
+    const topNavHeight = 48; // 顶部导航栏高度
+    const bottomSafetyMargin = topNavHeight + 10;
+    
+    // 聊天窗口初始位置：右下角
+    setChatPosition({ 
+      x: Math.max(0, window.innerWidth - 720),
+      y: Math.max(topNavHeight + 5, Math.min(window.innerHeight - 600 - bottomSafetyMargin, 
+        window.innerHeight/2))
+    });
+    
+    // 变量窗口初始位置：右上角
+    setGlobalVarsPosition({ 
+      x: Math.max(0, window.innerWidth - 600),
+      y: topNavHeight + 5 // 紧贴顶部导航栏
+    });
+  }, []);
+
+  // 切换变量窗口显示
+  const toggleGlobalVarsPanel = useCallback(() => {
+    // 不再关闭其他面板，允许同时显示多个窗口
+    // resetPanelVisibility();
+    
+    // 顶部导航栏高度和底部安全边距
+    const topNavHeight = 48; // 顶部导航栏高度
+    const bottomSafetyMargin = topNavHeight + 10;
+    
+    // 如果当前是关闭状态，需要先计算位置再打开
+    if (!globalVarsOpen) {
+      // 计算新位置 - 屏幕右上角，并考虑顶部导航栏
+      const newPosition = { 
+        x: Math.max(0, window.innerWidth - 600), // 与窗口宽度匹配
+        y: topNavHeight + 5 // 紧贴顶部导航栏
+      };
+      
+      // 先设置新位置
+      setGlobalVarsPosition(newPosition);
+      
+      // 延迟设置开启状态，确保位置已经更新
+      setTimeout(() => {
+        setGlobalVarsOpen(true);
+      }, 0);
+    } else {
+      // 直接关闭窗口
+      setGlobalVarsOpen(false);
+    }
+  }, [globalVarsOpen]);
+
+  // 切换聊天窗口显示
+  const toggleChatPanel = useCallback(() => {
+    // 不再关闭其他面板，允许同时显示多个窗口
+    // resetPanelVisibility();
+    
+    // 顶部导航栏高度和底部安全边距
+    const topNavHeight = 48; // 顶部导航栏高度
+    const bottomSafetyMargin = topNavHeight + 10;
+    
+    // 如果当前是关闭状态，需要先计算位置再打开
+    if (!chatOpen) {
+      // 计算新位置 - 屏幕右下角
+      const newPosition = { 
+        x: Math.max(0, window.innerWidth - 720),
+        y: Math.max(topNavHeight + 5, window.innerHeight - 600 - bottomSafetyMargin)
+      };
+      
+      // 先设置新位置
+      setChatPosition(newPosition);
+      
+      // 延迟设置开启状态，确保位置已经更新
+      setTimeout(() => {
+        setChatOpen(true);
+      }, 0);
+    } else {
+      // 直接关闭窗口
+      setChatOpen(false);
+    }
+  }, [chatOpen]);
+  
   // 添加自动布局功能
   const autoLayout = useCallback(() => {
     // 弹出提示信息
@@ -1171,7 +1256,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           >
             <MenuItem
               onClick={() => {
-                toggleVariablesPanel();
+                toggleGlobalVarsPanel();
                 handleToggleMenuClose();
               }}
             >
@@ -1179,7 +1264,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                setChatOpen(!chatOpen);
+                toggleChatPanel();
                 handleToggleMenuClose();
               }}
             >
@@ -1532,8 +1617,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           isOpen={globalVarsOpen}
           onClose={() => setGlobalVarsOpen(false)}
           defaultPosition={globalVarsPosition}
-          defaultSize={{ width: 350, height: 400 }}
+          defaultSize={{ width: 600, height: 320 }}
           zIndex={5}
+          resizable={false}
         >
           <FlowVariables />
         </DraggableResizableContainer>
@@ -1547,6 +1633,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           defaultPosition={chatPosition}
           defaultSize={{ width: 700, height: 600 }}
           zIndex={5}
+          resizable={false}
         >
           <ChatInterface
             onAddNode={onAddNode}

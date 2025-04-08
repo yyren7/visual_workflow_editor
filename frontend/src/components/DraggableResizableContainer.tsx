@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useEffect } from 'react';
+import React, { useState, ReactNode, useEffect, useRef } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 import { Box, IconButton, Typography } from '@mui/material';
@@ -17,6 +17,7 @@ interface DraggableResizableContainerProps {
   maxWidth?: number;
   maxHeight?: number;
   zIndex?: number;
+  resizable?: boolean;
   children: ReactNode;
 }
 
@@ -35,10 +36,12 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
   maxWidth = 2000,
   maxHeight = 2000,
   zIndex = 5,
+  resizable = true,
   children
 }) => {
   const [size, setSize] = useState(defaultSize);
   const [position, setPosition] = useState(defaultPosition);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // 当组件打开时重置为默认位置
   useEffect(() => {
@@ -56,34 +59,74 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
     });
   };
 
-  const handleDragStop = (e: any, data: any) => {
-    // 获取窗口尺寸
+  const ensureVisibility = () => {
+    if (!containerRef.current) return;
+    
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     
-    // 确保拖动后的位置不会使容器完全超出可视区域
-    // 至少保留顶部标题栏在视图中(40px)，这样用户仍能抓住容器
+    // 增加底部安全边距，考虑顶部导航栏高度
+    const topNavHeight = 0; // 顶部导航栏高度
+    const bottomSafetyMargin = topNavHeight + 10; // 安全边距加上顶部导航栏的高度
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    let newX = position.x;
+    let newY = position.y;
+    
+    // 顶部检查 - 确保标题栏完全在可视区域内，考虑顶部导航栏
+    if (rect.top < topNavHeight) {
+      newY = position.y - rect.top + topNavHeight + 5; // 加5px额外空间
+    }
+    
+    // 左侧检查 - 确保至少有部分可见
+    if (rect.left < 0) {
+      newX = position.x - rect.left + 20;
+    }
+    
+    // 右侧检查 - 确保至少有部分可见
+    if (rect.right > windowWidth) {
+      newX = position.x - (rect.right - windowWidth) - 20;
+    }
+    
+    // 底部检查 - 确保整个窗口在可视区域内，并添加安全边距
+    if (rect.bottom > windowHeight - bottomSafetyMargin) {
+      newY = position.y - (rect.bottom - windowHeight) - bottomSafetyMargin;
+    }
+    
+    if (newX !== position.x || newY !== position.y) {
+      setPosition({ x: newX, y: newY });
+    }
+  };
+
+  const handleDragStop = (e: any, data: any) => {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 增加底部安全边距，考虑顶部导航栏高度
+    const topNavHeight = 0; // 顶部导航栏高度
+    const bottomSafetyMargin = topNavHeight + 10; // 安全边距加上顶部导航栏的高度
+    
     let newX = data.x;
     let newY = data.y;
     
-    // 右边界检查
-    if (newX > windowWidth - 40) {
-      newX = windowWidth - 40;
+    // 右边界检查 - 确保窗口不会超出右边界
+    if (newX + 20 > windowWidth) {
+      newX = windowWidth - 20;
     }
     
-    // 底部边界检查
-    if (newY > windowHeight - 40) {
-      newY = windowHeight - 40;
+    // 底部边界检查 - 考虑整个窗口的高度和顶部导航栏
+    if (newY + size.height > windowHeight - bottomSafetyMargin) {
+      newY = windowHeight - size.height - bottomSafetyMargin;
     }
     
-    // 左边界检查 - 确保至少20px宽度在可视区域
-    if (newX < -size.width + 40) {
-      newX = -size.width + 40;
+    // 左边界检查 - 确保至少有部分内容在可视区域内
+    if (newX + size.width - 20 < 0) {
+      newX = -size.width + 20;
     }
     
-    // 顶部边界检查
-    if (newY < 0) {
-      newY = 0;
+    // 顶部边界检查 - 确保标题栏不超过顶部导航栏
+    if (newY < topNavHeight) {
+      newY = topNavHeight + 5; // 加5px额外空间
     }
     
     setPosition({ x: newX, y: newY });
@@ -98,6 +141,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
       cancel=".cancel-drag"
     >
       <div
+        ref={containerRef}
         style={{
           position: 'absolute',
           width: `${size.width}px`,
@@ -105,14 +149,79 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
           zIndex: zIndex
         }}
       >
-        <Resizable
-          width={size.width}
-          height={size.height}
-          minConstraints={[minWidth, minHeight]}
-          maxConstraints={[maxWidth, maxHeight]}
-          onResize={handleResize}
-          resizeHandles={['se']}
-        >
+        {resizable ? (
+          <Resizable
+            width={size.width}
+            height={size.height}
+            minConstraints={[minWidth, minHeight]}
+            maxConstraints={[maxWidth, maxHeight]}
+            onResize={handleResize}
+            resizeHandles={['se']}
+          >
+            <Box
+              sx={{
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                bgcolor: '#2d2d2d',
+                borderRadius: '4px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid #444',
+                overflow: 'hidden'
+              }}
+            >
+              <Box
+                className="drag-handle"
+                sx={{
+                  p: 1,
+                  bgcolor: '#333',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: '1px solid #444',
+                  cursor: 'move'
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {icon}
+                  <Typography variant="subtitle2">{title}</Typography>
+                </Box>
+                <IconButton
+                  className="cancel-drag"
+                  size="small"
+                  color="inherit"
+                  onClick={onClose}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <Box 
+                sx={{ 
+                  p: 0, 
+                  overflowY: 'auto', 
+                  flexGrow: 1, 
+                  height: `calc(${size.height}px - 40px)`,
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: '#333',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#666',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    background: '#888',
+                  }
+                }}
+              >
+                {children}
+              </Box>
+            </Box>
+          </Resizable>
+        ) : (
           <Box
             sx={{
               width: `${size.width}px`,
@@ -175,7 +284,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
               {children}
             </Box>
           </Box>
-        </Resizable>
+        )}
       </div>
     </Draggable>
   );
