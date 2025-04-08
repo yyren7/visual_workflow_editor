@@ -86,7 +86,7 @@ try:
     logger.info("导入config成功")
     from backend.app.routers import (
         user, flow, email, auth, node_templates,
-        flow_variables_router, chat
+        flow_variables, chat
     )
     logger.info("导入基本路由成功")
     
@@ -164,7 +164,7 @@ try:
         logger.info("跳过注册workflow路由")
 
     # 加载API路由
-    app.include_router(flow_variables_router.router)  # 添加流程图变量路由
+    app.include_router(flow_variables.router)  # 添加流程图变量路由
     app.include_router(chat.router)  # 添加聊天路由
     logger.info("注册flow_variables路由成功")
     logger.info("注册chat路由成功")

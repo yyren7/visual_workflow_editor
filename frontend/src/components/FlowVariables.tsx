@@ -9,8 +9,17 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { useSnackbar } from 'notistack';
 import { saveAs } from 'file-saver';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 import { useFlowContext } from '../contexts/FlowContext';
+import { 
+  getFlowVariables, 
+  updateFlowVariables, 
+  resetFlowVariables, 
+  addFlowVariable,
+  deleteFlowVariable,
+  importFlowVariablesFromFile,
+  exportFlowVariablesToJson,
+  FlowVariables as FlowVariablesType
+} from '../api/api';
 
 // 定义变量类型
 interface VariablesType {
@@ -30,9 +39,6 @@ const FlowVariables: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
   const { currentFlowId } = useFlowContext(); // 从上下文中获取当前流程图ID
-
-  // API基础URL
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
   
   // 获取流程图变量
   const fetchFlowVariables = useCallback(async () => {
@@ -43,10 +49,8 @@ const FlowVariables: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/flow-variables/${currentFlowId}`, {
-        withCredentials: true
-      });
-      setVariables(response.data);
+      const data = await getFlowVariables(currentFlowId);
+      setVariables(data);
       enqueueSnackbar(t('flowVariables.loadSuccess'), { variant: 'success' });
     } catch (error) {
       console.error('获取流程图变量失败:', error);
@@ -54,7 +58,7 @@ const FlowVariables: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, enqueueSnackbar, t, currentFlowId]);
+  }, [enqueueSnackbar, t, currentFlowId]);
   
   // 初始加载
   useEffect(() => {
@@ -72,11 +76,7 @@ const FlowVariables: React.FC = () => {
 
     try {
       setLoading(true);
-      await axios.post(`${API_BASE_URL}/flow-variables/${currentFlowId}`, {
-        variables: variables
-      }, {
-        withCredentials: true
-      });
+      await updateFlowVariables(currentFlowId, variables);
       enqueueSnackbar(t('flowVariables.saveSuccess'), { variant: 'success' });
     } catch (error) {
       console.error('保存流程图变量失败:', error);
@@ -84,10 +84,10 @@ const FlowVariables: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, variables, enqueueSnackbar, t, currentFlowId]);
+  }, [variables, enqueueSnackbar, t, currentFlowId]);
   
   // 重置变量
-  const resetFlowVariables = useCallback(async () => {
+  const handleResetVariables = useCallback(async () => {
     if (!currentFlowId) {
       enqueueSnackbar(t('flowVariables.noActiveFlow'), { variant: 'warning' });
       return;
@@ -96,9 +96,7 @@ const FlowVariables: React.FC = () => {
     try {
       if (window.confirm(t('flowVariables.confirmReset'))) {
         setLoading(true);
-        await axios.delete(`${API_BASE_URL}/flow-variables/${currentFlowId}`, {
-          withCredentials: true
-        });
+        await resetFlowVariables(currentFlowId);
         setVariables({});
         enqueueSnackbar(t('flowVariables.resetSuccess'), { variant: 'success' });
       }
@@ -108,7 +106,7 @@ const FlowVariables: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, enqueueSnackbar, t, currentFlowId]);
+  }, [enqueueSnackbar, t, currentFlowId]);
 
   /**
    * 从文件加载变量
@@ -131,11 +129,7 @@ const FlowVariables: React.FC = () => {
             // 自动保存到服务器
             try {
               setLoading(true);
-              await axios.post(`${API_BASE_URL}/flow-variables/${currentFlowId}`, {
-                variables: loadedVariables
-              }, {
-                withCredentials: true
-              });
+              await updateFlowVariables(currentFlowId, loadedVariables);
               enqueueSnackbar(t('flowVariables.importSuccess'), { variant: 'success' });
             } catch (importError) {
               console.error('导入变量到服务器失败:', importError);
@@ -156,7 +150,7 @@ const FlowVariables: React.FC = () => {
       enqueueSnackbar(t('flowVariables.readError'), { variant: 'error' });
     };
     reader.readAsText(file);
-  }, [enqueueSnackbar, t, currentFlowId, API_BASE_URL]);
+  }, [enqueueSnackbar, t, currentFlowId]);
 
   /**
    * 保存变量到本地文件
@@ -221,9 +215,7 @@ const FlowVariables: React.FC = () => {
 
     try {
       setLoading(true);
-      await axios.delete(`${API_BASE_URL}/flow-variables/${currentFlowId}/variable/${name}`, {
-        withCredentials: true
-      });
+      await deleteFlowVariable(currentFlowId, name);
       
       // 更新本地状态
       const { [name]: deleted, ...newVariables } = variables;
@@ -261,32 +253,88 @@ const FlowVariables: React.FC = () => {
   }
 
   return (
-    <Box sx={{ padding: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">{t('flowVariables.title')}</Typography>
-        {loading && <CircularProgress size={24} />}
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Typography variant="h6" gutterBottom>
+          {t('flowVariables.title')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph>
+          {t('flowVariables.description')}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<SaveIcon />} 
+            onClick={saveVariablesToServer}
+            disabled={loading}
+          >
+            {t('flowVariables.save')}
+          </Button>
+          <Button 
+            variant="outlined" 
+            color="secondary" 
+            size="small" 
+            onClick={handleResetVariables}
+            disabled={loading}
+            startIcon={<RefreshIcon />}
+          >
+            {t('flowVariables.reset')}
+          </Button>
+          <input
+            accept=".json"
+            style={{ display: 'none' }}
+            id="contained-button-file"
+            type="file"
+            onChange={handleFileUpload}
+          />
+          <label htmlFor="contained-button-file">
+            <Button 
+              variant="outlined" 
+              component="span" 
+              size="small" 
+              disabled={loading}
+              startIcon={<UploadIcon />}
+            >
+              {t('flowVariables.import')}
+            </Button>
+          </label>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            onClick={saveVariablesToFile}
+            disabled={Object.keys(variables).length === 0 || loading}
+          >
+            {t('flowVariables.export')}
+          </Button>
+        </Box>
       </Box>
-      <Divider />
-
-      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-        <TextField
-          label={t('flowVariables.newVariable')}
-          variant="outlined"
-          size="small"
-          value={newVariableName}
-          onChange={(e) => setNewVariableName(e.target.value)}
-          sx={{ mr: 1 }}
-        />
-        <Button 
-          variant="contained" 
-          color="primary" 
-          size="small" 
-          startIcon={<AddIcon />} 
-          onClick={handleAddVariable}
-          disabled={loading}
-        >
-          {t('flowVariables.add')}
-        </Button>
+      
+      {/* 变量添加表单 */}
+      <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            label={t('flowVariables.variableName')}
+            value={newVariableName}
+            onChange={(e) => setNewVariableName(e.target.value)}
+            size="small"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleAddVariable();
+              }
+            }}
+            fullWidth
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleAddVariable}
+            startIcon={<AddIcon />}
+            disabled={loading}
+          >
+            {t('flowVariables.add')}
+          </Button>
+        </Box>
       </Box>
 
       <List sx={{ width: '100%', bgcolor: 'background.paper', mt: 2 }}>
@@ -316,64 +364,6 @@ const FlowVariables: React.FC = () => {
           </ListItem>
         ))}
       </List>
-
-      <Divider sx={{ mt: 2, mb: 2 }} />
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="contained"
-            component="label"
-            size="small"
-            startIcon={<UploadIcon />}
-            disabled={loading}
-          >
-            {t('flowVariables.upload')}
-            <input type="file" hidden onChange={handleFileUpload} accept=".json" />
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="primary" 
-            size="small" 
-            startIcon={<RefreshIcon />} 
-            onClick={fetchFlowVariables}
-            disabled={loading}
-          >
-            {t('flowVariables.refresh')}
-          </Button>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button 
-            variant="outlined" 
-            color="secondary" 
-            size="small" 
-            onClick={resetFlowVariables}
-            disabled={loading}
-          >
-            {t('flowVariables.reset')}
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="primary" 
-            size="small" 
-            startIcon={<SaveIcon />} 
-            onClick={saveVariablesToFile}
-            disabled={loading}
-          >
-            {t('flowVariables.saveFile')}
-          </Button>
-          <Button 
-            variant="contained" 
-            color="success" 
-            size="small" 
-            startIcon={<SaveIcon />} 
-            onClick={saveVariablesToServer}
-            disabled={loading}
-          >
-            {t('flowVariables.save')}
-          </Button>
-        </Box>
-      </Box>
     </Box>
   );
 };
