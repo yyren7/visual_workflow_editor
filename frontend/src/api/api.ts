@@ -744,3 +744,77 @@ export const exportFlowVariablesToJson = async (flowId: string): Promise<{data: 
     throw error;
   }
 };
+
+// 聊天相关API
+export const chatApi = {
+  // 创建新的聊天会话
+  createChat: async (flowId: number, title?: string) => {
+    const response = await apiClient.post(`/chats`, {
+      flow_id: flowId,
+      title
+    });
+    return response.data;
+  },
+
+  // 获取特定聊天记录
+  getChat: async (chatId: number) => {
+    const response = await apiClient.get(`/chats/${chatId}`);
+    return response.data;
+  },
+
+  // 获取流程图相关的所有聊天记录
+  getFlowChats: async (flowId: number, skip: number = 0, limit: number = 10) => {
+    const response = await apiClient.get(`/chats/flow/${flowId}`, {
+      params: { skip, limit }
+    });
+    return response.data;
+  },
+
+  // 发送消息
+  sendMessage: async (chatId: number, content: string, role: string = 'user') => {
+    const response = await apiClient.post(`/chats/${chatId}/messages`, {
+      content,
+      role
+    });
+    return response.data;
+  },
+
+  // 删除聊天记录
+  deleteChat: async (chatId: number) => {
+    const response = await apiClient.delete(`/chats/${chatId}`);
+    return response.data;
+  }
+};
+
+// 流程图相关API
+export const flowApi = {
+  // 获取流程图列表
+  getFlows: async () => {
+    const response = await axios.get(`${API_BASE_URL}/flows`);
+    return response.data;
+  },
+
+  // 获取特定流程图
+  getFlow: async (flowId: number) => {
+    const response = await axios.get(`${API_BASE_URL}/flows/${flowId}`);
+    return response.data;
+  },
+
+  // 创建新流程图
+  createFlow: async (flowData: any) => {
+    const response = await axios.post(`${API_BASE_URL}/flows`, flowData);
+    return response.data;
+  },
+
+  // 更新流程图
+  updateFlow: async (flowId: number, flowData: any) => {
+    const response = await axios.put(`${API_BASE_URL}/flows/${flowId}`, flowData);
+    return response.data;
+  },
+
+  // 删除流程图
+  deleteFlow: async (flowId: number) => {
+    const response = await axios.delete(`${API_BASE_URL}/flows/${flowId}`);
+    return response.data;
+  }
+};

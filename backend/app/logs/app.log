@@ -3437,3 +3437,152 @@ AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_t
 2025-04-08 06:48:03,405 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
 2025-04-08 06:48:03,424 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
 2025-04-08 06:48:03,427 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-08 06:50:17,754 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-08 06:50:17,754 - app.main - INFO - 开始导入模块...
+2025-04-08 06:50:17,754 - app.main - INFO - 导入database成功
+2025-04-08 06:50:17,754 - app.main - INFO - 导入models成功
+2025-04-08 06:50:17,754 - app.main - INFO - 导入config成功
+2025-04-08 06:50:17,832 - app.main - INFO - 导入基本路由成功
+2025-04-08 06:50:18,291 - app.main - ERROR - 导入workflow_router失败: No module named 'langchainchat.config'
+2025-04-08 06:50:18,291 - app.main - INFO - 导入utils成功
+2025-04-08 06:50:18,291 - app.main - INFO - 导入dependencies成功
+2025-04-08 06:50:18,291 - app.main - INFO - 创建数据库表...
+2025-04-08 06:50:18,291 - app.main - INFO - 数据库表创建成功
+2025-04-08 06:50:18,291 - app.main - INFO - 初始化FastAPI应用...
+2025-04-08 06:50:18,298 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 06:50:18,298 - app.main - INFO - 注册路由...
+2025-04-08 06:50:18,302 - app.main - INFO - 注册user路由成功
+2025-04-08 06:50:18,307 - app.main - INFO - 注册flow路由成功
+2025-04-08 06:50:18,307 - app.main - INFO - 注册email路由成功
+2025-04-08 06:50:18,308 - app.main - INFO - 注册auth路由成功
+2025-04-08 06:50:18,308 - app.main - INFO - 注册node_templates路由成功
+2025-04-08 06:50:18,308 - app.main - ERROR - 注册workflow路由失败: name 'workflow_router' is not defined
+2025-04-08 06:50:18,317 - app.main - INFO - 注册flow_variables路由成功
+2025-04-08 06:50:18,318 - app.main - INFO - 注册chat路由成功
+2025-04-08 06:50:18,318 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-08 06:50:18,319 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-08 06:50:18,319 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-08 06:50:18,319 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-08 06:50:18,319 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-08 06:50:18,319 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-08 06:50:18,319 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-08 06:50:18,319 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-08 06:50:18,350 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-08 06:50:18,350 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-08 06:50:18,350 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-08 06:50:18,350 - backend.app.startup - INFO - API前缀: /api
+2025-04-08 06:50:18,350 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-08 06:54:38,044 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 07:51:29,874 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-08 07:51:29,875 - app.main - INFO - 开始导入模块...
+2025-04-08 07:51:29,875 - app.main - INFO - 导入database成功
+2025-04-08 07:51:29,875 - app.main - INFO - 导入models成功
+2025-04-08 07:51:29,875 - app.main - INFO - 导入config成功
+2025-04-08 07:51:29,951 - app.main - INFO - 导入基本路由成功
+2025-04-08 07:51:30,409 - app.main - ERROR - 导入workflow_router失败: No module named 'langchainchat.config'
+2025-04-08 07:51:30,409 - app.main - INFO - 导入utils成功
+2025-04-08 07:51:30,409 - app.main - INFO - 导入dependencies成功
+2025-04-08 07:51:30,409 - app.main - INFO - 创建数据库表...
+2025-04-08 07:51:30,409 - app.main - INFO - 数据库表创建成功
+2025-04-08 07:51:30,409 - app.main - INFO - 初始化FastAPI应用...
+2025-04-08 07:51:30,415 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 07:51:30,416 - app.main - INFO - 注册路由...
+2025-04-08 07:51:30,420 - app.main - INFO - 注册user路由成功
+2025-04-08 07:51:30,424 - app.main - INFO - 注册flow路由成功
+2025-04-08 07:51:30,425 - app.main - INFO - 注册email路由成功
+2025-04-08 07:51:30,426 - app.main - INFO - 注册auth路由成功
+2025-04-08 07:51:30,426 - app.main - INFO - 注册node_templates路由成功
+2025-04-08 07:51:30,426 - app.main - ERROR - 注册workflow路由失败: name 'workflow_router' is not defined
+2025-04-08 07:51:30,435 - app.main - INFO - 注册flow_variables路由成功
+2025-04-08 07:51:30,435 - app.main - INFO - 注册chat路由成功
+2025-04-08 07:51:30,435 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-08 07:51:30,436 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-08 07:51:30,436 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-08 07:51:30,436 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-08 07:51:30,436 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-08 07:51:30,436 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-08 07:51:30,436 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-08 07:51:30,437 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-08 07:51:30,467 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-08 07:51:30,467 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-08 07:51:30,468 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-08 07:51:30,468 - backend.app.startup - INFO - API前缀: /api
+2025-04-08 07:51:30,468 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-08 07:51:48,663 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-08 07:51:48,663 - app.main - INFO - 开始导入模块...
+2025-04-08 07:51:48,663 - app.main - INFO - 导入database成功
+2025-04-08 07:51:48,663 - app.main - INFO - 导入models成功
+2025-04-08 07:51:48,663 - app.main - INFO - 导入config成功
+2025-04-08 07:51:48,738 - app.main - INFO - 导入基本路由成功
+2025-04-08 07:51:49,192 - app.main - ERROR - 导入workflow_router失败: No module named 'langchainchat.config'
+2025-04-08 07:51:49,192 - app.main - INFO - 导入utils成功
+2025-04-08 07:51:49,192 - app.main - INFO - 导入dependencies成功
+2025-04-08 07:51:49,192 - app.main - INFO - 创建数据库表...
+2025-04-08 07:51:49,193 - app.main - INFO - 数据库表创建成功
+2025-04-08 07:51:49,193 - app.main - INFO - 初始化FastAPI应用...
+2025-04-08 07:51:49,199 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 07:51:49,199 - app.main - INFO - 注册路由...
+2025-04-08 07:51:49,204 - app.main - INFO - 注册user路由成功
+2025-04-08 07:51:49,208 - app.main - INFO - 注册flow路由成功
+2025-04-08 07:51:49,209 - app.main - INFO - 注册email路由成功
+2025-04-08 07:51:49,209 - app.main - INFO - 注册auth路由成功
+2025-04-08 07:51:49,210 - app.main - INFO - 注册node_templates路由成功
+2025-04-08 07:51:49,210 - app.main - ERROR - 注册workflow路由失败: name 'workflow_router' is not defined
+2025-04-08 07:51:49,219 - app.main - INFO - 注册flow_variables路由成功
+2025-04-08 07:51:49,219 - app.main - INFO - 注册chat路由成功
+2025-04-08 07:51:49,219 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-08 07:51:49,220 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-08 07:51:49,220 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-08 07:51:49,220 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-08 07:51:49,220 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-08 07:51:49,220 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-08 07:51:49,220 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-08 07:51:49,220 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-08 07:51:49,251 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-08 07:51:49,251 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-08 07:51:49,251 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-08 07:51:49,251 - backend.app.startup - INFO - API前缀: /api
+2025-04-08 07:51:49,251 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-08 07:52:07,932 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-08 07:52:07,933 - app.main - INFO - 开始导入模块...
+2025-04-08 07:52:07,933 - app.main - INFO - 导入database成功
+2025-04-08 07:52:07,933 - app.main - INFO - 导入models成功
+2025-04-08 07:52:07,933 - app.main - INFO - 导入config成功
+2025-04-08 07:52:08,008 - app.main - INFO - 导入基本路由成功
+2025-04-08 07:52:08,461 - app.main - ERROR - 导入workflow_router失败: No module named 'langchainchat.config'
+2025-04-08 07:52:08,461 - app.main - INFO - 导入utils成功
+2025-04-08 07:52:08,461 - app.main - INFO - 导入dependencies成功
+2025-04-08 07:52:08,461 - app.main - INFO - 创建数据库表...
+2025-04-08 07:52:08,461 - app.main - INFO - 数据库表创建成功
+2025-04-08 07:52:08,461 - app.main - INFO - 初始化FastAPI应用...
+2025-04-08 07:52:08,468 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 07:52:08,468 - app.main - INFO - 注册路由...
+2025-04-08 07:52:08,472 - app.main - INFO - 注册user路由成功
+2025-04-08 07:52:08,477 - app.main - INFO - 注册flow路由成功
+2025-04-08 07:52:08,477 - app.main - INFO - 注册email路由成功
+2025-04-08 07:52:08,478 - app.main - INFO - 注册auth路由成功
+2025-04-08 07:52:08,478 - app.main - INFO - 注册node_templates路由成功
+2025-04-08 07:52:08,478 - app.main - ERROR - 注册workflow路由失败: name 'workflow_router' is not defined
+2025-04-08 07:52:08,487 - app.main - INFO - 注册flow_variables路由成功
+2025-04-08 07:52:08,487 - app.main - INFO - 注册chat路由成功
+2025-04-08 07:52:08,487 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-08 07:52:08,488 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-08 07:52:08,488 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-08 07:52:08,488 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-08 07:52:08,488 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-08 07:52:08,488 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-08 07:52:08,488 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-08 07:52:08,489 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-08 07:52:08,519 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-08 07:52:08,520 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-08 07:52:08,520 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-08 07:52:08,520 - backend.app.startup - INFO - API前缀: /api
+2025-04-08 07:52:08,520 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-08 07:54:07,218 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-08 07:58:00,437 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-08 07:58:16,814 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-08 07:58:16,863 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 07:58:16,866 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-08 07:58:16,888 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-08 07:58:16,937 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-08 08:01:03,209 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
