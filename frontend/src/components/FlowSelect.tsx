@@ -397,7 +397,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
           bgcolor: '#333',
           borderBottom: '1px solid #444'
         }}>
-          <Typography variant="h6">{t('flowSelect.title', '选择流程图')}</Typography>
+          <Typography variant="h6" component="div">{t('flowSelect.title', '选择流程图')}</Typography>
           <IconButton
             edge="end"
             color="inherit"
@@ -581,7 +581,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
         }}
       >
         <DialogTitle sx={{ bgcolor: '#333', borderBottom: '1px solid #444' }}>
-          {t('flowSelect.editFlowName', '编辑流程图名称')}
+          <Typography component="div">{t('flowSelect.editFlowName', '编辑流程图名称')}</Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 2, pb: 1, mt: 1 }}>
           <TextField
@@ -655,7 +655,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
           borderBottom: '1px solid #444',
           color: '#ff5252'
         }}>
-          {t('flowEditor.deleteConfirmTitle', '确认删除流程图?')}
+          <Typography component="div">{t('flowEditor.deleteConfirmTitle', '确认删除流程图?')}</Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 2, pb: 1, mt: 1 }}>
           <Typography sx={{ mb: 2 }}>

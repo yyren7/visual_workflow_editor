@@ -3586,3 +3586,101 @@ AttributeError: 'PromptExpansionService' object has no attribute 'check_direct_t
 2025-04-08 07:58:16,888 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
 2025-04-08 07:58:16,937 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
 2025-04-08 08:01:03,209 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 00:33:10,457 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:33:10,459 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:33:12,201 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 00:33:12,253 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 00:33:12,281 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:33:12,290 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:33:12,296 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 00:33:12,299 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 00:35:24,138 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:35:24,195 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:35:24,241 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:35:24,263 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:35:24,277 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:35:24,279 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:35:24,282 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:35:51,830 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-04-09 00:35:51,869 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-04-09 00:35:51,898 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:35:51,904 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:35:51,911 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-04-09 00:35:51,915 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: d414b7dd-b903-4edf-aef9-475e67791277
+2025-04-09 00:36:01,972 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:36:02,012 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:36:02,015 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:36:02,022 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:36:02,028 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:36:50,634 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:36:50,735 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:36:50,740 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:36:50,756 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:36:50,760 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 072bf7ae-5bde-43dc-92a0-778a5441d8b2
+2025-04-09 00:59:14,746 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 00:59:14,799 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 00:59:14,827 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:59:14,833 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 00:59:14,848 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 00:59:14,852 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 01:00:12,323 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 01:00:12,380 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:00:12,383 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:00:12,400 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 01:00:12,405 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: b86dbc31-26fe-45bd-9c3a-7c807cc59d53
+2025-04-09 01:00:22,305 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:00:22,343 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:00:22,388 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:00:22,390 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:00:22,406 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:00:22,409 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:00:29,487 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:00:29,489 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:00:29,505 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:05:42,885 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:05:42,887 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:05:42,903 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:31:57,655 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:31:57,695 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:31:57,696 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:31:57,717 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:31:57,721 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:32:01,047 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:01,065 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:01,097 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:19,627 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-09 01:32:19,633 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-09 01:32:19,654 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:32:19,678 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:32:19,680 - backend.app.services.flow_variable_service - INFO - 获取流程图 ed10ef28-ad53-41c0-860f-f359e3ea9640 的变量成功，共 0 个
+2025-04-09 01:32:19,683 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-09 01:32:19,685 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-09 01:32:21,754 - backend.app.services.flow_variable_service - INFO - 获取流程图 ed10ef28-ad53-41c0-860f-f359e3ea9640 的变量成功，共 0 个
+2025-04-09 01:32:21,757 - backend.app.services.flow_variable_service - INFO - 获取流程图 ed10ef28-ad53-41c0-860f-f359e3ea9640 的变量成功，共 0 个
+2025-04-09 01:32:21,765 - backend.app.services.flow_variable_service - INFO - 获取流程图 ed10ef28-ad53-41c0-860f-f359e3ea9640 的变量成功，共 0 个
+2025-04-09 01:32:32,413 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:32,425 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:32:32,430 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:32:32,448 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:32:32,455 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:32:32,478 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:32:32,481 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:32:34,708 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:34,710 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:34,722 - backend.app.services.flow_variable_service - INFO - 获取流程图 61751c36-5c34-4dcb-90ac-73480ce54638 的变量成功，共 2 个
+2025-04-09 01:32:41,340 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-09 01:32:41,360 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-09 01:32:41,398 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 01:32:41,411 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-09 01:32:41,480 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-09 01:32:41,502 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:32:41,504 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 01:32:41,517 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-09 01:32:41,520 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-09 01:32:44,303 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 01:32:44,304 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 01:32:44,312 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 02:40:58,325 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 02:41:04,104 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 02:41:06,706 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个
+2025-04-09 02:41:08,676 - backend.app.services.flow_variable_service - INFO - 获取流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的变量成功，共 0 个

@@ -42,6 +42,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
   const [size, setSize] = useState(defaultSize);
   const [position, setPosition] = useState(defaultPosition);
   const containerRef = useRef<HTMLDivElement>(null);
+  const draggableNodeRef = useRef<HTMLDivElement>(null);
 
   // 当组件打开时重置为默认位置
   useEffect(() => {
@@ -60,7 +61,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
   };
 
   const ensureVisibility = () => {
-    if (!containerRef.current) return;
+    if (!draggableNodeRef.current) return;
     
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
@@ -69,7 +70,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
     const topNavHeight = 0; // 顶部导航栏高度
     const bottomSafetyMargin = topNavHeight + 10; // 安全边距加上顶部导航栏的高度
     
-    const rect = containerRef.current.getBoundingClientRect();
+    const rect = draggableNodeRef.current.getBoundingClientRect();
     let newX = position.x;
     let newY = position.y;
     
@@ -134,6 +135,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
 
   return (
     <Draggable
+      nodeRef={draggableNodeRef}
       position={position}
       onStop={handleDragStop}
       bounds="parent"
@@ -141,7 +143,7 @@ const DraggableResizableContainer: React.FC<DraggableResizableContainerProps> = 
       cancel=".cancel-drag"
     >
       <div
-        ref={containerRef}
+        ref={draggableNodeRef}
         style={{
           position: 'absolute',
           width: `${size.width}px`,
