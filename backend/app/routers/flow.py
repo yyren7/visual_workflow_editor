@@ -11,6 +11,9 @@ from database.connection import get_db
 from backend.config import APP_CONFIG
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.user_flow_service import UserFlowService
+import logging # Add logging
+
+logger = logging.getLogger(__name__) # Add logger
 
 router = APIRouter(
     prefix="/flows",
@@ -135,3 +138,31 @@ async def get_last_selected_flow(db: Session = Depends(get_db), current_user: sc
         return flows
     
     return flow
+
+
+# --- Add endpoint to get last interacted chat ID ---
+@router.get("/{flow_id}/last_chat", response_model=schemas.LastChatResponse)
+async def get_flow_last_chat_id(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user)
+):
+    """获取流程图最后交互的聊天 ID"""
+    try:
+        logger.info(f"Attempting to get last chat ID for flow: {flow_id} for user: {current_user.id}")
+        flow = verify_flow_ownership(flow_id, current_user, db) # Re-use ownership verification
+        logger.info(f"Found flow, returning last_interacted_chat_id: {flow.last_interacted_chat_id}")
+        # The flow object fetched by verify_flow_ownership should contain the field
+        return schemas.LastChatResponse(chatId=flow.last_interacted_chat_id)
+    except HTTPException as http_exc:
+        # Re-raise HTTP exceptions (like 403 Forbidden, 404 Not Found from verify_flow_ownership)
+        logger.warning(f"HTTPException getting last chat ID for flow {flow_id}: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        # Catch other potential errors during verification or access
+        logger.error(f"Unexpected error getting last chat ID for flow {flow_id}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取最后聊天ID时出错: {str(e)}"
+        )
+# --- End add endpoint ---

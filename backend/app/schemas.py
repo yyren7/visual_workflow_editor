@@ -61,6 +61,7 @@ class Flow(FlowBase):
     flow_data: Dict[str, Any]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    last_interacted_chat_id: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -116,3 +117,6 @@ class Chat(ChatBase):
 
     class Config:
         from_attributes = True
+
+class LastChatResponse(BaseModel):
+    chatId: Optional[str] = None

@@ -33,7 +33,8 @@ import {
   Menu,
   MenuItem,
   Divider,
-  Typography
+  Typography,
+  CircularProgress
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -56,7 +57,7 @@ import FlowVariables from './FlowVariables';
 import ChatInterface from './ChatInterface';
 import NodeSelector from './NodeSelector';
 import DraggableResizableContainer from './DraggableResizableContainer'; // 导入可拖动调整大小的容器组件
-import { createFlow, getFlow, updateFlow, deleteFlow } from '../api/api';
+import { createFlow, getFlow, updateFlow, deleteFlow, getLastChatIdForFlow } from '../api/api';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 import VersionInfo from './VersionInfo';
@@ -127,6 +128,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
     y: window.innerHeight - 620
   });
   const [globalVarsPosition, setGlobalVarsPosition] = useState<{ x: number; y: number }>({ x: window.innerWidth - 400, y: 50 });
+
+  // --- Add state for active chat ---
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [isLoadingChatId, setIsLoadingChatId] = useState<boolean>(true);
+  // --- End of added state ---
 
   // 窗口大小状态
   const [windowSize, setWindowSize] = useState({
@@ -819,6 +825,53 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
       window.removeEventListener('flow-renamed', handleFlowRenamed as EventListener);
     };
   }, [flowId, enqueueSnackbar, t]);
+
+  // --- Add useEffect to fetch last chat ID ---
+  useEffect(() => {
+    const fetchLastChatId = async () => {
+      if (flowId) {
+        console.log(`FlowEditor: flowId changed to ${flowId}, fetching last chat ID.`);
+        setIsLoadingChatId(true);
+        setActiveChatId(null); // Reset while loading
+        try {
+          // ---- IMPORTANT: Assumes getLastChatIdForFlow exists and is imported ----
+          // You need to implement this function in frontend/src/api/api.ts
+          // and the corresponding backend API endpoint.
+          // It should return { chatId: string | null }
+          if (getLastChatIdForFlow) { // Check if function exists
+             const response = await getLastChatIdForFlow(flowId); // Call directly
+             console.log("Last chat ID response:", response);
+             setActiveChatId(response.chatId); // Can be null
+          } else {
+             console.warn("getLastChatIdForFlow function is not defined or imported from api.ts");
+             setActiveChatId(null); // Default to null if API function missing
+          }
+          // ---- End of Assumption ----
+        } catch (error) {
+          console.error("Failed to fetch last chat ID for flow:", flowId, error);
+          setActiveChatId(null);
+        } finally {
+          setIsLoadingChatId(false);
+        }
+      } else {
+        // No flowId, clear chat state
+        console.log("FlowEditor: flowId is null or undefined, clearing chat state.");
+        setActiveChatId(null);
+        setIsLoadingChatId(false);
+      }
+    };
+
+    fetchLastChatId();
+  }, [flowId]); // Re-run when flowId changes
+  // --- End of added useEffect ---
+
+
+  // --- Add handler for chat creation ---
+  const handleChatCreated = useCallback((newChatId: string) => {
+    console.log("FlowEditor: New chat created, setting activeChatId:", newChatId);
+    setActiveChatId(newChatId);
+  }, []);
+  // --- End of added handler ---
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -1635,12 +1688,18 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId }) => {
           zIndex={5}
           resizable={false}
         >
-          <ChatInterface
-            onAddNode={onAddNode}
-            onUpdateNode={onUpdateNode}
-            onConnectNodes={onConnectNodes}
-            currentFlowId={flowId}
-          />
+          {isLoadingChatId ? (
+              <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
+                  <CircularProgress />
+                  <Typography sx={{ml: 1}}>Loading chat...</Typography>
+              </Box>
+          ) : (
+              <ChatInterface
+                  flowId={flowId}
+                  chatId={activeChatId}
+                  onChatCreated={handleChatCreated}
+              />
+          )}
         </DraggableResizableContainer>
 
         {/* 流程图选择对话框 */}

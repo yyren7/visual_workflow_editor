@@ -45,7 +45,13 @@ class Flow(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     name = Column(String, nullable=False, default="Untitled Flow")  # Added flow name
     variables = relationship("FlowVariable", back_populates="flow")
-    chats = relationship("Chat", back_populates="flow")  # 添加与Chat的关系
+
+    # --- 修正 'chats' 关系并指定外键 ---
+    chats = relationship("Chat", back_populates="flow", foreign_keys="Chat.flow_id")
+
+    # --- 添加 last_interacted_chat_id ---
+    last_interacted_chat_id = Column(String(36), ForeignKey('chats.id', ondelete="SET NULL"), nullable=True)
+    # --- 结束添加 ---
 
     def __repr__(self):
         return f"<Flow(id={self.id}, name='{self.name}', owner_id={self.owner_id})>"
@@ -61,8 +67,8 @@ class Chat(Base):
     # 使用String类型存储UUID，适用于SQLite
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     chat_data = Column(JSON, nullable=False, default={})  # 存储聊天数据，JSON格式
-    flow_id = Column(String(36), ForeignKey("flows.id", ondelete="CASCADE"), nullable=False)
-    flow = relationship("Flow", back_populates="chats")  # 与Flow的关系
+    flow_id = Column(String(36), ForeignKey("flows.id", ondelete="CASCADE"), nullable=False) # 这个外键是 chats 关系的基础
+    flow = relationship("Flow", back_populates="chats", foreign_keys=[flow_id]) # 明确指定 Chat.flow 的外键
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     name = Column(String, nullable=False, default="未命名聊天")  # 聊天名称

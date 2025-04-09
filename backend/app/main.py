@@ -7,6 +7,7 @@ import os
 import logging
 from pathlib import Path
 import logging.handlers
+import time # 导入 time
 
 # 创建logs目录
 log_dir = Path("backend/app/logs")
@@ -121,6 +122,27 @@ app = FastAPI(
     title=APP_CONFIG['PROJECT_NAME'],
     version=get_version(),  # 动态读取版本号
 )
+
+# 添加这个中间件来记录所有请求
+@app.middleware("http")
+async def log_requests_detailed(request: Request, call_next):
+    client_host = request.client.host if request.client else "Unknown"
+    logger.info(f"收到请求: {request.method} {request.url.path} (来自: {client_host})")
+    logger.debug(f"请求头: {dict(request.headers)}") # 打印请求头 (DEBUG级别)
+
+    start_time = time.time()
+    try:
+        response = await call_next(request) # 调用后续处理或路由
+        process_time = time.time() - start_time
+        logger.info(f"请求完成: {request.method} {request.url.path} - {response.status_code} (耗时: {process_time:.4f}s)")
+        # 如果需要，可以记录响应头 (DEBUG级别)
+        # logger.debug(f"响应头: {dict(response.headers)}")
+    except Exception as e:
+        process_time = time.time() - start_time
+        logger.error(f"请求处理出错: {request.method} {request.url.path} - {e} (耗时: {process_time:.4f}s)", exc_info=True) # 记录异常信息
+        # 重新抛出异常，让 FastAPI 的错误处理接管
+        raise e from None
+    return response
 
 # CORS configuration - 配置更加明确的CORS
 app.add_middleware(

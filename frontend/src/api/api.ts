@@ -240,6 +240,35 @@ export const deleteFlow = async (flowId: string): Promise<void> => {
 };
 
 /**
+ * Retrieves the last interacted chat ID for a given flow.
+ * Calls the backend endpoint GET /flows/{flowId}/last_chat.
+ * @param {string} flowId - The UUID of the flow.
+ * @returns {Promise<{ chatId: string | null }>} - A promise resolving to the chat ID or null.
+ */
+export const getLastChatIdForFlow = async (flowId: string): Promise<{ chatId: string | null }> => {
+    console.log(`API call: getLastChatIdForFlow for flowId ${flowId}`);
+    try {
+        // Make the actual API call using apiClient
+        const response: AxiosResponse<{ chatId: string | null }> = await apiClient.get(`/flows/${flowId}/last_chat`);
+        // Return the data part of the response, which should match { chatId: string | null }
+        return response.data;
+    } catch (error: any) {
+        if (error.response && error.response.status === 404) {
+            // Handle 404 specifically: Flow might exist but no last chat ID recorded, or flow itself not found/no permission.
+            console.warn(`getLastChatIdForFlow: Flow ${flowId} not found or access denied (404).`);
+            return { chatId: null };
+        } else if (error.response && error.response.status === 403) {
+             // Handle 403 Forbidden explicitly
+             console.warn(`getLastChatIdForFlow: Permission denied for flow ${flowId} (403).`);
+             return { chatId: null };
+        }
+        // Log and rethrow other unexpected errors
+        console.error(`Error fetching last chat ID for flow ${flowId}:`, error);
+         return { chatId: null }; // Return null as a fallback for other errors
+    }
+};
+
+/**
  * Generates a new node using the LLM.
  * @param {string} prompt - The prompt to use for generating the node.
  * @returns {Promise<NodeGenerationResult>} - A promise that resolves to the generated node data.
@@ -748,22 +777,25 @@ export const exportFlowVariablesToJson = async (flowId: string): Promise<{data: 
 // 聊天相关API
 export const chatApi = {
   // 创建新的聊天会话
-  createChat: async (flowId: number, title?: string) => {
-    const response = await apiClient.post(`/chats`, {
+  createChat: async (flowId: string, title?: string) => {
+    const chatDataToSend = {
       flow_id: flowId,
-      title
-    });
+      name: title || "新聊天",
+      chat_data: {}
+    };
+    // 直接请求带尾部斜杠的路径
+    const response = await apiClient.post(`/chats/`, chatDataToSend);
     return response.data;
   },
 
   // 获取特定聊天记录
-  getChat: async (chatId: number) => {
+  getChat: async (chatId: string) => {
     const response = await apiClient.get(`/chats/${chatId}`);
     return response.data;
   },
 
   // 获取流程图相关的所有聊天记录
-  getFlowChats: async (flowId: number, skip: number = 0, limit: number = 10) => {
+  getFlowChats: async (flowId: string, skip: number = 0, limit: number = 10) => {
     const response = await apiClient.get(`/chats/flow/${flowId}`, {
       params: { skip, limit }
     });
@@ -771,7 +803,7 @@ export const chatApi = {
   },
 
   // 发送消息
-  sendMessage: async (chatId: number, content: string, role: string = 'user') => {
+  sendMessage: async (chatId: string, content: string, role: string = 'user') => {
     const response = await apiClient.post(`/chats/${chatId}/messages`, {
       content,
       role
@@ -780,7 +812,7 @@ export const chatApi = {
   },
 
   // 删除聊天记录
-  deleteChat: async (chatId: number) => {
+  deleteChat: async (chatId: string) => {
     const response = await apiClient.delete(`/chats/${chatId}`);
     return response.data;
   }
@@ -818,3 +850,6 @@ export const flowApi = {
     return response.data;
   }
 };
+
+// 暴露apiClient实例（如果需要直接使用）
+export { apiClient };
