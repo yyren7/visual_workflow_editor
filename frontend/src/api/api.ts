@@ -811,6 +811,25 @@ export const chatApi = {
     return response.data;
   },
 
+  // 更新聊天记录 (例如，重命名)
+  // Define the expected structure for the update payload
+  // Ideally, this would import a type from a shared schema definition
+  updateChat: async (chatId: string, chatUpdate: { name?: string; chat_data?: any }) => {
+    console.log(`API call: updateChat for chatId ${chatId} with data:`, chatUpdate);
+    try {
+      const response = await apiClient.put(`/chats/${chatId}`, chatUpdate);
+      return response.data; // Assuming backend returns the updated chat object
+    } catch (error: any) {
+      console.error(`Error updating chat ${chatId}:`, error);
+       if (error.response && error.response.status === 404) {
+        throw new Error("聊天不存在，无法更新");
+      } else if (error.response && error.response.status === 403) {
+        throw new Error("没有权限更新此聊天");
+      }
+      throw error; // Re-throw other errors
+    }
+  },
+
   // 删除聊天记录
   deleteChat: async (chatId: string) => {
     const response = await apiClient.delete(`/chats/${chatId}`);

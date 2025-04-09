@@ -5,18 +5,18 @@ export interface Message {
 }
 
 export interface Chat {
-  id: number;
-  flow_id: number;
-  user_id: number;
-  title: string;
+  id: string;
+  flow_id: string;
+  user_id: string;
+  name: string;
   chat_data: {
-    messages: Message[];
+    messages?: Message[];
   };
   created_at: string;
   updated_at: string;
-  metadata: {
-    langchain_session_id: string;
-    context_used: boolean;
+  metadata?: {
+    langchain_session_id?: string;
+    context_used?: boolean;
     [key: string]: any;
   };
 } 
