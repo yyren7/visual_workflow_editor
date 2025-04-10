@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 520">
+  <!-- タイトル部分 -->
+  <rect x="10" y="10" width="820" height="50" fill="#00AA4F" rx="5" ry="5" />
+  <text x="30" y="43" font-family="Arial" font-size="24" font-weight="bold" fill="white">ロボットティーチング基盤開発 進捗状況</text>
+  <image x="740" y="15" width="80" height="40" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMTAwIj48cGF0aCBkPSJNMTQwLDEwIEwxOTAsNTAgTDE0MCw5MCBaIiBmaWxsPSIjMDBBQTRGIi8+PHBhdGggZD0iTTEwLDUwIEwxNDAsMTAgTDE0MCw5MCBaIiBmaWxsPSIjMDBBQTRGIi8+PHRleHQgeD0iNjUiIHk9IjU1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSI+QWxsIGZvciBkcmVhbXM8L3RleHQ+PC9zdmc+" />
+
+  <!-- ステータスバー -->
+  <rect x="10" y="70" width="820" height="40" fill="#00AA4F" rx="5" ry="5" />
+  <text x="30" y="97" font-family="Arial" font-size="20" font-weight="bold" fill="white">基盤機能8件完了、開発中5件（進捗度：50%）</text>
+
+  <!-- テーブルヘッダー -->
+  <rect x="160" y="120" width="130" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="120" width="350" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="120" width="90" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="10" y="120" width="50" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="120" width="100" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="140" font-family="Arial" font-size="14" text-anchor="middle">No.</text>
+  <text x="110" y="140" font-family="Arial" font-size="14" text-anchor="middle">分類</text>
+  <text x="225" y="140" font-family="Arial" font-size="14" text-anchor="middle">項目</text>
+  <text x="465" y="140" font-family="Arial" font-size="14" text-anchor="middle">項目</text>
+  <text x="685" y="140" font-family="Arial" font-size="14" text-anchor="middle">進捗</text>
+
+  <!-- 完了項目（上部） -->
+  <rect x="10" y="150" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="150" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="150" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="150" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="150" width="90" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="170" font-family="Arial" font-size="14" text-anchor="middle">1</text>
+  <text x="110" y="170" font-family="Arial" font-size="14" text-anchor="middle">機能追加</text>
+  <text x="225" y="170" font-family="Arial" font-size="14" text-anchor="middle">データベース</text>
+  <text x="305" y="170" font-family="Arial" font-size="14">Flowモデルにlast_interacted_chat_idフィールド追加</text>
+  <text x="685" y="170" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <!-- 行2 -->
+  <rect x="10" y="180" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="180" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="180" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="180" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="180" width="90" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="200" font-family="Arial" font-size="14" text-anchor="middle">2</text>
+  <text x="110" y="200" font-family="Arial" font-size="14" text-anchor="middle">機能追加</text>
+  <text x="225" y="200" font-family="Arial" font-size="14" text-anchor="middle">API</text>
+  <text x="305" y="200" font-family="Arial" font-size="14">最後に操作したチャットID取得APIの実装</text>
+  <text x="685" y="200" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <!-- 行3 -->
+  <rect x="10" y="210" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="210" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="210" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="210" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="210" width="90" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="230" font-family="Arial" font-size="14" text-anchor="middle">3</text>
+  <text x="110" y="230" font-family="Arial" font-size="14" text-anchor="middle">機能追加</text>
+  <text x="225" y="230" font-family="Arial" font-size="14" text-anchor="middle">フロントエンド</text>
+  <text x="305" y="230" font-family="Arial" font-size="14">チャットUI基本機能一式（リスト、作成、編集、削除）</text>
+  <text x="685" y="230" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <!-- 区切り線 -->
+  <rect x="10" y="240" width="720" height="2" fill="#00AA4F" stroke="none" />
+
+  <!-- 開発中項目（中部） -->
+  <rect x="10" y="242" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="242" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="242" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="242" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="242" width="90" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="262" font-family="Arial" font-size="14" text-anchor="middle">4</text>
+  <text x="110" y="262" font-family="Arial" font-size="14" text-anchor="middle">機能拡張</text>
+  <text x="225" y="262" font-family="Arial" font-size="14" text-anchor="middle">システム</text>
+  <text x="305" y="262" font-family="Arial" font-size="14">各種ノードテンプレートの導入</text>
+  <text x="685" y="262" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- 行5 -->
+  <rect x="10" y="272" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="272" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="272" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="272" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="272" width="90" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="292" font-family="Arial" font-size="14" text-anchor="middle">5</text>
+  <text x="110" y="292" font-family="Arial" font-size="14" text-anchor="middle">機能開発</text>
+  <text x="225" y="292" font-family="Arial" font-size="14" text-anchor="middle">バックエンド</text>
+  <text x="305" y="292" font-family="Arial" font-size="14">コンテキスト管理の最適化</text>
+  <text x="685" y="292" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- 行6 -->
+  <rect x="10" y="302" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="302" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="302" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="302" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="302" width="90" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="322" font-family="Arial" font-size="14" text-anchor="middle">6</text>
+  <text x="110" y="322" font-family="Arial" font-size="14" text-anchor="middle">機能開発</text>
+  <text x="225" y="322" font-family="Arial" font-size="14" text-anchor="middle">AI</text>
+  <text x="305" y="322" font-family="Arial" font-size="14">Embedding、RERANKING機能の実験と結果収集</text>
+  <text x="685" y="322" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- 行7 -->
+  <rect x="10" y="332" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="332" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="332" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="332" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="332" width="90" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="352" font-family="Arial" font-size="14" text-anchor="middle">7</text>
+  <text x="110" y="352" font-family="Arial" font-size="14" text-anchor="middle">機能開発</text>
+  <text x="225" y="352" font-family="Arial" font-size="14" text-anchor="middle">AI</text>
+  <text x="305" y="352" font-family="Arial" font-size="14">ユーザー入力分類エージェントの実験</text>
+  <text x="685" y="352" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- 行8 -->
+  <rect x="10" y="362" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="362" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="362" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="362" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="362" width="90" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="382" font-family="Arial" font-size="14" text-anchor="middle">8</text>
+  <text x="110" y="382" font-family="Arial" font-size="14" text-anchor="middle">バグ修正</text>
+  <text x="225" y="382" font-family="Arial" font-size="14" text-anchor="middle">バックエンド</text>
+  <text x="305" y="382" font-family="Arial" font-size="14">ChatInterface自動作成バグの修正</text>
+  <text x="685" y="382" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- 行9 -->
+  <rect x="10" y="392" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="392" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="392" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="392" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="392" width="90" height="30" fill="#C0C0C0" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="412" font-family="Arial" font-size="14" text-anchor="middle">9</text>
+  <text x="110" y="412" font-family="Arial" font-size="14" text-anchor="middle">バグ修正</text>
+  <text x="225" y="412" font-family="Arial" font-size="14" text-anchor="middle">データベース</text>
+  <text x="305" y="412" font-family="Arial" font-size="14">複数チャットのデータベース読み取りバグ対応</text>
+  <text x="685" y="412" font-family="Arial" font-size="14" text-anchor="middle">未着手</text>
+
+  <!-- 区切り線 -->
+  <rect x="10" y="422" width="720" height="2" fill="#00AA4F" stroke="none" />
+
+  <!-- 今後の予定 -->
+  <rect x="10" y="425" width="720" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <text x="30" y="445" font-family="Arial" font-size="16" font-weight="bold">今後の予定</text>
+
+  <!-- 行10 -->
+  <rect x="10" y="455" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="455" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="455" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="455" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="455" width="90" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="475" font-family="Arial" font-size="14" text-anchor="middle">10</text>
+  <text x="110" y="475" font-family="Arial" font-size="14" text-anchor="middle">研究</text>
+  <text x="225" y="475" font-family="Arial" font-size="14" text-anchor="middle">論文</text>
+  <text x="305" y="475" font-family="Arial" font-size="14">第213回HCI研究会発表準備</text>
+  <text x="685" y="475" font-family="Arial" font-size="14" text-anchor="middle">4/11締切</text>
+
+  <!-- 行11 -->
+  <rect x="10" y="485" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="485" width="100" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="160" y="485" width="130" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="290" y="485" width="350" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="640" y="485" width="90" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="505" font-family="Arial" font-size="14" text-anchor="middle">11</text>
+  <text x="110" y="505" font-family="Arial" font-size="14" text-anchor="middle">機能拡張</text>
+  <text x="225" y="505" font-family="Arial" font-size="14" text-anchor="middle">多言語対応</text>
+  <text x="305" y="505" font-family="Arial" font-size="14">日本語・英語・中国語UI対応の最適化</text>
+  <text x="685" y="505" font-family="Arial" font-size="14" text-anchor="middle">4/23予定</text>
+</svg>

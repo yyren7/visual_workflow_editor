@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 750">
+  <!-- タイトル部分 -->
+  <rect x="10" y="10" width="820" height="50" fill="#00AA4F" rx="5" ry="5" />
+  <text x="30" y="43" font-family="Arial" font-size="24" font-weight="bold" fill="white">自然言語ロボットティーチング開発 総合進捗</text>
+  <image x="740" y="15" width="80" height="40" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMTAwIj48cGF0aCBkPSJNMTQwLDEwIEwxOTAsNTAgTDE0MCw5MCBaIiBmaWxsPSIjMDBBQTRGIi8+PHBhdGggZD0iTTEwLDUwIEwxNDAsMTAgTDE0MCw5MCBaIiBmaWxsPSIjMDBBQTRGIi8+PHRleHQgeD0iNjUiIHk9IjU1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSI+QWxsIGZvciBkcmVhbXM8L3RleHQ+PC9zdmc+" />
+
+  <!-- ステータスバー -->
+  <rect x="10" y="70" width="820" height="40" fill="#00AA4F" rx="5" ry="5" />
+  <text x="30" y="97" font-family="Arial" font-size="20" font-weight="bold" fill="white">システム全体進捗度（2024年4月9日現在）</text>
+
+  <!-- 進捗サマリー -->
+  <rect x="10" y="120" width="820" height="80" fill="#f8f8f8" stroke="#cccccc" stroke-width="1" rx="5" ry="5" />
+  
+  <!-- プログレスバー -->
+  <rect x="20" y="130" width="750" height="30" fill="#eeeeee" stroke="#cccccc" stroke-width="1" rx="3" ry="3" />
+  <rect x="20" y="130" width="562.5" height="30" fill="#00AA4F" rx="3" ry="3" /> <!-- 75%分を塗りつぶし -->
+  <text x="400" y="152" font-family="Arial" font-size="18" font-weight="bold" fill="white" text-anchor="middle">75% 完了</text>
+
+  <!-- セクションタイトル -->
+  <rect x="10" y="210" width="820" height="35" fill="#4472C4" rx="5" ry="5" />
+  <text x="30" y="235" font-family="Arial" font-size="20" font-weight="bold" fill="white">コンポーネント別進捗状況</text>
+
+  <!-- バックエンド進捗 -->
+  <rect x="10" y="255" width="400" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  <text x="30" y="277" font-family="Arial" font-size="16" font-weight="bold">バックエンド開発</text>
+  <text x="350" y="277" font-family="Arial" font-size="16" font-weight="bold" text-anchor="end">90%</text>
+  
+  <!-- プログレスバー -->
+  <rect x="10" y="285" width="400" height="15" fill="#eeeeee" stroke="#cccccc" stroke-width="1" />
+  <rect x="10" y="285" width="360" height="15" fill="#4472C4" /> <!-- 90%分を塗りつぶし -->
+
+  <!-- バックエンド項目 -->
+  <rect x="10" y="310" width="50" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="310" width="250" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="310" width="100" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="330" font-family="Arial" font-size="14" text-anchor="middle">No.</text>
+  <text x="185" y="330" font-family="Arial" font-size="14" text-anchor="middle">項目</text>
+  <text x="360" y="330" font-family="Arial" font-size="14" text-anchor="middle">進捗</text>
+
+  <!-- バックエンド項目リスト -->
+  <rect x="10" y="340" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="340" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="340" width="100" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="360" font-family="Arial" font-size="14" text-anchor="middle">1</text>
+  <text x="75" y="360" font-family="Arial" font-size="14">データベースモデル・API実装</text>
+  <text x="360" y="360" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <rect x="10" y="370" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="370" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="370" width="100" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="390" font-family="Arial" font-size="14" text-anchor="middle">2</text>
+  <text x="75" y="390" font-family="Arial" font-size="14">チャットサービス実装</text>
+  <text x="360" y="390" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <rect x="10" y="400" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="400" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="400" width="100" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="420" font-family="Arial" font-size="14" text-anchor="middle">3</text>
+  <text x="75" y="420" font-family="Arial" font-size="14">ノードテンプレート実装</text>
+  <text x="360" y="420" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <rect x="10" y="430" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="430" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="430" width="100" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="450" font-family="Arial" font-size="14" text-anchor="middle">4</text>
+  <text x="75" y="450" font-family="Arial" font-size="14">エージェント/チェーン実装</text>
+  <text x="360" y="450" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- フロントエンド進捗 -->
+  <rect x="430" y="255" width="400" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  <text x="450" y="277" font-family="Arial" font-size="16" font-weight="bold">フロントエンド開発</text>
+  <text x="770" y="277" font-family="Arial" font-size="16" font-weight="bold" text-anchor="end">95%</text>
+  
+  <!-- プログレスバー -->
+  <rect x="430" y="285" width="400" height="15" fill="#eeeeee" stroke="#cccccc" stroke-width="1" />
+  <rect x="430" y="285" width="380" height="15" fill="#4472C4" /> <!-- 95%分を塗りつぶし -->
+
+  <!-- フロントエンド項目 -->
+  <rect x="430" y="310" width="50" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="480" y="310" width="250" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="310" width="100" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  
+  <text x="450" y="330" font-family="Arial" font-size="14" text-anchor="middle">No.</text>
+  <text x="605" y="330" font-family="Arial" font-size="14" text-anchor="middle">項目</text>
+  <text x="780" y="330" font-family="Arial" font-size="14" text-anchor="middle">進捗</text>
+
+  <!-- フロントエンド項目リスト -->
+  <rect x="430" y="340" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="480" y="340" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="340" width="100" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="450" y="360" font-family="Arial" font-size="14" text-anchor="middle">1</text>
+  <text x="495" y="360" font-family="Arial" font-size="14">チャットUIコンポーネント</text>
+  <text x="780" y="360" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <rect x="430" y="370" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="480" y="370" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="370" width="100" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="450" y="390" font-family="Arial" font-size="14" text-anchor="middle">2</text>
+  <text x="495" y="390" font-family="Arial" font-size="14">多言語対応（日・英・中）</text>
+  <text x="780" y="390" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <rect x="430" y="400" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="480" y="400" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="400" width="100" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="450" y="420" font-family="Arial" font-size="14" text-anchor="middle">3</text>
+  <text x="495" y="420" font-family="Arial" font-size="14">フローエディタUI改善</text>
+  <text x="780" y="420" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <rect x="430" y="430" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="480" y="430" width="250" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="430" width="100" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="450" y="450" font-family="Arial" font-size="14" text-anchor="middle">4</text>
+  <text x="495" y="450" font-family="Arial" font-size="14">パラメーター機能</text>
+  <text x="780" y="450" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- AI機能開発進捗 -->
+  <rect x="10" y="470" width="820" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  <text x="30" y="492" font-family="Arial" font-size="16" font-weight="bold">AI機能開発</text>
+  <text x="770" y="492" font-family="Arial" font-size="16" font-weight="bold" text-anchor="end">60%</text>
+  
+  <!-- プログレスバー -->
+  <rect x="10" y="500" width="820" height="15" fill="#eeeeee" stroke="#cccccc" stroke-width="1" />
+  <rect x="10" y="500" width="492" height="15" fill="#4472C4" /> <!-- 60%分を塗りつぶし -->
+
+  <!-- AI機能項目 -->
+  <rect x="10" y="525" width="50" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="525" width="670" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="525" width="100" height="30" fill="#f0f0f0" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="545" font-family="Arial" font-size="14" text-anchor="middle">No.</text>
+  <text x="400" y="545" font-family="Arial" font-size="14" text-anchor="middle">項目</text>
+  <text x="780" y="545" font-family="Arial" font-size="14" text-anchor="middle">進捗</text>
+
+  <!-- AI機能項目リスト -->
+  <rect x="10" y="555" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="555" width="670" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="555" width="100" height="30" fill="#FFDAB9" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="575" font-family="Arial" font-size="14" text-anchor="middle">1</text>
+  <text x="75" y="575" font-family="Arial" font-size="14">基本プロンプト設計（ロボット動作指示変換）</text>
+  <text x="780" y="575" font-family="Arial" font-size="14" text-anchor="middle">完了</text>
+
+  <rect x="10" y="585" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="585" width="670" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="585" width="100" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="605" font-family="Arial" font-size="14" text-anchor="middle">2</text>
+  <text x="75" y="605" font-family="Arial" font-size="14">Embedding/RERANKING機能の実験と評価</text>
+  <text x="780" y="605" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <rect x="10" y="615" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="615" width="670" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="615" width="100" height="30" fill="#90EE90" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="635" font-family="Arial" font-size="14" text-anchor="middle">3</text>
+  <text x="75" y="635" font-family="Arial" font-size="14">ユーザー入力分類エージェントの開発</text>
+  <text x="780" y="635" font-family="Arial" font-size="14" text-anchor="middle">対応中</text>
+
+  <!-- 今後の予定 -->
+  <rect x="10" y="655" width="820" height="25" fill="#00AA4F" rx="5" ry="5" />
+  <text x="30" y="673" font-family="Arial" font-size="16" font-weight="bold" fill="white">今後の予定</text>
+  
+  <rect x="10" y="680" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="680" width="670" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="680" width="100" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="700" font-family="Arial" font-size="14" text-anchor="middle">1</text>
+  <text x="75" y="700" font-family="Arial" font-size="14">国際学会・会議発表先の調査と選定</text>
+  <text x="780" y="700" font-family="Arial" font-size="14" text-anchor="middle">4/30予定</text>
+
+  <rect x="10" y="710" width="50" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="60" y="710" width="670" height="30" fill="white" stroke="#000000" stroke-width="1" />
+  <rect x="730" y="710" width="100" height="30" fill="#E6E6FA" stroke="#000000" stroke-width="1" />
+  
+  <text x="30" y="730" font-family="Arial" font-size="14" text-anchor="middle">2</text>
+  <text x="75" y="730" font-family="Arial" font-size="14">研究論文（実験データ収集および原稿作成）</text>
+  <text x="780" y="730" font-family="Arial" font-size="14" text-anchor="middle">5/16予定</text>
+</svg>

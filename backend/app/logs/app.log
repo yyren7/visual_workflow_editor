@@ -5983,3 +5983,887 @@ WHERE flows.id = ?
 2025-04-09 08:28:14,189 - backend.app.startup - INFO - ⚠️ 调试模式已启用
 2025-04-09 08:28:14,189 - backend.app.startup - INFO - API前缀: /api
 2025-04-09 08:28:14,189 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-09 09:36:55,301 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-09 09:36:55,301 - app.main - INFO - 开始导入模块...
+2025-04-09 09:36:55,301 - app.main - INFO - 导入database成功
+2025-04-09 09:36:55,301 - app.main - INFO - 导入models成功
+2025-04-09 09:36:55,301 - app.main - INFO - 导入config成功
+2025-04-09 09:36:55,381 - app.main - INFO - 导入基本路由成功
+2025-04-09 09:36:55,838 - app.main - ERROR - 导入workflow_router失败: No module named 'langchainchat.config'
+2025-04-09 09:36:55,839 - app.main - INFO - 导入utils成功
+2025-04-09 09:36:55,839 - app.main - INFO - 导入dependencies成功
+2025-04-09 09:36:55,839 - app.main - INFO - 创建数据库表...
+2025-04-09 09:36:55,839 - app.main - INFO - 数据库表创建成功
+2025-04-09 09:36:55,839 - app.main - INFO - 初始化FastAPI应用...
+2025-04-09 09:36:55,846 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 09:36:55,846 - app.main - INFO - 注册路由...
+2025-04-09 09:36:55,850 - app.main - INFO - 注册user路由成功
+2025-04-09 09:36:55,855 - app.main - INFO - 注册flow路由成功
+2025-04-09 09:36:55,856 - app.main - INFO - 注册email路由成功
+2025-04-09 09:36:55,857 - app.main - INFO - 注册auth路由成功
+2025-04-09 09:36:55,857 - app.main - INFO - 注册node_templates路由成功
+2025-04-09 09:36:55,857 - app.main - ERROR - 注册workflow路由失败: name 'workflow_router' is not defined
+2025-04-09 09:36:55,866 - app.main - INFO - 注册flow_variables路由成功
+2025-04-09 09:36:55,866 - app.main - INFO - 注册chat路由成功
+2025-04-09 09:36:55,866 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-09 09:36:55,867 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-09 09:36:55,868 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-09 09:36:55,868 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com/v1
+2025-04-09 09:36:55,868 - backend.app.startup - WARNING - ⚠️ 检测到基础URL中包含/v1路径: https://api.deepseek.com/v1
+2025-04-09 09:36:55,868 - backend.app.startup - WARNING - ⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions
+2025-04-09 09:36:55,868 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-09 09:36:55,868 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-09 09:36:55,900 - backend.app.startup - INFO - ✓ DeepSeek客户端服务初始化成功
+2025-04-09 09:36:55,900 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-09 09:36:55,900 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-09 09:36:55,900 - backend.app.startup - INFO - API前缀: /api
+2025-04-09 09:36:55,900 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-09 09:37:08,069 - app.main - INFO - 收到请求: GET /favicon.ico (来自: 172.19.0.1)
+2025-04-09 09:37:08,069 - app.main - INFO - 请求完成: GET /favicon.ico - 404 (耗时: 0.0003s)
+2025-04-09 09:37:08,101 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-09 09:37:08,105 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-09 09:37:08,105 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0039s)
+2025-04-09 09:37:08,106 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0016s)
+2025-04-09 09:37:08,142 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-09 09:37:08,143 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 09:37:08,143 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0012s)
+2025-04-09 09:37:08,144 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-09 09:37:08,145 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 09:37:08,145 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-09 09:37:08,161 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-09 09:37:08,161 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-09 09:37:08,175 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-09 09:37:08,175 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-09 09:37:08,212 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-09 09:37:08,212 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-09 09:37:08,215 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-09 09:37:08,215 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-09 09:37:08,224 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-09 09:37:08,229 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-09 09:37:08,229 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0051s)
+2025-04-09 09:37:08,277 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-09 09:37:08,278 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-09 09:37:08,278 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0493s)
+2025-04-09 09:37:08,284 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0067s)
+2025-04-09 09:37:08,285 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0068s)
+2025-04-09 09:37:09,370 - app.main - INFO - 收到请求: POST /flows/30a17510-07bf-4371-aa18-6583ad908aa4/set-as-last-selected (来自: 172.19.0.1)
+2025-04-09 09:37:09,374 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 09:37:09,374 - app.main - INFO - 请求完成: POST /flows/30a17510-07bf-4371-aa18-6583ad908aa4/set-as-last-selected - 200 (耗时: 0.0046s)
+2025-04-09 09:37:09,418 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:09,423 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 09:37:09,426 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0079s)
+2025-04-09 09:37:09,457 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-09 09:37:09,458 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 09:37:09,459 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0012s)
+2025-04-09 09:37:09,460 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-09 09:37:09,461 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-09 09:37:09,461 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-09 09:37:09,473 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:09,474 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:09,476 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 09:37:09,478 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-09 09:37:09,479 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-09 09:37:09,480 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0072s)
+2025-04-09 09:37:09,482 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-09 09:37:09,482 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-09 09:37:09,483 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-09 09:37:09,483 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0088s)
+2025-04-09 09:37:09,484 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-09 09:37:09,485 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-09 09:37:09,485 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0072s)
+2025-04-09 09:37:09,486 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0030s)
+2025-04-09 09:37:09,556 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:09,562 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0050s)
+2025-04-09 09:37:11,561 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:11,572 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0104s)
+2025-04-09 09:37:11,749 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-09 09:37:11,750 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-09 09:37:11,751 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-09 09:37:11,752 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-09 09:37:11,752 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-09 09:37:11,753 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-09 09:37:11,753 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0033s)
+2025-04-09 09:37:11,754 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0041s)
+2025-04-09 09:37:11,758 - app.main - INFO - 收到请求: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:11,759 - app.main - INFO - 收到请求: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:11,763 - app.main - INFO - 请求完成: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0042s)
+2025-04-09 09:37:11,764 - app.main - INFO - 请求完成: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0052s)
+2025-04-09 09:37:11,784 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-09 09:37:11,787 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0026s)
+2025-04-09 09:37:11,808 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-09 09:37:11,809 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-09 09:37:11,814 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0061s)
+2025-04-09 09:37:11,815 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0058s)
+2025-04-09 09:37:14,861 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:14,864 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-09 09:37:14,865 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0034s)
+2025-04-09 09:37:14,866 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0015s)
+2025-04-09 09:37:16,868 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-09 09:37:16,882 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0126s)
+2025-04-09 09:37:20,819 - app.main - INFO - 收到请求: POST /chats/8b728096-aeb5-4f52-beba-de36bd9c287c/messages (来自: 172.19.0.1)
+2025-04-09 09:37:20,821 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 linked to chat: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-09 09:37:20,826 - backend.app.services.chat_service - INFO - 已向聊天 8b728096-aeb5-4f52-beba-de36bd9c287c 添加一条 user 消息
+2025-04-09 09:37:20,831 - backend.app.routers.chat - INFO - 更新 Flow 30a17510-07bf-4371-aa18-6583ad908aa4 的 last_interacted_chat_id 为 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-09 09:37:20,831 - app.main - INFO - 请求完成: POST /chats/8b728096-aeb5-4f52-beba-de36bd9c287c/messages - 200 (耗时: 0.0124s)
+2025-04-10 05:01:28,034 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-10 05:01:28,035 - app.main - INFO - 请求完成: GET /auth/verify-token - 401 (耗时: 0.0009s)
+2025-04-10 05:01:28,075 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-10 05:01:28,076 - app.main - INFO - 请求完成: GET /auth/verify-token - 401 (耗时: 0.0009s)
+2025-04-10 05:01:28,960 - app.main - INFO - 收到请求: POST /users/login (来自: 172.19.0.1)
+2025-04-10 05:01:29,152 - app.main - INFO - 请求完成: POST /users/login - 200 (耗时: 0.1911s)
+2025-04-10 05:01:29,155 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-10 05:01:29,156 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0013s)
+2025-04-10 05:01:29,167 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-10 05:01:29,168 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0014s)
+2025-04-10 05:01:29,184 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 05:01:29,184 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 05:01:29,185 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,185 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0011s)
+2025-04-10 05:01:29,185 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0004s)
+2025-04-10 05:01:29,188 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 05:01:29,189 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 05:01:29,189 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0008s)
+2025-04-10 05:01:29,208 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,209 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 05:01:29,209 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,210 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 05:01:29,212 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,213 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 05:01:29,215 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 05:01:29,216 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 05:01:29,216 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0013s)
+2025-04-10 05:01:29,218 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,218 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,221 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,223 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 05:01:29,223 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 05:01:29,225 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0024s)
+2025-04-10 05:01:29,226 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0080s)
+2025-04-10 05:01:29,226 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0084s)
+2025-04-10 05:01:29,227 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0064s)
+2025-04-10 05:01:29,228 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,229 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,229 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0005s)
+2025-04-10 05:01:29,229 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0005s)
+2025-04-10 05:01:29,244 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,245 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-10 05:01:29,247 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,247 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,248 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,254 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0072s)
+2025-04-10 05:01:29,255 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0074s)
+2025-04-10 05:01:29,255 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0073s)
+2025-04-10 05:01:29,262 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 05:01:29,262 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0004s)
+2025-04-10 05:01:29,263 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,266 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0032s)
+2025-04-10 05:01:29,284 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 05:01:29,287 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0027s)
+2025-04-10 05:01:32,191 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 05:01:32,192 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:32,209 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 05:01:32,212 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 05:01:32,213 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0214s)
+2025-04-10 05:01:32,214 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.0230s)
+2025-04-10 05:01:32,258 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 05:01:32,259 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 05:01:32,260 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-10 05:01:32,260 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 05:01:32,261 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 05:01:32,261 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0006s)
+2025-04-10 05:01:32,274 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:32,274 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:32,277 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 05:01:32,279 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 05:01:32,281 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0073s)
+2025-04-10 05:01:32,281 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0070s)
+2025-04-10 05:01:32,282 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 05:01:32,282 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 05:01:32,283 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 05:01:32,284 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 05:01:32,284 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 05:01:32,284 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 05:01:32,285 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0032s)
+2025-04-10 05:01:32,285 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0031s)
+2025-04-10 05:01:32,328 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:32,333 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0048s)
+2025-04-10 05:01:34,335 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:34,348 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0124s)
+2025-04-10 05:01:36,578 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 05:01:36,579 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 05:01:36,580 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 05:01:36,581 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 05:01:36,581 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 05:01:36,582 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 05:01:36,582 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0031s)
+2025-04-10 05:01:36,582 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0038s)
+2025-04-10 05:01:36,590 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:36,590 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:01:36,594 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0041s)
+2025-04-10 05:01:36,594 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0040s)
+2025-04-10 05:01:40,491 - app.main - INFO - 收到请求: GET /chats/642835f6-ce4d-49d1-80fa-bca7e246a70e (来自: 172.19.0.1)
+2025-04-10 05:01:40,493 - app.main - INFO - 请求完成: GET /chats/642835f6-ce4d-49d1-80fa-bca7e246a70e - 200 (耗时: 0.0022s)
+2025-04-10 05:01:41,095 - app.main - INFO - 收到请求: GET /chats/2225927e-4fcf-4c2e-a772-ae3bc104f20b (来自: 172.19.0.1)
+2025-04-10 05:01:41,097 - app.main - INFO - 请求完成: GET /chats/2225927e-4fcf-4c2e-a772-ae3bc104f20b - 200 (耗时: 0.0020s)
+2025-04-10 05:01:41,499 - app.main - INFO - 收到请求: GET /chats/43b5d619-3b54-4262-9256-ed7e2993b467 (来自: 172.19.0.1)
+2025-04-10 05:01:41,502 - app.main - INFO - 请求完成: GET /chats/43b5d619-3b54-4262-9256-ed7e2993b467 - 200 (耗时: 0.0028s)
+2025-04-10 05:01:41,995 - app.main - INFO - 收到请求: GET /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 (来自: 172.19.0.1)
+2025-04-10 05:01:41,997 - app.main - INFO - 请求完成: GET /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 - 200 (耗时: 0.0020s)
+2025-04-10 05:01:42,368 - app.main - INFO - 收到请求: GET /chats/97781511-28e4-4893-873a-e6d7e88445ec (来自: 172.19.0.1)
+2025-04-10 05:01:42,371 - app.main - INFO - 请求完成: GET /chats/97781511-28e4-4893-873a-e6d7e88445ec - 200 (耗时: 0.0025s)
+2025-04-10 05:02:03,181 - app.main - INFO - 收到请求: DELETE /chats/642835f6-ce4d-49d1-80fa-bca7e246a70e (来自: 172.19.0.1)
+2025-04-10 05:02:03,194 - backend.app.services.chat_service - INFO - 已删除聊天 642835f6-ce4d-49d1-80fa-bca7e246a70e
+2025-04-10 05:02:03,195 - app.main - INFO - 请求完成: DELETE /chats/642835f6-ce4d-49d1-80fa-bca7e246a70e - 200 (耗时: 0.0140s)
+2025-04-10 05:02:03,201 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:03,204 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0027s)
+2025-04-10 05:02:04,873 - app.main - INFO - 收到请求: DELETE /chats/2225927e-4fcf-4c2e-a772-ae3bc104f20b (来自: 172.19.0.1)
+2025-04-10 05:02:04,877 - backend.app.services.chat_service - INFO - 已删除聊天 2225927e-4fcf-4c2e-a772-ae3bc104f20b
+2025-04-10 05:02:04,878 - app.main - INFO - 请求完成: DELETE /chats/2225927e-4fcf-4c2e-a772-ae3bc104f20b - 200 (耗时: 0.0041s)
+2025-04-10 05:02:04,881 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:04,884 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0025s)
+2025-04-10 05:02:06,050 - app.main - INFO - 收到请求: GET /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 (来自: 172.19.0.1)
+2025-04-10 05:02:06,054 - app.main - INFO - 请求完成: GET /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 - 200 (耗时: 0.0037s)
+2025-04-10 05:02:06,464 - app.main - INFO - 收到请求: GET /chats/43b5d619-3b54-4262-9256-ed7e2993b467 (来自: 172.19.0.1)
+2025-04-10 05:02:06,466 - app.main - INFO - 请求完成: GET /chats/43b5d619-3b54-4262-9256-ed7e2993b467 - 200 (耗时: 0.0020s)
+2025-04-10 05:02:08,307 - app.main - INFO - 收到请求: DELETE /chats/43b5d619-3b54-4262-9256-ed7e2993b467 (来自: 172.19.0.1)
+2025-04-10 05:02:08,319 - backend.app.services.chat_service - INFO - 已删除聊天 43b5d619-3b54-4262-9256-ed7e2993b467
+2025-04-10 05:02:08,320 - app.main - INFO - 请求完成: DELETE /chats/43b5d619-3b54-4262-9256-ed7e2993b467 - 200 (耗时: 0.0130s)
+2025-04-10 05:02:08,324 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:08,326 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0022s)
+2025-04-10 05:02:09,138 - app.main - INFO - 收到请求: GET /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 (来自: 172.19.0.1)
+2025-04-10 05:02:09,141 - app.main - INFO - 请求完成: GET /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 - 200 (耗时: 0.0020s)
+2025-04-10 05:02:10,638 - app.main - INFO - 收到请求: DELETE /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 (来自: 172.19.0.1)
+2025-04-10 05:02:10,649 - backend.app.services.chat_service - INFO - 已删除聊天 7dcecbea-6b17-477d-bea4-ca339eb67ff8
+2025-04-10 05:02:10,650 - app.main - INFO - 请求完成: DELETE /chats/7dcecbea-6b17-477d-bea4-ca339eb67ff8 - 200 (耗时: 0.0118s)
+2025-04-10 05:02:10,654 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:10,660 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0059s)
+2025-04-10 05:02:12,453 - app.main - INFO - 收到请求: DELETE /chats/97781511-28e4-4893-873a-e6d7e88445ec (来自: 172.19.0.1)
+2025-04-10 05:02:12,466 - backend.app.services.chat_service - INFO - 已删除聊天 97781511-28e4-4893-873a-e6d7e88445ec
+2025-04-10 05:02:12,467 - app.main - INFO - 请求完成: DELETE /chats/97781511-28e4-4893-873a-e6d7e88445ec - 200 (耗时: 0.0137s)
+2025-04-10 05:02:12,470 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:12,474 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0040s)
+2025-04-10 05:02:18,600 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 05:02:18,601 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 05:02:18,603 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 05:02:18,603 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 05:02:18,604 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 05:02:18,604 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 05:02:18,605 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0037s)
+2025-04-10 05:02:18,605 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0048s)
+2025-04-10 05:02:18,609 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:18,609 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:18,613 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0038s)
+2025-04-10 05:02:18,613 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0037s)
+2025-04-10 05:02:21,828 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-10 05:02:21,831 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-10 05:02:21,831 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 05:02:21,832 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 05:02:21,832 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-10 05:02:21,844 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 05:02:21,845 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=c418816a-fcc6-4c6a-b252-b546b78ab6e1, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-10 05:02:21,850 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 05:02:21,850 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 05:02:21,851 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0228s)
+2025-04-10 05:02:21,856 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:21,860 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0035s)
+2025-04-10 05:02:21,941 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 05:02:21,943 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0027s)
+2025-04-10 05:02:24,802 - app.main - INFO - 收到请求: POST /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1/messages (来自: 172.19.0.1)
+2025-04-10 05:02:24,805 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 05:02:24,807 - backend.app.services.chat_service - INFO - 已向聊天 c418816a-fcc6-4c6a-b252-b546b78ab6e1 添加一条 user 消息
+2025-04-10 05:02:24,810 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 05:02:24,810 - app.main - INFO - 请求完成: POST /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1/messages - 200 (耗时: 0.0078s)
+2025-04-10 05:02:45,762 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:45,764 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0027s)
+2025-04-10 05:02:47,764 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 05:02:47,772 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0086s)
+2025-04-10 06:17:16,456 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-10 06:17:16,457 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-10 06:17:16,457 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:16,458 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:16,458 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-10 06:17:16,472 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 b8a4fc22-195c-48ad-a1d0-168eb55fb0d9
+2025-04-10 06:17:16,472 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=b8a4fc22-195c-48ad-a1d0-168eb55fb0d9, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-10 06:17:16,476 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 b8a4fc22-195c-48ad-a1d0-168eb55fb0d9
+2025-04-10 06:17:16,476 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: b8a4fc22-195c-48ad-a1d0-168eb55fb0d9
+2025-04-10 06:17:16,477 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0208s)
+2025-04-10 06:17:16,524 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:16,533 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0081s)
+2025-04-10 06:17:16,577 - app.main - INFO - 收到请求: GET /chats/b8a4fc22-195c-48ad-a1d0-168eb55fb0d9 (来自: 172.19.0.1)
+2025-04-10 06:17:16,579 - app.main - INFO - 请求完成: GET /chats/b8a4fc22-195c-48ad-a1d0-168eb55fb0d9 - 200 (耗时: 0.0024s)
+2025-04-10 06:17:17,484 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-10 06:17:17,487 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-10 06:17:17,487 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:17,487 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:17,487 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-10 06:17:17,500 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 6bb5b883-af3f-472d-8842-a403dc72b020
+2025-04-10 06:17:17,500 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=6bb5b883-af3f-472d-8842-a403dc72b020, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-10 06:17:17,504 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 6bb5b883-af3f-472d-8842-a403dc72b020
+2025-04-10 06:17:17,504 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: 6bb5b883-af3f-472d-8842-a403dc72b020
+2025-04-10 06:17:17,505 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0200s)
+2025-04-10 06:17:17,509 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:17,513 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0033s)
+2025-04-10 06:17:17,610 - app.main - INFO - 收到请求: GET /chats/6bb5b883-af3f-472d-8842-a403dc72b020 (来自: 172.19.0.1)
+2025-04-10 06:17:17,612 - app.main - INFO - 请求完成: GET /chats/6bb5b883-af3f-472d-8842-a403dc72b020 - 200 (耗时: 0.0021s)
+2025-04-10 06:17:17,677 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-10 06:17:17,679 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-10 06:17:17,679 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:17,679 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:17,679 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-10 06:17:17,690 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 bc6b29eb-2007-4137-8afe-f46d0f011791
+2025-04-10 06:17:17,691 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=bc6b29eb-2007-4137-8afe-f46d0f011791, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-10 06:17:17,694 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 bc6b29eb-2007-4137-8afe-f46d0f011791
+2025-04-10 06:17:17,694 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: bc6b29eb-2007-4137-8afe-f46d0f011791
+2025-04-10 06:17:17,695 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0175s)
+2025-04-10 06:17:17,698 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:17,701 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0024s)
+2025-04-10 06:17:17,785 - app.main - INFO - 收到请求: GET /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 (来自: 172.19.0.1)
+2025-04-10 06:17:17,788 - app.main - INFO - 请求完成: GET /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 - 200 (耗时: 0.0030s)
+2025-04-10 06:17:17,865 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-10 06:17:17,867 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-10 06:17:17,867 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:17,868 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:17,868 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-10 06:17:17,878 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:17:17,878 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=f00bcb73-6551-4d7e-a760-9d94d92e26d0, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-10 06:17:17,880 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:17:17,880 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:17:17,881 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0152s)
+2025-04-10 06:17:17,883 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:17,885 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0019s)
+2025-04-10 06:17:17,980 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:17:17,983 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0028s)
+2025-04-10 06:17:18,257 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-10 06:17:18,259 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-10 06:17:18,259 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:18,259 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:17:18,259 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-10 06:17:18,271 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:17:18,271 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=53e43ec9-ce1e-4f77-8c3d-c559f90ff84c, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-10 06:17:18,278 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:17:18,278 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:17:18,279 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0221s)
+2025-04-10 06:17:18,287 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:18,294 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0065s)
+2025-04-10 06:17:18,392 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:17:18,396 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0038s)
+2025-04-10 06:17:19,651 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:17:19,653 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0020s)
+2025-04-10 06:17:20,001 - app.main - INFO - 收到请求: GET /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 (来自: 172.19.0.1)
+2025-04-10 06:17:20,004 - app.main - INFO - 请求完成: GET /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 - 200 (耗时: 0.0029s)
+2025-04-10 06:17:20,422 - app.main - INFO - 收到请求: GET /chats/6bb5b883-af3f-472d-8842-a403dc72b020 (来自: 172.19.0.1)
+2025-04-10 06:17:20,424 - app.main - INFO - 请求完成: GET /chats/6bb5b883-af3f-472d-8842-a403dc72b020 - 200 (耗时: 0.0023s)
+2025-04-10 06:17:32,177 - app.main - INFO - 收到请求: GET /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 (来自: 172.19.0.1)
+2025-04-10 06:17:32,179 - app.main - INFO - 请求完成: GET /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 - 200 (耗时: 0.0021s)
+2025-04-10 06:17:34,440 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:17:34,442 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0020s)
+2025-04-10 06:17:37,629 - app.main - INFO - 收到请求: DELETE /chats/b8a4fc22-195c-48ad-a1d0-168eb55fb0d9 (来自: 172.19.0.1)
+2025-04-10 06:17:37,641 - backend.app.services.chat_service - INFO - 已删除聊天 b8a4fc22-195c-48ad-a1d0-168eb55fb0d9
+2025-04-10 06:17:37,641 - app.main - INFO - 请求完成: DELETE /chats/b8a4fc22-195c-48ad-a1d0-168eb55fb0d9 - 200 (耗时: 0.0116s)
+2025-04-10 06:17:37,646 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:37,648 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0023s)
+2025-04-10 06:17:39,679 - app.main - INFO - 收到请求: DELETE /chats/6bb5b883-af3f-472d-8842-a403dc72b020 (来自: 172.19.0.1)
+2025-04-10 06:17:39,693 - backend.app.services.chat_service - INFO - 已删除聊天 6bb5b883-af3f-472d-8842-a403dc72b020
+2025-04-10 06:17:39,694 - app.main - INFO - 请求完成: DELETE /chats/6bb5b883-af3f-472d-8842-a403dc72b020 - 200 (耗时: 0.0149s)
+2025-04-10 06:17:39,700 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:39,703 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0030s)
+2025-04-10 06:17:41,635 - app.main - INFO - 收到请求: DELETE /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 (来自: 172.19.0.1)
+2025-04-10 06:17:41,649 - backend.app.services.chat_service - INFO - 已删除聊天 bc6b29eb-2007-4137-8afe-f46d0f011791
+2025-04-10 06:17:41,649 - app.main - INFO - 请求完成: DELETE /chats/bc6b29eb-2007-4137-8afe-f46d0f011791 - 200 (耗时: 0.0135s)
+2025-04-10 06:17:41,652 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:17:41,655 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0027s)
+2025-04-10 06:24:10,857 - app.main - INFO - 收到请求: PUT /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:24:10,863 - backend.app.services.chat_service - INFO - 已更新聊天 f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:24:10,864 - app.main - INFO - 请求完成: PUT /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0062s)
+2025-04-10 06:24:10,867 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:24:10,869 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0020s)
+2025-04-10 06:24:11,987 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:24:11,991 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0038s)
+2025-04-10 06:24:12,651 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:24:12,654 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0027s)
+2025-04-10 06:24:13,357 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:13,363 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0048s)
+2025-04-10 06:24:14,276 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:24:14,279 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0027s)
+2025-04-10 06:24:26,188 - app.main - INFO - 收到请求: PUT /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:26,202 - backend.app.services.chat_service - INFO - 已更新聊天 c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 06:24:26,203 - app.main - INFO - 请求完成: PUT /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0150s)
+2025-04-10 06:24:26,209 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:24:26,212 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0024s)
+2025-04-10 06:24:37,441 - app.main - INFO - 收到请求: PUT /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:24:37,445 - backend.app.services.chat_service - INFO - 已更新聊天 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:24:37,446 - app.main - INFO - 请求完成: PUT /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0051s)
+2025-04-10 06:24:37,449 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:24:37,453 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0035s)
+2025-04-10 06:24:40,921 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:40,923 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0020s)
+2025-04-10 06:24:41,589 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:24:41,591 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0021s)
+2025-04-10 06:24:44,938 - app.main - INFO - 收到请求: POST /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0/messages (来自: 172.19.0.1)
+2025-04-10 06:24:44,940 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:24:44,943 - backend.app.services.chat_service - INFO - 已向聊天 f00bcb73-6551-4d7e-a760-9d94d92e26d0 添加一条 user 消息
+2025-04-10 06:24:44,945 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:24:44,946 - app.main - INFO - 请求完成: POST /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0/messages - 200 (耗时: 0.0074s)
+2025-04-10 06:24:46,228 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:24:46,232 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0033s)
+2025-04-10 06:24:49,073 - app.main - INFO - 收到请求: POST /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c/messages (来自: 172.19.0.1)
+2025-04-10 06:24:49,075 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:24:49,078 - backend.app.services.chat_service - INFO - 已向聊天 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c 添加一条 user 消息
+2025-04-10 06:24:49,080 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:24:49,080 - app.main - INFO - 请求完成: POST /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c/messages - 200 (耗时: 0.0076s)
+2025-04-10 06:24:50,148 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:50,150 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0023s)
+2025-04-10 06:24:50,814 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:24:50,816 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0022s)
+2025-04-10 06:24:51,212 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:51,216 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0035s)
+2025-04-10 06:24:51,544 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:24:51,546 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0022s)
+2025-04-10 06:24:51,932 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:24:51,935 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0032s)
+2025-04-10 06:24:52,840 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:52,843 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0025s)
+2025-04-10 06:24:53,151 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:24:53,155 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0033s)
+2025-04-10 06:24:53,819 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:24:53,822 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0026s)
+2025-04-10 06:24:58,936 - app.main - INFO - 收到请求: POST /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1/messages (来自: 172.19.0.1)
+2025-04-10 06:24:58,938 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 06:24:58,941 - backend.app.services.chat_service - INFO - 已向聊天 c418816a-fcc6-4c6a-b252-b546b78ab6e1 添加一条 user 消息
+2025-04-10 06:24:58,944 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 c418816a-fcc6-4c6a-b252-b546b78ab6e1
+2025-04-10 06:24:58,945 - app.main - INFO - 请求完成: POST /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1/messages - 200 (耗时: 0.0092s)
+2025-04-10 06:25:00,516 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:25:00,519 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0027s)
+2025-04-10 06:25:03,110 - app.main - INFO - 收到请求: POST /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0/messages (来自: 172.19.0.1)
+2025-04-10 06:25:03,112 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:25:03,114 - backend.app.services.chat_service - INFO - 已向聊天 f00bcb73-6551-4d7e-a760-9d94d92e26d0 添加一条 user 消息
+2025-04-10 06:25:03,117 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 f00bcb73-6551-4d7e-a760-9d94d92e26d0
+2025-04-10 06:25:03,117 - app.main - INFO - 请求完成: POST /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0/messages - 200 (耗时: 0.0075s)
+2025-04-10 06:25:04,155 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:25:04,158 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0023s)
+2025-04-10 06:25:07,215 - app.main - INFO - 收到请求: POST /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c/messages (来自: 172.19.0.1)
+2025-04-10 06:25:07,218 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:25:07,220 - backend.app.services.chat_service - INFO - 已向聊天 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c 添加一条 user 消息
+2025-04-10 06:25:07,223 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:25:07,223 - app.main - INFO - 请求完成: POST /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c/messages - 200 (耗时: 0.0079s)
+2025-04-10 06:25:12,546 - app.main - INFO - 收到请求: POST /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c/messages (来自: 172.19.0.1)
+2025-04-10 06:25:12,548 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:25:12,552 - backend.app.services.chat_service - INFO - 已向聊天 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c 添加一条 user 消息
+2025-04-10 06:25:12,555 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:25:12,556 - app.main - INFO - 请求完成: POST /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c/messages - 200 (耗时: 0.0094s)
+2025-04-10 06:25:18,858 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:18,858 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 06:25:18,903 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:18,907 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0037s)
+2025-04-10 06:25:20,186 - app.main - INFO - 收到请求: POST /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:25:20,199 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-10 06:25:20,200 - app.main - INFO - 请求完成: POST /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/set-as-last-selected - 200 (耗时: 0.0135s)
+2025-04-10 06:25:20,200 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:20,203 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0029s)
+2025-04-10 06:25:20,230 - app.main - INFO - 收到请求: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 (来自: 172.19.0.1)
+2025-04-10 06:25:20,233 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-10 06:25:20,235 - app.main - INFO - 请求完成: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 - 200 (耗时: 0.0053s)
+2025-04-10 06:25:20,260 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:20,261 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:20,261 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-10 06:25:20,262 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:20,263 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:20,263 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0006s)
+2025-04-10 06:25:20,274 - app.main - INFO - 收到请求: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 (来自: 172.19.0.1)
+2025-04-10 06:25:20,278 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-10 06:25:20,279 - app.main - INFO - 收到请求: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 (来自: 172.19.0.1)
+2025-04-10 06:25:20,280 - app.main - INFO - 收到请求: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:20,281 - app.main - INFO - 请求完成: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 - 200 (耗时: 0.0061s)
+2025-04-10 06:25:20,283 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-10 06:25:20,284 - app.main - INFO - 收到请求: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:20,285 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: ed10ef28-ad53-41c0-860f-f359e3ea9640 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:20,285 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:25:20,286 - app.main - INFO - 请求完成: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 - 200 (耗时: 0.0067s)
+2025-04-10 06:25:20,287 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: ed10ef28-ad53-41c0-860f-f359e3ea9640 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:20,287 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:25:20,288 - app.main - INFO - 请求完成: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/last_chat - 200 (耗时: 0.0072s)
+2025-04-10 06:25:20,288 - app.main - INFO - 请求完成: GET /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/last_chat - 200 (耗时: 0.0039s)
+2025-04-10 06:25:20,367 - app.main - INFO - 收到请求: PUT /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 (来自: 172.19.0.1)
+2025-04-10 06:25:20,382 - app.main - INFO - 请求完成: PUT /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 - 200 (耗时: 0.0142s)
+2025-04-10 06:25:22,328 - app.main - INFO - 收到请求: PUT /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 (来自: 172.19.0.1)
+2025-04-10 06:25:22,340 - app.main - INFO - 请求完成: PUT /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 - 200 (耗时: 0.0110s)
+2025-04-10 06:25:22,725 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:22,725 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 06:25:22,729 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:22,732 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0032s)
+2025-04-10 06:25:24,165 - app.main - INFO - 收到请求: POST /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:25:24,167 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: ed10ef28-ad53-41c0-860f-f359e3ea9640
+2025-04-10 06:25:24,168 - app.main - INFO - 请求完成: POST /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640/set-as-last-selected - 200 (耗时: 0.0023s)
+2025-04-10 06:25:26,018 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:26,018 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-10 06:25:26,030 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:26,033 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0034s)
+2025-04-10 06:25:26,855 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:26,868 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:25:26,869 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:25:26,870 - app.main - INFO - 收到请求: PUT /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 (来自: 172.19.0.1)
+2025-04-10 06:25:26,870 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0153s)
+2025-04-10 06:25:26,872 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:25:26,875 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.0060s)
+2025-04-10 06:25:26,877 - app.main - INFO - 请求完成: PUT /flows/ed10ef28-ad53-41c0-860f-f359e3ea9640 - 200 (耗时: 0.0067s)
+2025-04-10 06:25:26,894 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:26,895 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:26,895 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0013s)
+2025-04-10 06:25:26,897 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:26,898 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:26,898 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0006s)
+2025-04-10 06:25:26,908 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:26,909 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:26,913 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:25:26,915 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:25:26,916 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0076s)
+2025-04-10 06:25:26,917 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:26,917 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0072s)
+2025-04-10 06:25:26,918 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:26,918 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:25:26,918 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0016s)
+2025-04-10 06:25:26,955 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:26,957 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:26,958 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:25:26,958 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0029s)
+2025-04-10 06:25:26,965 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:26,968 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0027s)
+2025-04-10 06:25:29,010 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:29,011 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 06:25:29,012 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:29,015 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:29,015 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0031s)
+2025-04-10 06:25:29,018 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0028s)
+2025-04-10 06:25:30,654 - app.main - INFO - 收到请求: POST /flows/30a17510-07bf-4371-aa18-6583ad908aa4/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:25:30,654 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:30,668 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:30,671 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:30,671 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:25:30,672 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0172s)
+2025-04-10 06:25:30,672 - app.main - INFO - 请求完成: POST /flows/30a17510-07bf-4371-aa18-6583ad908aa4/set-as-last-selected - 200 (耗时: 0.0179s)
+2025-04-10 06:25:30,675 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0033s)
+2025-04-10 06:25:30,694 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:30,695 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:30,695 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-10 06:25:30,696 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:30,697 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:30,697 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0011s)
+2025-04-10 06:25:30,707 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:30,708 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:30,713 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:30,715 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:30,716 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0083s)
+2025-04-10 06:25:30,716 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0078s)
+2025-04-10 06:25:30,751 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:30,753 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:30,754 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:30,755 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:30,755 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0041s)
+2025-04-10 06:25:30,756 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:30,756 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:30,757 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0020s)
+2025-04-10 06:25:30,813 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:30,817 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0038s)
+2025-04-10 06:25:32,796 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:32,797 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:32,798 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:32,799 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:32,799 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:32,800 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:32,800 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:32,801 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0045s)
+2025-04-10 06:25:32,801 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0041s)
+2025-04-10 06:25:32,803 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0030s)
+2025-04-10 06:25:32,806 - app.main - INFO - 收到请求: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:32,809 - app.main - INFO - 收到请求: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:32,811 - app.main - INFO - 请求完成: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0047s)
+2025-04-10 06:25:32,811 - app.main - INFO - 请求完成: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0025s)
+2025-04-10 06:25:32,856 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:32,860 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:32,861 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0051s)
+2025-04-10 06:25:32,865 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0038s)
+2025-04-10 06:25:32,870 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:32,873 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0027s)
+2025-04-10 06:25:34,077 - app.main - INFO - 收到请求: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b (来自: 172.19.0.1)
+2025-04-10 06:25:34,079 - app.main - INFO - 请求完成: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b - 200 (耗时: 0.0021s)
+2025-04-10 06:25:34,626 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:34,631 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0046s)
+2025-04-10 06:25:35,683 - app.main - INFO - 收到请求: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b (来自: 172.19.0.1)
+2025-04-10 06:25:35,686 - app.main - INFO - 请求完成: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b - 200 (耗时: 0.0021s)
+2025-04-10 06:25:36,118 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:36,120 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0022s)
+2025-04-10 06:25:37,282 - app.main - INFO - 收到请求: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b (来自: 172.19.0.1)
+2025-04-10 06:25:37,284 - app.main - INFO - 请求完成: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b - 200 (耗时: 0.0020s)
+2025-04-10 06:25:40,311 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-10 06:25:40,312 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-10 06:25:40,314 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0029s)
+2025-04-10 06:25:40,315 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0029s)
+2025-04-10 06:25:40,328 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:40,330 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:40,332 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0037s)
+2025-04-10 06:25:40,365 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:40,366 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:40,366 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0005s)
+2025-04-10 06:25:40,366 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:40,367 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0011s)
+2025-04-10 06:25:40,368 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:40,368 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:40,368 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0006s)
+2025-04-10 06:25:40,381 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:40,381 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:40,384 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:40,385 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:40,386 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:40,386 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:40,386 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:40,387 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0061s)
+2025-04-10 06:25:40,387 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0059s)
+2025-04-10 06:25:40,389 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 30a17510-07bf-4371-aa18-6583ad908aa4
+2025-04-10 06:25:40,390 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:40,390 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:40,391 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0048s)
+2025-04-10 06:25:40,391 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0053s)
+2025-04-10 06:25:40,459 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:40,462 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0028s)
+2025-04-10 06:25:40,470 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:40,473 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0030s)
+2025-04-10 06:25:41,614 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:41,614 - app.main - INFO - 收到请求: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:41,616 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:41,616 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:41,617 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 30a17510-07bf-4371-aa18-6583ad908aa4 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:41,617 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 8b728096-aeb5-4f52-beba-de36bd9c287c
+2025-04-10 06:25:41,618 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0037s)
+2025-04-10 06:25:41,618 - app.main - INFO - 请求完成: GET /flows/30a17510-07bf-4371-aa18-6583ad908aa4/last_chat - 200 (耗时: 0.0035s)
+2025-04-10 06:25:41,626 - app.main - INFO - 收到请求: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:41,626 - app.main - INFO - 收到请求: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:41,630 - app.main - INFO - 请求完成: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0045s)
+2025-04-10 06:25:41,631 - app.main - INFO - 请求完成: GET /chats/flow/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0043s)
+2025-04-10 06:25:41,676 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:41,679 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0030s)
+2025-04-10 06:25:41,694 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:41,697 - app.main - INFO - 收到请求: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c (来自: 172.19.0.1)
+2025-04-10 06:25:41,698 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0033s)
+2025-04-10 06:25:41,700 - app.main - INFO - 请求完成: GET /chats/8b728096-aeb5-4f52-beba-de36bd9c287c - 200 (耗时: 0.0027s)
+2025-04-10 06:25:42,472 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:42,479 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0075s)
+2025-04-10 06:25:42,850 - app.main - INFO - 收到请求: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b (来自: 172.19.0.1)
+2025-04-10 06:25:42,854 - app.main - INFO - 请求完成: GET /chats/6cadcfb6-4f0a-4b1f-bad0-b0a01b46141b - 200 (耗时: 0.0039s)
+2025-04-10 06:25:44,713 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:44,713 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 06:25:44,716 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:44,719 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0027s)
+2025-04-10 06:25:49,910 - app.main - INFO - 收到请求: POST /flows/61751c36-5c34-4dcb-90ac-73480ce54638/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:25:49,923 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:25:49,923 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:25:49,926 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:25:49,927 - app.main - INFO - 收到请求: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 (来自: 172.19.0.1)
+2025-04-10 06:25:49,927 - app.main - INFO - 请求完成: POST /flows/61751c36-5c34-4dcb-90ac-73480ce54638/set-as-last-selected - 200 (耗时: 0.0170s)
+2025-04-10 06:25:49,928 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0044s)
+2025-04-10 06:25:49,930 - app.main - INFO - 请求完成: PUT /flows/30a17510-07bf-4371-aa18-6583ad908aa4 - 200 (耗时: 0.0037s)
+2025-04-10 06:25:49,950 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:49,951 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:49,952 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-10 06:25:49,952 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:25:49,953 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:25:49,953 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-10 06:25:49,965 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:25:49,966 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:25:49,968 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:25:49,970 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:25:49,971 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:49,972 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0065s)
+2025-04-10 06:25:49,972 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0064s)
+2025-04-10 06:25:49,973 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61751c36-5c34-4dcb-90ac-73480ce54638 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:49,974 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:25:49,975 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat (来自: 172.19.0.1)
+2025-04-10 06:25:49,976 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat - 200 (耗时: 0.0047s)
+2025-04-10 06:25:49,977 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61751c36-5c34-4dcb-90ac-73480ce54638 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:25:49,978 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:25:49,978 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat - 200 (耗时: 0.0032s)
+2025-04-10 06:25:50,063 - app.main - INFO - 收到请求: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:25:50,078 - app.main - INFO - 请求完成: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0141s)
+2025-04-10 06:25:52,026 - app.main - INFO - 收到请求: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:25:52,038 - app.main - INFO - 请求完成: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0118s)
+2025-04-10 06:25:54,448 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:54,448 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-10 06:25:54,451 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:54,454 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0030s)
+2025-04-10 06:25:57,117 - app.main - INFO - 收到请求: POST /flows/61751c36-5c34-4dcb-90ac-73480ce54638/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:25:57,119 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:25:57,120 - app.main - INFO - 请求完成: POST /flows/61751c36-5c34-4dcb-90ac-73480ce54638/set-as-last-selected - 200 (耗时: 0.0027s)
+2025-04-10 06:25:59,444 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:25:59,444 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 06:25:59,453 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:25:59,456 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0027s)
+2025-04-10 06:26:00,553 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:26:00,557 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:26:00,557 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:00,558 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.0043s)
+2025-04-10 06:26:00,559 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:26:00,560 - app.main - INFO - 收到请求: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:26:00,561 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0036s)
+2025-04-10 06:26:00,563 - app.main - INFO - 请求完成: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0027s)
+2025-04-10 06:26:00,581 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:26:00,582 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:26:00,583 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0016s)
+2025-04-10 06:26:00,583 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:26:00,584 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:26:00,584 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0008s)
+2025-04-10 06:26:00,594 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:00,594 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:00,597 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:26:00,597 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:26:00,598 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:26:00,600 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:26:00,602 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:26:00,602 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:26:00,603 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:26:00,603 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:26:00,603 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0093s)
+2025-04-10 06:26:00,603 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0091s)
+2025-04-10 06:26:00,604 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0063s)
+2025-04-10 06:26:00,604 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0066s)
+2025-04-10 06:26:00,651 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:00,656 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0043s)
+2025-04-10 06:26:02,539 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:26:02,540 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:26:02,541 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:26:02,541 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:26:02,542 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:26:02,542 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:26:02,543 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0033s)
+2025-04-10 06:26:02,543 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0038s)
+2025-04-10 06:26:02,549 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:02,550 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:02,556 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0058s)
+2025-04-10 06:26:02,556 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0070s)
+2025-04-10 06:26:02,599 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:02,602 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0026s)
+2025-04-10 06:26:02,627 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:02,629 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:02,630 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0031s)
+2025-04-10 06:26:02,632 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0022s)
+2025-04-10 06:26:02,653 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:02,657 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0042s)
+2025-04-10 06:26:03,727 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:26:03,730 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0021s)
+2025-04-10 06:26:04,196 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:26:04,199 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0021s)
+2025-04-10 06:26:04,850 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:26:04,852 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0020s)
+2025-04-10 06:26:05,371 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:05,374 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0027s)
+2025-04-10 06:26:24,239 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:26:24,239 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-10 06:26:24,241 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:26:24,244 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0030s)
+2025-04-10 06:26:33,178 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:33,184 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0056s)
+2025-04-10 06:26:33,247 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:33,253 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0055s)
+2025-04-10 06:26:34,160 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:26:34,163 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-10 06:26:34,164 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.0041s)
+2025-04-10 06:26:35,250 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:35,267 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0164s)
+2025-04-10 06:26:35,287 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:35,290 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0027s)
+2025-04-10 06:26:37,096 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:26:37,097 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:26:37,098 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:26:37,098 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-10 06:26:37,099 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:26:37,100 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-10 06:26:37,100 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0039s)
+2025-04-10 06:26:37,100 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0022s)
+2025-04-10 06:26:37,104 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:37,105 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:37,108 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0033s)
+2025-04-10 06:26:37,108 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0040s)
+2025-04-10 06:26:37,152 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:37,153 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:37,159 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0060s)
+2025-04-10 06:26:37,159 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0072s)
+2025-04-10 06:26:37,177 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:37,180 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0025s)
+2025-04-10 06:26:37,294 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:37,299 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0048s)
+2025-04-10 06:26:38,420 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:26:38,423 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0031s)
+2025-04-10 06:26:38,717 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:26:38,721 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0037s)
+2025-04-10 06:26:39,097 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:39,100 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0028s)
+2025-04-10 06:26:39,626 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:26:39,629 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0029s)
+2025-04-10 06:26:39,990 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-10 06:26:39,992 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0023s)
+2025-04-10 06:26:40,951 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-10 06:26:40,954 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0031s)
+2025-04-10 06:26:41,314 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-10 06:26:41,319 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0052s)
+2025-04-10 06:26:42,939 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:42,942 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0026s)
+2025-04-10 06:26:44,968 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:26:44,984 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0160s)
+2025-04-10 06:31:45,638 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-10 06:31:45,638 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-10 06:31:45,650 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-10 06:31:45,653 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0030s)
+2025-04-10 06:31:46,659 - app.main - INFO - 收到请求: POST /flows/61751c36-5c34-4dcb-90ac-73480ce54638/set-as-last-selected (来自: 172.19.0.1)
+2025-04-10 06:31:46,659 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:46,671 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:31:46,674 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:31:46,675 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-10 06:31:46,676 - app.main - INFO - 请求完成: POST /flows/61751c36-5c34-4dcb-90ac-73480ce54638/set-as-last-selected - 200 (耗时: 0.0168s)
+2025-04-10 06:31:46,676 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0168s)
+2025-04-10 06:31:46,680 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0046s)
+2025-04-10 06:31:46,697 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:31:46,698 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:31:46,698 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0013s)
+2025-04-10 06:31:46,700 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-10 06:31:46,701 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-10 06:31:46,701 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-10 06:31:46,708 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:46,709 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat (来自: 172.19.0.1)
+2025-04-10 06:31:46,712 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:31:46,712 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:46,712 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat (来自: 172.19.0.1)
+2025-04-10 06:31:46,713 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61751c36-5c34-4dcb-90ac-73480ce54638 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:31:46,713 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:31:46,716 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61751c36-5c34-4dcb-90ac-73480ce54638
+2025-04-10 06:31:46,717 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61751c36-5c34-4dcb-90ac-73480ce54638 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:31:46,718 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:31:46,718 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0096s)
+2025-04-10 06:31:46,718 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat - 200 (耗时: 0.0093s)
+2025-04-10 06:31:46,719 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0069s)
+2025-04-10 06:31:46,720 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat - 200 (耗时: 0.0072s)
+2025-04-10 06:31:46,755 - app.main - INFO - 收到请求: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:46,758 - app.main - INFO - 请求完成: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0027s)
+2025-04-10 06:31:48,571 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat (来自: 172.19.0.1)
+2025-04-10 06:31:48,572 - app.main - INFO - 收到请求: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat (来自: 172.19.0.1)
+2025-04-10 06:31:48,573 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61751c36-5c34-4dcb-90ac-73480ce54638 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:31:48,574 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:31:48,574 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61751c36-5c34-4dcb-90ac-73480ce54638 for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-10 06:31:48,575 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: None
+2025-04-10 06:31:48,575 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat - 200 (耗时: 0.0032s)
+2025-04-10 06:31:48,575 - app.main - INFO - 请求完成: GET /flows/61751c36-5c34-4dcb-90ac-73480ce54638/last_chat - 200 (耗时: 0.0040s)
+2025-04-10 06:31:48,583 - app.main - INFO - 收到请求: GET /chats/flow/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:48,583 - app.main - INFO - 收到请求: GET /chats/flow/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:48,587 - app.main - INFO - 请求完成: GET /chats/flow/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0042s)
+2025-04-10 06:31:48,587 - app.main - INFO - 请求完成: GET /chats/flow/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0042s)
+2025-04-10 06:31:48,757 - app.main - INFO - 收到请求: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 (来自: 172.19.0.1)
+2025-04-10 06:31:48,763 - app.main - INFO - 请求完成: PUT /flows/61751c36-5c34-4dcb-90ac-73480ce54638 - 200 (耗时: 0.0065s)
+2025-04-10 06:31:49,604 - app.main - INFO - 收到请求: GET /chats/b6208e81-685c-470b-b167-b43b9ecdeac8 (来自: 172.19.0.1)
+2025-04-10 06:31:49,606 - app.main - INFO - 请求完成: GET /chats/b6208e81-685c-470b-b167-b43b9ecdeac8 - 200 (耗时: 0.0024s)
+2025-04-10 06:31:50,026 - app.main - INFO - 收到请求: GET /chats/675dee98-4c26-4c79-8ebd-4a8cd2f3d9b9 (来自: 172.19.0.1)
+2025-04-10 06:31:50,028 - app.main - INFO - 请求完成: GET /chats/675dee98-4c26-4c79-8ebd-4a8cd2f3d9b9 - 200 (耗时: 0.0024s)
+2025-04-10 06:31:50,538 - app.main - INFO - 收到请求: GET /chats/ac884264-5bf5-4f43-8533-171ea86e92b2 (来自: 172.19.0.1)
+2025-04-10 06:31:50,541 - app.main - INFO - 请求完成: GET /chats/ac884264-5bf5-4f43-8533-171ea86e92b2 - 200 (耗时: 0.0024s)
+2025-04-10 06:31:50,855 - app.main - INFO - 收到请求: GET /chats/e817dca0-c24a-4f93-a07d-0aafa93143de (来自: 172.19.0.1)
+2025-04-10 06:31:50,859 - app.main - INFO - 请求完成: GET /chats/e817dca0-c24a-4f93-a07d-0aafa93143de - 200 (耗时: 0.0040s)
+2025-04-10 06:31:51,541 - app.main - INFO - 收到请求: GET /chats/ac884264-5bf5-4f43-8533-171ea86e92b2 (来自: 172.19.0.1)
+2025-04-10 06:31:51,543 - app.main - INFO - 请求完成: GET /chats/ac884264-5bf5-4f43-8533-171ea86e92b2 - 200 (耗时: 0.0022s)
+2025-04-10 06:31:51,862 - app.main - INFO - 收到请求: GET /chats/e817dca0-c24a-4f93-a07d-0aafa93143de (来自: 172.19.0.1)
+2025-04-10 06:31:51,865 - app.main - INFO - 请求完成: GET /chats/e817dca0-c24a-4f93-a07d-0aafa93143de - 200 (耗时: 0.0027s)
