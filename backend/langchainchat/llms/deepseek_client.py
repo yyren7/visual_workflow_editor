@@ -1,5 +1,5 @@
 """
-DeepSeek API客户端服务模块
+DeepSeek API客户端模块
 提供与DeepSeek API交互的功能
 """
 
@@ -28,15 +28,10 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-# 单例管理器
-_deepseek_client_instance = None
-# 会话管理，存储不同会话的对话历史
-_conversation_histories = {}
-
-class DeepSeekClientService:
+class DeepSeekLLM:
     """
-    DeepSeek客户端管理服务
-    负责DeepSeek API的客户端管理、多轮对话历史和错误处理
+    DeepSeek LLM 客户端
+    负责与 DeepSeek API 的交互和错误处理
     """
     
     def __init__(self):
@@ -59,89 +54,8 @@ class DeepSeekClientService:
         self.max_retries = 3
         self.retry_delay = 1.0  # 初始重试延迟(秒)
     
-    @classmethod
-    def get_instance(cls):
-        """获取单例实例"""
-        global _deepseek_client_instance
-        if _deepseek_client_instance is None:
-            _deepseek_client_instance = cls()
-        return _deepseek_client_instance
-    
-    def create_conversation(self, conversation_id: str = None, system_message: str = None) -> str:
-        """
-        创建一个新的对话
-        
-        Args:
-            conversation_id: 对话ID，如果不提供则自动生成
-            system_message: 系统消息，用于初始化对话
-            
-        Returns:
-            对话ID
-        """
-        if conversation_id is None:
-            conversation_id = f"conv_{uuid.uuid4().hex[:8]}_{int(time.time())}"
-        
-        # 如果对话已存在，返回已有ID
-        if conversation_id in _conversation_histories:
-            return conversation_id
-        
-        # 初始化对话历史
-        _conversation_histories[conversation_id] = []
-        
-        # 添加系统消息(如果提供)
-        if system_message:
-            self.add_message(conversation_id, "system", system_message)
-        
-        logger.debug(f"创建新对话: {conversation_id}")
-        return conversation_id
-    
-    def add_message(self, conversation_id: str, role: str, content: str) -> None:
-        """
-        向对话添加消息
-        
-        Args:
-            conversation_id: 对话ID
-            role: 消息角色 (system, user, assistant)
-            content: 消息内容
-        """
-        if conversation_id not in _conversation_histories:
-            self.create_conversation(conversation_id)
-        
-        message: ChatCompletionMessageParam = {"role": role, "content": content}
-        _conversation_histories[conversation_id].append(message)
-        logger.debug(f"添加消息到对话 {conversation_id}: role={role}, content_length={len(content)}")
-    
-    def get_conversation_history(self, conversation_id: str) -> List[ChatCompletionMessageParam]:
-        """
-        获取对话历史
-        
-        Args:
-            conversation_id: 对话ID
-            
-        Returns:
-            对话历史消息列表
-        """
-        if conversation_id not in _conversation_histories:
-            logger.warning(f"尝试获取不存在的对话历史: {conversation_id}")
-            return []
-        
-        return _conversation_histories[conversation_id]
-    
-    def clear_conversation(self, conversation_id: str) -> None:
-        """
-        清除对话历史
-        
-        Args:
-            conversation_id: 对话ID
-        """
-        if conversation_id in _conversation_histories:
-            del _conversation_histories[conversation_id]
-            logger.debug(f"清除对话历史: {conversation_id}")
-    
-    async def chat_completion(self, 
-                       messages: List[ChatCompletionMessageParam] = None,
-                       conversation_id: str = None, 
-                       user_message: str = None,
+    async def chat_completion(self,
+                       messages: List[ChatCompletionMessageParam],
                        model_name: str = None,
                        temperature: float = 0.3,
                        max_tokens: int = 1000,
@@ -149,12 +63,10 @@ class DeepSeekClientService:
                        json_mode: bool = False,
                        tools: List[Dict[str, Any]] = None) -> Tuple[str, bool]:
         """
-        执行聊天完成请求，支持新消息或已有对话ID
+        执行聊天完成请求
         
         Args:
-            messages: 消息列表(直接提供时会忽略conversation_id)
-            conversation_id: 对话ID
-            user_message: 用户消息(当使用conversation_id时)
+            messages: 消息列表
             model_name: 使用的模型，默认使用初始化时的模型
             temperature: 温度参数，控制随机性
             max_tokens: 最大生成令牌数
@@ -165,30 +77,9 @@ class DeepSeekClientService:
         Returns:
             (响应内容, 是否成功)
         """
-        # 确定使用哪些消息
-        request_messages = None
-        use_conversation = False
-        
+        request_messages = messages
+
         try:
-            if messages is not None:
-                # 直接使用提供的消息列表
-                request_messages = messages
-            elif conversation_id is not None:
-                # 使用对话历史
-                use_conversation = True
-                if conversation_id not in _conversation_histories:
-                    self.create_conversation(conversation_id)
-                
-                # 添加新的用户消息(如果有)
-                if user_message:
-                    self.add_message(conversation_id, "user", user_message)
-                
-                request_messages = _conversation_histories[conversation_id]
-            else:
-                # 错误：没有指定消息或对话ID
-                logger.error("执行聊天完成请求时未提供消息或对话ID")
-                return "错误：未提供消息或对话ID", False
-            
             # 确保消息不为空且格式正确
             if not request_messages:
                 logger.error("消息列表为空")
@@ -328,10 +219,6 @@ class DeepSeekClientService:
                         logger.info(f"  {line}")
                     logger.info("==================================")
                     
-                    # 如果使用对话，将助手响应添加到历史
-                    if use_conversation and conversation_id and response_text:
-                        self.add_message(conversation_id, "assistant", response_text)
-                    
                     success = True
                     logger.info("DeepSeek API调用成功")
                     break
@@ -414,10 +301,9 @@ class DeepSeekClientService:
         
         return response_text, True
     
-    async def structured_output(self, 
-                         prompt: str, 
-                         system_prompt: str = None, 
-                         conversation_id: str = None, 
+    async def structured_output(self,
+                         prompt: str,
+                         system_prompt: str = None,
                          schema: Dict = None) -> Tuple[Dict, bool]:
         """
         获取结构化JSON输出
@@ -425,7 +311,6 @@ class DeepSeekClientService:
         Args:
             prompt: 用户提示
             system_prompt: 系统提示
-            conversation_id: 对话ID
             schema: JSON结构定义
             
         Returns:
@@ -440,15 +325,15 @@ class DeepSeekClientService:
         # 如果提供了schema，添加到提示中
         if schema:
             schema_str = json.dumps(schema, ensure_ascii=False, indent=2)
-            prompt = f"{prompt}\n\n请使用以下JSON模式:\n```json\n{schema_str}\n```"
-        
-        messages.append({"role": "user", "content": prompt})
+            prompt_content = f"{prompt}\n\n请使用以下JSON模式:\n```json\n{schema_str}\n```"
+        else:
+             prompt_content = prompt
+
+        messages.append({"role": "user", "content": prompt_content})
         
         # 使用JSON模式调用API
         response_text, success = await self.chat_completion(
-            messages=messages if conversation_id is None else None,
-            conversation_id=conversation_id,
-            user_message=prompt if conversation_id is not None else None,
+            messages=messages,
             json_mode=True
         )
         
@@ -476,11 +361,11 @@ class DeepSeekClientService:
             
             return {"error": "无法解析响应为有效的JSON", "raw_response": response_text}, False
     
-    async def function_calling(self, 
-                       prompt: str, 
-                       tools: List[Dict[str, Any]], 
+    async def function_calling(self,
+                       prompt: str,
+                       tools: List[Dict[str, Any]],
                        system_prompt: str = None,
-                       conversation_id: str = None) -> Tuple[Dict, bool]:
+                       ) -> Tuple[Dict, bool]:
         """
         执行函数调用
         
@@ -488,7 +373,6 @@ class DeepSeekClientService:
             prompt: 用户提示
             tools: 工具定义列表
             system_prompt: 系统提示
-            conversation_id: 对话ID
             
         Returns:
             (工具调用结果, 是否成功)
@@ -502,9 +386,7 @@ class DeepSeekClientService:
         
         # 调用API
         response_text, success = await self.chat_completion(
-            messages=messages if conversation_id is None else None,
-            conversation_id=conversation_id,
-            user_message=prompt if conversation_id is not None else None,
+            messages=messages,
             tools=tools
         )
         
@@ -515,12 +397,18 @@ class DeepSeekClientService:
         try:
             # 这里通常需要解析响应以提取工具调用信息
             # 由于DeepSeek的函数调用可能会有特殊的返回格式，可能需要调整
-            if "tool_calls" in response_text:
-                # 假设工具调用以某种方式包含在响应中
-                return {"tool_calls": response_text}, True
-            else:
-                # 如果没有工具调用，返回文本响应
-                return {"content": response_text, "has_tool_calls": False}, True
+            # 假设响应本身包含调用信息或纯文本
+            # 尝试解析为JSON看是否是结构化响应
+            try:
+                response_json = json.loads(response_text)
+                if "tool_calls" in response_json: # 检查 OpenAI 格式
+                    return {"tool_calls": response_json["tool_calls"], "has_tool_calls": True}, True
+                else: # 其他 JSON 结构
+                     return {"content": response_json, "has_tool_calls": False}, True
+            except json.JSONDecodeError:
+                 # 不是 JSON，返回纯文本
+                 return {"content": response_text, "has_tool_calls": False}, True
+
         except Exception as e:
             logger.error(f"处理工具调用响应时出错: {str(e)}")
             return {"error": f"处理工具调用响应时出错: {str(e)}", "raw_response": response_text}, False 

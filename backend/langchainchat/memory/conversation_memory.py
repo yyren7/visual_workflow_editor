@@ -13,7 +13,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from langchainchat.config import settings
+# 导入正确的配置字典
+from backend.config import APP_CONFIG, AI_CONFIG, LANGCHAIN_CONFIG
 from langchainchat.utils.logging import logger
 
 class EnhancedConversationMemory(ConversationBufferMemory):
@@ -72,11 +73,15 @@ class EnhancedConversationMemory(ConversationBufferMemory):
     
     def get_session_path(self) -> str:
         """获取会话存储路径"""
-        if not settings.PERSIST_SESSIONS:
+        if not APP_CONFIG.get('PERSIST_SESSIONS', False):
             return None
             
         # 创建会话目录
-        sessions_dir = Path(settings.SESSIONS_DB_PATH)
+        sessions_db_path = APP_CONFIG.get('SESSIONS_DB_PATH')
+        if not sessions_db_path:
+            logger.error("SESSIONS_DB_PATH 未在 APP_CONFIG 中配置")
+            return None
+        sessions_dir = Path(sessions_db_path)
         sessions_dir.mkdir(parents=True, exist_ok=True)
         
         # 用户特定目录
@@ -94,7 +99,7 @@ class EnhancedConversationMemory(ConversationBufferMemory):
         Returns:
             保存是否成功
         """
-        if not settings.PERSIST_SESSIONS:
+        if not APP_CONFIG.get('PERSIST_SESSIONS', False):
             logger.debug("会话持久化已禁用，跳过保存")
             return False
         
@@ -149,13 +154,17 @@ class EnhancedConversationMemory(ConversationBufferMemory):
         Returns:
             加载的对话记忆实例，如果加载失败则返回None
         """
-        if not settings.PERSIST_SESSIONS:
+        if not APP_CONFIG.get('PERSIST_SESSIONS', False):
             logger.debug("会话持久化已禁用，跳过加载")
             return None
             
         try:
             # 构建会话路径
-            sessions_dir = Path(settings.SESSIONS_DB_PATH)
+            sessions_db_path = APP_CONFIG.get('SESSIONS_DB_PATH')
+            if not sessions_db_path:
+                logger.error("SESSIONS_DB_PATH 未在 APP_CONFIG 中配置，无法加载会话")
+                return None
+            sessions_dir = Path(sessions_db_path)
             
             # 尝试在用户目录中查找
             session_path = None
@@ -226,12 +235,16 @@ class EnhancedConversationMemory(ConversationBufferMemory):
         Returns:
             对话列表，每个对话包含ID、用户ID和元数据
         """
-        if not settings.PERSIST_SESSIONS:
+        if not APP_CONFIG.get('PERSIST_SESSIONS', False):
             logger.debug("会话持久化已禁用，跳过列表获取")
             return []
             
         try:
-            sessions_dir = Path(settings.SESSIONS_DB_PATH)
+            sessions_db_path = APP_CONFIG.get('SESSIONS_DB_PATH')
+            if not sessions_db_path:
+                logger.error("SESSIONS_DB_PATH 未在 APP_CONFIG 中配置，无法列出对话")
+                return []
+            sessions_dir = Path(sessions_db_path)
             if not sessions_dir.exists():
                 return []
                 
@@ -308,7 +321,7 @@ def create_memory(
         对话记忆实例
     """
     # 如果提供了ID且设置了加载现有对话，则尝试加载
-    if conversation_id and load_if_exists and settings.PERSIST_SESSIONS:
+    if conversation_id and load_if_exists and APP_CONFIG.get('PERSIST_SESSIONS', False):
         existing_memory = EnhancedConversationMemory.load(conversation_id, user_id)
         if existing_memory:
             logger.info(f"加载现有对话: {conversation_id}")
@@ -319,7 +332,7 @@ def create_memory(
         conversation_id=conversation_id,
         user_id=user_id,
         metadata=metadata or {},
-        max_token_limit=max_token_limit or settings.DEFAULT_CONTEXT_WINDOW,
+        max_token_limit=max_token_limit or LANGCHAIN_CONFIG.get('DEFAULT_CONTEXT_WINDOW', 2000),
         memory_key="chat_history",
         return_messages=True,
         output_key="output",

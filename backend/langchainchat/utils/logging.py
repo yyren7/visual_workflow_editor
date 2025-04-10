@@ -3,6 +3,9 @@ import sys
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
+# Import specific config objects and base variables needed
+from backend.config import LANGCHAIN_CONFIG, LOG_DIR
+
 def setup_logging(name: str = "langchain_chat") -> logging.Logger:
     """
     配置LangChain模块的日志记录器
@@ -13,11 +16,12 @@ def setup_logging(name: str = "langchain_chat") -> logging.Logger:
     Returns:
         配置好的日志记录器
     """
-    # 在函数内部导入以避免循环导入
-    from langchainchat.config import settings
+    # Removed incorrect import from inside the function
+    # from langchainchat.config import settings
     
-    # 获取日志级别
-    log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+    # 获取日志级别 using LANGCHAIN_CONFIG
+    log_level_str = LANGCHAIN_CONFIG.get("LOG_LEVEL", "INFO")
+    log_level = getattr(logging, log_level_str.upper(), logging.INFO)
     
     # 创建日志记录器
     logger = logging.getLogger(name)
@@ -38,8 +42,13 @@ def setup_logging(name: str = "langchain_chat") -> logging.Logger:
     console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
     
-    # 创建文件处理器
-    log_file = settings.langchain_log_file
+    # 创建文件处理器 using LANGCHAIN_CONFIG
+    log_file = LANGCHAIN_CONFIG.get("LANGCHAIN_LOG_FILE")
+    if not log_file:
+        logger.warning("LANGCHAIN_LOG_FILE not found in config, logging to console only.")
+        logger.addHandler(console_handler)
+        return logger
+    
     file_handler = RotatingFileHandler(
         log_file, 
         maxBytes=10*1024*1024,  # 10MB
@@ -53,12 +62,12 @@ def setup_logging(name: str = "langchain_chat") -> logging.Logger:
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
     
-    logger.info(f"日志已配置: 级别={settings.LOG_LEVEL}, 文件={log_file}")
+    logger.info(f"日志已配置: 级别={log_level_str}, 文件={log_file}")
     
-    # 记录配置信息
-    logger.info(f"LangChain模块配置: DeepSeek模型={settings.DEEPSEEK_MODEL}")
-    logger.info(f"向量存储设置: 类型={settings.VECTOR_STORE_TYPE}, 路径={settings.VECTOR_STORE_PATH}")
-    logger.info(f"记忆设置: 最大历史长度={settings.MAX_HISTORY_LENGTH}")
+    # 记录配置信息 (Accessing LANGCHAIN_CONFIG)
+    # Example: logger.info(f"DeepSeek Model: {LANGCHAIN_CONFIG.get('CHAT_MODEL_NAME')}")
+    # Example: logger.info(f"Vector Store Path: {LANGCHAIN_CONFIG.get('VECTOR_STORE_PATH')}")
+    # Example: logger.info(f"Max History Length: {LANGCHAIN_CONFIG.get('MAX_HISTORY_LENGTH')}")
     
     # 配置LangChain的日志
     langchain_logger = logging.getLogger("langchain")
@@ -66,10 +75,9 @@ def setup_logging(name: str = "langchain_chat") -> logging.Logger:
     langchain_logger.addHandler(console_handler)
     langchain_logger.addHandler(file_handler)
     
-    # 配置LangChain调试日志
-    if settings.LOG_LLM_CALLS:
-        # 配置额外的调试文件处理器
-        debug_log_file = Path(settings.LOG_DIR) / "langchain_debug.log"
+    # 配置LangChain调试日志 using LANGCHAIN_CONFIG and LOG_DIR
+    if LANGCHAIN_CONFIG.get("LOG_LLM_CALLS", False):
+        debug_log_file = Path(LOG_DIR) / "langchain_debug.log"
         debug_file_handler = RotatingFileHandler(
             debug_log_file, 
             maxBytes=20*1024*1024,  # 20MB
@@ -79,9 +87,11 @@ def setup_logging(name: str = "langchain_chat") -> logging.Logger:
         debug_file_handler.setLevel(logging.DEBUG)
         debug_file_handler.setFormatter(formatter)
         
-        langchain_debug_logger = logging.getLogger("langchain.api")
-        langchain_debug_logger.setLevel(logging.DEBUG)
-        langchain_debug_logger.addHandler(debug_file_handler)
+        # Log calls specifically from langchain.api or potentially others
+        langchain_api_logger = logging.getLogger("langchain.api") # Or adjust logger name if needed
+        langchain_api_logger.setLevel(logging.DEBUG)
+        langchain_api_logger.addHandler(debug_file_handler)
+        logger.info(f"Langchain debug logging enabled, writing to {debug_log_file}")
     
     return logger
 

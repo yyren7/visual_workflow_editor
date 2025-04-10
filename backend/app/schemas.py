@@ -118,5 +118,16 @@ class Chat(ChatBase):
     class Config:
         from_attributes = True
 
+# 聊天消息处理的响应模型
+class ChatMessageResponse(BaseModel):
+    ai_response: str
+    nodes: Optional[List[Dict]] = None # 由 WorkflowChain 返回的节点更新
+    connections: Optional[List[Dict]] = None # 由 WorkflowChain 返回的连接更新
+    flow_update_status: Optional[Dict] = None # Flow 更新状态
+    error: Optional[str] = None # 任何处理错误
+
+    class Config:
+        from_attributes = True # 如果需要从 ORM 对象创建
+
 class LastChatResponse(BaseModel):
     chatId: Optional[str] = None

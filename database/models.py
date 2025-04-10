@@ -1,12 +1,19 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, UniqueConstraint, Float, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from pgvector.sqlalchemy import Vector
 # 对于PostgreSQL数据库，可以使用以下导入
 # from sqlalchemy.dialects.postgresql import UUID
 import uuid
 import datetime
+import logging
+from typing import Dict, Any, List, Optional
 
 from database.connection import Base
+from database.embedding.config import embedding_config
+
+logger = logging.getLogger(__name__)
 
 class User(Base):
     """
@@ -106,4 +113,67 @@ class VersionInfo(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
     def __repr__(self):
-        return f"<VersionInfo(version='{self.version}', last_updated='{self.last_updated}')>" 
+        return f"<VersionInfo(version='{self.version}', last_updated='{self.last_updated}')>"
+
+
+class JsonEmbedding(Base):
+    """
+    JSON 数据嵌入模型
+    """
+    __tablename__ = 'json_embeddings'
+    __table_args__ = {'extend_existing': True}
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # 存储原始JSON数据
+    json_data = Column(JSONB, nullable=False)
+    
+    # 使用 pgvector 存储嵌入向量
+    # 需要从 embedding_config 获取维度
+    embedding_vector = Column(Vector(embedding_config.VECTOR_DIMENSION))
+    
+    # 嵌入模型名称
+    model_name = Column(String(100), nullable=False, index=True)
+    
+    # 时间戳 (保留 Float 类型，根据原始代码)
+    created_at = Column(Float, nullable=False)
+    updated_at = Column(Float, nullable=False)
+    
+    # (可选) 元数据，例如来源文档ID、类型等
+    meta_data = Column(JSONB, nullable=True)
+
+    # 创建 HNSW 或 IVFFlat 索引以加速相似性搜索
+    # HNSW 索引（推荐，适用于高维数据）
+    __table_args__ = (
+        Index(
+            'ix_json_embeddings_embedding_hnsw',
+            embedding_vector,
+            postgresql_using='hnsw',
+            postgresql_with={'m': 16, 'ef_construction': 64} # HNSW 参数
+        ),
+        Index('ix_json_embeddings_model_name', 'model_name'), # 索引模型名称
+    )
+    
+    # IVFFlat 索引（可选，可能在某些场景下更快）
+    # __table_args__ = (
+    #     Index(
+    #         'ix_json_embeddings_embedding_ivfflat',
+    #         embedding_vector,
+    #         postgresql_using='ivfflat',
+    #         postgresql_with={'lists': 100} # 列表数量，通常是 sqrt(N)
+    #     ),
+    # )
+
+    def __repr__(self):
+        return f"<JsonEmbedding(id={self.id}, model='{self.model_name}')>"
+
+# 可选: 流程图变量模型 (如果需要单独管理)
+# class FlowVariable(Base):
+#     # ... existing code ...
+#     pass # 省略未更改部分
+
+# 创建所有表 (通常在应用启动时或迁移脚本中执行)
+# from database.connection import engine
+# Base.metadata.create_all(bind=engine)
+# logger.info("数据库模型已初始化 (如果表不存在则创建)")
+
+# 注意：使用 pgvector 需要在数据库中启用扩展: CREATE EXTENSION vector; 

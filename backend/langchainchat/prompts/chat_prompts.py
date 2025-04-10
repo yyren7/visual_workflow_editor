@@ -5,33 +5,16 @@ import logging
 # 配置日志
 logger = logging.getLogger("langchainchat.prompts")
 
-def get_node_types_text() -> str:
-    """
-    动态获取所有节点类型并生成提示文本
-    
-    Returns:
-        str: 节点类型提示文本
-    """
-    try:
-        # 导入依赖
-        from backend.app.services.node_type_prompt_service import get_node_type_prompt_service
-        
-        # 获取节点类型提示服务实例
-        node_type_service = get_node_type_prompt_service()
-        
-        # 获取节点类型提示文本
-        node_types_text = node_type_service.get_node_types_prompt_text()
-        
-        # 返回提示文本
-        logger.info(f"动态生成节点类型提示文本，包含多种节点类型")
-        return node_types_text
-    except Exception as e:
-        logger.error(f"获取节点类型提示文本失败: {str(e)}")
-        # 返回简单提示而不是硬编码节点类型
-        return "请从系统中获取可用的节点类型。"
-
-# 获取节点类型提示文本
-node_types_text = get_node_types_text()
+# 定义常用的节点类型文本 (替代之前的动态获取)
+NODE_TYPES_INFO = """常用节点类型:
+- start: 流程的开始
+- end: 流程的结束
+- process: 处理步骤或操作
+- decision: 判断条件，通常有多个输出分支
+- input: 用户输入或数据输入
+- output: 系统输出或结果展示
+- database: 数据存储或检索
+- api: 调用外部接口"""
 
 # 基础系统提示
 BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用户设计和创建工作流流程图。
@@ -43,7 +26,7 @@ BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用�
 4. 协助用户解决流程图设计中遇到的问题
 5. 只回答与流程图和工作流相关的问题
 
-{node_types_text}
+{NODE_TYPES_INFO}
 
 请始终保持专业和有帮助的态度。"""
 
@@ -89,11 +72,10 @@ WORKFLOW_GENERATION_TEMPLATE = ChatPromptTemplate.from_messages([
       "target": "目标节点ID",
       "label": "连接标签/说明"
     }}
-  ],
-  "summary": "流程图整体描述"
+  ]
 }}
 
-{node_types_text}
+{NODE_TYPES_INFO}
 
 注意事项:
 1. 必须包含一个start节点和至少一个end节点
@@ -154,7 +136,7 @@ TOOL_CALLING_TEMPLATE = ChatPromptTemplate.from_messages([
 4. delete_node - 删除节点
 5. get_flow_info - 获取当前流程图信息
 
-{node_types_text}
+{NODE_TYPES_INFO}
 
 使用工具时应遵循以下原则:
 1. 根据用户需求选择最合适的工具

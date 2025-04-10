@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional, Type, Union
+from typing import Dict, Any, List, Optional, Type, Union, Tuple
 from pydantic import BaseModel, Field
 from langchain.tools import BaseTool, Tool
 import logging
@@ -9,7 +9,18 @@ import httpx
 import asyncio
 from sqlalchemy.orm import Session
 
-from langchainchat.utils.logging import logger
+# Use correct absolute path for logger import
+from backend.langchainchat.utils.logging import logger
+
+# Import Pydantic models and ToolResult
+from .definitions import (
+    NodeParams, ConnectionParams, PropertyParams, 
+    QuestionsParams, TextGenerationParams, ToolResult
+)
+# Import the necessary LLM client class
+from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
+# Import the output parser (assuming it's needed for property generation)
+from backend.langchainchat.output_parsers.structured_parser import StructuredOutputParser
 
 # 当前活动的流程图ID，可以由会话管理器设置
 _active_flow_id = None
@@ -541,4 +552,338 @@ def get_flow_tools() -> List[BaseTool]:
         create_node_tool,
         connect_nodes_tool,
         get_flow_info_tool
-    ] 
+    ]
+
+# ======================
+# 工具实现函数
+# ======================
+
+async def generate_node_properties(
+    node_type: str, 
+    node_label: str,
+    llm_client: DeepSeekLLM # 注入 LLM 客户端
+) -> Tuple[Dict[str, Any], bool]:
+    """
+    根据节点类型和标签生成推荐的节点属性
+    
+    Args:
+        node_type: 节点类型
+        node_label: 节点标签
+        llm_client: DeepSeekLLM 客户端实例
+        
+    Returns:
+        (推荐的属性, 是否成功)
+    """
+    try:
+        prompt = f"""请为以下流程图节点生成合适的属性JSON对象：
+        
+节点类型: {node_type}
+节点标签: {node_label}
+
+请生成一个属性对象，属性名应该反映该类型节点的常见特性，属性值应为占位符或示例值。
+请只返回 JSON 对象本身，不要包含其他文本。例如：{{\"property_name\": \"value\"}}
+"""
+        
+        properties_schema = {
+            "type": "object",
+            "properties": {},
+            "description": "节点的属性键值对"
+            # 这里不限制具体属性，让 LLM 自由生成
+        }
+        
+        # 使用 LLM 客户端进行结构化输出
+        result, success = await llm_client.structured_output(
+            prompt=prompt,
+            system_prompt="你是一个流程图节点属性专家，擅长为不同类型的节点推荐合适的属性。请输出 JSON 对象格式的属性。",
+            schema=properties_schema # 虽然不限制属性，但仍指定 schema 以鼓励 JSON 输出
+        )
+        
+        if not success or not isinstance(result, dict):
+            logger.error(f"生成节点属性失败或返回格式错误 for {node_type} - {node_label}")
+            # 返回空字典作为默认值
+            return {}, True # 即使生成失败，也认为工具调用本身是"成功"的，只是没生成内容
+            
+        # 确保返回的是字典
+        return result, True
+        
+    except Exception as e:
+        logger.error(f"生成节点属性时出错: {str(e)}")
+        return {}, False
+
+async def ask_more_info_func(
+    params: QuestionsParams,
+    llm_client: DeepSeekLLM # 注入 LLM 客户端
+) -> ToolResult:
+    """询问更多信息工具实现"""
+    try:
+        questions = params.questions
+        context = params.context
+        
+        # 过滤掉空字符串问题
+        questions = [q for q in questions if q and q.strip()]
+        
+        # 如果没有提供问题，使用智能默认问题
+        if not questions:
+            logger.info("未提供问题，尝试基于上下文生成")
+            
+            # 如果有上下文，尝试基于上下文生成相关问题
+            if context and len(context) > 10:
+                try:
+                    prompt = f"""根据以下流程图设计对话的上下文，生成最多3个相关问题，以帮助获取更多设计流程图所需的信息：
+                    
+上下文: {context}
+
+请生成一个包含问题的 JSON 数组，例如：{{\"questions\": [\"问题1\", \"问题2\"]}}。确保只返回 JSON。
+"""
+                    
+                    questions_schema = {
+                        "type": "object",
+                        "properties": {
+                            "questions": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "需要向用户询问的问题列表"
+                            }
+                        },
+                        "required": ["questions"]
+                    }
+                    
+                    result, success = await llm_client.structured_output(
+                        prompt=prompt,
+                        system_prompt="你是一个帮助生成有用问题的助手。请输出 JSON 数组格式的问题列表。",
+                        schema=questions_schema
+                    )
+                    
+                    if success and isinstance(result, dict) and "questions" in result and result["questions"]:
+                        questions = result["questions"]
+                        logger.info(f"基于上下文生成了 {len(questions)} 个问题")
+                    else:
+                        logger.warning("无法基于上下文生成问题，将使用默认问题")
+                        questions = [] # 重置，下面会填充默认
+                except Exception as e:
+                    logger.error(f"基于上下文生成问题时出错: {str(e)}，将使用默认问题")
+                    questions = []
+            
+            # 如果仍然没有问题（生成失败或无上下文），使用默认
+            if not questions:
+                questions = [
+                    "请详细描述一下您想要创建的流程图的主要目标或功能是什么？",
+                    "这个流程图大概包含哪些关键的步骤或处理节点？", 
+                    "流程中是否存在需要判断条件或做出选择的地方（决策点）？"
+                ]
+                logger.info("使用默认问题列表")
+        
+        # 生成格式化文本
+        formatted_questions = "\n".join([f"{i+1}. {q}" for i, q in enumerate(questions)])
+        formatted_text = f"为了更好地帮助您，我需要了解更多信息：\n{formatted_questions}"
+        if context:
+             formatted_text = f"基于之前的讨论:\n{context}\n\n为了继续，我需要了解更多信息：\n{formatted_questions}"
+        
+        result_data = {
+            "questions": questions,
+            "context": context,
+            "formatted_text": formatted_text
+        }
+        
+        return ToolResult(
+            success=True,
+            message="已准备好需要询问的问题。", # 修改消息，表明是准备问题而非已生成
+            data=result_data
+        )
+    except Exception as e:
+        logger.error(f"生成问题时出错: {str(e)}")
+        return ToolResult(
+            success=False,
+            message=f"生成问题失败: {str(e)}"
+        )
+
+async def create_node_func(
+    params: NodeParams,
+    llm_client: DeepSeekLLM # 注入
+) -> ToolResult:
+    """创建节点工具实现"""
+    try:
+        node_type = params.node_type
+        node_label = params.node_label
+        properties = params.properties
+        position = params.position # 获取位置信息
+        
+        logger.info(f"请求创建节点: type={node_type}, label={node_label}")
+        
+        if not node_type:
+            logger.warning("缺少节点类型")
+            return ToolResult(
+                success=False,
+                message="创建节点失败: 缺少节点类型"
+            )
+        
+        # 处理标签缺失
+        if not node_label:
+             node_label = f"{node_type.capitalize()}_{str(uuid.uuid4())[:4]}"
+             logger.info(f"未提供标签，使用生成的默认标签: {node_label}")
+        
+        # 处理属性缺失 (调用 generate_node_properties)
+        if properties is None: # 检查是否为 None
+            logger.info("未提供属性，尝试生成默认属性")
+            properties, prop_success = await generate_node_properties(node_type, node_label, llm_client)
+            if not prop_success:
+                 logger.warning("生成默认属性失败，将使用空属性")
+                 properties = {}
+            else:
+                 logger.info(f"生成默认属性: {properties}")
+        
+        # 生成节点ID
+        node_id = f"node_{str(uuid.uuid4())[:8]}"
+        
+        # 创建结果数据
+        result_data = {
+            "id": node_id,
+            "type": node_type,
+            "label": node_label,
+            "properties": properties,
+             # 包含位置信息，如果提供了的话
+            "position": position if position else {"x": 100, "y": 100} # 提供默认位置
+        }
+        
+        logger.info(f"成功准备节点创建数据: {node_label} (ID: {node_id})")
+        return ToolResult(
+            success=True,
+            message=f"成功准备创建节点: {node_label}",
+            data=result_data
+        )
+    except Exception as e:
+        logger.error(f"创建节点时出错: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return ToolResult(
+            success=False,
+            message=f"创建节点失败: {str(e)}"
+        )
+
+async def connect_nodes_func(
+    params: ConnectionParams,
+    llm_client: DeepSeekLLM # 注入 (虽然此函数当前不直接使用，但保持接口一致性)
+) -> ToolResult:
+    """连接创建工具实现"""
+    try:
+        source_id = params.source_id
+        target_id = params.target_id
+        label = params.label
+        
+        logger.info(f"请求连接节点: {source_id} -> {target_id}")
+
+        # 注意：这里不再自动创建缺失的节点，假设调用者（Agent/Chain）
+        # 已经确保了 source_id 和 target_id 存在或会先创建它们。
+        if not source_id or not target_id:
+            return ToolResult(
+                success=False,
+                message="创建连接失败: 必须提供源节点ID和目标节点ID"
+            )
+        
+        # 生成连接ID
+        connection_id = f"conn_{str(uuid.uuid4())[:8]}"
+        
+        # 创建结果数据
+        result_data = {
+            "id": connection_id,
+            "source": source_id,
+            "target": target_id,
+            "label": label or "" # 确保标签是字符串
+        }
+        
+        logger.info(f"成功准备连接创建数据: {source_id} -> {target_id}")
+        return ToolResult(
+            success=True,
+            message=f"成功准备创建连接: {source_id} -> {target_id}",
+            data=result_data
+        )
+    except Exception as e:
+        logger.error(f"创建连接时出错: {str(e)}")
+        return ToolResult(
+            success=False,
+            message=f"创建连接失败: {str(e)}"
+        )
+
+async def set_properties_func(
+    params: PropertyParams,
+    llm_client: DeepSeekLLM # 注入
+) -> ToolResult:
+    """属性设置工具实现"""
+    try:
+        element_id = params.element_id
+        properties = params.properties
+        
+        logger.info(f"请求设置属性 for element: {element_id}")
+
+        if not element_id or properties is None: # 检查 properties 是否为 None
+            return ToolResult(
+                success=False,
+                message="设置属性失败: 缺少元素ID或属性"
+            )
+        
+        # 创建结果数据
+        result_data = {
+            "element_id": element_id,
+            "properties": properties
+        }
+        
+        logger.info(f"成功准备属性设置数据 for: {element_id}")
+        return ToolResult(
+            success=True,
+            message=f"成功准备设置属性: {element_id}",
+            data=result_data
+        )
+    except Exception as e:
+        logger.error(f"设置属性时出错: {str(e)}")
+        return ToolResult(
+            success=False,
+            message=f"设置属性失败: {str(e)}"
+        )
+
+async def generate_text_func(
+    params: TextGenerationParams,
+    llm_client: DeepSeekLLM # 注入
+) -> ToolResult:
+    """文本生成工具实现"""
+    try:
+        prompt = params.prompt
+        max_length = params.max_length
+        
+        logger.info(f"请求生成文本: prompt length={len(prompt)}, max_length={max_length}")
+
+        if not prompt:
+            return ToolResult(
+                success=False,
+                message="文本生成失败: 缺少提示"
+            )
+        
+        # 使用 DeepSeek 客户端服务生成文本
+        # 注意：这里直接调用 chat_completion 可能不够优化，
+        # 可能需要一个更通用的 system prompt。
+        response_text, success = await llm_client.chat_completion(
+            messages=[
+                {"role": "system", "content": "你是一个专业的文本生成助手。"},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=max_length
+        )
+        
+        if not success:
+            logger.error("LLM 调用失败 during text generation")
+            return ToolResult(
+                success=False,
+                message="文本生成失败: AI 服务错误"
+            )
+        
+        logger.info("成功生成文本")
+        return ToolResult(
+            success=True,
+            message="成功生成文本",
+            data={"text": response_text}
+        )
+    except Exception as e:
+        logger.error(f"生成文本时出错: {str(e)}")
+        return ToolResult(
+            success=False,
+            message=f"生成文本失败: {str(e)}"
+        ) 

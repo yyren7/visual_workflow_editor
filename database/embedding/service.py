@@ -7,12 +7,16 @@ import time
 import logging
 from typing import Any, Dict, List
 from sqlalchemy.orm import Session
+import json
+import uuid
 
 # 导入工具和配置
-from .utils import normalize_json
+from .utils import normalize_json, calculate_similarity
 from .config import embedding_config
-from .models import JsonEmbedding
+# from .embedding_result import EmbeddingResult # Removed unused import
 from .lmstudio_client import LMStudioClient
+# Removed import causing circular dependency
+# from backend.langchainchat.embeddings.semantic_search import search_by_vector
 
 # 设置logger
 logger = logging.getLogger(__name__)
@@ -103,6 +107,8 @@ class EmbeddingService:
         Returns:
             创建的嵌入记录
         """
+        # Moved import inside method to break circular dependency
+        from database.models import JsonEmbedding
         try:
             # 标准化JSON数据
             normalized_data = normalize_json(json_data)
@@ -118,6 +124,7 @@ class EmbeddingService:
                 json_data=json_data,
                 embedding_vector=embedding_vector,
                 model_name=self.model_name,
+                meta_data=json_data.get('metadata'),
                 created_at=current_time,
                 updated_at=current_time
             )
@@ -145,4 +152,193 @@ class EmbeddingService:
             "vector_dimension": embedding_config.VECTOR_DIMENSION,
             "using_lmstudio": embedding_config.USE_LMSTUDIO,
             "api_base_url": embedding_config.LMSTUDIO_API_BASE_URL if embedding_config.USE_LMSTUDIO else None
-        } 
+        }
+
+class DatabaseEmbeddingService:
+    """
+    负责文本嵌入生成和向量相似性搜索
+    与底层的 Embedding 模型和向量存储交互
+    """
+    
+    def __init__(self):
+        """
+        初始化服务，获取 EmbeddingService 实例
+        """
+        logger.info("Initializing DatabaseEmbeddingService...")
+        # 获取 EmbeddingService 的单例实例用于创建向量
+        self._embedding_creator = EmbeddingService.get_instance()
+        logger.info("DatabaseEmbeddingService initialized.")
+
+    async def embed_text(self, text: str) -> List[float]:
+        """
+        生成单个文本的嵌入向量
+        
+        Args:
+            text: 输入文本
+            
+        Returns:
+            嵌入向量
+        """
+        logger.debug(f"Embedding text: {text[:50]}...")
+        try:
+            vector = await self._embedding_creator.create_embedding_vector(text)
+            logger.debug(f"Text embedded successfully, vector dimension: {len(vector)}")
+            return vector
+        except Exception as e:
+            logger.error(f"Error embedding text: {e}")
+            # 返回零向量或根据策略抛出异常
+            return [0.0] * embedding_config.VECTOR_DIMENSION
+
+    async def embed_documents(self, documents: List[Dict[str, Any]]) -> List[List[float]]:
+        """
+        生成多个文档的嵌入向量
+        
+        Args:
+            documents: 文档列表 (每个文档是包含 'text' 键的字典)
+            
+        Returns:
+            嵌入向量列表
+        """
+        logger.debug(f"Embedding {len(documents)} documents...")
+        embeddings = []
+        for doc in documents:
+            text_to_embed = doc.get("text")
+            if isinstance(text_to_embed, dict): # Handle case where 'text' might be JSON itself
+                text_to_embed = normalize_json(text_to_embed)
+            elif not isinstance(text_to_embed, str):
+                text_to_embed = str(text_to_embed) # Fallback to string conversion
+
+            if text_to_embed:
+                vector = await self.embed_text(text_to_embed)
+                embeddings.append(vector)
+            else:
+                logger.warning("Document missing 'text' field or text is empty, creating zero vector.")
+                embeddings.append([0.0] * embedding_config.VECTOR_DIMENSION)
+        logger.debug(f"Finished embedding {len(documents)} documents.")
+        return embeddings
+
+    async def add_documents(self, db: Session, documents: List[Dict[str, Any]]):
+        """
+        将文档及其嵌入添加到数据库
+        
+        Args:
+            db: 数据库会话
+            documents: 文档列表 (包含文本和可能的元数据)
+        """
+        # Moved import inside method to break circular dependency
+        from database.models import JsonEmbedding
+        logger.info(f"Adding {len(documents)} documents to the database...")
+        added_count = 0
+        try:
+            for doc in documents:
+                json_data = doc.get("data") # Assuming data is under 'data' key
+                if not json_data:
+                    logger.warning(f"Document missing 'data' field, skipping: {doc.get('id', 'N/A')}")
+                    continue
+
+                # Prepare text for embedding (e.g., from specific fields or normalized JSON)
+                text_to_embed = normalize_json(json_data) # Embed the normalized JSON data
+
+                # Create embedding vector
+                embedding_vector = await self.embed_text(text_to_embed)
+
+                if not embedding_vector or all(v == 0 for v in embedding_vector):
+                     logger.warning(f"Failed to create embedding for document {doc.get('id', 'N/A')}, skipping.")
+                     continue
+
+                # Record current time
+                current_time = time.time()
+
+                # Create JsonEmbedding object
+                embedding_record = JsonEmbedding(
+                    id=doc.get("id", uuid.uuid4()), # Use provided ID or generate new one
+                    json_data=json_data,
+                    embedding_vector=embedding_vector,
+                    model_name=self._embedding_creator.model_name,
+                    meta_data=doc.get('metadata'), # Use provided metadata
+                    created_at=current_time,
+                    updated_at=current_time
+                )
+                db.add(embedding_record)
+                added_count += 1
+
+            if added_count > 0:
+                db.commit()
+                logger.info(f"Successfully added {added_count} documents to the database.")
+            else:
+                 logger.info("No valid documents were added.")
+            # Refresh might not be needed/possible in bulk async operations easily
+            # Consider returning IDs or status
+
+        except Exception as e:
+            logger.error(f"Error adding documents to database: {e}")
+            db.rollback()
+            raise # Re-raise the exception after rollback
+
+    async def similarity_search(self, db: Session, query: str, k: int = 3, threshold: float = 0.5) -> List[Dict[str, Any]]:
+        """
+        根据查询文本在数据库中执行相似性搜索
+        
+        Args:
+            db: 数据库会话
+            query: 查询文本
+            k: 返回的最相似结果数量
+            threshold: 相似度阈值
+            
+        Returns:
+            相似文档列表 (格式化后的结果)
+        """
+        # Moved import inside method to potentially break circular dependency if JsonEmbedding is needed here
+        # Although it seems it's only needed for the query() call, let's keep it simple for now.
+        from database.models import JsonEmbedding
+        from backend.langchainchat.embeddings.utils import format_search_result # Use the existing formatter
+
+        logger.info(f"Performing similarity search for: {query[:50]}... K={k}, Threshold={threshold}")
+        try:
+            # 1. 生成查询嵌入
+            query_embedding = await self.embed_text(query)
+            if not query_embedding or all(v == 0 for v in query_embedding):
+                logger.error("Failed to generate query embedding for the search.")
+                return []
+
+            # 2. Core search logic moved here from semantic_search.py's search_by_vector
+            logger.debug(f"Executing vector similarity search in database.")
+
+            # 从数据库获取所有嵌入记录 (Consider optimization for large datasets)
+            # TODO: Explore direct vector search capabilities of the DB (e.g., using pgvector operators) for efficiency
+            # For now, fetch all and calculate in Python:
+            db_embeddings = db.query(JsonEmbedding).all()
+
+            # 计算相似度并排序
+            results_with_scores = []
+            for emb in db_embeddings:
+                # Ensure embedding vector is valid
+                if not emb.embedding_vector or all(v == 0 for v in emb.embedding_vector):
+                    continue
+
+                # Calculate cosine similarity
+                similarity = calculate_similarity(query_embedding, emb.embedding_vector)
+
+                # If above threshold, add to results
+                if similarity >= threshold:
+                    # Add score attribute dynamically for sorting/formatting
+                    emb.score = similarity
+                    results_with_scores.append((emb, similarity))
+
+            # Sort by similarity score (descending) and take top K
+            results_with_scores.sort(key=lambda x: x[1], reverse=True)
+            top_results_objects = [item[0] for item in results_with_scores[:k]]
+
+            logger.info(f"Database search found {len(top_results_objects)} potential matches above threshold.")
+
+            # 3. Format the results using the utility from langchainchat.embeddings
+            formatted_results = format_search_result(top_results_objects, with_score=True)
+
+            logger.info(f"Formatted {len(formatted_results)} results for output.")
+            return formatted_results
+
+        except Exception as e:
+            logger.error(f"Error during similarity search execution: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return [] 

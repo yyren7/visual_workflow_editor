@@ -6,10 +6,15 @@ import unittest
 import asyncio
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from database.embedding import create_embedding, create_json_embedding, get_embedding_model_info
+from database.base import Base
+from database.embedding import create_embedding, create_embedding_with_given_id, cosine_similarity
+from database.embedding.embedding_result import EmbeddingResult
+from database.embedding.utils import calculate_similarity
+from database.models import JsonEmbedding
 from database.embedding.service import EmbeddingService
-from database.embedding.models import JsonEmbedding
 from database.embedding.config import embedding_config
 
 
@@ -96,7 +101,7 @@ class TestEmbeddingModule(unittest.TestCase):
                 mock_model.return_value = mock_embedding
                 
                 # 调用API
-                result = await create_json_embedding(self.mock_db, json_data)
+                result = await create_embedding_with_given_id(self.mock_db, json_data)
                 
                 # 验证数据库操作
                 self.mock_db.add.assert_called_once()
