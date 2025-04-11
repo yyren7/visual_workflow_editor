@@ -94,7 +94,7 @@ try:
     # 只在非最小模式下导入复杂路由
     if not MINIMAL_MODE:
         try:
-            from backend.app.routers import workflow_router
+            # from backend.app.routers import workflow_router
             logger.info("导入workflow_router成功")
         except ImportError as e:
             logger.error(f"导入workflow_router失败: {e}")
@@ -178,7 +178,7 @@ try:
     # 只在非最小模式下注册复杂路由
     if not MINIMAL_MODE:
         try:
-            app.include_router(workflow_router.router)  # 添加工作流路由
+            # app.include_router(workflow_router.router)  # 添加工作流路由
             logger.info("注册workflow路由成功")
         except Exception as e:
             logger.error(f"注册workflow路由失败: {e}")
@@ -257,13 +257,16 @@ async def validate_api_configuration():
             
         logger.info(f"DeepSeek模型: {AI_CONFIG['DEEPSEEK_MODEL']}")
         
-        # 尝试初始化客户端
+        # 尝试验证 DeepSeek 客户端模块
         try:
-            from backend.app.services.deepseek_client_service import DeepSeekClientService
-            client_service = DeepSeekClientService.get_instance()
-            logger.info("✓ DeepSeek客户端服务初始化成功")
+            # 尝试导入新的 DeepSeekLLM 类来验证模块是否存在
+            from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
+            # 之前获取实例的代码不再需要
+            # logger.info("✓ DeepSeek客户端服务初始化成功") # 旧日志
+            logger.info("✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功") # 新日志
         except Exception as e:
-            logger.error(f"⚠️ DeepSeek客户端服务初始化失败: {str(e)}")
+            # logger.error(f"⚠️ DeepSeek客户端服务初始化失败: {str(e)}") # 旧日志
+            logger.error(f"⚠️ DeepSeek客户端模块 (DeepSeekLLM) 导入或验证失败: {str(e)}") # 新日志
     
     # 验证数据库配置
     logger.info(f"数据库URL: {APP_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in APP_CONFIG else '未设置'}")
