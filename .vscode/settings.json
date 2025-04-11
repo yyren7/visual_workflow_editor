@@ -1,4 +1,7 @@
 {
     "sqltools.useNodeRuntime": true,
-    "editor.fontSize": 20
+    "editor.fontSize": 20,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}"
+    ]
 }

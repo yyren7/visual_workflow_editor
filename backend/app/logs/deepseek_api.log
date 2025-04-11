@@ -460,3 +460,60 @@
 2025-04-10 08:57:45,519 - backend.deepseek - INFO - ==================================
 2025-04-10 08:57:45,519 - INFO - DeepSeek API调用成功
 2025-04-10 08:57:45,519 - backend.deepseek - INFO - DeepSeek API调用成功
+2025-04-11 01:01:14,387 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,387 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,423 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,423 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,509 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,509 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,547 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,547 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,585 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:14,585 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:39,043 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:39,043 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:01:39,091 - INFO - 准备DeepSeek API调用: 2条消息
+2025-04-11 01:01:39,091 - backend.deepseek - INFO - 准备DeepSeek API调用: 2条消息
+2025-04-11 01:01:39,092 - INFO - ===== DEEPSEEK API 请求详情 =====
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - ===== DEEPSEEK API 请求详情 =====
+2025-04-11 01:01:39,092 - INFO - 消息 1 (system) 完整内容:
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 消息 1 (system) 完整内容:
+2025-04-11 01:01:39,092 - INFO -   You are an AI assistant for creating flowcharts. You can use tools to create nodes, connect them, set properties, or ask for more information. Respond in Chinese.
+2025-04-11 01:01:39,092 - backend.deepseek - INFO -   You are an AI assistant for creating flowcharts. You can use tools to create nodes, connect them, set properties, or ask for more information. Respond in Chinese.
+2025-04-11 01:01:39,092 - INFO - 消息 2 (user) 完整内容:
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 消息 2 (user) 完整内容:
+2025-04-11 01:01:39,092 - INFO -   123
+2025-04-11 01:01:39,092 - backend.deepseek - INFO -   123
+2025-04-11 01:01:39,092 - INFO - 工具定义: [{"type": "function", "function": {"name": "create_node", "description": "创建一个流程图节点", "parameters": {"description": "节点创建参数", "properties": {"node_type": {"title": "Node Type", "type": "string"}, "node_label": {"title": "Node Label", "type": "string"}, "position": {"anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}], "default": null, "title": "Position"}, "properties": {"anyOf": [{"type": "object"}, {"type": "null"}], "default": null, "title": "Properties"}}, "required": ["node_type", "node_label"], "title": "NodeParams", "type": "object"}}}, {"type": "function", "function": {"name": "connect_nodes", "description": "连接两个流程图节点", "parameters": {"description": "节点连接参数", "properties": {"source_id": {"title": "Source Id", "type": "string"}, "target_id": {"title": "Target Id", "type": "string"}, "label": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "title": "Label"}}, "required": ["source_id", "target_id"], "title": "ConnectionParams", "type": "object"}}}, {"type": "function", "function": {"name": "set_properties", "description": "设置节点或连接的属性", "parameters": {"description": "属性设置参数", "properties": {"element_id": {"title": "Element Id", "type": "string"}, "properties": {"type": "object", "title": "Properties"}}, "required": ["element_id", "properties"], "title": "PropertyParams", "type": "object"}}}, {"type": "function", "function": {"name": "ask_more_info", "description": "当信息不足时，向用户询问更多问题", "parameters": {"description": "追加问题参数", "properties": {"questions": {"items": {"type": "string"}, "title": "Questions", "type": "array"}, "context": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "title": "Context"}}, "required": ["questions"], "title": "QuestionsParams", "type": "object"}}}, {"type": "function", "function": {"name": "generate_text", "description": "根据提示生成文本内容", "parameters": {"description": "文本生成参数", "properties": {"prompt": {"title": "Prompt", "type": "string"}, "max_length": {"default": 500, "title": "Max Length", "type": "integer"}}, "required": ["prompt"], "title": "TextGenerationParams", "type": "object"}}}]
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 工具定义: [{"type": "function", "function": {"name": "create_node", "description": "创建一个流程图节点", "parameters": {"description": "节点创建参数", "properties": {"node_type": {"title": "Node Type", "type": "string"}, "node_label": {"title": "Node Label", "type": "string"}, "position": {"anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}], "default": null, "title": "Position"}, "properties": {"anyOf": [{"type": "object"}, {"type": "null"}], "default": null, "title": "Properties"}}, "required": ["node_type", "node_label"], "title": "NodeParams", "type": "object"}}}, {"type": "function", "function": {"name": "connect_nodes", "description": "连接两个流程图节点", "parameters": {"description": "节点连接参数", "properties": {"source_id": {"title": "Source Id", "type": "string"}, "target_id": {"title": "Target Id", "type": "string"}, "label": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "title": "Label"}}, "required": ["source_id", "target_id"], "title": "ConnectionParams", "type": "object"}}}, {"type": "function", "function": {"name": "set_properties", "description": "设置节点或连接的属性", "parameters": {"description": "属性设置参数", "properties": {"element_id": {"title": "Element Id", "type": "string"}, "properties": {"type": "object", "title": "Properties"}}, "required": ["element_id", "properties"], "title": "PropertyParams", "type": "object"}}}, {"type": "function", "function": {"name": "ask_more_info", "description": "当信息不足时，向用户询问更多问题", "parameters": {"description": "追加问题参数", "properties": {"questions": {"items": {"type": "string"}, "title": "Questions", "type": "array"}, "context": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "title": "Context"}}, "required": ["questions"], "title": "QuestionsParams", "type": "object"}}}, {"type": "function", "function": {"name": "generate_text", "description": "根据提示生成文本内容", "parameters": {"description": "文本生成参数", "properties": {"prompt": {"title": "Prompt", "type": "string"}, "max_length": {"default": 500, "title": "Max Length", "type": "integer"}}, "required": ["prompt"], "title": "TextGenerationParams", "type": "object"}}}]
+2025-04-11 01:01:39,092 - INFO - 模型: deepseek-chat
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 模型: deepseek-chat
+2025-04-11 01:01:39,092 - INFO - 温度: 0.3
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 温度: 0.3
+2025-04-11 01:01:39,092 - INFO - 最大令牌数: 1000
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 最大令牌数: 1000
+2025-04-11 01:01:39,092 - INFO - JSON模式: False
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - JSON模式: False
+2025-04-11 01:01:39,092 - INFO - 流式响应: False
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 流式响应: False
+2025-04-11 01:01:39,092 - INFO - ==================================
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - ==================================
+2025-04-11 01:01:39,092 - DEBUG - 调用DeepSeek API: 模型=deepseek-chat, 温度=0.3, JSON模式=False
+2025-04-11 01:01:39,092 - INFO - 开始非流式API调用
+2025-04-11 01:01:39,092 - backend.deepseek - INFO - 开始非流式API调用
+2025-04-11 01:01:44,790 - INFO - 非流式API调用完成，接收到45字符
+2025-04-11 01:01:44,790 - backend.deepseek - INFO - 非流式API调用完成，接收到45字符
+2025-04-11 01:01:44,791 - INFO - ===== DEEPSEEK API 响应详情 =====
+2025-04-11 01:01:44,791 - backend.deepseek - INFO - ===== DEEPSEEK API 响应详情 =====
+2025-04-11 01:01:44,791 - INFO - 响应完整内容:
+2025-04-11 01:01:44,791 - backend.deepseek - INFO - 响应完整内容:
+2025-04-11 01:01:44,791 - INFO -   你好！请问你是想创建一个流程图，还是需要其他帮助？可以告诉我你的具体需求，我会尽力协助你！
+2025-04-11 01:01:44,791 - backend.deepseek - INFO -   你好！请问你是想创建一个流程图，还是需要其他帮助？可以告诉我你的具体需求，我会尽力协助你！
+2025-04-11 01:01:44,792 - INFO - ==================================
+2025-04-11 01:01:44,792 - backend.deepseek - INFO - ==================================
+2025-04-11 01:01:44,792 - INFO - DeepSeek API调用成功
+2025-04-11 01:01:44,792 - backend.deepseek - INFO - DeepSeek API调用成功
+2025-04-11 01:02:51,537 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:02:51,537 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:02:51,975 - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-11 01:02:51,975 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
