@@ -4,7 +4,7 @@ import { chatApi, getLastChatIdForFlow } from '../api/api'; // Import getLastCha
 import { Message, Chat } from '../types'; // Assuming Chat type exists in types.ts
 import {
     Box, TextField, Button, Paper, Typography, CircularProgress,
-    List, ListItem, ListItemButton, ListItemText, IconButton, Divider,
+    List, ListItem, ListItemButton, ListItemText, IconButton,
     Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Input
 } from '@mui/material';
 import {
@@ -140,7 +140,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               console.log("Last interacted chat ID:", lastChatId);
 
               // 2. Fetch the full chat list
-              const fetchedChats = await fetchChatList(flowId); // fetchChatList handles its own loading state
+              await fetchChatList(flowId); // fetchChatList handles its own loading state and updates chatList
 
               // 3. Set active chat and fetch its messages if lastChatId exists
               setActiveChatId(lastChatId); // Set active chat regardless of whether messages load
@@ -203,7 +203,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setError(null);
     try {
       console.log("Creating new chat for flow:", flowId);
-      const newChat = await chatApi.createChat(flowId, "新聊天"); // Default name
+      const newChat = await chatApi.createChat(flowId); // 使用 API 默认名称
       console.log("New chat created:", newChat);
       // Refresh list and set new chat as active
       await fetchChatList(flowId); // Update the list
@@ -297,9 +297,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     try {
         console.log(`Renaming chat ${chatId} to: ${renameInputValue.trim()}`);
       // Optimistic UI update (optional but can feel snappier)
-      // setChatList(prevList => prevList.map(chat =>
-      //   chat.id === chatId ? { ...chat, name: renameInputValue.trim() } : chat
-      // ));
+      setChatList(prevList => prevList.map(chat =>
+        chat.id === chatId ? { ...chat, name: renameInputValue.trim() } : chat
+      ));
 
       await chatApi.updateChat(chatId, { name: renameInputValue.trim() });
       // Refresh the list from the server to get the confirmed state
@@ -310,9 +310,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.error(`Failed to rename chat ${chatId}:`, err);
       setError(`重命名失败: ${err.message}`);
       // Revert optimistic update if it was implemented
-      // setChatList(prevList => prevList.map(chat =>
-      //   chat.id === chatId ? { ...chat, name: originalName } : chat
-      // ));
+      setChatList(prevList => prevList.map(chat =>
+        chat.id === chatId ? { ...chat, name: originalName || chat.name } : chat // 使用 originalName 回滚
+      ));
       setIsLoadingList(false); // Ensure loading indicator is off on error
     } finally {
         // fetchChatList sets isLoadingList to false
@@ -482,7 +482,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {!isLoadingChat && !hasActiveChat && (
                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', textAlign: 'center', p: 2 }}>
                   <Typography variant="h6" gutterBottom>请选择或创建聊天</Typography>
-                  <Typography color="text.secondary">从左侧侧边栏选择一个聊天，或点击“新建聊天”开始。</Typography>
+                  <Typography color="text.secondary">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
                </Box>
           )}
            {!isLoadingChat && hasActiveChat && messages.length === 0 && (

@@ -9548,3 +9548,1069 @@ connections
 2025-04-11 08:32:38,814 - backend.app.startup - INFO - ⚠️ 调试模式已启用
 2025-04-11 08:32:38,814 - backend.app.startup - INFO - API前缀: /api
 2025-04-11 08:32:38,814 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-13 23:52:22,105 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-13 23:52:22,106 - app.main - INFO - 开始导入模块...
+2025-04-13 23:52:22,106 - app.main - INFO - 导入database成功
+2025-04-13 23:52:22,106 - app.main - INFO - 导入models成功
+2025-04-13 23:52:22,106 - app.main - INFO - 导入config成功
+2025-04-13 23:52:22,519 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-13 23:52:22,520 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log
+2025-04-13 23:52:22,827 - app.main - INFO - 导入基本路由成功
+2025-04-13 23:52:22,827 - app.main - INFO - 导入workflow_router成功
+2025-04-13 23:52:22,827 - app.main - INFO - 导入utils成功
+2025-04-13 23:52:22,827 - app.main - INFO - 导入dependencies成功
+2025-04-13 23:52:22,827 - app.main - INFO - 创建数据库表...
+2025-04-13 23:52:22,828 - app.main - INFO - 数据库表创建成功
+2025-04-13 23:52:22,828 - app.main - INFO - 初始化FastAPI应用...
+2025-04-13 23:52:22,834 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:52:22,834 - app.main - INFO - 注册路由...
+2025-04-13 23:52:22,839 - app.main - INFO - 注册user路由成功
+2025-04-13 23:52:22,844 - app.main - INFO - 注册flow路由成功
+2025-04-13 23:52:22,845 - app.main - INFO - 注册email路由成功
+2025-04-13 23:52:22,845 - app.main - INFO - 注册auth路由成功
+2025-04-13 23:52:22,846 - app.main - INFO - 注册node_templates路由成功
+2025-04-13 23:52:22,846 - app.main - INFO - 注册workflow路由成功
+2025-04-13 23:52:22,855 - app.main - INFO - 注册flow_variables路由成功
+2025-04-13 23:52:22,855 - app.main - INFO - 注册chat路由成功
+2025-04-13 23:52:22,855 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - ✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - API前缀: /api
+2025-04-13 23:52:22,856 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-13 23:52:32,717 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:52:32,719 - app.main - INFO - 请求完成: GET /auth/verify-token - 401 (耗时: 0.0022s)
+2025-04-13 23:52:32,764 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:52:32,765 - app.main - INFO - 请求完成: GET /auth/verify-token - 401 (耗时: 0.0012s)
+2025-04-13 23:52:32,801 - app.main - INFO - 收到请求: GET /favicon.ico (来自: 172.19.0.1)
+2025-04-13 23:52:32,802 - app.main - INFO - 请求完成: GET /favicon.ico - 404 (耗时: 0.0002s)
+2025-04-13 23:52:35,220 - app.main - INFO - 收到请求: POST /users/login (来自: 172.19.0.1)
+2025-04-13 23:52:35,415 - app.main - INFO - 请求完成: POST /users/login - 200 (耗时: 0.1948s)
+2025-04-13 23:52:35,417 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:52:35,419 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0016s)
+2025-04-13 23:52:35,480 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:52:35,480 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-13 23:52:35,482 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:52:35,483 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:52:35,484 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0015s)
+2025-04-13 23:52:35,484 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:52:35,485 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:52:35,485 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0007s)
+2025-04-13 23:52:35,509 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:52:35,510 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-13 23:52:35,520 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:52:35,520 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-13 23:52:35,527 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:52:35,531 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0041s)
+2025-04-13 23:52:35,547 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:52:35,548 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-13 23:52:35,567 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:52:35,570 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:52:35,572 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0054s)
+2025-04-13 23:52:35,573 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0033s)
+2025-04-13 23:52:35,611 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:52:35,614 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0028s)
+2025-04-13 23:52:37,606 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 172.19.0.1)
+2025-04-13 23:52:37,611 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:52:37,612 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.0057s)
+2025-04-13 23:52:37,615 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:37,621 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:52:37,623 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0076s)
+2025-04-13 23:52:37,654 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:52:37,655 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:52:37,656 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-13 23:52:37,656 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:52:37,656 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:52:37,657 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0007s)
+2025-04-13 23:52:37,670 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:37,671 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:37,675 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:52:37,677 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:52:37,679 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0077s)
+2025-04-13 23:52:37,679 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0084s)
+2025-04-13 23:52:37,720 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:52:37,721 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:52:37,722 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:52:37,723 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:52:37,723 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:52:37,724 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:52:37,724 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0036s)
+2025-04-13 23:52:37,724 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0034s)
+2025-04-13 23:52:37,767 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:37,771 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0039s)
+2025-04-13 23:52:39,735 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:39,750 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0144s)
+2025-04-13 23:52:39,994 - app.main - INFO - 收到请求: GET /node-templates/ (来自: 172.19.0.1)
+2025-04-13 23:52:39,994 - app.main - INFO - 请求完成: GET /node-templates/ - 200 (耗时: 0.0005s)
+2025-04-13 23:52:39,995 - app.main - INFO - 收到请求: GET /node-templates/ (来自: 172.19.0.1)
+2025-04-13 23:52:39,995 - app.main - INFO - 收到请求: GET /node-templates/ (来自: 172.19.0.1)
+2025-04-13 23:52:39,996 - app.main - INFO - 请求完成: GET /node-templates/ - 200 (耗时: 0.0005s)
+2025-04-13 23:52:39,996 - app.main - INFO - 请求完成: GET /node-templates/ - 200 (耗时: 0.0010s)
+2025-04-13 23:52:42,373 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:52:42,373 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:52:42,375 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:52:42,375 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:52:42,376 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:52:42,376 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:52:42,377 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0034s)
+2025-04-13 23:52:42,377 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0043s)
+2025-04-13 23:52:42,388 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:42,389 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:52:42,392 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:42,425 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:42,426 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:42,426 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:42,426 - database.embedding.service - INFO - 创建EmbeddingService单例实例
+2025-04-13 23:52:42,426 - database.embedding.service - INFO - 初始化EmbeddingService，使用LMStudio API: http://localhost:1234/v1
+2025-04-13 23:52:42,426 - database.embedding.lmstudio_client - INFO - 初始化LMStudio客户端，API基础URL: http://localhost:1234/v1
+2025-04-13 23:52:42,426 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:42,428 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:42,431 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:42,464 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:42,465 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:42,465 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:42,465 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:42,466 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:42,467 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0786s)
+2025-04-13 23:52:42,468 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0782s)
+2025-04-13 23:52:42,520 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:52:42,522 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:52:42,526 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:42,560 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:42,560 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:42,560 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:42,560 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:42,561 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:42,563 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:42,595 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:42,595 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:42,595 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:42,595 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:42,595 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:42,597 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:52:42,597 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0748s)
+2025-04-13 23:52:42,598 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0769s)
+2025-04-13 23:52:42,598 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:42,630 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:42,630 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:42,630 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:42,630 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:42,630 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:42,632 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0348s)
+2025-04-13 23:52:43,745 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-13 23:52:43,747 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:43,780 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:43,780 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:43,780 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:43,780 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:43,781 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:43,782 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0368s)
+2025-04-13 23:52:44,150 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-13 23:52:44,151 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:44,183 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:44,184 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:44,184 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:44,184 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:44,184 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:44,185 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0357s)
+2025-04-13 23:52:44,562 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:52:44,564 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:44,596 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:44,597 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:44,597 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:44,597 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:44,597 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:44,598 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0362s)
+2025-04-13 23:52:45,790 - app.main - INFO - 收到请求: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 (来自: 172.19.0.1)
+2025-04-13 23:52:45,792 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:45,824 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:45,824 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:45,824 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:45,825 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:45,825 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:45,826 - app.main - INFO - 请求完成: GET /chats/f00bcb73-6551-4d7e-a760-9d94d92e26d0 - 200 (耗时: 0.0360s)
+2025-04-13 23:52:46,020 - app.main - INFO - 收到请求: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 (来自: 172.19.0.1)
+2025-04-13 23:52:46,022 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:52:46,058 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:52:46,058 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:52:46,058 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:52:46,058 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:52:46,059 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:52:46,060 - app.main - INFO - 请求完成: GET /chats/c418816a-fcc6-4c6a-b252-b546b78ab6e1 - 200 (耗时: 0.0403s)
+2025-04-13 23:53:25,025 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-13 23:53:25,025 - app.main - INFO - 开始导入模块...
+2025-04-13 23:53:25,025 - app.main - INFO - 导入database成功
+2025-04-13 23:53:25,025 - app.main - INFO - 导入models成功
+2025-04-13 23:53:25,025 - app.main - INFO - 导入config成功
+2025-04-13 23:53:25,397 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-13 23:53:25,397 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log
+2025-04-13 23:53:25,677 - app.main - INFO - 导入基本路由成功
+2025-04-13 23:53:25,678 - app.main - INFO - 导入workflow_router成功
+2025-04-13 23:53:25,678 - app.main - INFO - 导入utils成功
+2025-04-13 23:53:25,678 - app.main - INFO - 导入dependencies成功
+2025-04-13 23:53:25,678 - app.main - INFO - 创建数据库表...
+2025-04-13 23:53:25,678 - app.main - INFO - 数据库表创建成功
+2025-04-13 23:53:25,678 - app.main - INFO - 初始化FastAPI应用...
+2025-04-13 23:53:25,685 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:53:25,685 - app.main - INFO - 注册路由...
+2025-04-13 23:53:25,691 - app.main - INFO - 注册user路由成功
+2025-04-13 23:53:25,696 - app.main - INFO - 注册flow路由成功
+2025-04-13 23:53:25,696 - app.main - INFO - 注册email路由成功
+2025-04-13 23:53:25,697 - app.main - INFO - 注册auth路由成功
+2025-04-13 23:53:25,697 - app.main - INFO - 注册node_templates路由成功
+2025-04-13 23:53:25,697 - app.main - INFO - 注册workflow路由成功
+2025-04-13 23:53:25,707 - app.main - INFO - 注册flow_variables路由成功
+2025-04-13 23:53:25,707 - app.main - INFO - 注册chat路由成功
+2025-04-13 23:53:25,707 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - ✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - API前缀: /api
+2025-04-13 23:53:25,708 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-13 23:55:43,065 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:55:43,068 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:55:43,069 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0034s)
+2025-04-13 23:55:43,070 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0020s)
+2025-04-13 23:55:43,102 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:55:43,102 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-13 23:55:43,105 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:43,109 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:55:43,110 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0053s)
+2025-04-13 23:55:43,160 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:55:43,161 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:55:43,161 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-13 23:55:43,162 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:55:43,163 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:55:43,163 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0008s)
+2025-04-13 23:55:43,176 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:43,178 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:55:43,180 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:55:43,181 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:43,181 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:55:43,181 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:55:43,181 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0054s)
+2025-04-13 23:55:43,183 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:55:43,183 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:55:43,185 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:55:43,186 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:55:43,187 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:55:43,189 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0091s)
+2025-04-13 23:55:43,190 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0090s)
+2025-04-13 23:55:43,190 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0092s)
+2025-04-13 23:55:43,191 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0093s)
+2025-04-13 23:55:43,261 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:43,266 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0044s)
+2025-04-13 23:55:45,265 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:45,277 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0115s)
+2025-04-13 23:55:45,572 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:55:45,572 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:55:45,574 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:55:45,575 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:55:45,575 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:55:45,575 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 53e43ec9-ce1e-4f77-8c3d-c559f90ff84c
+2025-04-13 23:55:45,576 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0041s)
+2025-04-13 23:55:45,576 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0039s)
+2025-04-13 23:55:45,580 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:45,581 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:45,583 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:45,614 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:45,615 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:45,615 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:45,615 - database.embedding.service - INFO - 创建EmbeddingService单例实例
+2025-04-13 23:55:45,615 - database.embedding.service - INFO - 初始化EmbeddingService，使用LMStudio API: http://localhost:1234/v1
+2025-04-13 23:55:45,615 - database.embedding.lmstudio_client - INFO - 初始化LMStudio客户端，API基础URL: http://localhost:1234/v1
+2025-04-13 23:55:45,615 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:45,617 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:45,619 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:45,653 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:45,653 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:45,653 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:45,653 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:45,653 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:45,655 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0742s)
+2025-04-13 23:55:45,655 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0742s)
+2025-04-13 23:55:45,658 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:55:45,660 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:45,694 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:45,694 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:45,694 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:45,694 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:45,694 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:45,696 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:55:45,697 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0388s)
+2025-04-13 23:55:45,699 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:45,736 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:45,736 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:45,736 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:45,736 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:45,737 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:45,739 - app.main - INFO - 收到请求: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c (来自: 172.19.0.1)
+2025-04-13 23:55:45,741 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:45,781 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:45,782 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:45,782 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:45,782 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:45,783 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:45,784 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0875s)
+2025-04-13 23:55:45,785 - app.main - INFO - 请求完成: GET /chats/53e43ec9-ce1e-4f77-8c3d-c559f90ff84c - 200 (耗时: 0.0458s)
+2025-04-13 23:55:47,369 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-13 23:55:47,371 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-13 23:55:47,372 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:55:47,372 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:55:47,372 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-13 23:55:47,372 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:47,408 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:47,408 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:47,408 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:47,408 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:47,410 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:47,414 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:55:47,414 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=4be79397-0d91-4827-a0a1-8a2c0e094425, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-13 23:55:47,418 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:55:47,418 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:55:47,418 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0489s)
+2025-04-13 23:55:47,422 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:55:47,423 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:47,456 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:47,456 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:47,456 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:47,456 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:47,457 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:47,458 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0359s)
+2025-04-13 23:55:47,550 - app.main - INFO - 收到请求: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 (来自: 172.19.0.1)
+2025-04-13 23:55:47,551 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:55:47,583 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:55:47,584 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:55:47,584 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:55:47,584 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:55:47,584 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:55:47,585 - app.main - INFO - 请求完成: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 - 200 (耗时: 0.0352s)
+2025-04-13 23:56:01,161 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:56:01,163 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:56:01,164 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0021s)
+2025-04-13 23:56:01,165 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0017s)
+2025-04-13 23:56:01,177 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:56:01,177 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0003s)
+2025-04-13 23:56:01,179 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:01,180 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:56:01,182 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:01,184 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0045s)
+2025-04-13 23:56:01,185 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0052s)
+2025-04-13 23:56:01,218 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:56:01,218 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:56:01,219 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-13 23:56:01,221 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:56:01,222 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:56:01,222 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-13 23:56:01,241 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:01,242 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:01,246 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:01,247 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:01,247 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:56:01,248 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:01,248 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:01,248 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0071s)
+2025-04-13 23:56:01,250 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:01,251 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0081s)
+2025-04-13 23:56:01,251 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:01,252 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:56:01,252 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0041s)
+2025-04-13 23:56:01,253 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0049s)
+2025-04-13 23:56:01,323 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:01,326 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0026s)
+2025-04-13 23:56:03,134 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:03,134 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:03,136 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:03,136 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:56:03,137 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:03,137 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 4be79397-0d91-4827-a0a1-8a2c0e094425
+2025-04-13 23:56:03,137 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0029s)
+2025-04-13 23:56:03,138 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0037s)
+2025-04-13 23:56:03,142 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:03,143 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:03,144 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:03,178 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:03,179 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:03,179 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:03,179 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:03,179 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:03,181 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:03,214 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:03,214 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:03,214 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:03,214 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:03,215 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:03,216 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0737s)
+2025-04-13 23:56:03,216 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0736s)
+2025-04-13 23:56:03,219 - app.main - INFO - 收到请求: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 (来自: 172.19.0.1)
+2025-04-13 23:56:03,221 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:03,260 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:03,260 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:03,260 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:03,260 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:03,261 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:03,262 - app.main - INFO - 收到请求: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 (来自: 172.19.0.1)
+2025-04-13 23:56:03,262 - app.main - INFO - 收到请求: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 (来自: 172.19.0.1)
+2025-04-13 23:56:03,263 - app.main - INFO - 请求完成: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 - 200 (耗时: 0.0434s)
+2025-04-13 23:56:03,264 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:03,298 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:03,298 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:03,298 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:03,298 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:03,298 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:03,300 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:03,336 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:03,337 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:03,337 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:03,337 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:03,339 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:03,341 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:03,342 - app.main - INFO - 请求完成: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 - 200 (耗时: 0.0797s)
+2025-04-13 23:56:03,342 - app.main - INFO - 请求完成: GET /chats/4be79397-0d91-4827-a0a1-8a2c0e094425 - 200 (耗时: 0.0800s)
+2025-04-13 23:56:03,345 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0037s)
+2025-04-13 23:56:03,921 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-13 23:56:03,922 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-13 23:56:03,923 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:03,923 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:03,923 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-13 23:56:03,923 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:03,956 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:03,956 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:03,956 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:03,956 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:03,958 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:03,970 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:03,970 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-13 23:56:03,973 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:03,973 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:03,974 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0525s)
+2025-04-13 23:56:03,976 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:03,978 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:04,009 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:04,010 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:04,010 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:04,010 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:04,012 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:04,013 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0368s)
+2025-04-13 23:56:04,100 - app.main - INFO - 收到请求: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 (来自: 172.19.0.1)
+2025-04-13 23:56:04,102 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:04,133 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:04,133 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:04,133 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:04,133 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:04,135 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:04,136 - app.main - INFO - 请求完成: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 - 200 (耗时: 0.0354s)
+2025-04-13 23:56:16,309 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:56:16,310 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-13 23:56:16,312 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0027s)
+2025-04-13 23:56:16,312 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0025s)
+2025-04-13 23:56:16,319 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:56:16,320 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-13 23:56:16,348 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:56:16,349 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:56:16,349 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0014s)
+2025-04-13 23:56:16,350 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:56:16,350 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:56:16,351 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-13 23:56:16,370 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:56:16,371 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:56:16,371 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0005s)
+2025-04-13 23:56:16,371 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0004s)
+2025-04-13 23:56:16,405 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-13 23:56:16,405 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0002s)
+2025-04-13 23:56:16,411 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:56:16,414 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:56:16,415 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:56:16,417 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0066s)
+2025-04-13 23:56:16,418 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-13 23:56:16,419 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0046s)
+2025-04-13 23:56:16,424 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0091s)
+2025-04-13 23:56:16,425 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0069s)
+2025-04-13 23:56:17,225 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 172.19.0.1)
+2025-04-13 23:56:17,226 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:17,228 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:17,230 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:17,230 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.0048s)
+2025-04-13 23:56:17,231 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0045s)
+2025-04-13 23:56:17,257 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:56:17,258 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:56:17,258 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0009s)
+2025-04-13 23:56:17,259 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-13 23:56:17,260 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-13 23:56:17,260 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0006s)
+2025-04-13 23:56:17,273 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:17,274 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:17,274 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:17,276 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:17,278 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:17,278 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:17,278 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:17,280 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:17,281 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0073s)
+2025-04-13 23:56:17,281 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0072s)
+2025-04-13 23:56:17,282 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:17,282 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:17,283 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0084s)
+2025-04-13 23:56:17,284 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0052s)
+2025-04-13 23:56:17,335 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:17,338 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0028s)
+2025-04-13 23:56:18,847 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:18,848 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:56:18,849 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:18,850 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:18,851 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:56:18,851 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739
+2025-04-13 23:56:18,851 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0041s)
+2025-04-13 23:56:18,852 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0039s)
+2025-04-13 23:56:18,856 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:18,856 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:18,858 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:18,891 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:18,891 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:18,891 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:18,891 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:18,893 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:18,895 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:18,926 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:18,926 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:18,926 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:18,926 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:18,928 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:18,929 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0730s)
+2025-04-13 23:56:18,929 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0728s)
+2025-04-13 23:56:18,931 - app.main - INFO - 收到请求: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 (来自: 172.19.0.1)
+2025-04-13 23:56:18,932 - app.main - INFO - 收到请求: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 (来自: 172.19.0.1)
+2025-04-13 23:56:18,933 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:18,967 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:18,968 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:18,968 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:18,968 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:18,971 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:18,972 - app.main - INFO - 收到请求: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 (来自: 172.19.0.1)
+2025-04-13 23:56:18,973 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:19,006 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:19,006 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:19,006 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:19,006 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:19,007 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:19,009 - app.main - INFO - 请求完成: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 - 200 (耗时: 0.0774s)
+2025-04-13 23:56:19,010 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:19,042 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:19,042 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:19,042 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:19,042 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:19,043 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:19,044 - app.main - INFO - 请求完成: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 - 200 (耗时: 0.1117s)
+2025-04-13 23:56:19,044 - app.main - INFO - 请求完成: GET /chats/5f8a5fc9-a8f5-481a-b2ae-a41c5c8f1739 - 200 (耗时: 0.0723s)
+2025-04-13 23:56:19,341 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:19,352 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0105s)
+2025-04-13 23:56:19,618 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-13 23:56:19,622 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-13 23:56:19,622 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:19,623 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:56:19,623 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-13 23:56:19,624 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:19,662 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:19,663 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:19,663 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:19,663 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:19,663 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:19,675 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:56:19,675 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=6a4d14ab-9a60-4881-b7fe-be11b8fa96e7, name='新聊天', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-13 23:56:19,678 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:56:19,678 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:56:19,678 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0599s)
+2025-04-13 23:56:19,681 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:56:19,684 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:19,717 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:19,718 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:19,718 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:19,718 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:19,718 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:19,719 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0378s)
+2025-04-13 23:56:19,764 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:56:19,766 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:56:19,801 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:56:19,802 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:56:19,802 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:56:19,802 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:56:19,802 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:56:19,804 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0389s)
+2025-04-13 23:58:07,360 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,361 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:58:07,361 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:58:07,361 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,362 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:58:07,365 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:58:07,365 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:58:07,366 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,398 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,398 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,398 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,398 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,399 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,402 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:58:07,404 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:58:07,405 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:58:07,406 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0448s)
+2025-04-13 23:58:07,406 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0459s)
+2025-04-13 23:58:07,406 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,406 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0455s)
+2025-04-13 23:58:07,407 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0452s)
+2025-04-13 23:58:07,407 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0461s)
+2025-04-13 23:58:07,409 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,410 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0037s)
+2025-04-13 23:58:07,411 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,442 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,443 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,443 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,443 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,443 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,444 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,445 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:58:07,445 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:58:07,445 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0359s)
+2025-04-13 23:58:07,447 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:58:07,447 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:58:07,448 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:58:07,448 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:58:07,451 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0059s)
+2025-04-13 23:58:07,451 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0061s)
+2025-04-13 23:58:07,452 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0070s)
+2025-04-13 23:58:07,490 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:58:07,492 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,528 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,528 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,528 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,528 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,529 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,530 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,530 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:07,531 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0408s)
+2025-04-13 23:58:07,532 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,567 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,568 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,568 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,568 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,568 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,571 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,606 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,608 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,608 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,608 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,610 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,611 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0807s)
+2025-04-13 23:58:07,611 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0812s)
+2025-04-13 23:58:07,659 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:58:07,661 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:58:07,664 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,696 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,697 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,697 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,697 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,698 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,700 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,731 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,731 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,731 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,731 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,733 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,734 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:58:07,735 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0752s)
+2025-04-13 23:58:07,735 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0741s)
+2025-04-13 23:58:07,736 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:58:07,768 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:58:07,768 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:58:07,768 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:58:07,768 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:58:07,769 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:58:07,771 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0362s)
+2025-04-13 23:58:09,598 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:58:09,604 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0058s)
+2025-04-13 23:59:04,365 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-13 23:59:04,366 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:59:04,368 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-13 23:59:04,368 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 6a4d14ab-9a60-4881-b7fe-be11b8fa96e7
+2025-04-13 23:59:04,369 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:04,406 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:04,406 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:04,406 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:04,407 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:04,408 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:04,409 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0441s)
+2025-04-13 23:59:04,410 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0438s)
+2025-04-13 23:59:04,413 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:59:04,415 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:04,445 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:04,446 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:04,446 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:04,446 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:04,447 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:04,449 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0356s)
+2025-04-13 23:59:04,492 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:59:04,494 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:04,526 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:04,526 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:04,526 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:04,526 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:04,528 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:04,529 - app.main - INFO - 收到请求: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 (来自: 172.19.0.1)
+2025-04-13 23:59:04,530 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0372s)
+2025-04-13 23:59:04,531 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:04,562 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:04,562 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:04,562 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:04,562 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:04,564 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:04,565 - app.main - INFO - 请求完成: GET /chats/6a4d14ab-9a60-4881-b7fe-be11b8fa96e7 - 200 (耗时: 0.0356s)
+2025-04-13 23:59:17,926 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-13 23:59:17,928 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-13 23:59:17,928 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:59:17,928 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-13 23:59:17,928 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-13 23:59:17,928 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:17,960 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:17,960 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:17,960 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:17,960 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:17,962 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:17,975 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-13 23:59:17,975 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=7dab15a3-42c1-4d32-8d6a-447b95bd0f95, name='chat-20250414-085917', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-13 23:59:17,977 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-13 23:59:17,977 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-13 23:59:17,978 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0517s)
+2025-04-13 23:59:17,980 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-13 23:59:17,981 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:18,013 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:18,014 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:18,014 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:18,014 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:18,015 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:18,017 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0366s)
+2025-04-13 23:59:18,047 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-13 23:59:18,049 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-13 23:59:18,080 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-13 23:59:18,080 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-13 23:59:18,080 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-13 23:59:18,080 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-13 23:59:18,082 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-13 23:59:18,083 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0355s)
+2025-04-14 00:02:01,897 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:01,898 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:01,899 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:01,900 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:01,901 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:01,934 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:01,935 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:01,935 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:01,935 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:01,944 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:01,945 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0478s)
+2025-04-14 00:02:01,946 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0477s)
+2025-04-14 00:02:01,948 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:01,950 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:01,983 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:01,983 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:01,983 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:01,984 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:01,984 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:01,985 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0367s)
+2025-04-14 00:02:01,988 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:01,990 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:02,022 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:02,022 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:02,022 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:02,022 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:02,022 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:02,024 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:02,024 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0361s)
+2025-04-14 00:02:02,025 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:02,056 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:02,057 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:02,057 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:02,057 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:02,057 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:02,059 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0347s)
+2025-04-14 00:02:09,107 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:09,107 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:09,109 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:09,109 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:09,110 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:09,146 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:09,146 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:09,146 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:09,146 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:09,146 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:09,148 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0408s)
+2025-04-14 00:02:09,148 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0406s)
+2025-04-14 00:02:09,151 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:09,152 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:09,188 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:09,188 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:09,188 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:09,188 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:09,188 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:09,190 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0388s)
+2025-04-14 00:02:09,192 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:09,194 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:09,227 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:09,227 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:09,227 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:09,227 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:09,227 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:09,229 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:09,229 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0365s)
+2025-04-14 00:02:09,230 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:09,262 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:09,263 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:09,263 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:09,263 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:09,263 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:09,264 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0356s)
+2025-04-14 00:02:18,887 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:18,887 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:18,889 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:18,890 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:18,891 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:18,930 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:18,931 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:18,931 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:18,931 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:18,931 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:18,933 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0456s)
+2025-04-14 00:02:18,934 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0467s)
+2025-04-14 00:02:18,939 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:18,943 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:18,980 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:18,980 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:18,980 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:18,980 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:18,981 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:18,982 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0430s)
+2025-04-14 00:02:18,985 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:18,986 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:19,018 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:19,018 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:19,018 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:19,018 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:19,018 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:19,020 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:19,020 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0354s)
+2025-04-14 00:02:19,021 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:19,052 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:19,053 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:19,053 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:19,053 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:19,053 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:19,055 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0347s)
+2025-04-14 00:02:50,225 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-14 00:02:50,226 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 172.19.0.1)
+2025-04-14 00:02:50,228 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0027s)
+2025-04-14 00:02:50,228 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.0017s)
+2025-04-14 00:02:50,279 - app.main - INFO - 收到请求: GET /flows (来自: 172.19.0.1)
+2025-04-14 00:02:50,280 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0004s)
+2025-04-14 00:02:50,280 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:50,283 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 00:02:50,285 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0045s)
+2025-04-14 00:02:50,327 - app.main - INFO - 收到请求: GET /flows/ (来自: 172.19.0.1)
+2025-04-14 00:02:50,338 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0103s)
+2025-04-14 00:02:50,342 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-14 00:02:50,343 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-14 00:02:50,343 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0010s)
+2025-04-14 00:02:50,345 - app.main - INFO - 收到请求: GET /api/version (来自: 172.19.0.1)
+2025-04-14 00:02:50,345 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-14 00:02:50,346 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0007s)
+2025-04-14 00:02:50,358 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:50,359 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:50,362 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 00:02:50,366 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 00:02:50,367 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0081s)
+2025-04-14 00:02:50,367 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:50,368 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0081s)
+2025-04-14 00:02:50,368 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:50,369 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:50,369 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0020s)
+2025-04-14 00:02:50,401 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:50,403 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:50,403 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:50,403 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0022s)
+2025-04-14 00:02:50,443 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:50,446 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0029s)
+2025-04-14 00:02:52,445 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:52,455 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0100s)
+2025-04-14 00:02:55,822 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:55,823 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat (来自: 172.19.0.1)
+2025-04-14 00:02:55,824 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:55,824 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:55,825 - backend.app.routers.flow - INFO - Attempting to get last chat ID for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb for user: 27c83191-caae-4df4-a217-b6398a62061b
+2025-04-14 00:02:55,825 - backend.app.routers.flow - INFO - Found flow, returning last_interacted_chat_id: 7dab15a3-42c1-4d32-8d6a-447b95bd0f95
+2025-04-14 00:02:55,826 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0035s)
+2025-04-14 00:02:55,826 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/last_chat - 200 (耗时: 0.0033s)
+2025-04-14 00:02:55,834 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:55,835 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:55,836 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:55,869 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:55,869 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:55,869 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:55,869 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:55,870 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:55,871 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:55,904 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:55,904 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:55,904 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:55,904 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:55,905 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:55,906 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0721s)
+2025-04-14 00:02:55,906 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0715s)
+2025-04-14 00:02:55,910 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:55,910 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:55,912 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:55,945 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:55,946 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:55,946 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:55,946 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:55,946 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:55,948 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:55,979 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:55,979 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:55,979 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:55,979 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:55,980 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:55,982 - app.main - INFO - 收到请求: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 (来自: 172.19.0.1)
+2025-04-14 00:02:55,982 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0721s)
+2025-04-14 00:02:55,982 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0716s)
+2025-04-14 00:02:55,983 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:56,015 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:56,016 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:56,016 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:56,016 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:56,016 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:56,018 - app.main - INFO - 请求完成: GET /chats/7dab15a3-42c1-4d32-8d6a-447b95bd0f95 - 200 (耗时: 0.0360s)
+2025-04-14 00:02:57,235 - app.main - INFO - 收到请求: POST /chats/ (来自: 172.19.0.1)
+2025-04-14 00:02:57,237 - backend.app.routers.chat - INFO - 成功进入 create_chat 函数: POST /chats/
+2025-04-14 00:02:57,237 - backend.app.routers.chat - INFO - 验证 flow ownership: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 00:02:57,237 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 00:02:57,237 - backend.app.routers.chat - INFO - 调用 chat_service.create_chat
+2025-04-14 00:02:57,237 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:57,272 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:57,272 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:57,272 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:57,272 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:57,272 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:57,285 - backend.app.services.chat_service - INFO - 已为流程图 61aa7e47-7611-41e8-b7bb-a438f0c09adb 创建聊天 f5585b38-840b-4e29-a94f-7b851319585c
+2025-04-14 00:02:57,285 - backend.app.routers.chat - INFO - chat_service.create_chat 返回: <Chat(id=f5585b38-840b-4e29-a94f-7b851319585c, name='chat-20250414-090257', flow_id=61aa7e47-7611-41e8-b7bb-a438f0c09adb)>
+2025-04-14 00:02:57,288 - backend.app.routers.chat - INFO - 更新 Flow 61aa7e47-7611-41e8-b7bb-a438f0c09adb 的 last_interacted_chat_id 为 f5585b38-840b-4e29-a94f-7b851319585c
+2025-04-14 00:02:57,288 - backend.app.routers.chat - INFO - 成功创建聊天，返回 chat 对象 ID: f5585b38-840b-4e29-a94f-7b851319585c
+2025-04-14 00:02:57,288 - app.main - INFO - 请求完成: POST /chats/ - 200 (耗时: 0.0527s)
+2025-04-14 00:02:57,291 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:02:57,293 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:57,324 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:57,324 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:57,325 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:57,325 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:57,325 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:57,326 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0350s)
+2025-04-14 00:02:57,359 - app.main - INFO - 收到请求: GET /chats/f5585b38-840b-4e29-a94f-7b851319585c (来自: 172.19.0.1)
+2025-04-14 00:02:57,360 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:02:57,391 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:02:57,391 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:02:57,391 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:02:57,391 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:02:57,392 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:02:57,393 - app.main - INFO - 请求完成: GET /chats/f5585b38-840b-4e29-a94f-7b851319585c - 200 (耗时: 0.0341s)
+2025-04-14 00:03:02,606 - app.main - INFO - 收到请求: PUT /chats/f5585b38-840b-4e29-a94f-7b851319585c (来自: 172.19.0.1)
+2025-04-14 00:03:02,608 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:03:02,639 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:03:02,640 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:03:02,640 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:03:02,640 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:03:02,640 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:03:02,652 - backend.app.services.chat_service - INFO - 已更新聊天 f5585b38-840b-4e29-a94f-7b851319585c
+2025-04-14 00:03:02,653 - app.main - INFO - 请求完成: PUT /chats/f5585b38-840b-4e29-a94f-7b851319585c - 200 (耗时: 0.0470s)
+2025-04-14 00:03:02,657 - app.main - INFO - 收到请求: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
+2025-04-14 00:03:02,660 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:03:02,695 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:03:02,695 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:03:02,695 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:03:02,695 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:03:02,695 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:03:02,697 - app.main - INFO - 请求完成: GET /chats/flow/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0390s)
+2025-04-14 00:03:05,672 - app.main - INFO - 收到请求: POST /chats/f5585b38-840b-4e29-a94f-7b851319585c/messages (来自: 172.19.0.1)
+2025-04-14 00:03:05,674 - backend.deepseek - INFO - 初始化DeepSeek客户端，使用模型: deepseek-chat
+2025-04-14 00:03:05,711 - backend.app.services.chat_service - INFO - Initializing WorkflowChain in ChatService (example setup)
+2025-04-14 00:03:05,711 - backend.app.services.chat_service - INFO - Initializing RAGChain in ChatService (example setup)
+2025-04-14 00:03:05,711 - database.embedding.service - INFO - Initializing DatabaseEmbeddingService...
+2025-04-14 00:03:05,711 - database.embedding.service - INFO - DatabaseEmbeddingService initialized.
+2025-04-14 00:03:05,712 - backend.langchainchat.chains.rag_chain - INFO - RAG chain created successfully using LCEL.
+2025-04-14 00:03:05,713 - backend.app.routers.chat - INFO - Flow ownership 验证通过 for flow: 61aa7e47-7611-41e8-b7bb-a438f0c09adb linked to chat: f5585b38-840b-4e29-a94f-7b851319585c
+2025-04-14 00:03:05,713 - backend.app.services.chat_service - INFO - Processing message for chat f5585b38-840b-4e29-a94f-7b851319585c: 341...
+2025-04-14 00:03:05,724 - backend.app.services.chat_service - INFO - 已向聊天 f5585b38-840b-4e29-a94f-7b851319585c 添加一条 user 消息
+2025-04-14 00:03:05,724 - backend.langchainchat.chains.workflow_chain - INFO - WorkflowChain processing input: 341...
+2025-04-14 00:03:05,724 - backend.langchainchat.chains.workflow_chain - INFO - Calling LLM with prompt and tools...
+2025-04-14 00:03:05,724 - backend.deepseek - INFO - 准备DeepSeek API调用: 2条消息
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - ===== DEEPSEEK API 请求详情 =====
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 消息 1 (system) 完整内容:
+2025-04-14 00:03:05,725 - backend.deepseek - INFO -   You are an AI assistant for creating flowcharts. You can use tools to create nodes, connect them, set properties, or ask for more information. Respond in Chinese.
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 消息 2 (user) 完整内容:
+2025-04-14 00:03:05,725 - backend.deepseek - INFO -   341
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 工具定义: [{"type": "function", "function": {"name": "create_node", "description": "创建一个流程图节点", "parameters": {"description": "节点创建参数", "properties": {"node_type": {"title": "Node Type", "type": "string"}, "node_label": {"title": "Node Label", "type": "string"}, "position": {"anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}], "default": null, "title": "Position"}, "properties": {"anyOf": [{"type": "object"}, {"type": "null"}], "default": null, "title": "Properties"}}, "required": ["node_type", "node_label"], "title": "NodeParams", "type": "object"}}}, {"type": "function", "function": {"name": "connect_nodes", "description": "连接两个流程图节点", "parameters": {"description": "节点连接参数", "properties": {"source_id": {"title": "Source Id", "type": "string"}, "target_id": {"title": "Target Id", "type": "string"}, "label": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "title": "Label"}}, "required": ["source_id", "target_id"], "title": "ConnectionParams", "type": "object"}}}, {"type": "function", "function": {"name": "set_properties", "description": "设置节点或连接的属性", "parameters": {"description": "属性设置参数", "properties": {"element_id": {"title": "Element Id", "type": "string"}, "properties": {"type": "object", "title": "Properties"}}, "required": ["element_id", "properties"], "title": "PropertyParams", "type": "object"}}}, {"type": "function", "function": {"name": "ask_more_info", "description": "当信息不足时，向用户询问更多问题", "parameters": {"description": "追加问题参数", "properties": {"questions": {"items": {"type": "string"}, "title": "Questions", "type": "array"}, "context": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "title": "Context"}}, "required": ["questions"], "title": "QuestionsParams", "type": "object"}}}, {"type": "function", "function": {"name": "generate_text", "description": "根据提示生成文本内容", "parameters": {"description": "文本生成参数", "properties": {"prompt": {"title": "Prompt", "type": "string"}, "max_length": {"default": 500, "title": "Max Length", "type": "integer"}}, "required": ["prompt"], "title": "TextGenerationParams", "type": "object"}}}]
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 模型: deepseek-chat
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 温度: 0.3
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 最大令牌数: 1000
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - JSON模式: False
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 流式响应: False
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - ==================================
+2025-04-14 00:03:05,725 - backend.deepseek - DEBUG - 调用DeepSeek API: 模型=deepseek-chat, 温度=0.3, JSON模式=False
+2025-04-14 00:03:05,725 - backend.deepseek - INFO - 开始非流式API调用
+2025-04-14 00:03:05,990 - httpx - INFO - HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+2025-04-14 00:03:11,330 - backend.deepseek - INFO - 非流式API调用完成，接收到47字符
+2025-04-14 00:03:11,331 - backend.deepseek - INFO - ===== DEEPSEEK API 响应详情 =====
+2025-04-14 00:03:11,331 - backend.deepseek - INFO - 响应完整内容:
+2025-04-14 00:03:11,331 - backend.deepseek - INFO -   你好！请问你是想创建一个流程图，还是需要帮助完成其他与流程图相关的任务？可以告诉我更多细节吗？
+2025-04-14 00:03:11,331 - backend.deepseek - INFO - ==================================
+2025-04-14 00:03:11,331 - backend.deepseek - INFO - DeepSeek API调用成功
+2025-04-14 00:03:11,331 - backend.langchainchat.chains.workflow_chain - INFO - LLM direct response/summary: 你好！请问你是想创建一个流程图，还是需要帮助完成其他与流程图相关的任务？可以告诉我更多细节吗？...
+2025-04-14 00:03:11,331 - backend.langchainchat.chains.workflow_chain - INFO - No tool calls detected in LLM response.
+2025-04-14 00:03:11,331 - backend.langchainchat.chains.workflow_chain - ERROR - Error in WorkflowChain execution: 2 validation errors for WorkflowChainOutput
+nodes
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+connections
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+Traceback (most recent call last):
+  File "/workspace/backend/langchainchat/chains/workflow_chain.py", line 282, in _acall
+    final_output = WorkflowChainOutput(
+  File "/home/vscode/.local/lib/python3.10/site-packages/pydantic/main.py", line 176, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for WorkflowChainOutput
+nodes
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+connections
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+2025-04-14 00:03:11,344 - backend.app.services.chat_service - ERROR - WorkflowChain returned an error: 2 validation errors for WorkflowChainOutput
+nodes
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+connections
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+2025-04-14 00:03:11,351 - backend.app.services.chat_service - INFO - 已向聊天 f5585b38-840b-4e29-a94f-7b851319585c 添加一条 assistant 消息
+2025-04-14 00:03:11,352 - backend.app.routers.chat - ERROR - ChatService process_chat_message 返回错误: 2 validation errors for WorkflowChainOutput
+nodes
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+connections
+  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.7/v/list_type
+2025-04-14 00:03:11,354 - app.main - INFO - 请求完成: POST /chats/f5585b38-840b-4e29-a94f-7b851319585c/messages - 200 (耗时: 5.6811s)

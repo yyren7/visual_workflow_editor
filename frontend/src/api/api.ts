@@ -778,9 +778,20 @@ export const exportFlowVariablesToJson = async (flowId: string): Promise<{data: 
 export const chatApi = {
   // 创建新的聊天会话
   createChat: async (flowId: string, title?: string) => {
+    // 获取当前日期时间并格式化
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // 月份从 0 开始
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const formattedDateTime = `${year}${month}${day}-${hours}${minutes}${seconds}`;
+    const defaultChatName = `chat-${formattedDateTime}`;
+
     const chatDataToSend = {
       flow_id: flowId,
-      name: title || "新聊天",
+      name: title || defaultChatName, // 使用生成的默认名称
       chat_data: {}
     };
     // 直接请求带尾部斜杠的路径
