@@ -177,15 +177,17 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
                 console.log("FlowEditor: Debounced save triggered.");
                 dispatch(saveFlow());
           } else {
-              console.log("FlowEditor: Debounced save skipped (conditions not met).");
+              console.log(`FlowEditor: Debounced save skipped (conditions not met: flowId=${currentFlowId}, isLoading=${isLoading}, isSaving=${isSaving}, initialLoad=${isInitialLoad.current}).`);
           }
       }, SAVE_DEBOUNCE_MS),
-      [dispatch, currentFlowId, isLoading, isSaving]
+      // Remove isLoading and isSaving from dependencies to prevent loop
+      [dispatch, currentFlowId]
   );
 
   // --- Effect to trigger debounced save on changes (now relies on history changes) ---
   useEffect(() => {
     if (!isInitialLoad.current) {
+        console.log(`FlowEditor: Change detected! Name: ${flowName}, Nodes count: ${nodes.length}, Edges count: ${edges.length}`);
         console.log("FlowEditor: Detected change in nodes/edges/name via Redux state. Debouncing save...");
         debouncedSave();
     }

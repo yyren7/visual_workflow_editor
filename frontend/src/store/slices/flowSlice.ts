@@ -156,11 +156,13 @@ const flowCoreReducer = createReducer(initialCoreState, (builder) => {
       state.edges = action.payload;
     })
     .addCase(updateNodeData, (state, action) => {
-      state.nodes = state.nodes.map(node =>
-        node.id === action.payload.id
-          ? { ...node, data: { ...node.data, ...action.payload.data } }
-          : node
-      );
+      const nodeIndex = state.nodes.findIndex(node => node.id === action.payload.id);
+      if (nodeIndex !== -1) {
+        state.nodes[nodeIndex].data = {
+          ...state.nodes[nodeIndex].data,
+          ...action.payload.data
+        };
+      }
     })
     .addCase(addNode, (state, action) => {
       state.nodes.push(action.payload); // Simple push, assumes payload is valid Node
