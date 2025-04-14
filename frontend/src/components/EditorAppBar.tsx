@@ -20,8 +20,6 @@ import LanguageSelector from './LanguageSelector';
 import { useTranslation } from 'react-i18next';
 import SaveIcon from '@mui/icons-material/Save';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import UndoIcon from '@mui/icons-material/Undo';
-import RedoIcon from '@mui/icons-material/Redo';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale/zh-CN';
 import { enUS } from 'date-fns/locale/en-US';
@@ -39,10 +37,6 @@ interface EditorAppBarProps {
   onLogout: () => void;
   isSaving?: boolean;
   lastSaveTime?: string | null;
-  onUndo: () => void;
-  onRedo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
 }
 
 // Helper to get locale for date-fns
@@ -65,10 +59,6 @@ const EditorAppBar: React.FC<EditorAppBarProps> = ({
   onLogout,
   isSaving,
   lastSaveTime,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
 }) => {
   const { t, i18n } = useTranslation();
   const [localFlowName, setLocalFlowName] = useState<string>(flowName);
@@ -172,22 +162,6 @@ const EditorAppBar: React.FC<EditorAppBarProps> = ({
           <IconButton color="inherit" onClick={onToggleSidebar} size="small">
             <AddIcon />
           </IconButton>
-        </Tooltip>
-
-        <Tooltip title={t('editorAppBar.undo', 'Undo')}>
-          <span>
-            <IconButton color="inherit" onClick={onUndo} disabled={!canUndo} size="small">
-              <UndoIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-
-        <Tooltip title={t('editorAppBar.redo', 'Redo')}>
-          <span>
-            <IconButton color="inherit" onClick={onRedo} disabled={!canRedo} size="small">
-              <RedoIcon />
-            </IconButton>
-          </span>
         </Tooltip>
 
         <Tooltip title={t('flowEditor.autoLayout')}>

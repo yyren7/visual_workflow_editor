@@ -1,46 +1,27 @@
-import { createSlice, PayloadAction, createAsyncThunk, ActionReducerMapBuilder, SerializedError, createReducer } from '@reduxjs/toolkit';
-import { Node, Edge, addEdge as reactFlowAddEdge, NodeChange, EdgeChange, applyNodeChanges, applyEdgeChanges } from 'reactflow';
+import { createSlice, PayloadAction, createAsyncThunk, ActionReducerMapBuilder, SerializedError } from '@reduxjs/toolkit';
+import { Node, Edge, addEdge as reactFlowAddEdge } from 'reactflow';
 import { NodeData } from '../../components/FlowEditor'; // Adjust path if needed
 import { getFlow, updateFlow } from '../../api/flowApi'; // API function to fetch flow data
 import { RootState } from '../store';
-import undoable, { StateWithHistory, ActionCreators as UndoActionCreators } from 'redux-undo'; // Import redux-undo
 
-// Define the core state managed by undo/redo
-interface FlowCoreState {
-    nodes: Node<NodeData>[];
-    edges: Edge[];
-}
-
-// Define the overall flow state including history
 interface FlowState {
   currentFlowId: string | null;
   flowName: string;
-  history: StateWithHistory<FlowCoreState>; // Use redux-undo state shape
+  nodes: Node<NodeData>[];
+  edges: Edge[];
   isLoading: boolean;
   error: string | null;
+  // Add other relevant state, e.g., selectedNodeId?
   isSaving: boolean;
   saveError: string | null;
-  lastSaveTime: string | null; // Keep as ISO string for serialization
+  lastSaveTime: string | null;
 }
 
-// Initial state for the core undoable part
-const initialCoreState: FlowCoreState = {
-    nodes: [],
-    edges: [],
-};
-
-// Initial state for the entire slice
 const initialState: FlowState = {
   currentFlowId: null,
-  flowName: 'Untitled Flow',
-  history: { // Initialize history structure
-      past: [],
-      present: initialCoreState,
-      future: [],
-      _latestUnfiltered: initialCoreState, // Required by redux-undo
-      group: null, // Required by redux-undo
-      index: 0 // Required by redux-undo
-  },
+  flowName: 'Untitled Flow', // Default name
+  nodes: [],
+  edges: [],
   isLoading: false,
   error: null,
   isSaving: false,
@@ -97,10 +78,8 @@ interface SaveFlowArgs {
 export const saveFlow = createAsyncThunk<SaveFlowPayload, void, { state: RootState, rejectValue: string }>( // Get state type from RootState
     'flow/saveStatus',
     async (_, { getState, rejectWithValue }) => {
-        // Use history.present for nodes/edges
-        const state = getState().flow;
-        const { currentFlowId, flowName, history } = state;
-        const { nodes, edges } = history.present; // Get current nodes/edges from history
+        const state = getState().flow; // Get current flow state
+        const { currentFlowId, flowName, nodes, edges } = state;
 
         if (!currentFlowId) {
             return rejectWithValue('No active flow to save');
@@ -108,9 +87,10 @@ export const saveFlow = createAsyncThunk<SaveFlowPayload, void, { state: RootSta
 
         console.log(`Redux: Attempting to save flow ${currentFlowId}...`);
         try {
+            // Prepare data for the API
             const updateData = {
                 name: flowName,
-                flow_data: { nodes, edges } // Use nodes/edges from history.present
+                flow_data: { nodes, edges }
             };
             await updateFlow(currentFlowId, updateData);
             const saveTime = new Date().toISOString();
@@ -134,187 +114,131 @@ export const saveFlow = createAsyncThunk<SaveFlowPayload, void, { state: RootSta
     }
 );
 
-// --- Actions for Core Reducer ---
-// We still define action creators using createSlice, but the logic moves to flowCoreReducer
-
-// Placeholder actions - their logic will be in flowCoreReducer
-const setNodes = createSlice({ name: 'flowCore', initialState: initialCoreState, reducers: { setNodes: (state, action: PayloadAction<Node<NodeData>[]>) => {} } }).actions.setNodes;
-const setEdges = createSlice({ name: 'flowCore', initialState: initialCoreState, reducers: { setEdges: (state, action: PayloadAction<Edge[]>) => {} } }).actions.setEdges;
-const updateNodeData = createSlice({ name: 'flowCore', initialState: initialCoreState, reducers: { updateNodeData: (state, action: PayloadAction<{ id: string; data: Partial<NodeData> }>) => {} } }).actions.updateNodeData;
-const addNode = createSlice({ name: 'flowCore', initialState: initialCoreState, reducers: { addNode: (state, action: PayloadAction<Node<NodeData>>) => {} } }).actions.addNode;
-const addEdgeAction = createSlice({ name: 'flowCore', initialState: initialCoreState, reducers: { addEdge: (state, action: PayloadAction<Edge>) => {} } }).actions.addEdge; // Renamed to avoid conflict with reactFlowAddEdge import
-const removeElements = createSlice({ name: 'flowCore', initialState: initialCoreState, reducers: { removeElements: (state, action: PayloadAction<{ nodeIds: string[]; edgeIds: string[] }>) => {} } }).actions.removeElements;
-
-
-// --- Core Reducer for Nodes and Edges (Managed by redux-undo) ---
-const flowCoreReducer = createReducer(initialCoreState, (builder) => {
-  builder
-    .addCase(setNodes, (state, action) => {
-      state.nodes = action.payload;
-    })
-    .addCase(setEdges, (state, action) => {
-      state.edges = action.payload;
-    })
-    .addCase(updateNodeData, (state, action) => {
-      state.nodes = state.nodes.map(node =>
-        node.id === action.payload.id
-          ? { ...node, data: { ...node.data, ...action.payload.data } }
-          : node
-      );
-    })
-    .addCase(addNode, (state, action) => {
-      state.nodes.push(action.payload); // Simple push, assumes payload is valid Node
-    })
-    .addCase(addEdgeAction, (state, action) => {
-      // Use React Flow's helper to add the edge
-      state.edges = reactFlowAddEdge(action.payload, state.edges);
-    })
-    .addCase(removeElements, (state, action) => {
-      const { nodeIds, edgeIds } = action.payload;
-      state.nodes = state.nodes.filter(n => !nodeIds.includes(n.id));
-      // Also remove edges connected to deleted nodes
-      state.edges = state.edges.filter(e => !edgeIds.includes(e.id) && !nodeIds.includes(e.source) && !nodeIds.includes(e.target));
-    })
-    // Handle React Flow's batch changes via setNodes/setEdges
-    .addCase(fetchFlowById.fulfilled, (state, action) => {
-      // This case handles the initial load, directly setting the state
-      state.nodes = action.payload.nodes || [];
-      state.edges = action.payload.edges || [];
-    });
-});
-
-// Wrap the core reducer with undoable
-const undoableFlowCoreReducer = undoable(flowCoreReducer, {
-  limit: 50, // Set a limit for the history
-  // Filter out actions that shouldn't affect undo/redo if needed
-  // filter: filterActions(['flow/fetchByIdStatus/fulfilled']),
-});
-
-// --- Main Flow Slice ---
 const flowSlice = createSlice({
   name: 'flow',
   initialState,
   reducers: {
-    // Actions that modify non-undoable state
-    setCurrentFlowId: (state, action: PayloadAction<string | null>) => {
+    // Action to set the current flow ID (e.g., when navigating or selecting)
+    setCurrentFlowId: (state: FlowState, action: PayloadAction<string | null>) => {
+      // If ID changes, reset related state? Or let fetch handle it?
       if (state.currentFlowId !== action.payload) {
-        state.currentFlowId = action.payload;
-        // Reset non-history state and the history itself
-        state.flowName = 'Untitled Flow';
-        state.error = null;
-        state.isLoading = false;
-        state.isSaving = false;
-        state.saveError = null;
-        state.lastSaveTime = null;
-        // Reset history to initial state
-        state.history = {
-            past: [],
-            present: initialCoreState,
-            future: [],
-            _latestUnfiltered: initialCoreState, group: null, index: 0
-        };
+          state.currentFlowId = action.payload;
+          // Reset state when ID changes before fetching new data
+          state.nodes = [];
+          state.edges = [];
+          state.flowName = 'Untitled Flow';
+          state.error = null;
+          state.isLoading = false; // Will be set true by fetch thunk
+          // Reset save status when flow changes
+          state.isSaving = false;
+          state.saveError = null;
+          state.lastSaveTime = null;
       }
     },
-    setFlowName: (state, action: PayloadAction<string>) => {
-      state.flowName = action.payload;
-      // Note: flowName changes are NOT undoable with this setup.
-      // If needed, move flowName into FlowCoreState and the core reducer.
+    // Direct reducers to update nodes/edges (e.g., from React Flow changes)
+    // These might be replaced by actions dispatched from useReactFlowManager or similar
+    setNodes: (state: FlowState, action: PayloadAction<Node<NodeData>[]>) => {
+      state.nodes = action.payload;
+      // TODO: Consider triggering auto-save here via middleware or another thunk?
     },
-    clearSaveError: (state) => {
-      state.saveError = null;
+    setEdges: (state: FlowState, action: PayloadAction<Edge[]>) => {
+      state.edges = action.payload;
+      // TODO: Consider triggering auto-save here?
     },
-    // Action creators for undoable actions are defined above using createSlice hack
-    // Their logic is handled by flowCoreReducer and undoable()
+    addNode: (state: FlowState, action: PayloadAction<Node<NodeData>>) => {
+        // Simple concat, assumes payload is a single node object
+        state.nodes.push(action.payload);
+        // TODO: Trigger auto-save?
+    },
+    addEdge: (state: FlowState, action: PayloadAction<Edge>) => {
+        // Use React Flow's helper within the reducer for consistency
+        // Note: reactFlowAddEdge might return the same array if edge is duplicate/invalid
+        state.edges = reactFlowAddEdge(action.payload, state.edges);
+        // TODO: Trigger auto-save?
+    },
+    updateNodeData: (state: FlowState, action: PayloadAction<{ id: string; data: Partial<NodeData> }>) => {
+        const nodeIndex = state.nodes.findIndex((n: Node<NodeData>) => n.id === action.payload.id);
+        if (nodeIndex !== -1) {
+            state.nodes[nodeIndex] = {
+                ...state.nodes[nodeIndex],
+                data: { ...state.nodes[nodeIndex].data, ...action.payload.data }
+            };
+        }
+        // TODO: Trigger auto-save?
+    },
+    setFlowName: (state: FlowState, action: PayloadAction<string>) => {
+        state.flowName = action.payload;
+        // TODO: Trigger auto-save for name change?
+    }
+    // Add other reducers as needed (e.g., addNode, addEdge, deleteNode)
   },
-  extraReducers: (builder) => {
+  extraReducers: (builder: ActionReducerMapBuilder<FlowState>) => {
     builder
-      // --- Fetching ---
-      .addCase(fetchFlowById.pending, (state) => {
+      .addCase(fetchFlowById.pending, (state: FlowState) => {
         state.isLoading = true;
         state.error = null;
         console.log('Redux: Fetching flow pending...');
       })
-      .addCase(fetchFlowById.fulfilled, (state, action) => {
-        // Update non-history state
+      .addCase(fetchFlowById.fulfilled, (state: FlowState, action: PayloadAction<FetchFlowByIdPayload>) => {
         state.isLoading = false;
         state.currentFlowId = action.payload.id ?? null;
         state.flowName = action.payload.name;
+        state.nodes = action.payload.nodes;
+        state.edges = action.payload.edges;
         state.error = null;
-        state.lastSaveTime = new Date().toISOString(); // Assume load time is initial "save" state
+        console.log('Redux: Fetching flow fulfilled');
+        // Set lastSaveTime based on loaded data if available?
+        // Or assume loaded state is the last saved state initially.
+        state.lastSaveTime = new Date().toISOString(); // Or from flowData if backend provides it
         state.isSaving = false;
         state.saveError = null;
-        console.log('Redux: Fetching flow fulfilled');
-        // Update history state - Let undoable reducer handle this via addMatcher
-        // The actual nodes/edges data is passed via the action payload
       })
-      .addCase(fetchFlowById.rejected, (state, action) => {
+      .addCase(fetchFlowById.rejected, (state: FlowState, action: PayloadAction<string | undefined, string, { arg: string; requestId: string; rejectedWithValue: boolean; aborted: boolean; condition: boolean; }, SerializedError>) => {
         state.isLoading = false;
         state.error = action.payload ?? action.error.message ?? 'Unknown error';
-        state.currentFlowId = null; // Reset id on fetch failure
+        state.nodes = [];
+        state.edges = [];
         state.flowName = 'Untitled Flow';
-        // Reset history on error
-        state.history = { past: [], present: initialCoreState, future: [], _latestUnfiltered: initialCoreState, group: null, index: 0 };
         console.error('Redux: Fetching flow rejected', action.payload, action.error);
-      })
-      // --- Saving ---
-      .addCase(saveFlow.pending, (state) => {
-        console.log('Redux: Saving flow pending...');
-        state.isSaving = true;
-        state.saveError = null;
-      })
-      .addCase(saveFlow.fulfilled, (state, action) => {
-        console.log('Redux: Saving flow fulfilled at', action.payload.lastSaveTime);
-        state.isSaving = false;
-        state.lastSaveTime = action.payload.lastSaveTime;
-        state.saveError = null;
-        // Clear future history on successful save? Optional, but common.
-        // state.history.future = [];
-      })
-      .addCase(saveFlow.rejected, (state, action) => {
-        console.error('Redux: Saving flow rejected', action.payload, action.error);
-        state.isSaving = false;
-        state.saveError = (action.payload as string) ?? action.error.message ?? 'Unknown save error';
-      })
-      // --- Let undoable reducer handle history actions ---
-      .addMatcher(
-        // Match all actions intended for the core undoable reducer
-        (action) => [
-          setNodes.type,
-          setEdges.type,
-          updateNodeData.type,
-          addNode.type,
-          addEdgeAction.type, // Use the renamed action type
-          removeElements.type,
-          UndoActionCreators.undo().type,
-          UndoActionCreators.redo().type,
-          fetchFlowById.fulfilled.type // Let undoable handle setting initial state too
-        ].includes(action.type),
-        (state, action) => {
-          // Delegate history state updates to the undoable reducer
-          state.history = undoableFlowCoreReducer(state.history, action);
-        }
-      );
+      });
+    // --- Save Flow Cases ---
+    builder
+        .addCase(saveFlow.pending, (state) => {
+            console.log('Redux: Saving flow pending...');
+            state.isSaving = true;
+            state.saveError = null;
+        })
+        .addCase(saveFlow.fulfilled, (state, action: PayloadAction<SaveFlowPayload>) => {
+            console.log('Redux: Saving flow fulfilled at', action.payload.lastSaveTime);
+            state.isSaving = false;
+            state.lastSaveTime = action.payload.lastSaveTime;
+            state.saveError = null;
+        })
+        .addCase(saveFlow.rejected, (state, action) => {
+            console.error('Redux: Saving flow rejected', action.payload, action.error);
+            state.isSaving = false;
+            // Use action.payload (string) or action.error.message
+            state.saveError = (action.payload as string) ?? action.error.message ?? 'Unknown save error';
+            // Keep last successful save time?
+        });
   },
 });
 
-// Export non-undoable actions
-export const { setCurrentFlowId, setFlowName, clearSaveError } = flowSlice.actions;
-
-// Export undoable action creators
-export { setNodes, setEdges, updateNodeData, addNode, addEdgeAction as addEdge, removeElements };
-
-// Export Undo/Redo action creators from redux-undo for convenience
-export const flowUndo = UndoActionCreators.undo;
-export const flowRedo = UndoActionCreators.redo;
+export const {
+    setCurrentFlowId,
+    setNodes,
+    setEdges,
+    addNode,
+    addEdge,
+    updateNodeData,
+    setFlowName
+} = flowSlice.actions;
 
 // Selectors
 export const selectCurrentFlowId = (state: RootState) => state.flow.currentFlowId;
 export const selectFlowName = (state: RootState) => state.flow.flowName;
-export const selectFlowHistory = (state: RootState) => state.flow.history; // Expose history if needed
-export const selectNodes = (state: RootState) => state.flow.history.present.nodes; // Select from present state
-export const selectEdges = (state: RootState) => state.flow.history.present.edges; // Select from present state
-export const selectCanUndo = (state: RootState) => state.flow.history.past.length > 0;
-export const selectCanRedo = (state: RootState) => state.flow.history.future.length > 0;
+export const selectNodes = (state: RootState) => state.flow.nodes;
+export const selectEdges = (state: RootState) => state.flow.edges;
 export const selectIsFlowLoading = (state: RootState) => state.flow.isLoading;
 export const selectFlowError = (state: RootState) => state.flow.error;
 export const selectIsSaving = (state: RootState) => state.flow.isSaving;

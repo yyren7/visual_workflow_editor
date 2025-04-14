@@ -31,8 +31,8 @@ interface FlowCanvasProps extends Omit<ReactFlowProps, 'nodes' | 'edges'> {
   defaultEdgeOptions: DefaultEdgeOptions;
   connectionLineStyle: React.CSSProperties;
   // Pass layout handlers
-  // onAutoLayout: () => void; // No longer required here, handled in FlowEditor/AppBar
-  onOptimizeEdges?: () => void; // Keep optimize optional
+  onAutoLayout: () => void;
+  onOptimizeEdges?: () => void; // Make optimize optional for now
 }
 
 const FlowCanvas: React.FC<FlowCanvasProps> = ({
@@ -50,7 +50,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   onPaneClick,
   onDrop,
   onDragOver,
-  // onAutoLayout, // Remove from destructuring
+  onAutoLayout,
   onOptimizeEdges,
   ...rest // Pass any remaining ReactFlowProps
 }) => {
@@ -139,8 +139,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
           <VersionInfo />
         </div>
 
-        {/* Remove the Panel with layout/optimize buttons */}
-        {/* <Panel position="top-left" style={{ marginTop: '50px', backgroundColor: '#2d2d2d', color: '#fff', borderRadius: '4px', padding: '8px', border: '1px solid #444' }}>
+        <Panel position="top-left" style={{ marginTop: '50px', backgroundColor: '#2d2d2d', color: '#fff', borderRadius: '4px', padding: '8px', border: '1px solid #444' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Tooltip title={t('flowEditor.autoLayout')}>
               <IconButton
@@ -151,6 +150,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 <SortIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+            {/* Optimize button might need adjustment or temporary removal */}
             {onOptimizeEdges && (
               <Tooltip title="Optimize Edges">
                 <IconButton
@@ -163,8 +163,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
               </Tooltip>
             )}
           </Box>
-        </Panel> */}
-
+        </Panel>
       </ReactFlow>
     </Box>
   );

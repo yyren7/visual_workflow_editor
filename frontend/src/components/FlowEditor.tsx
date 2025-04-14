@@ -7,7 +7,6 @@ import ReactFlow, {
   Node,
   Edge,
   Connection,
-  NodeMouseHandler,
   ReactFlowInstance,
   NodeTypes,
   BackgroundVariant,
@@ -15,6 +14,7 @@ import ReactFlow, {
   ConnectionLineType,
   MarkerType,
   Panel,
+  NodeMouseHandler,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import {
@@ -68,6 +68,9 @@ import { RootState, AppDispatch } from '../store/store';
 import {
   fetchFlowById,
   setCurrentFlowId,
+  setNodes as setFlowNodes,
+  setEdges as setFlowEdges,
+  updateNodeData as updateFlowNodeData,
   setFlowName as setReduxFlowName,
   saveFlow,
   selectCurrentFlowId,
@@ -79,13 +82,6 @@ import {
   selectIsSaving,
   selectSaveError,
   selectLastSaveTime,
-  flowUndo,
-  flowRedo,
-  selectCanUndo,
-  selectCanRedo,
-  updateNodeData,
-  setNodes,
-  setEdges,
 } from '../store/slices/flowSlice';
 
 // Import custom hooks
@@ -123,7 +119,7 @@ const nodeTypes: NodeTypes = {
   condition: ConditionNode, // 添加条件判断节点类型
 };
 
-const SAVE_DEBOUNCE_MS = 2000; // Debounce time for saving (e.g., 2 seconds)
+const SAVE_DEBOUNCE_MS = 100; // Debounce time for saving (e.g., 0.1 seconds)
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const { t } = useTranslation();
@@ -142,8 +138,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const isSaving = useSelector(selectIsSaving);
   const saveError = useSelector(selectSaveError);
   const lastSaveTime = useSelector(selectLastSaveTime);
-  const canUndo = useSelector(selectCanUndo);
-  const canRedo = useSelector(selectCanRedo);
 
   // Ref to track if it's the initial load to prevent immediate save
   const isInitialLoad = useRef(true);
@@ -173,26 +167,28 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   // --- Debounced Save Function ---
   const debouncedSave = useCallback(
       debounce(() => {
-          if (currentFlowId && !isLoading && !isSaving && !isInitialLoad.current) {
+          if (!isInitialLoad.current) { // Only save after initial load
                 console.log("FlowEditor: Debounced save triggered.");
                 dispatch(saveFlow());
           } else {
-              console.log("FlowEditor: Debounced save skipped (conditions not met).");
+              console.log("FlowEditor: Debounced save skipped (initial load).");
           }
       }, SAVE_DEBOUNCE_MS),
-      [dispatch, currentFlowId, isLoading, isSaving]
+      [dispatch] // Dispatch function is stable
   );
 
-  // --- Effect to trigger debounced save on changes (now relies on history changes) ---
+  // --- Effect to trigger debounced save on changes ---
   useEffect(() => {
-    if (!isInitialLoad.current) {
-        console.log("FlowEditor: Detected change in nodes/edges/name via Redux state. Debouncing save...");
-        debouncedSave();
+    // Don't trigger save immediately after load or if loading/saving
+    if (!isInitialLoad.current && currentFlowId && !isLoading && !isSaving) {
+      console.log("FlowEditor: Detected change in nodes/edges/name. Debouncing save...");
+      debouncedSave();
     }
+    // Cleanup function to cancel debounce if component unmounts or dependencies change
     return () => {
-        debouncedSave.cancel();
+      debouncedSave.cancel();
     };
-  }, [nodes, edges, flowName, debouncedSave]);
+  }, [nodes, edges, flowName, currentFlowId, debouncedSave]);
 
   // --- Effect to show save errors ---
    useEffect(() => {
@@ -203,7 +199,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
        }
    }, [saveError, enqueueSnackbar, t]);
 
-  // --- React Flow State (via Hook) ---
+  // --- React Flow State (via Hook, needs modification) ---
   const {
     onNodesChange,
     onEdgesChange,
@@ -212,12 +208,10 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     reactFlowInstance,
     onConnect,
     onInit,
-    onNodeClick,
     onPaneClick,
     onDragOver,
     onDrop,
     handleNodeDataUpdate,
-    deleteSelectedElements,
   } = useReactFlowManager({
     reactFlowWrapperRef: reactFlowWrapper,
   });
@@ -236,20 +230,20 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     nodeInfoPosition,
     globalVarsPosition,
     chatPosition,
+    openNodeInfoPanel,
   } = usePanelManager();
 
   // --- UI State (Local) ---
   const [flowSelectOpen, setFlowSelectOpen] = useState<boolean>(false);
 
-  // Layout Hook
+  // Layout Hook (Example usage, adjust as needed)
   const { performLayout } = useFlowLayout({ reactFlowInstance });
   const handleLayout = useCallback(() => {
     performLayout(nodes, edges, (newNodes: Node<NodeData>[], newEdges: Edge[]) => {
-        console.log("Dispatching layout changes via setNodes/setEdges");
-        dispatch(setNodes(newNodes));
-        dispatch(setEdges(newEdges));
+      dispatch(setFlowNodes(newNodes));
+      dispatch(setFlowEdges(newEdges));
     });
-  }, [nodes, edges, dispatch, performLayout]);
+  }, [nodes, edges, dispatch, performLayout, reactFlowInstance]);
 
   // *** Constants needed by ReactFlow ***
   const defaultEdgeOptions: DefaultEdgeOptions = {
@@ -283,48 +277,31 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     dispatch(setReduxFlowName(newName));
   }, [dispatch]);
 
-  const handleNodeSelectFromEvent = useCallback((nodeId: string, position?: { x: number; y: number }) => {
-    console.log(`FlowEditor: Handling node selection for ${nodeId}`);
-    const nodeToSelect = nodes.find((n: Node<NodeData>) => n.id === nodeId);
-    if (nodeToSelect) {
-      setSelectedNode(nodeToSelect);
-      dispatch(setNodes(nodes.map((n: Node<NodeData>) => ({ ...n, selected: n.id === nodeId }))));
-      if (position && reactFlowInstance) {
-        reactFlowInstance.setCenter(position.x, position.y, { duration: 800 });
+  const handleNodeClick: NodeMouseHandler = useCallback((event: React.MouseEvent, node: Node) => {
+      setSelectedNode(node);
+      openNodeInfoPanel();
+      console.log('Node clicked (FlowEditor):', node);
+  }, [setSelectedNode, openNodeInfoPanel]);
+
+  // Intermediate callback for NodePropertiesPanel
+  const handlePanelNodeDataChange = useCallback((id: string, data: Partial<NodeData>) => {
+      handleNodeDataUpdate({ id, data });
+  }, [handleNodeDataUpdate]);
+
+  // Callback for ChatPanel node selection
+  const handleNodeSelectFromChat = useCallback((nodeId: string, position?: { x: number; y: number }) => {
+      const nodeToSelect = nodes.find((n: Node) => n.id === nodeId);
+      if (nodeToSelect) {
+        setSelectedNode(nodeToSelect);
+        openNodeInfoPanel();
+        // Optional: Center view on the node
+        if (position && reactFlowInstance) {
+          reactFlowInstance.setCenter(position.x, position.y, { duration: 800 });
+        }
+      } else {
+        console.warn(`FlowEditor: Node ${nodeId} not found for chat panel selection.`);
       }
-    } else {
-      console.warn(`FlowEditor: Node ${nodeId} not found.`);
-    }
-  }, [nodes, dispatch, setSelectedNode, reactFlowInstance]);
-
-  // --- Undo/Redo Handlers ---
-  const handleUndo = useCallback(() => {
-    dispatch(flowUndo());
-  }, [dispatch]);
-
-  const handleRedo = useCallback(() => {
-    dispatch(flowRedo());
-  }, [dispatch]);
-
-  // --- Keyboard Listener for Delete ---
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const targetElement = event.target as HTMLElement;
-      const isInputFocused = targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA' || targetElement.isContentEditable;
-
-      if ((event.key === 'Delete' || event.key === 'Backspace') && !isInputFocused) {
-        event.preventDefault();
-        console.log("Delete/Backspace pressed, calling deleteSelectedElements");
-        deleteSelectedElements();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [deleteSelectedElements]);
+    }, [nodes, setSelectedNode, openNodeInfoPanel, reactFlowInstance]);
 
   // --- Rendering ---
 
@@ -362,10 +339,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         onLogout={logout}
         isSaving={isSaving}
         lastSaveTime={lastSaveTime}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
       />
 
       <Box sx={{ display: 'flex', flexGrow: 1, position: 'relative' }}>
@@ -392,13 +365,14 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
             onConnect={onConnect}
             onInit={onInit}
             onPaneClick={onPaneClick}
-            onNodeClick={onNodeClick}
+            onNodeClick={handleNodeClick}
             onDragOver={onDragOver}
             onDrop={onDrop}
             defaultEdgeOptions={defaultEdgeOptions}
             connectionLineStyle={connectionLineStyle}
             fitView
             reactFlowWrapperRef={reactFlowWrapper}
+            onAutoLayout={handleLayout}
           >
             <Panel position="top-right">
               <VersionInfo />
@@ -412,9 +386,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
             node={selectedNode}
             isOpen={nodeInfoOpen}
             onClose={closeNodeInfoPanel}
-            onNodeDataChange={(id: string, data: Partial<NodeData>) => {
-              handleNodeDataUpdate({ id, data });
-            }}
+            onNodeDataChange={handlePanelNodeDataChange}
             initialPosition={nodeInfoPosition}
           />
         )}
@@ -433,7 +405,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
           isOpen={chatOpen}
             onClose={toggleChatPanel}
             initialPosition={chatPosition}
-            onNodeSelect={handleNodeSelectFromEvent}
+            onNodeSelect={handleNodeSelectFromChat}
           />
         )}
 

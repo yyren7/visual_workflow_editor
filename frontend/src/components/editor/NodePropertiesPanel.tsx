@@ -33,10 +33,10 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
     return null;
   }
 
-  // Callback for NodeProperties component
-  const handlePropertyChange = (update: { data: Partial<NodeData> }) => {
-      // Pass id and data separately
-      onNodeDataChange(node.id, update.data);
+  // 修改回调函数以接收 property 和 value
+  const handlePropertyChange = (property: string, value: any) => {
+      // 构建 { [property]: value } 结构并传递给上层
+      onNodeDataChange(node.id, { [property]: value });
   };
 
   return (
@@ -52,7 +52,7 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
     >
         {/* Content goes inside the container */}
         <Box sx={{ p: 2, overflowY: 'auto', height: '100%', width: '100%' }}>
-          {/* Pass node and the adapted callback */}
+          {/* Pass node and the *new* adapted callback */}
           <NodeProperties node={node} onNodePropertyChange={handlePropertyChange} />
         </Box>
     </DraggableResizableContainer>

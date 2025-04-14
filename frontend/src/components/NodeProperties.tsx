@@ -1,5 +1,5 @@
 // visual_workflow_editor/frontend/src/components/NodeProperties.tsx
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 import { Box, TextField, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Node } from 'reactflow';
@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 interface NodePropertiesProps {
   node: Node<NodeData> | null;
-  onNodePropertyChange: (node: Node<NodeData>) => void;
+  onNodePropertyChange: (property: string, value: any) => void;
 }
 
 /**
@@ -18,32 +18,12 @@ interface NodePropertiesProps {
  */
 const NodeProperties: React.FC<NodePropertiesProps> = ({ node, onNodePropertyChange }) => {
   const { t } = useTranslation();
-  const [properties, setProperties] = useState<NodeData>({ label: '' });
-
-  useEffect(() => {
-    if (node && node.data) {
-      setProperties(node.data);
-    } else {
-      setProperties({ label: '' });
-    }
-  }, [node]);
-
-  /**
-   * Updates a node property.
-   * @param {string} property - The name of the property to update.
-   * @param {any} value - The new value of the property.
-   */
-  const updateNodeProperty = (property: string, value: any): void => {
-    const newProperties: NodeData = { ...properties, [property]: value };
-    setProperties(newProperties);
-    if (node && onNodePropertyChange) {
-      onNodePropertyChange({ ...node, data: newProperties });
-    }
-  };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = event.target;
-    updateNodeProperty(name, value);
+    if (node && onNodePropertyChange) {
+      onNodePropertyChange(name, value);
+    }
   };
 
   if (!node) {
@@ -65,12 +45,12 @@ const NodeProperties: React.FC<NodePropertiesProps> = ({ node, onNodePropertyCha
           <Typography>{t('nodeProperties.dataProperties')}</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {Object.entries(properties).map(([key, value]) => (
+          {Object.entries(node.data || {}).map(([key, value]) => (
             <TextField
               key={key}
               label={key}
               name={key}
-              value={value || ''} // Ensure a default value to avoid uncontrolled component warning
+              value={value || ''}
               onChange={handleChange}
               fullWidth
               margin="normal"
