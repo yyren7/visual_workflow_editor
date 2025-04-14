@@ -22536,3 +22536,124 @@ connections
 2025-04-14 03:16:56,958 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0026s)
 2025-04-14 03:16:58,988 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 172.19.0.1)
 2025-04-14 03:16:58,991 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0035s)
+2025-04-14 07:33:23,161 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-14 07:33:23,177 - app.main - INFO - 开始导入模块...
+2025-04-14 07:33:23,179 - app.main - INFO - 导入database成功
+2025-04-14 07:33:23,180 - app.main - INFO - 导入models成功
+2025-04-14 07:33:23,182 - app.main - INFO - 导入config成功
+2025-04-14 07:33:27,114 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-14 07:33:27,122 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log
+2025-04-14 07:33:30,703 - app.main - INFO - 导入基本路由成功
+2025-04-14 07:33:30,705 - app.main - INFO - 导入workflow_router成功
+2025-04-14 07:33:30,706 - app.main - INFO - 导入utils成功
+2025-04-14 07:33:30,707 - app.main - INFO - 导入dependencies成功
+2025-04-14 07:33:30,707 - app.main - INFO - 创建数据库表...
+2025-04-14 07:33:30,719 - app.main - INFO - 数据库表创建成功
+2025-04-14 07:33:30,719 - app.main - INFO - 初始化FastAPI应用...
+2025-04-14 07:33:30,735 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-14 07:33:30,736 - app.main - INFO - 注册路由...
+2025-04-14 07:33:30,906 - app.main - INFO - 注册user路由成功
+2025-04-14 07:33:30,985 - app.main - INFO - 注册flow路由成功
+2025-04-14 07:33:30,990 - app.main - INFO - 注册email路由成功
+2025-04-14 07:33:30,996 - app.main - INFO - 注册auth路由成功
+2025-04-14 07:33:31,021 - app.main - INFO - 注册node_templates路由成功
+2025-04-14 07:33:31,024 - app.main - INFO - 注册workflow路由成功
+2025-04-14 07:33:31,078 - app.main - INFO - 注册flow_variables路由成功
+2025-04-14 07:33:31,080 - app.main - INFO - 注册chat路由成功
+2025-04-14 07:33:31,080 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-14 07:33:31,412 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-14 07:33:31,414 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-14 07:33:31,415 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-04-14 07:33:31,419 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-14 07:33:31,422 - backend.app.startup - INFO - ✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功
+2025-04-14 07:33:31,423 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-14 07:33:31,424 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-14 07:33:31,425 - backend.app.startup - INFO - API前缀: /api
+2025-04-14 07:33:31,427 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *
+2025-04-14 07:40:50,590 - app.main - INFO - 收到请求: GET /favicon.ico (来自: 192.168.127.1)
+2025-04-14 07:40:51,376 - app.main - INFO - 请求完成: GET /favicon.ico - 404 (耗时: 0.3413s)
+2025-04-14 07:40:52,021 - app.main - INFO - 收到请求: GET /favicon.ico (来自: 192.168.127.1)
+2025-04-14 07:40:52,054 - app.main - INFO - 请求完成: GET /favicon.ico - 404 (耗时: 0.0008s)
+2025-04-14 07:40:52,105 - app.main - INFO - 收到请求: POST /users/login (来自: 192.168.143.2)
+2025-04-14 07:40:55,246 - app.main - INFO - 请求完成: POST /users/login - 200 (耗时: 3.1015s)
+2025-04-14 07:40:55,677 - app.main - INFO - 收到请求: GET /auth/verify-token (来自: 192.168.143.2)
+2025-04-14 07:40:55,906 - app.main - INFO - 请求完成: GET /auth/verify-token - 200 (耗时: 0.2274s)
+2025-04-14 07:40:55,975 - app.main - INFO - 收到请求: GET /flows (来自: 192.168.143.2)
+2025-04-14 07:40:55,982 - app.main - INFO - 收到请求: GET /api/version (来自: 192.168.143.2)
+2025-04-14 07:40:56,022 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-14 07:40:56,029 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0514s)
+2025-04-14 07:40:56,032 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0478s)
+2025-04-14 07:40:56,073 - app.main - INFO - 收到请求: GET /flows (来自: 192.168.143.2)
+2025-04-14 07:40:56,076 - app.main - INFO - 请求完成: GET /flows - 307 (耗时: 0.0007s)
+2025-04-14 07:40:56,461 - app.main - INFO - 收到请求: GET /flows/ (来自: 192.168.143.2)
+2025-04-14 07:40:56,782 - app.main - INFO - 收到请求: GET /flows/ (来自: 192.168.143.2)
+2025-04-14 07:40:56,799 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.3299s)
+2025-04-14 07:40:56,866 - app.main - INFO - 请求完成: GET /flows/ - 200 (耗时: 0.0781s)
+2025-04-14 07:41:00,158 - app.main - INFO - 收到请求: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected (来自: 192.168.143.2)
+2025-04-14 07:41:00,408 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 07:41:00,413 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:00,420 - app.main - INFO - 请求完成: POST /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb/set-as-last-selected - 200 (耗时: 0.2609s)
+2025-04-14 07:41:00,452 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 07:41:00,510 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0954s)
+2025-04-14 07:41:00,587 - app.main - INFO - 收到请求: GET /api/version (来自: 192.168.143.2)
+2025-04-14 07:41:00,597 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-14 07:41:00,601 - app.main - INFO - 请求完成: GET /api/version - 200 (耗时: 0.0114s)
+2025-04-14 07:41:00,631 - app.main - INFO - 收到请求: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:00,670 - backend.app.services.user_flow_service - INFO - 设置用户 27c83191-caae-4df4-a217-b6398a62061b 最后选择的流程图ID: 61aa7e47-7611-41e8-b7bb-a438f0c09adb
+2025-04-14 07:41:00,683 - app.main - INFO - 请求完成: GET /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0494s)
+2025-04-14 07:41:06,231 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:06,642 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.4080s)
+2025-04-14 07:41:08,734 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:08,774 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0383s)
+2025-04-14 07:41:10,952 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:10,976 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0219s)
+2025-04-14 07:41:13,981 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:14,081 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0978s)
+2025-04-14 07:41:16,989 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:17,014 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0225s)
+2025-04-14 07:41:19,983 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:20,015 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0300s)
+2025-04-14 07:41:22,967 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:22,982 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0142s)
+2025-04-14 07:41:26,044 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:26,114 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0688s)
+2025-04-14 07:41:28,988 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:29,034 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0453s)
+2025-04-14 07:41:31,180 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:31,230 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0474s)
+2025-04-14 07:41:33,970 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:33,998 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0235s)
+2025-04-14 07:41:37,680 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:37,823 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.1387s)
+2025-04-14 07:41:41,016 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:41,055 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0247s)
+2025-04-14 07:41:43,983 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:44,004 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0191s)
+2025-04-14 07:41:46,954 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:47,021 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0127s)
+2025-04-14 07:41:49,969 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:49,985 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0144s)
+2025-04-14 07:41:52,969 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:53,032 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0618s)
+2025-04-14 07:41:56,485 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:41:56,709 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.1987s)
+2025-04-14 07:42:00,274 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:00,371 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0927s)
+2025-04-14 07:42:03,009 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:03,088 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0615s)
+2025-04-14 07:42:05,958 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:06,002 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0417s)
+2025-04-14 07:42:09,075 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:09,103 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0230s)
+2025-04-14 07:42:11,962 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:11,993 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0301s)
+2025-04-14 07:42:14,960 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:15,032 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0685s)
+2025-04-14 07:42:17,955 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:18,328 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.3719s)
+2025-04-14 07:42:20,974 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:21,252 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.2454s)
+2025-04-14 07:42:24,427 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:25,121 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.4335s)
+2025-04-14 07:42:50,658 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 192.168.143.2)
+2025-04-14 07:42:50,846 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.1743s)
