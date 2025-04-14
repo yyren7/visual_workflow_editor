@@ -107,7 +107,7 @@ if [ "$(whoami)" != "vscode" ]; then
     # 安装前端依赖
     echo "安装前端 Node.js 依赖..."
     cd /workspace/frontend
-    npm ci --no-optional
+    sudo npm ci --no-optional && sudo chown -R vscode:vscode node_modules
   '
 else
   # 如果已经是 vscode 用户，直接执行
@@ -123,7 +123,7 @@ else
   # 安装前端依赖
   echo "安装前端 Node.js 依赖..."
   cd /workspace/frontend
-  npm ci --no-optional
+  sudo npm ci --no-optional && sudo chown -R vscode:vscode node_modules
 fi
 
 # 跳过最后的权限设置
