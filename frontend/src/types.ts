@@ -19,4 +19,10 @@ export interface Chat {
     context_used?: boolean;
     [key: string]: any;
   };
+}
+
+export interface User {
+  id: string;
+  email?: string;
+  username?: string;
 } 

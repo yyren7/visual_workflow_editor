@@ -6,12 +6,13 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
 from sqlalchemy.orm import Session
 from backend.app import schemas, utils
-from database.models import Flow, FlowVariable
+from database.models import Flow, FlowVariable, Chat
 from database.connection import get_db
 from backend.config import APP_CONFIG
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.user_flow_service import UserFlowService
 import logging # Add logging
+from sqlalchemy import desc # Import desc for ordering
 
 logger = logging.getLogger(__name__) # Add logger
 
@@ -140,29 +141,83 @@ async def get_last_selected_flow(db: Session = Depends(get_db), current_user: sc
     return flow
 
 
-# --- Add endpoint to get last interacted chat ID ---
+# --- Modify endpoint to get last interacted chat ID ---
 @router.get("/{flow_id}/last_chat", response_model=schemas.LastChatResponse)
 async def get_flow_last_chat_id(
     flow_id: str,
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(get_current_user)
 ):
-    """获取流程图最后交互的聊天 ID"""
+    """
+    获取流程图最后交互且仍然存在的聊天 ID。
+    如果记录的最后交互聊天已被删除，则尝试查找最新的、仍然存在的聊天。
+    """
     try:
-        logger.info(f"Attempting to get last chat ID for flow: {flow_id} for user: {current_user.id}")
-        flow = verify_flow_ownership(flow_id, current_user, db) # Re-use ownership verification
-        logger.info(f"Found flow, returning last_interacted_chat_id: {flow.last_interacted_chat_id}")
-        # The flow object fetched by verify_flow_ownership should contain the field
-        return schemas.LastChatResponse(chatId=flow.last_interacted_chat_id)
+        logger.info(f"Attempting to get last valid chat ID for flow: {flow_id} for user: {current_user.id}")
+        flow = verify_flow_ownership(flow_id, current_user, db) # Verify ownership and get flow
+
+        last_chat_id = flow.last_interacted_chat_id
+        valid_chat_id_to_return = None
+
+        if last_chat_id:
+            # 1. Check if the recorded last_chat_id still exists
+            chat_exists = db.query(Chat).filter(
+                Chat.id == last_chat_id,
+                Chat.flow_id == flow_id # Ensure it belongs to the correct flow
+            ).first()
+
+            if chat_exists:
+                logger.info(f"Recorded last chat ID {last_chat_id} is valid for flow {flow_id}.")
+                valid_chat_id_to_return = last_chat_id
+            else:
+                logger.warning(f"Recorded last chat ID {last_chat_id} for flow {flow_id} not found or deleted. Searching for fallback.")
+                # 2. If not exists, find the most recent *existing* chat for this flow
+                fallback_chat = db.query(Chat).filter(
+                    Chat.flow_id == flow_id
+                ).order_by(desc(Chat.updated_at)).first() # Order by updated_at descending
+
+                if fallback_chat:
+                    logger.info(f"Found fallback chat ID {fallback_chat.id} for flow {flow_id}.")
+                    valid_chat_id_to_return = fallback_chat.id
+                    # Optional: Update the flow's last_interacted_chat_id to the new valid one
+                    try:
+                        flow.last_interacted_chat_id = fallback_chat.id
+                        db.add(flow)
+                        db.commit()
+                        logger.info(f"Updated flow {flow_id}'s last_interacted_chat_id to {fallback_chat.id}.")
+                    except Exception as update_err:
+                         logger.error(f"Failed to update last_interacted_chat_id for flow {flow_id}", exc_info=True)
+                         db.rollback() # Rollback the specific update attempt on error
+                else:
+                    logger.warning(f"No existing chats found for flow {flow_id} as fallback.")
+                    # Optional: Clear the invalid last_interacted_chat_id if no fallback exists
+                    if flow.last_interacted_chat_id is not None: # Only update if it was previously set
+                        try:
+                            flow.last_interacted_chat_id = None
+                            db.add(flow)
+                            db.commit()
+                            logger.info(f"Cleared invalid last_interacted_chat_id for flow {flow_id}.")
+                        except Exception as clear_err:
+                             logger.error(f"Failed to clear last_interacted_chat_id for flow {flow_id}", exc_info=True)
+                             db.rollback() # Rollback the specific clear attempt on error
+
+        else:
+             logger.info(f"No last interacted chat ID recorded for flow {flow_id}.")
+             # last_chat_id was None initially, so valid_chat_id_to_return remains None
+
+        logger.info(f"Returning last chat ID for flow {flow_id}: {valid_chat_id_to_return}")
+        return schemas.LastChatResponse(chatId=valid_chat_id_to_return)
+
     except HTTPException as http_exc:
-        # Re-raise HTTP exceptions (like 403 Forbidden, 404 Not Found from verify_flow_ownership)
+        # Re-raise HTTP exceptions
         logger.warning(f"HTTPException getting last chat ID for flow {flow_id}: {http_exc.status_code} - {http_exc.detail}")
         raise http_exc
     except Exception as e:
-        # Catch other potential errors during verification or access
+        # Catch other potential errors
         logger.error(f"Unexpected error getting last chat ID for flow {flow_id}", exc_info=True)
+        db.rollback() # Rollback any potential transaction changes from this function
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取最后聊天ID时出错: {str(e)}"
         )
-# --- End add endpoint ---
+# --- End modify endpoint ---

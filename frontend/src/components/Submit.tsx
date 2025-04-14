@@ -1,17 +1,17 @@
 // visual_workflow_editor/frontend/src/components/Submit.tsx
 import React, { useState } from 'react';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Button, 
-  TextField, 
+import {
+  Container,
+  Typography,
+  Box,
+  Button,
+  TextField,
   Paper,
   Snackbar,
   Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { sendEmail } from '../api/api'; // 引入 sendEmail 函数
+import { sendEmail } from '../api/otherApi'; // 更新导入路径
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -27,7 +27,7 @@ const Submit: React.FC = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
-  
+
   const handleSendEmail = async () => {
     if (!title.trim()) {
       setSnackbarMessage(t('submit.emptyTitle'));
@@ -35,34 +35,34 @@ const Submit: React.FC = () => {
       setOpenSnackbar(true);
       return;
     }
-    
+
     if (!content.trim()) {
       setSnackbarMessage(t('submit.emptyContent'));
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       // 调用 api.ts 中的 sendEmail 函数
       await sendEmail(title, content);
-      
+
       // 显示成功消息
       setSnackbarMessage(t('submit.success'));
       setSnackbarSeverity('success');
       setOpenSnackbar(true);
-      
+
       // 重置表单
       setTitle('');
       setContent('');
-      
+
       // 1.5秒后跳转到登录页面
       setTimeout(() => {
         navigate('/login');
       }, 1500);
-      
+
     } catch (error: any) {
       console.error('发送邮件失败:', error);
       setSnackbarMessage(error.response?.data?.message || t('submit.error')); // 显示后端返回的错误信息
@@ -72,7 +72,7 @@ const Submit: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <Container component="main" maxWidth="md">
       <Box
@@ -89,7 +89,7 @@ const Submit: React.FC = () => {
         <Typography variant="body1" paragraph>
           {t('submit.description')}
         </Typography>
-        
+
         <Paper elevation={3} sx={{ p: 4, mt: 2, width: '100%', maxWidth: 600 }}>
           <TextField
             margin="normal"
@@ -102,7 +102,7 @@ const Submit: React.FC = () => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
-          
+
           <TextField
             margin="normal"
             required
@@ -115,7 +115,7 @@ const Submit: React.FC = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
-          
+
           <Snackbar
             open={openSnackbar}
             autoHideDuration={3000}
@@ -126,18 +126,18 @@ const Submit: React.FC = () => {
               {snackbarMessage}
             </Alert>
           </Snackbar>
-          
+
           <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'space-between' }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               color="primary"
               onClick={() => navigate('/login')}
             >
               {t('submit.backToLogin')}
             </Button>
-            
-            <Button 
-              variant="contained" 
+
+            <Button
+              variant="contained"
               color="primary"
               onClick={handleSendEmail}
               disabled={loading}

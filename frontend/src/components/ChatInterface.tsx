@@ -1,20 +1,21 @@
 // visual_workflow_editor/frontend/src/components/ChatInterface.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { chatApi, getLastChatIdForFlow } from '../api/api'; // Import getLastChatIdForFlow explicitly
+import { chatApi } from '../api/chatApi'; // 更新 chatApi 导入路径
+import { getLastChatIdForFlow } from '../api/flowApi'; // 更新 getLastChatIdForFlow 导入路径
 import { Message, Chat } from '../types'; // Assuming Chat type exists in types.ts
 import {
-    Box, TextField, Button, Paper, Typography, CircularProgress,
-    List, ListItem, ListItemButton, ListItemText, IconButton,
-    Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Input
+  Box, TextField, Button, Paper, Typography, CircularProgress,
+  List, ListItem, ListItemButton, ListItemText, IconButton,
+  Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Input
 } from '@mui/material';
 import {
-    Send as SendIcon,
-    AddComment as AddCommentIcon,
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    Download as DownloadIcon,
-    Check as CheckIcon,
-    Close as CloseIcon
+  Send as SendIcon,
+  AddComment as AddCommentIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Download as DownloadIcon,
+  Check as CheckIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 
 interface ChatInterfaceProps {
@@ -22,6 +23,7 @@ interface ChatInterfaceProps {
   // chatId prop is no longer needed to drive loading, flowId is the primary driver
   // Keep onChatCreated for potential future use if needed, but primary interaction is within the component
   onChatCreated?: (newChatId: string) => void;
+  onNodeSelect: (nodeId: string, position?: { x: number; y: number }) => void;
 }
 
 // Helper function to format messages to Markdown
@@ -52,6 +54,7 @@ const downloadMarkdown = (markdownContent: string, filename: string) => {
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   flowId,
   onChatCreated,
+  onNodeSelect,
 }) => {
   // --- State Variables ---
   const [chatList, setChatList] = useState<Chat[]>([]);
@@ -95,27 +98,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Function to fetch messages for a specific chat ID
   const fetchChatMessages = useCallback(async (chatIdToLoad: string) => {
-      if (!chatIdToLoad) {
-          setMessages([]);
-          setIsLoadingChat(false);
-          return;
-      }
-      setIsLoadingChat(true);
-      setError(null);
-      try {
-        console.log("Fetching messages for chat:", chatIdToLoad);
-        const chat = await chatApi.getChat(chatIdToLoad);
-        setMessages(chat.chat_data?.messages || []);
-         console.log("Messages fetched:", chat.chat_data?.messages);
-      } catch (err: any) {
-        console.error(`Failed to load messages for chat ${chatIdToLoad}:`, err);
-        setError(`加载聊天内容失败: ${err.message}`);
-        setMessages([]); // Clear messages on error
-        // If the active chat fails to load, maybe deactivate it?
-        // setActiveChatId(null);
-      } finally {
-        setIsLoadingChat(false);
-      }
+    if (!chatIdToLoad) {
+      setMessages([]);
+      setIsLoadingChat(false);
+      return;
+    }
+    setIsLoadingChat(true);
+    setError(null);
+    try {
+      console.log("Fetching messages for chat:", chatIdToLoad);
+      const chat = await chatApi.getChat(chatIdToLoad);
+      setMessages(chat.chat_data?.messages || []);
+      console.log("Messages fetched:", chat.chat_data?.messages);
+    } catch (err: any) {
+      console.error(`Failed to load messages for chat ${chatIdToLoad}:`, err);
+      setError(`加载聊天内容失败: ${err.message}`);
+      setMessages([]); // Clear messages on error
+      // If the active chat fails to load, maybe deactivate it?
+      // setActiveChatId(null);
+    } finally {
+      setIsLoadingChat(false);
+    }
   }, []); // Also stable
 
   // Effect to load initial data when flowId changes
@@ -133,29 +136,29 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       let lastChatId: string | null = null;
 
       const loadInitialData = async () => {
-          try {
-              // 1. Fetch last interacted chat ID
-              const lastChatResponse = await getLastChatIdForFlow(flowId);
-              lastChatId = lastChatResponse?.chatId ?? null;
-              console.log("Last interacted chat ID:", lastChatId);
+        try {
+          // 1. Fetch last interacted chat ID
+          const lastChatResponse = await getLastChatIdForFlow(flowId);
+          lastChatId = lastChatResponse?.chatId ?? null;
+          console.log("Last interacted chat ID:", lastChatId);
 
-              // 2. Fetch the full chat list
-              await fetchChatList(flowId); // fetchChatList handles its own loading state and updates chatList
+          // 2. Fetch the full chat list
+          await fetchChatList(flowId); // fetchChatList handles its own loading state and updates chatList
 
-              // 3. Set active chat and fetch its messages if lastChatId exists
-              setActiveChatId(lastChatId); // Set active chat regardless of whether messages load
-              if (lastChatId) {
-                  await fetchChatMessages(lastChatId); // fetchChatMessages handles its loading state
-              } else {
-                   setIsLoadingChat(false); // No chat to load messages for
-              }
-
-          } catch (err: any) {
-              console.error('Failed during initial load sequence:', err);
-              setError(`初始化聊天界面失败: ${err.message}`);
-              setIsLoadingList(false); // Ensure loading states are off on error
-              setIsLoadingChat(false);
+          // 3. Set active chat and fetch its messages if lastChatId exists
+          setActiveChatId(lastChatId); // Set active chat regardless of whether messages load
+          if (lastChatId) {
+            await fetchChatMessages(lastChatId); // fetchChatMessages handles its loading state
+          } else {
+            setIsLoadingChat(false); // No chat to load messages for
           }
+
+        } catch (err: any) {
+          console.error('Failed during initial load sequence:', err);
+          setError(`初始化聊天界面失败: ${err.message}`);
+          setIsLoadingList(false); // Ensure loading states are off on error
+          setIsLoadingChat(false);
+        }
       };
 
       loadInitialData();
@@ -171,13 +174,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Effect to load messages when activeChatId changes (and is not null)
   useEffect(() => {
-      if (activeChatId) {
-          console.log("Active chat ID changed:", activeChatId);
-          fetchChatMessages(activeChatId);
-      } else {
-          // Clear messages if no chat is active
-          setMessages([]);
-      }
+    if (activeChatId) {
+      console.log("Active chat ID changed:", activeChatId);
+      fetchChatMessages(activeChatId);
+    } else {
+      // Clear messages if no chat is active
+      setMessages([]);
+    }
   }, [activeChatId, fetchChatMessages]); // Rerun only when activeChatId changes
 
 
@@ -209,7 +212,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       await fetchChatList(flowId); // Update the list
       setActiveChatId(newChat.id); // Select the new chat
       if (onChatCreated) { // Optional: notify parent if needed
-          onChatCreated(newChat.id);
+        onChatCreated(newChat.id);
       }
     } catch (err: any) {
       console.error('Failed to create new chat:', err);
@@ -239,8 +242,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const updatedChat = await chatApi.sendMessage(activeChatId, messageToSend);
       // Update messages with authoritative list from server
       setMessages(updatedChat.chat_data.messages || []);
-       console.log("Message sent, updated messages:", updatedChat.chat_data.messages);
-       // Backend should have updated last_interacted_chat_id
+      console.log("Message sent, updated messages:", updatedChat.chat_data.messages);
+      // Backend should have updated last_interacted_chat_id
     } catch (err: any) {
       console.error('Failed to send message:', err);
       setError(`发送消息失败: ${err.message}`);
@@ -260,20 +263,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleDownloadChat = () => {
-      if (!activeChatId || messages.length === 0) {
-          setError("没有活动的聊天或消息可供下载");
-          return;
-      }
-      const activeChat = chatList.find(chat => chat.id === activeChatId);
-      const chatName = activeChat?.name || `chat-${activeChatId}`;
-      try {
-          const markdown = formatMessagesToMarkdown(messages, chatName);
-          downloadMarkdown(markdown, `${chatName}.md`);
-          setError(null); // Clear previous errors
-      } catch (err: any) {
-           console.error('Failed to download chat:', err);
-           setError(`下载聊天记录失败: ${err.message}`);
-      }
+    if (!activeChatId || messages.length === 0) {
+      setError("没有活动的聊天或消息可供下载");
+      return;
+    }
+    const activeChat = chatList.find(chat => chat.id === activeChatId);
+    const chatName = activeChat?.name || `chat-${activeChatId}`;
+    try {
+      const markdown = formatMessagesToMarkdown(messages, chatName);
+      downloadMarkdown(markdown, `${chatName}.md`);
+      setError(null); // Clear previous errors
+    } catch (err: any) {
+      console.error('Failed to download chat:', err);
+      setError(`下载聊天记录失败: ${err.message}`);
+    }
 
   };
 
@@ -295,7 +298,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const originalName = chatList.find(c => c.id === chatId)?.name; // Store original name for potential revert
     setIsLoadingList(true); // Indicate activity
     try {
-        console.log(`Renaming chat ${chatId} to: ${renameInputValue.trim()}`);
+      console.log(`Renaming chat ${chatId} to: ${renameInputValue.trim()}`);
       // Optimistic UI update (optional but can feel snappier)
       setChatList(prevList => prevList.map(chat =>
         chat.id === chatId ? { ...chat, name: renameInputValue.trim() } : chat
@@ -315,8 +318,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       ));
       setIsLoadingList(false); // Ensure loading indicator is off on error
     } finally {
-        // fetchChatList sets isLoadingList to false
-       // setIsLoadingList(false); // Set loading false if not using optimistic update
+      // fetchChatList sets isLoadingList to false
+      // setIsLoadingList(false); // Set loading false if not using optimistic update
     }
   };
 
@@ -338,18 +341,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       // Clear active chat if it was the one deleted
       if (activeChatId === chatToDelete) {
-          setActiveChatId(null);
-          setMessages([]);
+        setActiveChatId(null);
+        setMessages([]);
       }
-       // Refresh the chat list
+      // Refresh the chat list
       await fetchChatList(flowId);
 
     } catch (err: any) {
       console.error(`Failed to delete chat ${chatToDelete}:`, err);
       setError(`删除聊天失败: ${err.message}`);
     } finally {
-        setIsDeletingChatId(null);
-        setChatToDelete(null);
+      setIsDeletingChatId(null);
+      setChatToDelete(null);
     }
   };
 
@@ -362,6 +365,33 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // --- Render Logic ---
   const hasActiveChat = !!activeChatId;
   const inputDisabled = !hasActiveChat || isSending || isLoadingChat || isLoadingList || isCreatingChat;
+
+  // --- Rendering Logic (Needs update for clickable nodes) ---
+  const renderMessageContent = (content: string) => {
+    // Basic placeholder: Replace [Node: id] with clickable link
+    // Needs a more robust parser (e.g., regex)
+    const parts = content.split(/(\[Node: [a-zA-Z0-9_-]+\])/g);
+    return parts.map((part, index) => {
+      const match = part.match(/\[Node: ([a-zA-Z0-9_-]+)\]/);
+      if (match) {
+        const nodeId = match[1];
+        // How to get node position? Might need to pass node list or fetch node details
+        // For now, just call onNodeSelect without position
+        return (
+          <Button 
+            key={index} 
+            size="small" 
+            variant="text"
+            onClick={() => onNodeSelect(nodeId)} // Call the handler
+            sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline', textTransform: 'none' }}
+          >
+            (Node: {nodeId})
+          </Button>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row', padding: 1, gap: 1, overflow: 'hidden' }}>
@@ -383,11 +413,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <Tooltip title="下载当前聊天记录 (Markdown)">
             <span> {/* Span needed for tooltip when button is disabled */}
               <IconButton
-                  size="small"
-                  onClick={handleDownloadChat}
-                  disabled={!activeChatId || messages.length === 0}
-                  aria-label="下载聊天记录"
-                >
+                size="small"
+                onClick={handleDownloadChat}
+                disabled={!activeChatId || messages.length === 0}
+                aria-label="下载聊天记录"
+              >
                 <DownloadIcon />
               </IconButton>
             </span>
@@ -397,29 +427,29 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {/* Chat List */}
         <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
           {isLoadingList && !chatList.length && ( // Show loader only if list is truly empty initially
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress /></Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress /></Box>
           )}
           {!isLoadingList && chatList.length === 0 && (
-              <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>暂无聊天记录</Typography>
+            <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>暂无聊天记录</Typography>
           )}
           {chatList.map((chat) => (
             <ListItem
               key={chat.id}
               disablePadding
-              secondaryAction={ isRenamingChatId === chat.id ? (
-                  <>
-                    <IconButton edge="end" aria-label="确认重命名" size="small" onClick={() => handleConfirmRename(chat.id)}>
-                        <CheckIcon fontSize="small"/>
-                    </IconButton>
-                    <IconButton edge="end" aria-label="取消重命名" size="small" onClick={handleCancelRename}>
-                        <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </>
+              secondaryAction={isRenamingChatId === chat.id ? (
+                <>
+                  <IconButton edge="end" aria-label="确认重命名" size="small" onClick={() => handleConfirmRename(chat.id)}>
+                    <CheckIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton edge="end" aria-label="取消重命名" size="small" onClick={handleCancelRename}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </>
               ) : (
                 <>
                   <Tooltip title="重命名">
-                    <IconButton edge="end" aria-label="重命名" size="small" onClick={(e) => {e.stopPropagation(); handleStartRename(chat.id, chat.name);}}>
-                      <EditIcon fontSize="small"/>
+                    <IconButton edge="end" aria-label="重命名" size="small" onClick={(e) => { e.stopPropagation(); handleStartRename(chat.id, chat.name); }}>
+                      <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="删除">
@@ -431,7 +461,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         disabled={isDeletingChatId === chat.id}
                         onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat.id); }}
                       >
-                       {isDeletingChatId === chat.id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small"/>}
+                        {isDeletingChatId === chat.id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -440,19 +470,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               sx={{ backgroundColor: activeChatId === chat.id ? 'action.selected' : 'inherit' }}
             >
               {isRenamingChatId === chat.id ? (
-                  <Input
-                      value={renameInputValue}
-                      onChange={(e) => setRenameInputValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmRename(chat.id); else if (e.key === 'Escape') handleCancelRename(); }}
-                      autoFocus
-                      fullWidth
-                      disableUnderline
-                      sx={{ px: 2, py: 1 }}
-                  />
+                <Input
+                  value={renameInputValue}
+                  onChange={(e) => setRenameInputValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmRename(chat.id); else if (e.key === 'Escape') handleCancelRename(); }}
+                  autoFocus
+                  fullWidth
+                  disableUnderline
+                  sx={{ px: 2, py: 1 }}
+                />
               ) : (
-                 <ListItemButton onClick={() => handleSelectChat(chat.id)} dense>
-                    <ListItemText primary={chat.name} primaryTypographyProps={{ noWrap: true, title: chat.name }} />
-                 </ListItemButton>
+                <ListItemButton onClick={() => handleSelectChat(chat.id)} dense>
+                  <ListItemText primary={chat.name} primaryTypographyProps={{ noWrap: true, title: chat.name }} />
+                </ListItemButton>
               )}
             </ListItem>
           ))}
@@ -475,20 +505,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           }}
         >
           {isLoadingChat && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <CircularProgress />
-              </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <CircularProgress />
+            </Box>
           )}
           {!isLoadingChat && !hasActiveChat && (
-               <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', textAlign: 'center', p: 2 }}>
-                  <Typography variant="h6" gutterBottom>请选择或创建聊天</Typography>
-                  <Typography color="text.secondary">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
-               </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', textAlign: 'center', p: 2 }}>
+              <Typography variant="h6" gutterBottom>请选择或创建聊天</Typography>
+              <Typography color="text.secondary">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
+            </Box>
           )}
-           {!isLoadingChat && hasActiveChat && messages.length === 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <Typography color="text.secondary">开始对话吧！</Typography>
-              </Box>
+          {!isLoadingChat && hasActiveChat && messages.length === 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Typography color="text.secondary">开始对话吧！</Typography>
+            </Box>
           )}
           {!isLoadingChat && messages.length > 0 && messages.map((message, index) => (
             <Box
@@ -512,7 +542,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 }}
               >
                 <Typography variant="body1" component="div" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {message.content}
+                  {renderMessageContent(message.content)}
                 </Typography>
               </Paper>
             </Box>
@@ -521,61 +551,61 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </Paper>
 
         {/* Input Area */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, mt: 'auto', padding: '8px 0' }}>
-              <TextField
-                fullWidth
-                multiline
-                minRows={1}
-                maxRows={5}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={hasActiveChat ? "输入消息 (Shift+Enter 换行)" : "请先选择一个聊天"}
-                disabled={inputDisabled}
-                sx={{
-                   backgroundColor: '#ffffff',
-                   borderRadius: '20px',
-                   '& .MuiOutlinedInput-root': {
-                       borderRadius: '20px',
-                       padding: '10px 15px',
-                       '& fieldset': { border: 'none' },
-                   },
-                }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleSendMessage}
-                disabled={inputDisabled || !inputMessage.trim()}
-                sx={{
-                   minWidth: 'auto', padding: '10px', borderRadius: '50%', height: '48px', width: '48px',
-                }}
-                aria-label="发送消息"
-              >
-                {isSending ? <CircularProgress size={24} color="inherit"/> : <SendIcon />}
-              </Button>
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, mt: 'auto', padding: '8px 0' }}>
+          <TextField
+            fullWidth
+            multiline
+            minRows={1}
+            maxRows={5}
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={hasActiveChat ? "输入消息 (Shift+Enter 换行)" : "请先选择一个聊天"}
+            disabled={inputDisabled}
+            sx={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '20px',
+                padding: '10px 15px',
+                '& fieldset': { border: 'none' },
+              },
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSendMessage}
+            disabled={inputDisabled || !inputMessage.trim()}
+            sx={{
+              minWidth: 'auto', padding: '10px', borderRadius: '50%', height: '48px', width: '48px',
+            }}
+            aria-label="发送消息"
+          >
+            {isSending ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+          </Button>
+        </Box>
       </Box>
 
-       {/* Delete Confirmation Dialog */}
-        <Dialog
-            open={showDeleteConfirm}
-            onClose={cancelDeleteChat}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-        >
-            <DialogTitle id="alert-dialog-title">{"确认删除"}</DialogTitle>
-            <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-                你确定要删除这个聊天记录吗？此操作无法撤销。
-            </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-            <Button onClick={cancelDeleteChat}>取消</Button>
-            <Button onClick={confirmDeleteChat} color="error" autoFocus>
-                删除
-            </Button>
-            </DialogActions>
-        </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={cancelDeleteChat}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"确认删除"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            你确定要删除这个聊天记录吗？此操作无法撤销。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDeleteChat}>取消</Button>
+          <Button onClick={confirmDeleteChat} color="error" autoFocus>
+            删除
+          </Button>
+        </DialogActions>
+      </Dialog>
 
     </Box>
   );

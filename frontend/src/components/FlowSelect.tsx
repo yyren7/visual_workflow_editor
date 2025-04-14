@@ -16,11 +16,7 @@ import {
   InputAdornment,
   Divider,
   Button,
-  ListItemSecondaryAction,
-  Dialog as EditDialog,
   DialogActions,
-  DialogContent as EditDialogContent,
-  DialogTitle as EditDialogTitle
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -29,7 +25,10 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { getFlowsForUser, FlowData, createFlow, updateFlowName, deleteFlow, duplicateFlow, setAsLastSelectedFlow } from '../api/api';
+import {
+  getFlowsForUser, FlowData, createFlow, updateFlowName,
+  deleteFlow, duplicateFlow, setAsLastSelectedFlow
+} from '../api/flowApi';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';

@@ -1,0 +1,173 @@
+import React, { RefObject } from 'react';
+import ReactFlow, {
+  Controls,
+  Background,
+  Node,
+  Edge,
+  Connection,
+  NodeMouseHandler,
+  ReactFlowInstance,
+  NodeTypes,
+  BackgroundVariant,
+  DefaultEdgeOptions,
+  ConnectionLineType,
+  Panel,
+  ReactFlowProps, // Import base props
+} from 'reactflow';
+import { Box, Tooltip, IconButton } from '@mui/material';
+import SortIcon from '@mui/icons-material/Sort';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import { useTranslation } from 'react-i18next';
+import { NodeData } from './FlowEditor'; // Adjust path if needed
+import VersionInfo from './VersionInfo';
+
+// Define Props for the FlowCanvas component
+// Inherit basic ReactFlowProps and add/override specific ones
+interface FlowCanvasProps extends Omit<ReactFlowProps, 'nodes' | 'edges'> {
+  nodes: Node<NodeData>[];
+  edges: Edge[];
+  reactFlowWrapperRef: RefObject<HTMLDivElement>;
+  nodeTypes: NodeTypes;
+  defaultEdgeOptions: DefaultEdgeOptions;
+  connectionLineStyle: React.CSSProperties;
+  // Pass layout handlers
+  // onAutoLayout: () => void; // No longer required here, handled in FlowEditor/AppBar
+  onOptimizeEdges?: () => void; // Keep optimize optional
+}
+
+const FlowCanvas: React.FC<FlowCanvasProps> = ({
+  nodes,
+  edges,
+  reactFlowWrapperRef,
+  nodeTypes,
+  defaultEdgeOptions,
+  connectionLineStyle,
+  onNodesChange,
+  onEdgesChange,
+  onConnect,
+  onInit,
+  onNodeClick,
+  onPaneClick,
+  onDrop,
+  onDragOver,
+  // onAutoLayout, // Remove from destructuring
+  onOptimizeEdges,
+  ...rest // Pass any remaining ReactFlowProps
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <Box
+      ref={reactFlowWrapperRef}
+      sx={{
+        flexGrow: 1,
+        position: 'relative',
+        height: '100%',
+        width: '100%',
+        '& .react-flow': {
+          background: '#1e1e1e',
+          width: '100%',
+          height: '100%'
+        },
+        '& .react-flow__container': {
+          width: '100%',
+          height: '100%'
+        },
+        '& .react-flow__controls': {
+          position: 'fixed',
+          left: '20px',
+          bottom: '20px',
+          zIndex: 5,
+        },
+        '& .react-flow__attribution': {
+          display: 'none'
+        },
+        '& .version-info': {
+          position: 'fixed',
+          right: '10px',
+          bottom: '10px',
+          zIndex: 4,
+          backgroundColor: 'transparent',
+        }
+      }}
+    >
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onInit={onInit}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        nodeTypes={nodeTypes}
+        deleteKeyCode="Delete"
+        multiSelectionKeyCode="Control"
+        selectionOnDrag={false}
+        panOnDrag={true}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
+        snapToGrid={false}
+        snapGrid={[5, 5]}
+        defaultEdgeOptions={defaultEdgeOptions}
+        connectionLineStyle={connectionLineStyle}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        elevateEdgesOnSelect={true}
+        fitView
+        style={{
+          width: '100%',
+          height: '100%',
+          background: '#1e1e1e'
+        }}
+        className="fullscreen-flow"
+        onPaneClick={onPaneClick}
+        {...rest} // Spread remaining props
+      >
+        <Controls
+          showInteractive={true}
+          style={{
+            backgroundColor: '#2d2d2d',
+            color: '#fff',
+            border: '1px solid #444',
+            borderRadius: '4px',
+            padding: '4px',
+          }}
+        />
+        <Background color="#444" gap={12} size={1} variant={BackgroundVariant.Dots} />
+        <div className="version-info">
+          <VersionInfo />
+        </div>
+
+        {/* Remove the Panel with layout/optimize buttons */}
+        {/* <Panel position="top-left" style={{ marginTop: '50px', backgroundColor: '#2d2d2d', color: '#fff', borderRadius: '4px', padding: '8px', border: '1px solid #444' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Tooltip title={t('flowEditor.autoLayout')}>
+              <IconButton
+                size="small"
+                onClick={onAutoLayout}
+                sx={{ color: '#fff', borderColor: '#666', '&:hover': { borderColor: '#888', backgroundColor: 'rgba(255, 255, 255, 0.08)' } }}
+              >
+                <SortIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            {onOptimizeEdges && (
+              <Tooltip title="Optimize Edges">
+                <IconButton
+                  size="small"
+                  onClick={onOptimizeEdges}
+                  sx={{ color: '#fff', borderColor: '#666', '&:hover': { borderColor: '#888', backgroundColor: 'rgba(255, 255, 255, 0.08)' } }}
+                >
+                  <AutoFixHighIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </Panel> */}
+
+      </ReactFlow>
+    </Box>
+  );
+};
+
+export default FlowCanvas; 

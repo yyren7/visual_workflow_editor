@@ -1,7 +1,7 @@
 // visual_workflow_editor/frontend/src/components/Login.tsx
 import React, { useState, FormEvent, useEffect } from 'react';
 import { Container, TextField, Button, Typography, Box, CircularProgress } from '@mui/material';
-import { loginUser, UserLoginData, LoginResponse } from '../api/api.ts';
+import { loginUser, UserLoginData, LoginResponse } from '../api/userApi';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
@@ -60,7 +60,7 @@ const Login: React.FC = () => {
       // 主要存储方式
       localStorage.setItem('access_token', token);
       localStorage.setItem('user_id', userId);
-      
+
       // 触发登录状态变化事件，通知NavBar更新
       window.dispatchEvent(new Event('loginChange'));
       return true;
@@ -76,9 +76,9 @@ const Login: React.FC = () => {
       enqueueSnackbar(t('login.noToken'), { variant: 'warning' });
       return;
     }
-    
+
     const saved = saveAuthData(response.access_token, response.user_id);
-    
+
     if (saved) {
       enqueueSnackbar(t('login.success'), { variant: 'success' });
       navigate('/select');
@@ -90,7 +90,7 @@ const Login: React.FC = () => {
   // 处理登录错误
   const handleLoginError = (error: unknown): void => {
     let errorMessage = t('common.unknown');
-    
+
     if (error instanceof AxiosError) {
       if (error.response?.data?.detail) {
         // 处理后端返回的详细错误信息，但不直接显示后端原始错误
@@ -110,31 +110,31 @@ const Login: React.FC = () => {
     } else if (error instanceof Error) {
       errorMessage = t('login.errors.networkError');
     }
-    
+
     enqueueSnackbar(`${t('login.failed')}: ${errorMessage}`, { variant: 'error' });
   };
 
   // 提交表单
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     // 表单验证
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       // 准备用户数据
       const userData: UserLoginData = {
         username,
         password
       };
-      
+
       // 调用登录API
       const response: LoginResponse = await loginUser(userData);
-      
+
       // 处理登录成功
       handleLoginSuccess(response);
     } catch (error) {
@@ -207,7 +207,7 @@ const Login: React.FC = () => {
             >
               {t('login.noAccount')}
             </Button>
-            
+
             <Button
               variant="contained"
               color="secondary"

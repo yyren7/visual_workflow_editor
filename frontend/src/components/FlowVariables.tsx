@@ -1,6 +1,6 @@
 // visual_workflow_editor/frontend/src/components/FlowVariables.tsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, TextField, Button, Typography, List, ListItem, ListItemText, IconButton, Divider, CircularProgress } from '@mui/material';
+import { Box, TextField, Button, Typography, List, ListItem, ListItemText, IconButton, Divider, /* CircularProgress */ } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
@@ -10,16 +10,11 @@ import { useSnackbar } from 'notistack';
 import { saveAs } from 'file-saver';
 import { useTranslation } from 'react-i18next';
 import { useFlowContext } from '../contexts/FlowContext';
-import { 
-  getFlowVariables, 
-  updateFlowVariables, 
-  resetFlowVariables, 
-  addFlowVariable,
-  deleteFlowVariable,
-  importFlowVariablesFromFile,
-  exportFlowVariablesToJson,
-  FlowVariables as FlowVariablesType
-} from '../api/api';
+import {
+    getFlowVariables, updateFlowVariables, /* addFlowVariable, */
+    deleteFlowVariable, resetFlowVariables, /* importFlowVariablesFromFile, */
+    /* exportFlowVariablesToJson */
+} from '../api/variableApi';
 
 // 定义变量类型
 interface VariablesType {
@@ -161,15 +156,6 @@ const FlowVariables: React.FC = () => {
     saveAs(blob, `flow_variables_${currentFlowId}.json`);
     enqueueSnackbar(t('flowVariables.saveFileSuccess'), { variant: 'success' });
   }, [variables, enqueueSnackbar, t, currentFlowId]);
-
-  /**
-   * 获取变量值
-   * @param {string} name - 变量名
-   * @returns {string | undefined} - 变量值
-   */
-  const getVariable = (name: string): string | undefined => {
-    return variables[name];
-  };
 
   /**
    * 设置变量值

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { getFlow } from '../api/api';
+import { getFlow } from '../api/flowApi';
 import FlowEditorWrapper from './FlowEditor';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -213,8 +213,7 @@ const FlowLoader: React.FC = () => {
     // 执行加载
     loadFlowData();
     
-  // 添加setCurrentFlowId作为依赖项
-  }, [flowId, flowIdFromQuery, userId, navigate, enqueueSnackbar, t, setCurrentFlowId]);
+  }, [flowId, flowIdFromQuery, userId, navigate, enqueueSnackbar, t, setCurrentFlowId, location.pathname, location.search, loadedFlowId]);
   
   // 添加一个新的useEffect来监听flow-refresh事件
   useEffect(() => {
