@@ -72,21 +72,37 @@ class NodeTemplateService:
                 os.makedirs(self.template_dir, exist_ok=True)
                 print(f"已创建模板目录: {self.template_dir}")
                 return {}
+            
+            xml_files_found = []
+            print(f"开始递归扫描模板目录: {self.template_dir}")
+            for root, dirs, files in os.walk(self.template_dir):
+                # 忽略隐藏目录和文件（可选，如果需要可以取消注释）
+                # files = [f for f in files if not f.startswith('.')]
+                # dirs[:] = [d for d in dirs if not d.startswith('.')]
                 
-            files = os.listdir(self.template_dir)
-            if not files:
-                print(f"警告: 模板目录为空: {self.template_dir}")
+                print(f"正在扫描目录: {root}")
+                count_in_dir = 0
+                for filename in files:
+                    if filename.endswith('.xml'):
+                        template_path = os.path.join(root, filename)
+                        xml_files_found.append(template_path)
+                        count_in_dir += 1
+                if count_in_dir > 0:
+                     print(f"  - 在此目录找到 {count_in_dir} 个XML文件")
+            
+            if not xml_files_found:
+                print(f"警告: 在 {self.template_dir} 及其子目录中未找到XML文件")
                 return {}
                 
-            print(f"发现 {len(files)} 个文件在目录 {self.template_dir}")
-            xml_files = [f for f in files if f.endswith('.xml')]
-            print(f"其中 {len(xml_files)} 个是XML文件")
+            print(f"总共发现 {len(xml_files_found)} 个XML文件")
             
-            for filename in xml_files:
-                template_path = os.path.join(self.template_dir, filename)
+            for template_path in xml_files_found:
+                filename = os.path.basename(template_path) # 获取文件名用于日志
                 try:
                     template = self._parse_template(template_path)
                     if template:
+                        if template.type in self.templates:
+                             print(f"警告: 模板类型 '{template.type}' 已存在 (来自 {self.templates[template.type].id}.xml), 将被 {filename} 覆盖")
                         self.templates[template.type] = template
                         print(f"成功加载模板: {template.type} 从文件 {filename}")
                     else:

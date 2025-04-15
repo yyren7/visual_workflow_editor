@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ModbusClose">
+    <field name="DESCRIPTION">和Modbus从站断开连接，释放主站。</field>
+    <field name="index">0</field>
+  </block>
+</xml>

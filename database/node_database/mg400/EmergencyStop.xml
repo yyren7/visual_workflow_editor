@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="EmergencyStop">
+    <field name="DESCRIPTION">紧急停止机械臂。急停后机械臂会下电并报警，需要清除报警后才能重新上电和使能。</field>
+  </block>
+</xml>

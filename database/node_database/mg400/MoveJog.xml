@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MoveJog">
+    <field name="DESCRIPTION">点动机械臂。命令下发后机械臂会沿指定轴持续点动，需要再下发MoveJog()停止机械臂运动。另外，机械臂点动时下发携带任意非指定string的MoveJog(string)也会使机械臂停止运动。控制器1.5.6及以上版本支持该命令。</field>
+    <field name="axisID"></field>
+    <field name="CoordType">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+  </block>
+</xml>

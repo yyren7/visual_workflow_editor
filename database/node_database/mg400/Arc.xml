@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Arc">
+    <field name="DESCRIPTION">从当前位置以圆弧插补方式运动至目标点。需要通过当前位置，圆弧中间点，运动目标点三个点确定一个圆弧，因此当前位置不能在P1和P2确定的直线上。</field>
+    <field name="X1">0</field>
+    <field name="Y1">0</field>
+    <field name="Z1">0</field>
+    <field name="R1">0</field>
+    <field name="X2">0</field>
+    <field name="Y2">0</field>
+    <field name="Z2">0</field>
+    <field name="R2">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>

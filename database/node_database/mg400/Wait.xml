@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Wait">
+    <field name="DESCRIPTION">指令队列延时一段时间。</field>
+    <field name="time">0</field>
+  </block>
+</xml>

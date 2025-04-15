@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="InverseSolution">
+    <field name="DESCRIPTION">进行逆解运算：给定机械臂末端在给定的笛卡尔坐标系中的坐标值，计算机械臂各关节角度。由于笛卡尔坐标仅定义了TCP的空间坐标与旋转角，所以机械臂可以通过多种不同的姿态到达同一个位姿，意味着一个位姿变量可以对应多个关节变量。为得出唯一的解，系统需要一个指定的关节坐标，选择最接近该关节坐标的解作为逆解结果。关于该关节坐标的设置，详见isJointNear和JointNear参数。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="isJointNear">0</field>
+    <field name="JointNear"></field>
+  </block>
+</xml>

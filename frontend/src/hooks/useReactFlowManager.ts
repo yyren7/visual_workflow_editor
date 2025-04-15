@@ -143,20 +143,25 @@ export const useReactFlowManager = ({
   // --- Handlers using Redux ---
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      // Check if all changes are just selection changes
-      const isOnlySelectionChange = changes.every(change => change.type === 'select');
+      // Filter out changes we want to ignore completely for Redux state updates
+      const isOnlySelectionOrDimensionChange = changes.every(
+        change => change.type === 'select' || change.type === 'dimensions'
+      );
 
-      if (isOnlySelectionChange) {
-        console.log("useReactFlowManager: Only selection changes detected, skipping dispatch.");
-        // Apply changes locally for immediate visual feedback if necessary (React Flow usually handles this)
-        // E.g., update local selected state, though this might be redundant if node click handles it
-      } else {
-        console.log("useReactFlowManager: Substantive node changes detected, applying and dispatching.");
-        // Apply changes using the helper
-        const nextNodes = applyNodeChanges(changes, nodes);
-        // Dispatch the result to Redux
-        dispatch(setFlowNodes(nextNodes));
+      if (isOnlySelectionOrDimensionChange) {
+        console.log("useReactFlowManager: Only selection/dimension changes detected, skipping dispatch.");
+        return; // Exit early, no need to apply or dispatch
       }
+
+      // If we are here, there are substantive changes (position, remove, add, etc.)
+      // We will always apply these changes and dispatch them to Redux.
+      // The debounced save in FlowEditor will handle consolidating saves after drags.
+      console.log("useReactFlowManager: Substantive node changes detected, applying and dispatching.");
+
+      // Apply changes using the helper
+      const nextNodes = applyNodeChanges(changes, nodes);
+      // Dispatch the result to Redux
+      dispatch(setFlowNodes(nextNodes));
     },
     [dispatch, nodes] // Dependency: dispatch and the current nodes state
   );

@@ -124,7 +124,7 @@ const nodeTypes: NodeTypes = {
   select_robot: GenericNode, // Use GenericNode for 'select_robot'
 };
 
-const SAVE_DEBOUNCE_MS = 100; // Debounce time for saving (e.g., 0.1 seconds)
+const SAVE_DEBOUNCE_MS = 100; // Debounce time increased to 100ms
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const { t } = useTranslation();
@@ -143,6 +143,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const isSaving = useSelector(selectIsSaving);
   const saveError = useSelector(selectSaveError);
   const lastSaveTime = useSelector(selectLastSaveTime);
+
+  // --- Local State for Dragging ---
+  const [isDraggingNode, setIsDraggingNode] = useState(false);
 
   // Ref to track if it's the initial load to prevent immediate save
   const isInitialLoad = useRef(true);
@@ -185,15 +188,17 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   // --- Effect to trigger debounced save on changes ---
   useEffect(() => {
     // Don't trigger save immediately after load or if loading/saving
-    if (!isInitialLoad.current && currentFlowId && !isLoading && !isSaving) {
-      console.log("FlowEditor: Detected change in nodes/edges/name. Debouncing save...");
+    // AND Don't trigger save while a node is being dragged
+    if (!isInitialLoad.current && currentFlowId && !isLoading && !isSaving && !isDraggingNode) {
+      console.log("FlowEditor: Detected change and not dragging. Debouncing save...");
       debouncedSave();
     }
     // Cleanup function to cancel debounce if component unmounts or dependencies change
     return () => {
       debouncedSave.cancel();
     };
-  }, [nodes, edges, flowName, currentFlowId, debouncedSave]);
+    // Remove isSaving from dependency array, keep isLoading for safety? Keep others.
+  }, [nodes, edges, flowName, currentFlowId, debouncedSave, isLoading, isDraggingNode]);
 
   // --- Effect to show save errors ---
    useEffect(() => {
@@ -204,7 +209,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
        }
    }, [saveError, enqueueSnackbar, t]);
 
-  // --- React Flow State (via Hook, needs modification) ---
+  // --- React Flow State (via Hook) ---
   const {
     onNodesChange,
     onEdgesChange,
@@ -308,6 +313,27 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
       }
     }, [nodes, setSelectedNode, openNodeInfoPanel, reactFlowInstance]);
 
+  // --- Drag Handlers ---
+  const handleNodeDragStart = useCallback(() => {
+      console.log("FlowEditor: Node drag start.");
+      setIsDraggingNode(true);
+  }, []);
+
+  const handleNodeDragStop = useCallback(() => {
+      console.log("FlowEditor: Node drag stop.");
+      // Introduce a small delay before setting dragging to false
+      // This helps differentiate a click (instant dragStart/Stop) from a real drag
+      // and prevents the save useEffect from triggering on simple clicks.
+      const timer = setTimeout(() => {
+          setIsDraggingNode(false);
+      }, 50); // 50ms delay
+
+      // Cleanup the timer if the component unmounts or drag starts again quickly
+      return () => clearTimeout(timer);
+
+      // Save is triggered by useEffect watching nodes/isDraggingNode changing AFTER the delay
+  }, []);
+
   // --- Rendering ---
 
   if (isLoading && !currentFlowId) {
@@ -378,6 +404,8 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
             fitView
             reactFlowWrapperRef={reactFlowWrapper}
             onAutoLayout={handleLayout}
+            onNodeDragStart={handleNodeDragStart}
+            onNodeDragStop={handleNodeDragStop}
           >
             <Panel position="top-right">
               <VersionInfo />

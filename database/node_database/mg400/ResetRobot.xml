@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ResetRobot">
+    <field name="DESCRIPTION">停止机器人，清空已规划的指令队列。</field>
+  </block>
+</xml>

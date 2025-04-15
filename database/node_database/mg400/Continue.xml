@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Continue">
+    <field name="DESCRIPTION">与Pause指令对应，继续运行Pause暂停的运动指令。或者用于发生碰撞、报警后导致的机器人停止后，重新恢复接收运动指令并运行。</field>
+  </block>
+</xml>

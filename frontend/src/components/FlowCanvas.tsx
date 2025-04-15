@@ -33,6 +33,9 @@ interface FlowCanvasProps extends Omit<ReactFlowProps, 'nodes' | 'edges'> {
   // Pass layout handlers
   onAutoLayout: () => void;
   onOptimizeEdges?: () => void; // Make optimize optional for now
+  // Add drag handlers
+  onNodeDragStart?: (event: React.MouseEvent, node: Node) => void;
+  onNodeDragStop?: (event: React.MouseEvent, node: Node) => void;
 }
 
 const FlowCanvas: React.FC<FlowCanvasProps> = ({
@@ -52,6 +55,9 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   onDragOver,
   onAutoLayout,
   onOptimizeEdges,
+  // Destructure drag handlers
+  onNodeDragStart,
+  onNodeDragStop,
   ...rest // Pass any remaining ReactFlowProps
 }) => {
   const { t } = useTranslation();
@@ -122,6 +128,9 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         }}
         className="fullscreen-flow"
         onPaneClick={onPaneClick}
+        // Pass drag handlers to ReactFlow
+        onNodeDragStart={onNodeDragStart}
+        onNodeDragStop={onNodeDragStop}
         {...rest} // Spread remaining props
       >
         <Controls

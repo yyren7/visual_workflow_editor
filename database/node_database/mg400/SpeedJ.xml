@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SpeedJ">
+    <field name="DESCRIPTION">设置关节运动方式的速度比例。该命令设置的速度比例仅在本次TCP/IP控制模式中生效，未设置时默认值为100。</field>
+    <field name="R">100</field>
+  </block>
+</xml>

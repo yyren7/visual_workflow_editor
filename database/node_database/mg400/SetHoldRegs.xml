@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetHoldRegs">
+    <field name="DESCRIPTION">按照指定的数据类型，将指定的值写入Modbus从站保持寄存器指定的地址。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+    <field name="valTab">{0}</field>
+    <field name="valType">U16</field>
+  </block>
+</xml>

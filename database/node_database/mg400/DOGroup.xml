@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DOGroup">
+    <field name="DESCRIPTION">设置多个数字输出端口状态（立即指令）。</field>
+    <field name="index1">1</field>
+    <field name="value1">0</field>
+    <field name="index2">2</field>
+    <field name="value2">0</field>
+  </block>
+</xml>

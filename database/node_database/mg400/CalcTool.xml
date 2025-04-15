@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="CalcTool">
+    <field name="DESCRIPTION">计算工具坐标系。</field>
+    <field name="index">0</field>
+    <field name="matrix_direction">1</field>
+    <field name="table">{0,0,0,0}</field>
+  </block>
+</xml>

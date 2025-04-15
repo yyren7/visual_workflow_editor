@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RobotMode">
+    <field name="DESCRIPTION">获取机器人当前状态。</field>
+  </block>
+</xml>

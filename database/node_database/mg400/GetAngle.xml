@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetAngle">
+    <field name="DESCRIPTION">获取机械臂当前位姿的关节坐标。</field>
+  </block>
+</xml>

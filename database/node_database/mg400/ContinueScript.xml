@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ContinueScript">
+    <field name="DESCRIPTION">继续已暂停的工程。</field>
+  </block>
+</xml>

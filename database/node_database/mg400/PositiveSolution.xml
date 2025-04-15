@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="PositiveSolution">
+    <field name="DESCRIPTION">进行正解运算：给定机械臂各关节角度，计算机械臂末端在给定的笛卡尔坐标系中的坐标值。</field>
+    <field name="J1">0</field>
+    <field name="J2">0</field>
+    <field name="J3">0</field>
+    <field name="J4">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+  </block>
+</xml>

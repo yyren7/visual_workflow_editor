@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetErrorID">
+    <field name="DESCRIPTION">获取机器人当前报错的错误码。</field>
+  </block>
+</xml>

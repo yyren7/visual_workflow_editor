@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="PalletCreate">
+    <field name="DESCRIPTION">创建托盘。给定托盘四角的笛卡尔坐标点（P1~P4）和托盘的行数和列数，系统自动生成全部托盘点位。最多可创建20个托盘，退出TCP模式时会删除所有托盘。</field>
+    <field name="P1">{0,0,0,0}</field>
+    <field name="P2">{0,0,0,0}</field>
+    <field name="P3">{0,0,0,0}</field>
+    <field name="P4">{0,0,0,0}</field>
+    <field name="row">0</field>
+    <field name="col">0</field>
+    <field name="Palletname"></field>
+  </block>
+</xml>

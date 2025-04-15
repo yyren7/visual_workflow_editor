@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ModbusCreate">
+    <field name="DESCRIPTION">创建Modbus主站，并和从站建立连接。最多支持同时连接5个设备。</field>
+    <field name="ip"></field>
+    <field name="port">0</field>
+    <field name="slave_id">0</field>
+    <field name="isRTU">0</field>
+  </block>
+</xml>

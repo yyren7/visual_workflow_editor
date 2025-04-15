@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="CP">
+    <field name="DESCRIPTION">设置平滑过渡比例，即机械臂连续运动经过多个点时，经过中间点是以直角方式过渡还是以曲线方式过渡。该指令对Jump运动无效。该命令设置的平滑过渡比例仅在本次TCP/IP控制模式中生效，未设置时默认值为0，表示不平滑过渡。</field>
+    <field name="R">0</field>
+  </block>
+</xml>

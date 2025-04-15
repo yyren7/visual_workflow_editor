@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RelMovLUser">
+    <field name="DESCRIPTION">沿用户坐标系进行相对运动，末端运动方式为直线运动。</field>
+    <field name="OffsetX">0</field>
+    <field name="OffsetY">0</field>
+    <field name="OffsetZ">0</field>
+    <field name="OffsetR">0</field>
+    <field name="User">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="Tool">0</field>
+    <field name="CP">0</field>
+  </block>
+</xml>

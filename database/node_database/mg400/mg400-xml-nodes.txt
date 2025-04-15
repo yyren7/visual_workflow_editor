@@ -1,0 +1,737 @@
+<!-- AccJ.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="AccJ">
+    <field name="DESCRIPTION">设置关节运动方式的加速度比例。该命令设置的加速度比例仅在本次TCP/IP控制模式中生效，未设置时默认值为100。</field>
+    <field name="R">100</field>
+  </block>
+</xml>
+
+<!-- AccL.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="AccL">
+    <field name="DESCRIPTION">设置直线和弧线运动方式的加速度比例。该命令设置的加速度比例仅在本次TCP/IP控制模式中生效，未设置时默认值为100。</field>
+    <field name="R">100</field>
+  </block>
+</xml>
+
+<!-- Arc.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Arc">
+    <field name="DESCRIPTION">从当前位置以圆弧插补方式运动至目标点。需要通过当前位置，圆弧中间点，运动目标点三个点确定一个圆弧，因此当前位置不能在P1和P2确定的直线上。</field>
+    <field name="X1">0</field>
+    <field name="Y1">0</field>
+    <field name="Z1">0</field>
+    <field name="R1">0</field>
+    <field name="X2">0</field>
+    <field name="Y2">0</field>
+    <field name="Z2">0</field>
+    <field name="R2">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- Arch.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Arch">
+    <field name="DESCRIPTION">设置Jump运动的全局门型参数索引。用户调用Jump运动指令时可以指定使用的门型参数，若未指定，则使用全局门型参数索引。该命令设置的门型参数索引仅在本次TCP/IP控制模式中生效，未设置时默认值为0。</field>
+    <field name="Index">0</field>
+  </block>
+</xml>
+
+<!-- CP.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="CP">
+    <field name="DESCRIPTION">设置平滑过渡比例，即机械臂连续运动经过多个点时，经过中间点是以直角方式过渡还是以曲线方式过渡。该指令对Jump运动无效。该命令设置的平滑过渡比例仅在本次TCP/IP控制模式中生效，未设置时默认值为0，表示不平滑过渡。</field>
+    <field name="R">0</field>
+  </block>
+</xml>
+
+<!-- CalcTool.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="CalcTool">
+    <field name="DESCRIPTION">计算工具坐标系。</field>
+    <field name="index">0</field>
+    <field name="matrix_direction">1</field>
+    <field name="table">{0,0,0,0}</field>
+  </block>
+</xml>
+
+<!-- CalcUser.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="CalcUser">
+    <field name="DESCRIPTION">计算用户坐标系。</field>
+    <field name="index">0</field>
+    <field name="matrix_direction">1</field>
+    <field name="table">{0,0,0,0}</field>
+  </block>
+</xml>
+
+<!-- Circle.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Circle">
+    <field name="DESCRIPTION">从当前位置进行整圆插补运动，运动指定圈数后重新回到当前位置。需要通过当前位置，P1，P2三个点确定一个整圆，因此当前位置不能在P1和P2确定的直线上，且三个点确定的整圆不能超出机械臂的运动范围。</field>
+    <field name="count">1</field>
+    <field name="X1">0</field>
+    <field name="Y1">0</field>
+    <field name="Z1">0</field>
+    <field name="R1">0</field>
+    <field name="X2">0</field>
+    <field name="Y2">0</field>
+    <field name="Z2">0</field>
+    <field name="R2">0</field>
+  </block>
+</xml>
+
+<!-- ClearError.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ClearError">
+    <field name="DESCRIPTION">清除机器人报警。清除报警后，用户可以根据RobotMode来判断机器人是否还处于报警状态。部分报警需要解决报警原因或者重启控制柜后才能清除。</field>
+  </block>
+</xml>
+
+<!-- ContinueScript.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ContinueScript">
+    <field name="DESCRIPTION">继续已暂停的工程。</field>
+  </block>
+</xml>
+
+<!-- Continue.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Continue">
+    <field name="DESCRIPTION">与Pause指令对应，继续运行Pause暂停的运动指令。或者用于发生碰撞、报警后导致的机器人停止后，重新恢复接收运动指令并运行。</field>
+  </block>
+</xml>
+
+<!-- DI.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DI">
+    <field name="DESCRIPTION">获取DI端口的状态。</field>
+    <field name="index">1</field>
+  </block>
+</xml>
+
+<!-- DOExecute.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DOExecute">
+    <field name="DESCRIPTION">设置数字输出端口状态（立即指令）。</field>
+    <field name="index">1</field>
+    <field name="status">0</field>
+  </block>
+</xml>
+
+<!-- DOGroup.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DOGroup">
+    <field name="DESCRIPTION">设置多个数字输出端口状态（立即指令）。</field>
+    <field name="index1">1</field>
+    <field name="value1">0</field>
+    <field name="index2">2</field>
+    <field name="value2">0</field>
+  </block>
+</xml>
+
+<!-- DO.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DO">
+    <field name="DESCRIPTION">设置数字输出端口状态（队列指令）。</field>
+    <field name="index">1</field>
+    <field name="status">0</field>
+  </block>
+</xml>
+
+<!-- DisableRobot.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DisableRobot">
+    <field name="DESCRIPTION">下使能机器人。</field>
+  </block>
+</xml>
+
+<!-- EmergencyStop.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="EmergencyStop">
+    <field name="DESCRIPTION">紧急停止机械臂。急停后机械臂会下电并报警，需要清除报警后才能重新上电和使能。</field>
+  </block>
+</xml>
+
+<!-- EnableRobot.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="EnableRobot">
+    <field name="DESCRIPTION">使能机械臂。执行队列指令（机械臂运动、队列IO等）前必须先使能机械臂。</field>
+    <field name="load">0</field>
+    <field name="centerX">0</field>
+    <field name="centerY">0</field>
+    <field name="centerZ">0</field>
+  </block>
+</xml>
+
+<!-- GetAngle.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetAngle">
+    <field name="DESCRIPTION">获取机械臂当前位姿的关节坐标。</field>
+  </block>
+</xml>
+
+<!-- GetCoils.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetCoils">
+    <field name="DESCRIPTION">读取Modbus从站线圈寄存器地址的值。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+  </block>
+</xml>
+
+<!-- GetErrorID.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetErrorID">
+    <field name="DESCRIPTION">获取机器人当前报错的错误码。</field>
+  </block>
+</xml>
+
+<!-- GetHoldRegs.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetHoldRegs">
+    <field name="DESCRIPTION">按照指定的数据类型，读取Modbus从站保持寄存器地址的值。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+    <field name="valType">U16</field>
+  </block>
+</xml>
+
+<!-- GetInBits.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetInBits">
+    <field name="DESCRIPTION">读取Modbus从站触点寄存器（离散输入）地址的值。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+  </block>
+</xml>
+
+<!-- GetInRegs.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetInRegs">
+    <field name="DESCRIPTION">按照指定的数据类型，读取Modbus从站输入寄存器地址的值。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+    <field name="valType">U16</field>
+  </block>
+</xml>
+
+<!-- GetPalletPose.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetPalletPose">
+    <field name="DESCRIPTION">获取已创建的托盘的指定点位。索引和点位的对应关系请参考PalletCreate的描述。</field>
+    <field name="Palletname"></field>
+    <field name="index">1</field>
+  </block>
+</xml>
+
+<!-- GetPose.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="GetPose">
+    <field name="DESCRIPTION">获取机械臂当前位姿的笛卡尔坐标。</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+  </block>
+</xml>
+
+<!-- InverseSolution.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="InverseSolution">
+    <field name="DESCRIPTION">进行逆解运算：给定机械臂末端在给定的笛卡尔坐标系中的坐标值，计算机械臂各关节角度。由于笛卡尔坐标仅定义了TCP的空间坐标与旋转角，所以机械臂可以通过多种不同的姿态到达同一个位姿，意味着一个位姿变量可以对应多个关节变量。为得出唯一的解，系统需要一个指定的关节坐标，选择最接近该关节坐标的解作为逆解结果。关于该关节坐标的设置，详见isJointNear和JointNear参数。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="isJointNear">0</field>
+    <field name="JointNear"></field>
+  </block>
+</xml>
+
+<!-- JointMovJ.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="JointMovJ">
+    <field name="DESCRIPTION">从当前位置以关节运动方式运动至关节坐标目标点。</field>
+    <field name="J1">0</field>
+    <field name="J2">0</field>
+    <field name="J3">0</field>
+    <field name="J4">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- ModbusClose.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ModbusClose">
+    <field name="DESCRIPTION">和Modbus从站断开连接，释放主站。</field>
+    <field name="index">0</field>
+  </block>
+</xml>
+
+<!-- ModbusCreate.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ModbusCreate">
+    <field name="DESCRIPTION">创建Modbus主站，并和从站建立连接。最多支持同时连接5个设备。</field>
+    <field name="ip"></field>
+    <field name="port">0</field>
+    <field name="slave_id">0</field>
+    <field name="isRTU">0</field>
+  </block>
+</xml>
+
+<!-- MovJExt.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovJExt">
+    <field name="DESCRIPTION">控制滑轨（扩展轴）运动到目标角度或位置。</field>
+    <field name="Angle_Distance">0</field>
+    <field name="SpeedE">50</field>
+    <field name="AccE">50</field>
+    <field name="Sync">1</field>
+  </block>
+</xml>
+
+<!-- MovJIO.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovJIO">
+    <field name="DESCRIPTION">从当前位置以关节运动方式运动至笛卡尔坐标目标点，运动时并行设置数字输出端口状态。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="Mode">0</field>
+    <field name="Distance">50</field>
+    <field name="Index">1</field>
+    <field name="Status">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- MovJ.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovJ">
+    <field name="DESCRIPTION">从当前位置以关节运动方式运动至笛卡尔坐标目标点。关节运动的轨迹非直线，所有关节会同时完成运动。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- MovLIO.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovLIO">
+    <field name="DESCRIPTION">从当前位置以直线运动方式运动至笛卡尔坐标目标点，运动时并行设置数字输出端口状态。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="Mode">0</field>
+    <field name="Distance">50</field>
+    <field name="Index">1</field>
+    <field name="Status">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- MovL.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovL">
+    <field name="DESCRIPTION">从当前位置以直线运动方式运动至笛卡尔坐标目标点。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- MoveJog.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MoveJog">
+    <field name="DESCRIPTION">点动机械臂。命令下发后机械臂会沿指定轴持续点动，需要再下发MoveJog()停止机械臂运动。另外，机械臂点动时下发携带任意非指定string的MoveJog(string)也会使机械臂停止运动。控制器1.5.6及以上版本支持该命令。</field>
+    <field name="axisID"></field>
+    <field name="CoordType">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+  </block>
+</xml>
+
+<!-- PalletCreate.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="PalletCreate">
+    <field name="DESCRIPTION">创建托盘。给定托盘四角的笛卡尔坐标点（P1~P4）和托盘的行数和列数，系统自动生成全部托盘点位。最多可创建20个托盘，退出TCP模式时会删除所有托盘。</field>
+    <field name="P1">{0,0,0,0}</field>
+    <field name="P2">{0,0,0,0}</field>
+    <field name="P3">{0,0,0,0}</field>
+    <field name="P4">{0,0,0,0}</field>
+    <field name="row">0</field>
+    <field name="col">0</field>
+    <field name="Palletname"></field>
+  </block>
+</xml>
+
+<!-- PauseScript.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="PauseScript">
+    <field name="DESCRIPTION">暂停正在运行的工程。</field>
+  </block>
+</xml>
+
+<!-- Pause.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Pause">
+    <field name="DESCRIPTION">暂停非工程下发的运动指令（一般情况下即TCP下发的运动指令）,不清空运动队列。</field>
+  </block>
+</xml>
+
+<!-- PositiveSolution.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="PositiveSolution">
+    <field name="DESCRIPTION">进行正解运算：给定机械臂各关节角度，计算机械臂末端在给定的笛卡尔坐标系中的坐标值。</field>
+    <field name="J1">0</field>
+    <field name="J2">0</field>
+    <field name="J3">0</field>
+    <field name="J4">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+  </block>
+</xml>
+
+<!-- RelJointMovJ.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RelJointMovJ">
+    <field name="DESCRIPTION">沿关节坐标系进行相对运动，末端运动方式为关节运动。</field>
+    <field name="Offset1">0</field>
+    <field name="Offset2">0</field>
+    <field name="Offset3">0</field>
+    <field name="Offset4">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- RelMovJUser.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RelMovJUser">
+    <field name="DESCRIPTION">沿用户坐标系进行相对运动，末端运动方式为关节运动。</field>
+    <field name="OffsetX">0</field>
+    <field name="OffsetY">0</field>
+    <field name="OffsetZ">0</field>
+    <field name="OffsetR">0</field>
+    <field name="User">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="Tool">0</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- RelMovLUser.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RelMovLUser">
+    <field name="DESCRIPTION">沿用户坐标系进行相对运动，末端运动方式为直线运动。</field>
+    <field name="OffsetX">0</field>
+    <field name="OffsetY">0</field>
+    <field name="OffsetZ">0</field>
+    <field name="OffsetR">0</field>
+    <field name="User">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="Tool">0</field>
+    <field name="CP">0</field>
+  </block>
+</xml>
+
+<!-- ResetRobot.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ResetRobot">
+    <field name="DESCRIPTION">停止机器人，清空已规划的指令队列。</field>
+  </block>
+</xml>
+
+<!-- RobotMode.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RobotMode">
+    <field name="DESCRIPTION">获取机器人当前状态。</field>
+  </block>
+</xml>
+
+<!-- RunScript.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RunScript">
+    <field name="DESCRIPTION">运行指定工程。</field>
+    <field name="projectName"></field>
+  </block>
+</xml>
+
+<!-- SetArmOrientation.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetArmOrientation">
+    <field name="DESCRIPTION">设置运动目标点的手系。运动目标点为笛卡尔坐标点时，可通过手系确定机械臂唯一姿态。设置手系后，后续目标点为笛卡尔坐标点的运动命令会根据手系规划运动轨迹。该命令设置的手系仅在本次TCP/IP控制模式中生效，未设置时表示不指定手系。此条指令为M1 Pro特有。</field>
+    <field name="LorR">0</field>
+  </block>
+</xml>
+
+<!-- SetCoils.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetCoils">
+    <field name="DESCRIPTION">将指定的值写入线圈寄存器指定的地址。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+    <field name="valTab">{0}</field>
+  </block>
+</xml>
+
+<!-- SetCollisionLevel.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetCollisionLevel">
+    <field name="DESCRIPTION">设置碰撞检测等级。该命令设置的碰撞检测等级仅在本次TCP/IP控制模式中生效，未设置时沿用进入TCP/IP控制模式前控制软件设置的值。</field>
+    <field name="level">1</field>
+  </block>
+</xml>
+
+<!-- SetHoldRegs.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetHoldRegs">
+    <field name="DESCRIPTION">按照指定的数据类型，将指定的值写入Modbus从站保持寄存器指定的地址。</field>
+    <field name="index">0</field>
+    <field name="addr">0</field>
+    <field name="count">1</field>
+    <field name="valTab">{0}</field>
+    <field name="valType">U16</field>
+  </block>
+</xml>
+
+<!-- SetPayLoad.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetPayLoad">
+    <field name="DESCRIPTION">设置机械臂末端负载。</field>
+    <field name="weight">0</field>
+    <field name="inertia">0</field>
+  </block>
+</xml>
+
+<!-- SetTool.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetTool">
+    <field name="DESCRIPTION">修改指定的工具坐标系。</field>
+    <field name="index">0</field>
+    <field name="table">{0,0,0,0}</field>
+  </block>
+</xml>
+
+<!-- SetUser.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SetUser">
+    <field name="DESCRIPTION">修改指定的用户坐标系。</field>
+    <field name="index">0</field>
+    <field name="table">{0,0,0,0}</field>
+  </block>
+</xml>
+
+<!-- SpeedFactor.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SpeedFactor">
+    <field name="DESCRIPTION">设置全局速度比例。机械臂点动时实际运动加速度/速度比例 = 控制软件点动设置中的值 x 全局速度比例。机械臂再现时实际运动加速度/速度比例 = 运动指令可选参数设置的比例 x 控制软件再现设置中的值 x 全局速度比例。该命令设置的全局速率仅在本次TCP/IP控制模式中生效，未设置时沿用进入TCP/IP控制模式前控制软件设置的值。</field>
+    <field name="ratio">100</field>
+  </block>
+</xml>
+
+<!-- SpeedJ.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SpeedJ">
+    <field name="DESCRIPTION">设置关节运动方式的速度比例。该命令设置的速度比例仅在本次TCP/IP控制模式中生效，未设置时默认值为100。</field>
+    <field name="R">100</field>
+  </block>
+</xml>
+
+<!-- SpeedL.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SpeedL">
+    <field name="DESCRIPTION">设置直线和弧线运动方式的速度比例。该命令设置的速度比例仅在本次TCP/IP控制模式中生效，未设置时默认值为100。</field>
+    <field name="R">100</field>
+  </block>
+</xml>
+
+<!-- StartDrag.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="StartDrag">
+    <field name="DESCRIPTION">机械臂进入拖拽模式。机械臂处于报错状态下时，无法通过该指令进入拖拽模式。</field>
+  </block>
+</xml>
+
+<!-- StopDrag.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="StopDrag">
+    <field name="DESCRIPTION">机械臂退出拖拽模式。机械臂处于报错状态下时，无法通过该指令退出拖拽模式。</field>
+  </block>
+</xml>
+
+<!-- StopScript.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="StopScript">
+    <field name="DESCRIPTION">停止正在运行的工程。</field>
+  </block>
+</xml>
+
+<!-- SyncAll.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SyncAll">
+    <field name="DESCRIPTION">阻塞程序执行队列指令，待队列中所有指令执行完后才返回。此指令主要用于有扩展轴的场景：扩展轴和机械臂是各自独立运动的，Sync指令在队列中最后一条指令（假设为机械臂运动指令）执行完成后就会返回，此时队列前面的扩展轴运动指令可能还未执行完毕(反之亦然)；若想要确保队列中所有指令都执行完成，可使用SyncAll命令。</field>
+  </block>
+</xml>
+
+<!-- Sync.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Sync">
+    <field name="DESCRIPTION">阻塞程序执行队列指令，待队列最后的指令执行完后才返回。</field>
+  </block>
+</xml>
+
+<!-- ToolDI.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ToolDI">
+    <field name="DESCRIPTION">获取末端DI端口的状态。</field>
+    <field name="index">1</field>
+  </block>
+</xml>
+
+<!-- ToolDOExecute.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ToolDOExecute">
+    <field name="DESCRIPTION">设置末端数字输出端口状态（立即指令）。</field>
+    <field name="index">1</field>
+    <field name="status">0</field>
+  </block>
+</xml>
+
+<!-- ToolDO.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="ToolDO">
+    <field name="DESCRIPTION">设置末端数字输出端口状态（队列指令）。</field>
+    <field name="index">1</field>
+    <field name="status">0</field>
+  </block>
+</xml>
+
+<!-- Tool.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Tool">
+    <field name="DESCRIPTION">设置全局工具坐标系。用户下发运动指令时可选择工具坐标系，如未指定，则会使用全局工具坐标系。该命令设置的全局工具坐标系仅在本次TCP/IP控制模式中生效，未设置时默认的全局工具坐标系为进入TCP/IP控制模式前控制软件设置的坐标系。</field>
+    <field name="index">0</field>
+  </block>
+</xml>
+
+<!-- User.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="User">
+    <field name="DESCRIPTION">设置全局用户坐标系。用户下发运动指令时可选择用户坐标系，如未指定，则会使用全局用户坐标系。该命令设置的全局用户坐标系仅在本次TCP/IP控制模式中生效，未设置时默认的全局用户坐标系为进入TCP/IP控制模式前控制软件设置的坐标系。</field>
+    <field name="index">0</field>
+  </block>
+</xml>
+
+<!-- Wait.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Wait">
+    <field name="DESCRIPTION">指令队列延时一段时间。</field>
+    <field name="time">0</field>
+  </block>
+</xml>

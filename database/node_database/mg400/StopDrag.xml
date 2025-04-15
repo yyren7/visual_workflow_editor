@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="StopDrag">
+    <field name="DESCRIPTION">机械臂退出拖拽模式。机械臂处于报错状态下时，无法通过该指令退出拖拽模式。</field>
+  </block>
+</xml>

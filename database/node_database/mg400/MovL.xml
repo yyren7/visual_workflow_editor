@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovL">
+    <field name="DESCRIPTION">从当前位置以直线运动方式运动至笛卡尔坐标目标点。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedL">100</field>
+    <field name="AccL">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>

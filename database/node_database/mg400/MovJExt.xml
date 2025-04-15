@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovJExt">
+    <field name="DESCRIPTION">控制滑轨（扩展轴）运动到目标角度或位置。</field>
+    <field name="Angle_Distance">0</field>
+    <field name="SpeedE">50</field>
+    <field name="AccE">50</field>
+    <field name="Sync">1</field>
+  </block>
+</xml>

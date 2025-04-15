@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="SpeedFactor">
+    <field name="DESCRIPTION">设置全局速度比例。机械臂点动时实际运动加速度/速度比例 = 控制软件点动设置中的值 x 全局速度比例。机械臂再现时实际运动加速度/速度比例 = 运动指令可选参数设置的比例 x 控制软件再现设置中的值 x 全局速度比例。该命令设置的全局速率仅在本次TCP/IP控制模式中生效，未设置时沿用进入TCP/IP控制模式前控制软件设置的值。</field>
+    <field name="ratio">100</field>
+  </block>
+</xml>

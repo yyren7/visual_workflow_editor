@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RunScript">
+    <field name="DESCRIPTION">运行指定工程。</field>
+    <field name="projectName"></field>
+  </block>
+</xml>

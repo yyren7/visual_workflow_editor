@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="Circle">
+    <field name="DESCRIPTION">从当前位置进行整圆插补运动，运动指定圈数后重新回到当前位置。需要通过当前位置，P1，P2三个点确定一个整圆，因此当前位置不能在P1和P2确定的直线上，且三个点确定的整圆不能超出机械臂的运动范围。</field>
+    <field name="count">1</field>
+    <field name="X1">0</field>
+    <field name="Y1">0</field>
+    <field name="Z1">0</field>
+    <field name="R1">0</field>
+    <field name="X2">0</field>
+    <field name="Y2">0</field>
+    <field name="Z2">0</field>
+    <field name="R2">0</field>
+  </block>
+</xml>

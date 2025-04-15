@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="RelJointMovJ">
+    <field name="DESCRIPTION">沿关节坐标系进行相对运动，末端运动方式为关节运动。</field>
+    <field name="Offset1">0</field>
+    <field name="Offset2">0</field>
+    <field name="Offset3">0</field>
+    <field name="Offset4">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>

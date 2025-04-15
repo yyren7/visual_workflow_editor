@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="MovJIO">
+    <field name="DESCRIPTION">从当前位置以关节运动方式运动至笛卡尔坐标目标点，运动时并行设置数字输出端口状态。</field>
+    <field name="X">0</field>
+    <field name="Y">0</field>
+    <field name="Z">0</field>
+    <field name="R">0</field>
+    <field name="Mode">0</field>
+    <field name="Distance">50</field>
+    <field name="Index">1</field>
+    <field name="Status">0</field>
+    <field name="User">0</field>
+    <field name="Tool">0</field>
+    <field name="SpeedJ">100</field>
+    <field name="AccJ">100</field>
+    <field name="CP">0</field>
+  </block>
+</xml>

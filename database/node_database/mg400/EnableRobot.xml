@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="EnableRobot">
+    <field name="DESCRIPTION">使能机械臂。执行队列指令（机械臂运动、队列IO等）前必须先使能机械臂。</field>
+    <field name="load">0</field>
+    <field name="centerX">0</field>
+    <field name="centerY">0</field>
+    <field name="centerZ">0</field>
+  </block>
+</xml>

@@ -52,7 +52,7 @@ export interface GenericNodeData {
  * @returns React节点组件
  */
 const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNodeData>) => {
-  console.log('GenericNode data:', data); // 添加日志以检查传入的 data
+  // console.log('GenericNode data:', data); // Remove this debug log
   // 处理字段值的显示转换
   const formatFieldValue = useCallback((value: any, type?: string) => {
     if (value === undefined || value === null) return 'none';

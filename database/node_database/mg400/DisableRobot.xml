@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="DisableRobot">
+    <field name="DESCRIPTION">下使能机器人。</field>
+  </block>
+</xml>
