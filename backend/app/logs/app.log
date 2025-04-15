@@ -28809,3 +28809,37 @@ connections
 2025-04-15 07:47:04,553 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0089s)
 2025-04-15 07:47:07,129 - app.main - INFO - 收到请求: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb (来自: 127.0.0.1)
 2025-04-15 07:47:07,137 - app.main - INFO - 请求完成: PUT /flows/61aa7e47-7611-41e8-b7bb-a438f0c09adb - 200 (耗时: 0.0073s)
+2025-04-15 08:01:33,221 - app.main - INFO - 日志系统已配置，将记录到 backend/app/logs
+2025-04-15 08:01:33,221 - app.main - INFO - 开始导入模块...
+2025-04-15 08:01:33,221 - app.main - INFO - 导入database成功
+2025-04-15 08:01:33,221 - app.main - INFO - 导入models成功
+2025-04-15 08:01:33,221 - app.main - INFO - 导入config成功
+2025-04-15 08:01:33,567 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-15 08:01:33,568 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log
+2025-04-15 08:01:33,829 - app.main - INFO - 导入基本路由成功
+2025-04-15 08:01:33,829 - app.main - INFO - 导入workflow_router成功
+2025-04-15 08:01:33,829 - app.main - INFO - 导入utils成功
+2025-04-15 08:01:33,829 - app.main - INFO - 导入dependencies成功
+2025-04-15 08:01:33,829 - app.main - INFO - 创建数据库表...
+2025-04-15 08:01:33,830 - app.main - INFO - 数据库表创建成功
+2025-04-15 08:01:33,830 - app.main - INFO - 初始化FastAPI应用...
+2025-04-15 08:01:33,837 - backend.app.utils - INFO - 从数据库获取版本信息: 0.3.4
+2025-04-15 08:01:33,837 - app.main - INFO - 注册路由...
+2025-04-15 08:01:33,841 - app.main - INFO - 注册user路由成功
+2025-04-15 08:01:33,846 - app.main - INFO - 注册flow路由成功
+2025-04-15 08:01:33,847 - app.main - INFO - 注册email路由成功
+2025-04-15 08:01:33,847 - app.main - INFO - 注册auth路由成功
+2025-04-15 08:01:33,848 - app.main - INFO - 注册node_templates路由成功
+2025-04-15 08:01:33,848 - app.main - INFO - 注册workflow路由成功
+2025-04-15 08:01:33,856 - app.main - INFO - 注册flow_variables路由成功
+2025-04-15 08:01:33,856 - app.main - INFO - 注册chat路由成功
+2025-04-15 08:01:33,856 - app.main - INFO - FastAPI应用初始化完成，准备开始处理请求...
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - 正在验证DeepSeek API配置
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - ✓ DeepSeek API密钥已设置 (前4位: sk-f***)
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - DeepSeek API基础URL: https://api.deepseek.com
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - DeepSeek模型: deepseek-chat
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - ✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - 数据库URL: 未设置
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - ⚠️ 调试模式已启用
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - API前缀: /api
+2025-04-15 08:01:33,860 - backend.app.startup - INFO - CORS允许的源: http://localhost:3000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, *

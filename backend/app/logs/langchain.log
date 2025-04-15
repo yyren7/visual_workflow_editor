@@ -3603,3 +3603,5 @@ openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Authenticat
 2025-04-15 07:46:03 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log
 2025-04-15 07:46:18 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
 2025-04-15 07:46:18 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log
+2025-04-15 08:01:33 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=backend/app/logs/langchain.log
+2025-04-15 08:01:33 - langchain_chat - INFO - Langchain debug logging enabled, writing to backend/app/logs/langchain_debug.log

@@ -5,7 +5,8 @@ alwaysApply: false
 ---
 
 # Your rule content
-1，根据我问的问题主动调用工具感知源代码。
-2，对于所有前端代码，不允许硬编码任何使用者可见字段，全部在/workspace/frontend/src/i18n.ts文件里用三语对应。
+1，主动调用工具感知源代码。
+2，对于所有前端代码，不允许硬编码任何使用者可见字段，全部使用i18n，在/workspace/frontend/src/i18n.ts文件里用三语对应。
+3，任何代码在写之前都要考虑通用性，并且感知是否已经有重复类似功能代码可以复用。
 - You can @ files here
 - You can use markdown but dont have to
