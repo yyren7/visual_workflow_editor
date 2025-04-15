@@ -45,18 +45,40 @@ const NodeProperties: React.FC<NodePropertiesProps> = ({ node, onNodePropertyCha
           <Typography>{t('nodeProperties.dataProperties')}</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {Object.entries(node.data || {}).map(([key, value]) => (
+          {/* Filter entries to only include simple types (string/number/boolean) for editing */}
+          {Object.entries(node.data || {})
+            .filter(([key, value]) => 
+              typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+            )
+            .map(([key, value]) => (
             <TextField
               key={key}
               label={key}
               name={key}
-              value={value || ''}
-              onChange={handleChange}
+              // Handle boolean specifically if needed, e.g., with a Switch or Checkbox
+              // For now, just display boolean as string, but ensure correct value is passed
+              value={typeof value === 'boolean' ? String(value) : value || ''}
+              onChange={handleChange} 
               fullWidth
               margin="normal"
               variant="outlined"
+              // Disable editing for specific keys if necessary
+              // disabled={key === 'id' || key === 'type'} 
             />
           ))}
+          {/* Optionally, display complex properties (arrays/objects) in a read-only way */}
+          {Object.entries(node.data || {})
+            .filter(([key, value]) => 
+              typeof value === 'object' && value !== null // Includes arrays and objects
+            )
+            .map(([key, value]) => (
+              <Box key={key} sx={{ mt: 2, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{key}: (Read-only)</Typography>
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '3px' }}>
+                  {JSON.stringify(value, null, 2)}
+                </pre>
+              </Box>
+            ))}
         </AccordionDetails>
       </Accordion>
     </Box>

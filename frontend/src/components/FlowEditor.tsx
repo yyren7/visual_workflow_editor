@@ -115,8 +115,13 @@ const nodeTypes: NodeTypes = {
   output: OutputNode,
   process: ProcessNode,
   decision: DecisionNode,
-  generic: GenericNode, // 添加通用节点类型
-  condition: ConditionNode, // 添加条件判断节点类型
+  generic: GenericNode, // Default for unknown types
+  condition: ConditionNode, // Specific component for 'condition'
+  moveL: GenericNode, // Use GenericNode for 'moveL'
+  set_motor: GenericNode, // Use GenericNode for 'set_motor'
+  loop: GenericNode, // Use GenericNode for 'loop'
+  return: GenericNode, // Use GenericNode for 'return'
+  select_robot: GenericNode, // Use GenericNode for 'select_robot'
 };
 
 const SAVE_DEBOUNCE_MS = 100; // Debounce time for saving (e.g., 0.1 seconds)

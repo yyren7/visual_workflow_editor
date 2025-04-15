@@ -1,5 +1,5 @@
 // visual_workflow_editor/frontend/src/components/NodeSelector.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Box, List, ListItem, ListItemText, CircularProgress, Typography, Alert } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { getNodeTemplates, NodeTemplate } from '../api/nodeTemplates';
@@ -212,4 +212,5 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
   );
 };
 
-export default NodeSelector;
+// Wrap the component with React.memo for performance optimization
+export default memo(NodeSelector);

@@ -1,9 +1,12 @@
 ---
-description:
-globs:
+description: 
+globs: 
+alwaysApply: false
 ---
 
 # Your rule content
-
+1，根据我问的问题帮我调用工具积极感知源代码。
+2，对于所有前端代码，不允许硬编码任何使用者可见字段，全部在/workspace/frontend/src/i18n.ts文件里用三语对应。
+3，对我问的问题给方案，先不执行。
 - You can @ files here
 - You can use markdown but dont have to

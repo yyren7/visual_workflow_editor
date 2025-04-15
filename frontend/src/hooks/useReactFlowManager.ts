@@ -143,19 +143,19 @@ export const useReactFlowManager = ({
   // --- Handlers using Redux ---
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      // Apply changes using the helper and dispatch the result to Redux
-      // dispatch(setFlowNodes(applyNodeChanges(changes, nodes)));
-      // 计算下一个状态
-      const nextNodes = applyNodeChanges(changes, nodes);
-      // 比较当前状态和下一个状态，忽略 selected
-      if (haveNodesChanged(nodes, nextNodes)) {
-          console.log("useReactFlowManager: Substantive node changes detected, dispatching setFlowNodes.");
-        // 只有在有实质变化时才 dispatch
-        dispatch(setFlowNodes(nextNodes));
+      // Check if all changes are just selection changes
+      const isOnlySelectionChange = changes.every(change => change.type === 'select');
+
+      if (isOnlySelectionChange) {
+        console.log("useReactFlowManager: Only selection changes detected, skipping dispatch.");
+        // Apply changes locally for immediate visual feedback if necessary (React Flow usually handles this)
+        // E.g., update local selected state, though this might be redundant if node click handles it
       } else {
-          console.log("useReactFlowManager: Only selection node changes detected, skipping dispatch.");
-          // 可选：如果需要立即更新画布上的选中状态（即使 Redux 未更新），
-          // 可能需要一种不同的方式，但这通常由 React Flow 内部处理。
+        console.log("useReactFlowManager: Substantive node changes detected, applying and dispatching.");
+        // Apply changes using the helper
+        const nextNodes = applyNodeChanges(changes, nodes);
+        // Dispatch the result to Redux
+        dispatch(setFlowNodes(nextNodes));
       }
     },
     [dispatch, nodes] // Dependency: dispatch and the current nodes state
@@ -219,32 +219,56 @@ export const useReactFlowManager = ({
         return;
       }
 
-      const reactFlowBounds = reactFlowWrapperRef.current.getBoundingClientRect();
-      const type = event.dataTransfer.getData('application/reactflow');
-      const nodeLabel = event.dataTransfer.getData('application/nodeLabel') || t('nodes.newNode');
+      // Correctly get the serialized NodeTypeInfo object
+      const nodeTypeString = event.dataTransfer.getData('application/reactflow-node');
 
-      if (typeof type === 'undefined' || !type) {
+      // Check if data exists and parse it
+      if (!nodeTypeString) {
+         console.error("Node type data not found in dataTransfer.");
         return;
       }
 
-      const position = reactFlowInstance.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
+      let nodeTypeInfo;
+      try {
+          nodeTypeInfo = JSON.parse(nodeTypeString);
+      } catch (e) {
+          console.error("Failed to parse node type data from dataTransfer:", e);
+          return;
+      }
+
+      // Extract type from the parsed object
+      const type = nodeTypeInfo.type || nodeTypeInfo.id; // Fallback to id if type is missing
+      if (typeof type === 'undefined' || !type) {
+         console.error("Node type (type or id) is missing in the dropped data.");
+        return;
+      }
+      
+      // Use screenToFlowPosition instead of project (fix deprecation)
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
       });
 
+      // Create the newNode with comprehensive data
       const newNode: Node<NodeData> = {
-        id: uuidv4(),
+        id: `${type}-${uuidv4()}`, // Ensure a more unique ID combining type and uuid
         type,
         position,
-        data: { label: nodeLabel, description: '' },
+        // Copy all relevant properties from nodeTypeInfo into the data object
+        data: {
+          label: nodeTypeInfo.label || t('nodes.newNode'),
+          description: nodeTypeInfo.description || '',
+          fields: nodeTypeInfo.fields || [], // Include fields
+          inputs: nodeTypeInfo.inputs || [], // Include inputs
+          outputs: nodeTypeInfo.outputs || [], // Include outputs
+          // You might need to copy other custom properties from nodeTypeInfo if GenericNode uses them
+        },
       };
 
       console.log('Node dropped (dispatching): ', newNode);
       // Dispatch action to add the node
       dispatch(setFlowNodes(nodes.concat(newNode))); // Simple concat, assumes setFlowNodes replaces the array
-      // OR: If you have a dedicated addNode action:
-      // dispatch(addFlowNode(newNode));
-      enqueueSnackbar(t('flowEditor.nodeAdded', { type: nodeLabel }), { variant: 'success' });
+      enqueueSnackbar(t('flowEditor.nodeAdded', { type: newNode.data.label }), { variant: 'success' });
     },
     [reactFlowInstance, dispatch, nodes, t, enqueueSnackbar, reactFlowWrapperRef] // Add dispatch and nodes dependencies
   );
