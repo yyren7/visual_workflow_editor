@@ -39,4 +39,5 @@ Thumbs.db
 backend/app/logs/*
 backend/database/flow_editor.db
 database/flow_editor.db
+
 backend/langchainchat/sessions/*

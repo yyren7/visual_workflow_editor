@@ -35,26 +35,26 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 
   // 修改回调函数以接收 property 和 value
   const handlePropertyChange = (property: string, value: any) => {
-      // 构建 { [property]: value } 结构并传递给上层
-      onNodeDataChange(node.id, { [property]: value });
+    // 构建 { [property]: value } 结构并传递给上层
+    onNodeDataChange(node.id, { [property]: value });
   };
 
   return (
     <DraggableResizableContainer
-        title={t('flowEditor.nodeProperties')}
-        icon={<InfoIcon fontSize="small" />}
-        isOpen={isOpen} // Pass isOpen to container
-        onClose={onClose} // Pass onClose to container
-        defaultPosition={initialPosition} // Pass position
-        defaultSize={{ width: 350, height: 450 }} // Define default size
-        zIndex={6} // Ensure it's above other elements if needed
-        resizable={true}
+      title={t('flowEditor.nodeProperties')}
+      icon={<InfoIcon fontSize="small" />}
+      isOpen={isOpen} // Pass isOpen to container
+      onClose={onClose} // Pass onClose to container
+      defaultPosition={initialPosition} // Pass position
+      defaultSize={{ width: 350, height: 450 }} // Define default size
+      zIndex={6} // Ensure it's above other elements if needed
+      resizable={true}
     >
-        {/* Content goes inside the container */}
-        <Box sx={{ p: 2, overflowY: 'auto', height: '100%', width: '100%' }}>
-          {/* Pass node and the *new* adapted callback */}
-          <NodeProperties node={node} onNodePropertyChange={handlePropertyChange} />
-        </Box>
+      {/* Content goes inside the container */}
+      <Box sx={{ p: 2, overflowY: 'auto', height: '100%', width: '100%' }}>
+        {/* Pass node and the *new* adapted callback */}
+        <NodeProperties node={node} onNodePropertyChange={handlePropertyChange} />
+      </Box>
     </DraggableResizableContainer>
   );
 };
