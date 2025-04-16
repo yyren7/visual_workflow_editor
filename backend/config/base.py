@@ -13,7 +13,7 @@ workspace_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirnam
 load_dotenv(dotenv_path=workspace_env_path)
 
 # 日志目录设置
-LOG_DIR = os.getenv("LOG_DIR", "backend/app/logs")
+LOG_DIR = os.getenv("LOG_DIR", "logs")
 
 # 确保日志目录存在
 log_dir_path = Path(LOG_DIR)

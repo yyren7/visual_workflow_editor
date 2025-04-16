@@ -36,8 +36,13 @@ frontend/coverage
 # 操作系统
 .DS_Store
 Thumbs.db
-backend/app/logs/*
+# backend/app/logs/*
+# !backend/app/logs/.keep
 backend/database/flow_editor.db
 database/flow_editor.db
 
 backend/langchainchat/sessions/*
+
+# Log files
+logs/*
+!logs/.keep

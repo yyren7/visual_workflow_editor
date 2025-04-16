@@ -9,8 +9,15 @@ from pathlib import Path
 import logging.handlers
 import time # 导入 time
 
+# 添加项目根目录到Python路径
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(BASE_DIR))
+
+# 导入配置
+from backend.config.base import LOG_DIR
+
 # 创建logs目录
-log_dir = Path("backend/app/logs")
+log_dir = Path(LOG_DIR) # 使用配置中的 LOG_DIR
 log_dir.mkdir(parents=True, exist_ok=True)
 
 # 配置详细日志
@@ -22,7 +29,7 @@ logging.basicConfig(
         logging.StreamHandler(),
         # 文件输出
         logging.handlers.RotatingFileHandler(
-            log_dir / "app.log", 
+            log_dir / "app.log", # 使用 log_dir 变量
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5,
             encoding='utf-8'
@@ -34,7 +41,7 @@ logging.basicConfig(
 deepseek_logger = logging.getLogger("backend.deepseek")
 deepseek_logger.setLevel(logging.DEBUG)
 deepseek_file_handler = logging.handlers.RotatingFileHandler(
-    log_dir / "deepseek_api.log",
+    log_dir / "deepseek_api.log", # 使用 log_dir 变量
     maxBytes=20*1024*1024,  # 20MB
     backupCount=10,
     encoding='utf-8'
@@ -46,7 +53,7 @@ deepseek_logger.addHandler(deepseek_file_handler)
 workflow_logger = logging.getLogger("backend.workflow")
 workflow_logger.setLevel(logging.DEBUG)
 workflow_file_handler = logging.handlers.RotatingFileHandler(
-    log_dir / "workflow.log",
+    log_dir / "workflow.log", # 使用 log_dir 变量
     maxBytes=20*1024*1024,  # 20MB
     backupCount=10,
     encoding='utf-8'
@@ -55,16 +62,15 @@ workflow_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)
 workflow_logger.addHandler(workflow_file_handler)
 
 logger = logging.getLogger(__name__)
-logger.info("日志系统已配置，将记录到 %s", log_dir)
+logger.info("日志系统已配置，将记录到 %s", log_dir) # 使用 log_dir 变量
 
 # 检查是否使用最小模式
 MINIMAL_MODE = os.environ.get("SKIP_COMPLEX_ROUTERS", "0") == "1"
 if MINIMAL_MODE:
     logger.info("使用最小模式启动，将跳过某些复杂路由")
 
-# 添加项目根目录到Python路径
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-sys.path.append(str(BASE_DIR))
+# 确保 base 模块的 LOG_DIR 已经加载
+logger.info(f"从配置加载的 LOG_DIR: {LOG_DIR}")
 
 logger.info("开始导入模块...")
 
