@@ -14,6 +14,7 @@ from database.models import User, Flow, FlowVariable, VersionInfo, Chat
 # 导入迁移脚本
 from database.migrations.fix_flow_variables import migrate_flow_variables
 from database.migrations.migrate_user_preference import migrate_user_preferences
+from database.migrations.migrate_chat_preference import add_last_interacted_chat_id_column
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
@@ -51,6 +52,12 @@ def init_database():
     success = migrate_user_preferences()
     if not success:
         logger.error("迁移用户流程图偏好数据失败")
+
+    # 添加 flows.last_interacted_chat_id 字段
+    logger.info("向 flows 表添加 last_interacted_chat_id 字段...")
+    success = add_last_interacted_chat_id_column()
+    if not success:
+        logger.error("向 flows 表添加 last_interacted_chat_id 字段失败")
     
     # 初始化版本信息如果需要
     with get_db_context() as db:
