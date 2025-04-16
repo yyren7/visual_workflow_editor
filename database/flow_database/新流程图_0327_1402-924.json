@@ -1,0 +1,201 @@
+{
+    "nodes": [
+        {
+            "id": "moveL-1743487163556",
+            "type": "generic",
+            "position": {
+                "x": 628.0000964896756,
+                "y": 246.5
+            },
+            "data": {
+                "label": "Movel",
+                "description": "Movel",
+                "nodeType": "moveL",
+                "type": "moveL",
+                "fields": [
+                    {
+                        "name": "point_name_list",
+                        "value": "P1",
+                        "type": "string"
+                    },
+                    {
+                        "name": "control_x",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_y",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_z",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rz",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_ry",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rx",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "pallet_list",
+                        "value": "none",
+                        "type": "none"
+                    },
+                    {
+                        "name": "camera_list",
+                        "value": "none",
+                        "type": "none"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "point_name_list": "P1",
+                "control_x": "enable",
+                "control_y": "enable",
+                "control_z": "enable",
+                "control_rz": "enable",
+                "control_ry": "enable",
+                "control_rx": "enable",
+                "pallet_list": "none",
+                "camera_list": "none"
+            },
+            "width": 120,
+            "height": 80,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 628.0000964896756,
+                "y": 246.5
+            },
+            "dragging": false
+        },
+        {
+            "id": "condition-1743556456815",
+            "type": "generic",
+            "position": {
+                "x": 438.51872569015194,
+                "y": 304.7324131994212
+            },
+            "data": {
+                "label": "Condition",
+                "description": "Condition",
+                "nodeType": "condition",
+                "type": "condition",
+                "fields": [
+                    {
+                        "name": "CONDITION",
+                        "value": "true",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "DESCRIPTION",
+                        "value": "条件判断节点",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "true",
+                        "label": "True",
+                        "position": 0
+                    },
+                    {
+                        "id": "false",
+                        "label": "False",
+                        "position": 1
+                    }
+                ],
+                "CONDITION": "true",
+                "DESCRIPTION": "条件判断节点"
+            },
+            "width": 120,
+            "height": 80,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 438.51872569015194,
+                "y": 304.7324131994212
+            },
+            "dragging": false
+        },
+        {
+            "id": "set_motor-1743556486955",
+            "type": "generic",
+            "position": {
+                "x": 433.7594110899138,
+                "y": 173.8662065997106
+            },
+            "data": {
+                "label": "Set Motor",
+                "description": "Set Motor",
+                "nodeType": "set_motor",
+                "type": "set_motor",
+                "fields": [
+                    {
+                        "name": "state_list",
+                        "value": "on",
+                        "type": "boolean"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "state_list": "on"
+            },
+            "positionAbsolute": {
+                "x": 433.7594110899138,
+                "y": 173.8662065997106
+            },
+            "width": 120,
+            "height": 80,
+            "selected": false,
+            "dragging": false
+        }
+    ],
+    "edges": [],
+    "viewport": {
+        "x": -256.75950757958935,
+        "y": -99.09861979913182,
+        "zoom": 2
+    }
+}

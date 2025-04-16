@@ -1,0 +1,456 @@
+{
+    "nodes": [
+        {
+            "id": "moveL-1742977738249",
+            "type": "generic",
+            "position": {
+                "x": -271,
+                "y": -50
+            },
+            "data": {
+                "label": "Movel",
+                "description": "Movel",
+                "nodeType": "moveL",
+                "type": "moveL",
+                "fields": [
+                    {
+                        "name": "point_name_list",
+                        "value": "P1",
+                        "type": "string"
+                    },
+                    {
+                        "name": "control_x",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_y",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_z",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rz",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_ry",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rx",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "pallet_list",
+                        "value": "none",
+                        "type": "none"
+                    },
+                    {
+                        "name": "camera_list",
+                        "value": "none",
+                        "type": "none"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "point_name_list": "P1",
+                "control_x": "enable",
+                "control_y": "enable",
+                "control_z": "enable",
+                "control_rz": "enable",
+                "control_ry": "enable",
+                "control_rx": "enable",
+                "pallet_list": "none",
+                "camera_list": "none"
+            },
+            "width": 120,
+            "height": 80,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -271,
+                "y": -50
+            },
+            "dragging": false
+        },
+        {
+            "id": "condition-1742977738986",
+            "type": "generic",
+            "position": {
+                "x": 25,
+                "y": 0
+            },
+            "data": {
+                "label": "Condition",
+                "description": "Condition",
+                "nodeType": "condition",
+                "type": "condition",
+                "fields": [
+                    {
+                        "name": "CONDITION",
+                        "value": "true",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "DESCRIPTION",
+                        "value": "条件判断节点",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "true",
+                        "label": "True",
+                        "position": 0
+                    },
+                    {
+                        "id": "false",
+                        "label": "False",
+                        "position": 1
+                    }
+                ],
+                "CONDITION": "true",
+                "DESCRIPTION": "条件判断节点"
+            },
+            "width": 120,
+            "height": 80,
+            "positionAbsolute": {
+                "x": 25,
+                "y": 0
+            }
+        },
+        {
+            "id": "loop-1742977740356",
+            "type": "generic",
+            "position": {
+                "x": 275,
+                "y": 0
+            },
+            "data": {
+                "label": "Loop",
+                "description": "Loop",
+                "nodeType": "loop",
+                "type": "loop",
+                "fields": [],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    },
+                    {
+                        "id": "input_DO",
+                        "label": "Do",
+                        "position": 1
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "width": 120,
+            "height": 80,
+            "positionAbsolute": {
+                "x": 275,
+                "y": 0
+            }
+        },
+        {
+            "id": "moveL-1743063494164",
+            "type": "generic",
+            "position": {
+                "x": -92,
+                "y": -167.75
+            },
+            "data": {
+                "label": "Movel",
+                "description": "Movel",
+                "nodeType": "moveL",
+                "type": "moveL",
+                "fields": [
+                    {
+                        "name": "point_name_list",
+                        "value": "P1",
+                        "type": "string"
+                    },
+                    {
+                        "name": "control_x",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_y",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_z",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rz",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_ry",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rx",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "pallet_list",
+                        "value": "none",
+                        "type": "none"
+                    },
+                    {
+                        "name": "camera_list",
+                        "value": "none",
+                        "type": "none"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "point_name_list": "P1",
+                "control_x": "enable",
+                "control_y": "enable",
+                "control_z": "enable",
+                "control_rz": "enable",
+                "control_ry": "enable",
+                "control_rx": "enable",
+                "pallet_list": "none",
+                "camera_list": "none"
+            },
+            "width": 120,
+            "height": 80,
+            "positionAbsolute": {
+                "x": -92,
+                "y": -167.75
+            },
+            "selected": false,
+            "dragging": false
+        },
+        {
+            "id": "condition-1743063495182",
+            "type": "generic",
+            "position": {
+                "x": 208.5,
+                "y": -96.75
+            },
+            "data": {
+                "label": "Condition",
+                "description": "Condition",
+                "nodeType": "condition",
+                "type": "condition",
+                "fields": [
+                    {
+                        "name": "CONDITION",
+                        "value": "true",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "DESCRIPTION",
+                        "value": "条件判断节点",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "true",
+                        "label": "True",
+                        "position": 0
+                    },
+                    {
+                        "id": "false",
+                        "label": "False",
+                        "position": 1
+                    }
+                ],
+                "CONDITION": "true",
+                "DESCRIPTION": "条件判断节点"
+            },
+            "width": 120,
+            "height": 80,
+            "positionAbsolute": {
+                "x": 208.5,
+                "y": -96.75
+            }
+        },
+        {
+            "id": "moveL-1743142048950",
+            "type": "generic",
+            "position": {
+                "x": 287,
+                "y": -216.10000000000002
+            },
+            "data": {
+                "label": "Movel",
+                "nodeType": "moveL",
+                "type": "moveL",
+                "description": "Movel - 由AI助手创建",
+                "fields": [],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "nodeProperties": {
+                    "nodeId": "moveL-1743142048950",
+                    "nodeType": "moveL",
+                    "control_x": "enable",
+                    "control_y": "enable",
+                    "description": "Movel - 由AI助手创建",
+                    "fields": [],
+                    "inputs": [
+                        {
+                            "id": "input",
+                            "label": "Input",
+                            "position": 0
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "id": "output",
+                            "label": "Output",
+                            "position": 0
+                        }
+                    ],
+                    "point_name_list": "P1",
+                    "pallet_list": "none",
+                    "camera_list": "none",
+                    "control_z": "enable",
+                    "control_rz": "enable",
+                    "control_ry": "enable",
+                    "control_rx": "enable"
+                },
+                "control_x": "enable",
+                "control_y": "enable",
+                "point_name_list": "P1",
+                "pallet_list": "none",
+                "camera_list": "none",
+                "control_z": "enable",
+                "control_rz": "enable",
+                "control_ry": "enable",
+                "control_rx": "enable"
+            },
+            "width": 134,
+            "height": 80,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 287,
+                "y": -216.10000000000002
+            },
+            "dragging": false
+        }
+    ],
+    "edges": [
+        {
+            "animated": false,
+            "style": {
+                "stroke": "#888",
+                "strokeWidth": 2
+            },
+            "markerEnd": {
+                "type": "arrowclosed",
+                "color": "#888",
+                "width": 20,
+                "height": 20
+            },
+            "type": "smoothstep",
+            "source": "moveL-1742977738249",
+            "sourceHandle": "output",
+            "target": "condition-1742977738986",
+            "targetHandle": "input",
+            "className": "",
+            "id": "reactflow__edge-moveL-1742977738249output-condition-1742977738986input"
+        },
+        {
+            "animated": false,
+            "style": {
+                "stroke": "#888",
+                "strokeWidth": 2
+            },
+            "markerEnd": {
+                "type": "arrowclosed",
+                "color": "#888",
+                "width": 20,
+                "height": 20
+            },
+            "type": "smoothstep",
+            "source": "moveL-1743063494164",
+            "sourceHandle": "output",
+            "target": "condition-1743063495182",
+            "targetHandle": "input",
+            "className": "",
+            "id": "reactflow__edge-moveL-1743063494164output-condition-1743063495182input"
+        }
+    ],
+    "viewport": {
+        "x": 786.3797549967762,
+        "y": 426.7747689662583,
+        "zoom": 1.8482699333763162
+    }
+}

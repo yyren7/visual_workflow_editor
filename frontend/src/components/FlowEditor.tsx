@@ -1,5 +1,5 @@
 // frontend/src/components/FlowEditor.tsx
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   Controls,
@@ -61,6 +61,7 @@ import ChatInterface from './ChatInterface';
 import NodeSelector from './NodeSelector';
 import DraggableResizableContainer from './DraggableResizableContainer';
 import { debounce } from 'lodash';
+import { getNodeTemplates, NodeTemplatesResponse } from '../api/nodeTemplates'; // Import API function and type
 
 // --- Redux Imports ---
 import { useSelector, useDispatch } from 'react-redux';
@@ -109,22 +110,17 @@ interface FlowEditorProps {
   flowId?: string;
 }
 
-// 自定义节点类型
-const nodeTypes: NodeTypes = {
+// Base node types with specific components
+const baseNodeTypes: NodeTypes = {
   input: InputNode,
   output: OutputNode,
   process: ProcessNode,
   decision: DecisionNode,
-  generic: GenericNode, // Default for unknown types
   condition: ConditionNode, // Specific component for 'condition'
-  moveL: GenericNode, // Use GenericNode for 'moveL'
-  set_motor: GenericNode, // Use GenericNode for 'set_motor'
-  loop: GenericNode, // Use GenericNode for 'loop'
-  return: GenericNode, // Use GenericNode for 'return'
-  select_robot: GenericNode, // Use GenericNode for 'select_robot'
+  generic: GenericNode, // Keep a generic fallback just in case
 };
 
-const SAVE_DEBOUNCE_MS = 100; // Debounce time increased to 100ms
+const SAVE_DEBOUNCE_MS = 100;
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const { t } = useTranslation();
@@ -132,6 +128,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const { enqueueSnackbar } = useSnackbar();
   const { isAuthenticated, logout } = useAuth();
   const dispatch = useDispatch<AppDispatch>();
+
+  // --- State for Node Templates ---
+  const [nodeTemplates, setNodeTemplates] = useState<NodeTemplatesResponse | null>(null);
+  const [templatesLoading, setTemplatesLoading] = useState<boolean>(true);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
 
   // --- Get State from Redux ---
   const currentFlowId = useSelector(selectCurrentFlowId);
@@ -149,6 +150,43 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
 
   // Ref to track if it's the initial load to prevent immediate save
   const isInitialLoad = useRef(true);
+
+  // --- Effect to fetch Node Templates ---
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setTemplatesLoading(true);
+        setTemplatesError(null);
+        const templates = await getNodeTemplates();
+        setNodeTemplates(templates);
+        console.log("FlowEditor: Node templates fetched successfully.", templates);
+      } catch (error: any) {
+        console.error("FlowEditor: Failed to fetch node templates:", error);
+        setTemplatesError(error.message || 'Failed to load node templates');
+        enqueueSnackbar(t('flowEditor.errorLoadingTemplates'), { variant: 'error' });
+      } finally {
+        setTemplatesLoading(false);
+      }
+    };
+    fetchTemplates();
+  }, [enqueueSnackbar, t]); // Dependencies for the effect
+
+  // --- Dynamically generate nodeTypes using useMemo ---
+  const nodeTypes = useMemo(() => {
+    const dynamicTypes: NodeTypes = { ...baseNodeTypes };
+    if (nodeTemplates) {
+      Object.keys(nodeTemplates).forEach((templateKey) => {
+        const template = nodeTemplates[templateKey];
+        if (template && template.type && !(template.type in dynamicTypes)) {
+          // If the type is not already defined in baseNodeTypes, map it to GenericNode
+          dynamicTypes[template.type] = GenericNode;
+          console.log(`FlowEditor: Mapping node type '${template.type}' to GenericNode.`);
+        }
+      });
+    }
+    console.log("FlowEditor: Final nodeTypes map:", dynamicTypes);
+    return dynamicTypes;
+  }, [nodeTemplates]); // Dependency: recalculate when nodeTemplates change
 
   // --- Effect to handle flowId changes (fetch) ---
   useEffect(() => {
@@ -336,6 +374,27 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
 
   // --- Rendering ---
 
+  // Handle template loading/error states
+  if (templatesLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>{t('flowEditor.loadingTemplates')}</Typography>
+      </Box>
+    );
+  }
+
+  if (templatesError) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', p: 3 }}>
+         <Alert severity="error" sx={{ mb: 2 }}>
+           {t('flowEditor.errorLoadingTemplates')}: {templatesError}
+         </Alert>
+         {/* Optionally add a retry button */}
+      </Box>
+    );
+  }
+
   if (isLoading && !currentFlowId) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -376,12 +435,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         <NodeSelectorSidebar open={sidebarOpen} />
 
         <Box sx={{ flexGrow: 1, height: '100%', position: 'relative' }} ref={reactFlowWrapper}>
-          {isLoading && currentFlowId && (
-            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.7)', zIndex: 10 }}>
-              <CircularProgress />
-              <Typography sx={{ ml: 2 }}>{t('flowEditor.loadingFlow')}</Typography>
-          </Box>
-        )}
           {error && (
             <Alert severity="error" sx={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 11 }}>
               {t('flowEditor.errorLoadingFlow')}: {error}

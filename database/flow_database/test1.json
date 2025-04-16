@@ -1,0 +1,739 @@
+{
+    "nodes": [
+        {
+            "id": "condition-1743556456815",
+            "type": "generic",
+            "position": {
+                "x": 550.4750471450315,
+                "y": -1585.5829928528783
+            },
+            "data": {
+                "label": "Condition",
+                "description": "Condition",
+                "nodeType": "condition",
+                "type": "condition",
+                "fields": [
+                    {
+                        "name": "CONDITION",
+                        "value": "true",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "DESCRIPTION",
+                        "value": "条件判断节点",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "true",
+                        "label": "True",
+                        "position": 0
+                    },
+                    {
+                        "id": "false",
+                        "label": "False",
+                        "position": 1
+                    }
+                ],
+                "CONDITION": "true",
+                "DESCRIPTION": "条件判断节点"
+            },
+            "width": 120,
+            "height": 79,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 550.4750471450315,
+                "y": -1585.5829928528783
+            },
+            "dragging": false
+        },
+        {
+            "id": "set_motor-1743556486955",
+            "type": "generic",
+            "position": {
+                "x": 886.0792938722044,
+                "y": -1517.3431876447644
+            },
+            "data": {
+                "label": "Set Motor",
+                "description": "Set Motor",
+                "nodeType": "set_motor",
+                "type": "set_motor",
+                "fields": [
+                    {
+                        "name": "state_list",
+                        "value": "on",
+                        "type": "boolean"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "state_list": "on"
+            },
+            "positionAbsolute": {
+                "x": 886.0792938722044,
+                "y": -1517.3431876447644
+            },
+            "width": 120,
+            "height": 79,
+            "selected": false,
+            "dragging": false
+        },
+        {
+            "id": "moveL-5ae227bf-4721-4b8c-937a-b5014c5c674b",
+            "type": "moveL",
+            "position": {
+                "x": -138.65022413256997,
+                "y": -1543.3190151825295
+            },
+            "data": {
+                "label": "Movel",
+                "description": "Movel"
+            },
+            "width": 120,
+            "height": 79
+        },
+        {
+            "id": "condition-32ce3c43-27b0-4bd6-99bb-72950618462d",
+            "type": "condition",
+            "position": {
+                "x": 209.34977586743003,
+                "y": -1313.3190151825295
+            },
+            "data": {
+                "label": "Condition",
+                "description": "Condition"
+            },
+            "width": 120,
+            "height": 49
+        },
+        {
+            "id": "set_motor-1d9dcdd8-ee5a-453a-a683-077f71c85ca2",
+            "type": "set_motor",
+            "position": {
+                "x": -361.70307443303875,
+                "y": -1366.4133145815917
+            },
+            "data": {
+                "label": "Set Motor",
+                "description": "Set Motor"
+            },
+            "width": 120,
+            "height": 79,
+            "positionAbsolute": {
+                "x": -361.70307443303875,
+                "y": -1366.4133145815917
+            },
+            "dragging": false
+        },
+        {
+            "id": "return-cb2064fc-be38-4b59-bfd6-89af424a1f33",
+            "type": "return",
+            "position": {
+                "x": 47.349775867430026,
+                "y": -1487.9590115204198
+            },
+            "data": {
+                "label": "Return",
+                "description": "Return"
+            },
+            "width": 120,
+            "height": 79,
+            "positionAbsolute": {
+                "x": 47.349775867430026,
+                "y": -1487.9590115204198
+            },
+            "dragging": true
+        },
+        {
+            "id": "select_robot-72d819dd-93e7-45e2-b288-1c104571b674",
+            "type": "select_robot",
+            "position": {
+                "x": -542.2502241325699,
+                "y": -1481.3190151825295
+            },
+            "data": {
+                "label": "Select Robot",
+                "description": "Select Robot"
+            },
+            "width": 120,
+            "height": 79
+        },
+        {
+            "id": "loop-c7b9a63a-3675-4b57-bab6-2f4003d76598",
+            "type": "loop",
+            "position": {
+                "x": -492.2502241325699,
+                "y": -1719.3190151825295
+            },
+            "data": {
+                "label": "Loop",
+                "description": "Loop"
+            },
+            "width": 120,
+            "height": 79,
+            "positionAbsolute": {
+                "x": -492.2502241325699,
+                "y": -1719.3190151825295
+            },
+            "dragging": false
+        },
+        {
+            "id": "set_motor-ccf47146-9672-4698-8b03-59efb73ad7d2",
+            "type": "set_motor",
+            "position": {
+                "x": -300.2502241325699,
+                "y": -1049.3190151825295
+            },
+            "data": {
+                "label": "Set Motor",
+                "description": "Set Motor"
+            },
+            "width": 120,
+            "height": 79,
+            "positionAbsolute": {
+                "x": -300.2502241325699,
+                "y": -1049.3190151825295
+            },
+            "dragging": false
+        },
+        {
+            "id": "moveL-5aaa63cc-b4f6-45e7-9cd0-1b6fbc4dbdb9",
+            "type": "moveL",
+            "position": {
+                "x": 265.7497758674301,
+                "y": -1587.3190151825295
+            },
+            "data": {
+                "label": "Movel",
+                "description": "Movel"
+            },
+            "width": 120,
+            "height": 79,
+            "dragging": false,
+            "positionAbsolute": {
+                "x": 265.7497758674301,
+                "y": -1587.3190151825295
+            }
+        },
+        {
+            "id": "loop-3124899f-1297-4efd-bc34-aa49854ad53d",
+            "type": "loop",
+            "position": {
+                "x": 149.74977586743012,
+                "y": -1087.9590115204198
+            },
+            "data": {
+                "label": "Loop",
+                "description": "Loop"
+            },
+            "width": 120,
+            "height": 79,
+            "dragging": false
+        },
+        {
+            "id": "loop-f414911e-051b-4e46-89dc-97fe68510755",
+            "type": "loop",
+            "position": {
+                "x": -56.25022413256988,
+                "y": -1223.9590115204198
+            },
+            "data": {
+                "label": "Loop",
+                "description": "Loop",
+                "fields": [],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    },
+                    {
+                        "id": "input_DO",
+                        "label": "Do",
+                        "position": 1
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "width": 120,
+            "height": 79,
+            "dragging": false
+        },
+        {
+            "id": "loop-625e7341-decf-4e80-bc2a-05d0b29f9be7",
+            "type": "loop",
+            "position": {
+                "x": 266.9927764673415,
+                "y": -899.4599836719542
+            },
+            "data": {
+                "label": "Loop",
+                "description": "Loop",
+                "fields": [],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    },
+                    {
+                        "id": "input_DO",
+                        "label": "Do",
+                        "position": 1
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "width": 120,
+            "height": 79,
+            "positionAbsolute": {
+                "x": 266.9927764673415,
+                "y": -899.4599836719542
+            },
+            "dragging": false
+        },
+        {
+            "id": "loop-226b6bc0-bcf6-4529-a3f0-3d9d83fb2691",
+            "type": "loop",
+            "position": {
+                "x": 879.9091020393047,
+                "y": -2971.95901152042
+            },
+            "data": {
+                "label": "Loop",
+                "description": "Loop",
+                "fields": [],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    },
+                    {
+                        "id": "input_DO",
+                        "label": "Do",
+                        "position": 1
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "width": 120,
+            "height": 79,
+            "positionAbsolute": {
+                "x": 879.9091020393047,
+                "y": -2971.95901152042
+            },
+            "dragging": true
+        },
+        {
+            "id": "set_motor-4d8ff73a-7b70-4641-910e-1efc57768252",
+            "type": "set_motor",
+            "position": {
+                "x": -183.84336892257082,
+                "y": -651.1145040530945
+            },
+            "data": {
+                "label": "Set Motor",
+                "description": "Set Motor",
+                "fields": [
+                    {
+                        "name": "state_list",
+                        "default_value": "on",
+                        "type": "boolean"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "positionAbsolute": {
+                "x": -183.84336892257082,
+                "y": -651.1145040530945
+            },
+            "dragging": false
+        },
+        {
+            "id": "SetUser-35aef80e-b610-48e3-8662-cb87bd937627",
+            "type": "SetUser",
+            "position": {
+                "x": 228.11241150623084,
+                "y": -2107.6367562608784
+            },
+            "data": {
+                "label": "Setuser",
+                "description": "Setuser",
+                "fields": [
+                    {
+                        "name": "DESCRIPTION",
+                        "default_value": "修改指定的用户坐标系。",
+                        "type": "string"
+                    },
+                    {
+                        "name": "index",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "table",
+                        "default_value": "{0,0,0,0}",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "dragging": false
+        },
+        {
+            "id": "SetPayLoad-fd2c2de0-38c7-4684-bcdc-be3f6d35e4ac",
+            "type": "SetPayLoad",
+            "position": {
+                "x": 628.1124115062308,
+                "y": -2035.6367562608784
+            },
+            "data": {
+                "label": "Setpayload",
+                "description": "Setpayload",
+                "fields": [
+                    {
+                        "name": "DESCRIPTION",
+                        "default_value": "设置机械臂末端负载。",
+                        "type": "string"
+                    },
+                    {
+                        "name": "weight",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "inertia",
+                        "default_value": "0",
+                        "type": "integer"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "dragging": false
+        },
+        {
+            "id": "RobotMode-48ce1ca5-41fc-4d15-8acd-63af4db6d8bb",
+            "type": "RobotMode",
+            "position": {
+                "x": 1196.912411506231,
+                "y": -1541.6367562608784
+            },
+            "data": {
+                "label": "Robotmode",
+                "description": "Robotmode",
+                "fields": [
+                    {
+                        "name": "DESCRIPTION",
+                        "default_value": "获取机器人当前状态。",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "positionAbsolute": {
+                "x": 1196.912411506231,
+                "y": -1541.6367562608784
+            },
+            "dragging": false
+        },
+        {
+            "id": "MovJ-b51db7d9-d17f-4def-8a83-21766d3cb53a",
+            "type": "MovJ",
+            "position": {
+                "x": 112.11241150623073,
+                "y": -1757.6367562608784
+            },
+            "data": {
+                "label": "Movj",
+                "description": "Movj",
+                "fields": [
+                    {
+                        "name": "DESCRIPTION",
+                        "default_value": "从当前位置以关节运动方式运动至笛卡尔坐标目标点。关节运动的轨迹非直线，所有关节会同时完成运动。",
+                        "type": "string"
+                    },
+                    {
+                        "name": "X",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "Y",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "Z",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "R",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "User",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "Tool",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "SpeedJ",
+                        "default_value": "100",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "AccJ",
+                        "default_value": "100",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "CP",
+                        "default_value": "0",
+                        "type": "integer"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "dragging": false
+        },
+        {
+            "id": "CalcUser-a5d769f0-4637-4f48-9d97-7fb79334833b",
+            "type": "CalcUser",
+            "position": {
+                "x": 478.11241150623084,
+                "y": -1971.6367562608784
+            },
+            "data": {
+                "label": "Calcuser",
+                "description": "Calcuser",
+                "fields": [
+                    {
+                        "name": "DESCRIPTION",
+                        "default_value": "计算用户坐标系。",
+                        "type": "string"
+                    },
+                    {
+                        "name": "index",
+                        "default_value": "0",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "matrix_direction",
+                        "default_value": "1",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "table",
+                        "default_value": "{0,0,0,0}",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "positionAbsolute": {
+                "x": 478.11241150623084,
+                "y": -1971.6367562608784
+            },
+            "dragging": false
+        },
+        {
+            "id": "SyncAll-236097af-15be-4f10-9f88-065fcd3d91a3",
+            "type": "SyncAll",
+            "position": {
+                "x": 712.1124115062308,
+                "y": -2249.6367562608784
+            },
+            "data": {
+                "label": "Syncall",
+                "description": "Syncall",
+                "fields": [
+                    {
+                        "name": "DESCRIPTION",
+                        "default_value": "阻塞程序执行队列指令，待队列中所有指令执行完后才返回。此指令主要用于有扩展轴的场景：扩展轴和机械臂是各自独立运动的，Sync指令在队列中最后一条指令（假设为机械臂运动指令）执行完成后就会返回，此时队列前面的扩展轴运动指令可能还未执行完毕(反之亦然)；若想要确保队列中所有指令都执行完成，可使用SyncAll命令。",
+                        "type": "string"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ]
+            },
+            "dragging": false
+        }
+    ],
+    "edges": [
+        {
+            "animated": false,
+            "style": {
+                "stroke": "#888",
+                "strokeWidth": 2
+            },
+            "markerEnd": {
+                "type": "arrowclosed",
+                "color": "#888",
+                "width": 20,
+                "height": 20
+            },
+            "type": "smoothstep",
+            "source": "condition-1743556456815",
+            "sourceHandle": "true",
+            "target": "set_motor-1743556486955",
+            "targetHandle": "input",
+            "className": "true-edge",
+            "id": "reactflow__edge-condition-1743556456815true-set_motor-1743556486955input"
+        },
+        {
+            "animated": false,
+            "style": {
+                "stroke": "#888",
+                "strokeWidth": 2
+            },
+            "markerEnd": {
+                "type": "arrowclosed",
+                "color": "#888",
+                "width": 20,
+                "height": 20
+            },
+            "type": "smoothstep",
+            "source": "set_motor-1743556486955",
+            "sourceHandle": "output",
+            "target": "RobotMode-48ce1ca5-41fc-4d15-8acd-63af4db6d8bb",
+            "targetHandle": null,
+            "id": "25235d61-d0b1-4102-a835-a068b183302a"
+        }
+    ]
+}

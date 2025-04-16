@@ -1,0 +1,198 @@
+{
+    "nodes": [
+        {
+            "id": "moveL-1743400430172",
+            "type": "generic",
+            "position": {
+                "x": -113,
+                "y": 13
+            },
+            "data": {
+                "label": "Movel",
+                "nodeType": "moveL",
+                "type": "moveL",
+                "description": "Movel - 由AI助手创建",
+                "fields": [],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "nodeProperties": {
+                    "nodeId": "moveL-1743400430172",
+                    "nodeType": "moveL",
+                    "control_x": "enable",
+                    "control_y": "enable",
+                    "description": "Movel - 由AI助手创建",
+                    "fields": [],
+                    "inputs": [
+                        {
+                            "id": "input",
+                            "label": "Input",
+                            "position": 0
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "id": "output",
+                            "label": "Output",
+                            "position": 0
+                        }
+                    ],
+                    "point_name_list": "P1",
+                    "pallet_list": "none",
+                    "camera_list": "none",
+                    "control_z": "enable",
+                    "control_rz": "enable",
+                    "control_ry": "enable",
+                    "control_rx": "enable"
+                },
+                "control_x": "enable",
+                "control_y": "enable",
+                "point_name_list": "P1",
+                "pallet_list": "none",
+                "camera_list": "none",
+                "control_z": "enable",
+                "control_rz": "enable",
+                "control_ry": "enable",
+                "control_rx": "enable"
+            },
+            "width": 134,
+            "height": 80,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -113,
+                "y": 13
+            },
+            "dragging": false
+        },
+        {
+            "id": "moveL-1743400459115",
+            "type": "generic",
+            "position": {
+                "x": 323.5,
+                "y": -62.75
+            },
+            "data": {
+                "label": "Movel",
+                "description": "Movel",
+                "nodeType": "moveL",
+                "type": "moveL",
+                "fields": [
+                    {
+                        "name": "point_name_list",
+                        "value": "P1",
+                        "type": "string"
+                    },
+                    {
+                        "name": "control_x",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_y",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_z",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rz",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_ry",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "control_rx",
+                        "value": "enable",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "pallet_list",
+                        "value": "none",
+                        "type": "none"
+                    },
+                    {
+                        "name": "camera_list",
+                        "value": "none",
+                        "type": "none"
+                    }
+                ],
+                "inputs": [
+                    {
+                        "id": "input",
+                        "label": "Input",
+                        "position": 0
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "output",
+                        "label": "Output",
+                        "position": 0
+                    }
+                ],
+                "point_name_list": "P1",
+                "control_x": "enable",
+                "control_y": "enable",
+                "control_z": "enable",
+                "control_rz": "enable",
+                "control_ry": "enable",
+                "control_rx": "enable",
+                "pallet_list": "none",
+                "camera_list": "none"
+            },
+            "width": 120,
+            "height": 80,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 323.5,
+                "y": -62.75
+            },
+            "dragging": true
+        }
+    ],
+    "edges": [
+        {
+            "animated": false,
+            "style": {
+                "stroke": "#888",
+                "strokeWidth": 2
+            },
+            "markerEnd": {
+                "type": "arrowclosed",
+                "color": "#888",
+                "width": 20,
+                "height": 20
+            },
+            "type": "smoothstep",
+            "source": "moveL-1743400430172",
+            "sourceHandle": "output",
+            "target": "moveL-1743400459115",
+            "targetHandle": "input",
+            "className": "",
+            "id": "reactflow__edge-moveL-1743400430172output-moveL-1743400459115input"
+        }
+    ],
+    "viewport": {
+        "x": 594.5,
+        "y": 429.25,
+        "zoom": 2
+    }
+}
