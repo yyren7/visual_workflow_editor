@@ -1,0 +1,19 @@
+{
+  "category": "Robot",
+  "block_name": "robot position",
+  "description_jp": "ロボット現在位置を数値として返す",
+  "input_variables": [
+    {
+      "name_jp": "axisName",
+      "title_jp": "軸名",
+      "format_jp": "プルダウン",
+      "range_jp": "- X:X 軸\n\n- Y:Y 軸\n- Z:Z 軸\n- Rx:Rx 軸\n- Ry:Ry 軸\n- Rz:Rz 軸",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "現在位置を取得する軸名"
+    }
+  ],
+  "usage_example_jp": "・現在 X 位置が 0mm 以上の場合、\"Fairino FR\"が A 点 →C 点の順に移動します。\n・現在 X 位置が 0mm 未満の場合、\"Fairino FR\"が B 点 →C 点の順に移動します。",
+  "usage_notes_jp": [
+    "\"select\"ブロックでロボットを定義してから使って下さい"
+  ]
+} 

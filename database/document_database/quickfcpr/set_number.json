@@ -1,0 +1,27 @@
+{
+  "category": "Math",
+  "block_name": "set number",
+  "description_jp": "変数に値を代入する",
+  "input_variables": [
+    {
+      "name_jp": "dstValueVar",
+      "title_jp": "代入先数値変数",
+      "format_jp": "プルダウン",
+      "range_jp": "Number 変数表で設定した変数名（最大 300 点）",
+      "default_jp": "Number 変数表で最初に定義した変数",
+      "content_jp": "代入先の数値型の変数"
+    },
+    {
+      "name_jp": "srcValueVar",
+      "title_jp": "代入元数値変数",
+      "format_jp": "ブロック",
+      "range_jp": "数値ブロック",
+      "default_jp": "なし",
+      "content_jp": "代入元の数値型の変数"
+    }
+  ],
+  "usage_example_jp": "\"cnt\"に 10 を代入して、500msec 待機した後、\"cnt\"に 11(=10+1)を代入します",
+  "usage_notes_jp": [
+    "変数に値を格納する前に、変数表で定義して下さい"
+  ]
+} 

@@ -1,0 +1,59 @@
+{
+  "category": "PLC",
+  "block_name": "connect plc",
+  "description_jp": "PLC と接続する",
+  "input_variables": [
+    {
+      "name_jp": "maker",
+      "title_jp": "メーカー",
+      "format_jp": "プルダウン",
+      "range_jp": "- KEYENCE",
+      "default_jp": "KEYENCE",
+      "content_jp": "対象 PLC のメーカー"
+    },
+    {
+      "name_jp": "octetNo1",
+      "title_jp": "第 1 オクテット",
+      "format_jp": "キーボード",
+      "range_jp": "8 ビット符号無し整数",
+      "default_jp": "192",
+      "content_jp": "対象 PLC の IP アドレス第 1 オクテット"
+    },
+    {
+      "name_jp": "octetNo2",
+      "title_jp": "第 2 オクテット",
+      "format_jp": "キーボード",
+      "range_jp": "8 ビット符号無し整数",
+      "default_jp": "168",
+      "content_jp": "対象 PLC の IP アドレス第 2 オクテット"
+    },
+    {
+      "name_jp": "octetNo3",
+      "title_jp": "第 3 オクテット",
+      "format_jp": "キーボード",
+      "range_jp": "8 ビット符号無し整数",
+      "default_jp": "250",
+      "content_jp": "対象 PLC の IP アドレス第 3 オクテット"
+    },
+    {
+      "name_jp": "octetNo4",
+      "title_jp": "第 4 オクテット",
+      "format_jp": "キーボード",
+      "range_jp": "8 ビット符号無し整数",
+      "default_jp": "10",
+      "content_jp": "対象 PLC の IP アドレス第 4 オクテット"
+    },
+    {
+      "name_jp": "protNo",
+      "title_jp": "ポート番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1024~65535",
+      "default_jp": "5000",
+      "content_jp": "対象 PLC のポート番号"
+    }
+  ],
+  "usage_example_jp": "\"plc bit\" または \"set plc bit\"ブロック等を参照して下さい",
+  "usage_notes_jp": [
+    "\"plc bit\" または \"set plc bit\"ブロック等とセットで使用して下さい"
+  ]
+} 

@@ -1,0 +1,75 @@
+{
+  "category": "PLC",
+  "block_name": "set plc bit until",
+  "description_jp": "PLC の bit デバイスの値を指定した条件が成立するまで操作する",
+  "input_variables": [
+    {
+      "name_jp": "outDeviceName",
+      "title_jp": "出力デバイス名",
+      "format_jp": "プルダウン",
+      "range_jp": "- R デバイス\n\n- MR デバイス",
+      "default_jp": "R",
+      "content_jp": "PLC から取得する対象デバイス名の名前"
+    },
+    {
+      "name_jp": "outDeviceWordNo",
+      "title_jp": "出力デバイス WORD 番号",
+      "format_jp": "キーボード",
+      "range_jp": "対象メーカーの機種ごとに異なる",
+      "default_jp": "0",
+      "content_jp": "PLC から取得する対象デバイス名の WORD 番号"
+    },
+    {
+      "name_jp": "outDeviceBitNo",
+      "title_jp": "出力デバイス BIT 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "00~16",
+      "default_jp": "00",
+      "content_jp": "PLC から取得する対象デバイス名の BIT 番号"
+    },
+    {
+      "name_jp": "outBitStatus",
+      "title_jp": "出力ビット状態",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:アクティブ\n- OFF:非アクティブ",
+      "default_jp": "ON",
+      "content_jp": "対象ビットデバイスの操作方法"
+    },
+    {
+      "name_jp": "inDeviceName",
+      "title_jp": "入力デバイス名",
+      "format_jp": "プルダウン",
+      "range_jp": "- R デバイス\n- MR デバイス",
+      "default_jp": "R",
+      "content_jp": "PLC から取得する対象デバイス名の名前"
+    },
+    {
+      "name_jp": "inDeviceWordNo",
+      "title_jp": "入力デバイス WORD 番号",
+      "format_jp": "キーボード",
+      "range_jp": "対象メーカーの機種ごとに異なる",
+      "default_jp": "0",
+      "content_jp": "PLC から取得する対象デバイス名の WORD 番号"
+    },
+    {
+      "name_jp": "inDeviceBitNo",
+      "title_jp": "入力デバイス BIT 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "00~16",
+      "default_jp": "00",
+      "content_jp": "PLC から取得する対象デバイス名の BIT 番号"
+    },
+    {
+      "name_jp": "inBitStatus",
+      "title_jp": "入力ビット状態",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:アクティブ\n- OFF:非アクティブ",
+      "default_jp": "ON",
+      "content_jp": "対象ビットデバイスの操作方法"
+    }
+  ],
+  "usage_example_jp": "\"KEYENCE\"製 PLC の\"R1000\"デバイスが\"ON\"になるまでの間\"MR1000\"デバイスを\"ON\"にします",
+  "usage_notes_jp": [
+    "\"connect plc\"ブロックとセットで使用して下さい"
+  ]
+} 

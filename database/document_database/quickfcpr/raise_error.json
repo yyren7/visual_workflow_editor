@@ -1,0 +1,19 @@
+{
+  "category": "Error",
+  "block_name": "raise error",
+  "description_jp": "設定したエラーが即座に発生する",
+  "input_variables": [
+    {
+      "name_jp": "errorMessage",
+      "title_jp": "エラーメッセージ",
+      "format_jp": "文字列",
+      "range_jp": "最大 50 文字",
+      "default_jp": "errorMessage",
+      "content_jp": "エラー画面に表示したいアルファベットのエラーメッセージ"
+    }
+  ],
+  "usage_example_jp": "\"Fairino FR\"の Pick&Place 回数が 5 回に到達すると、設定したエラーが発生します\n\n・\"Error Reset\"ボタンで発生しているエラーをリセットできます\n・リセット後に再開する場合は、\"Auto\"ボタンを再度押下して下さい",
+  "usage_notes_jp": [
+    "エラーメッセとして設定可能な文字列は、アルファベットのみです"
+  ]
+} 

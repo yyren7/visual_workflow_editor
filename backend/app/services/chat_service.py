@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, AsyncGenerator
 from datetime import datetime
 import logging
 import uuid
@@ -247,113 +247,98 @@ class ChatService:
             logger.error(f"向聊天 {chat_id} 添加消息失败: {str(e)}", exc_info=True) # 添加 exc_info=True
             return None
 
-    # 新增 RAG/Workflow 交互方法
-    async def process_chat_message(self, chat_id: str, user_message: str) -> Dict[str, Any]:
+    async def process_chat_message(self, chat_id: str, user_message: str) -> WorkflowChainOutput | Dict[str, Any]:
         """
-        处理新的聊天消息，调用 WorkflowChain 并更新聊天记录和流程图。
+        处理新的聊天消息，调用 WorkflowChain。
+        如果返回流，则直接传递生成器，由路由层处理保存。
+        如果返回工具结果，则处理并保存。
 
         Args:
             chat_id: 当前聊天ID。
             user_message: 用户发送的消息。
 
         Returns:
-            包含AI回复、节点/连接更新等信息的字典。
+            WorkflowChainOutput 对象 (可能包含原始 stream_generator 或工具信息) 
+            或在初始错误时返回包含 error 的字典。
         """
         logger.info(f"Processing message for chat {chat_id}: {user_message[:50]}...")
         
         # 1. 将用户消息添加到聊天记录
         updated_chat = self.add_message_to_chat(chat_id, "user", user_message)
         if not updated_chat:
-             return {"error": "无法将用户消息添加到聊天记录"}
+             return {"error": "无法将用户消息添加到聊天记录", "ai_response": None, "nodes": None, "connections": None}
 
         # 2. 调用 WorkflowChain 处理输入
         try:
             chain_input = {
                 "user_input": user_message,
                 "db_session": self.db
-                # 可以添加其他需要的输入，如 flow_id (如果链需要)
             }
-            # result 是一个字典，key 是 output_key ("result")
-            # chain_result_dict = await self.workflow_chain.acall(chain_input) 
-            # 使用 ainvoke 替代 acall
-            chain_result_dict = await self.workflow_chain.ainvoke(chain_input)
+            logger.debug(f"Invoking WorkflowChain for chat {chat_id}")
+            chain_result = await self.workflow_chain.ainvoke(chain_input)
+            logger.debug(f"WorkflowChain returned type: {type(chain_result)}")
+
+            # --- Parse the result to get WorkflowChainOutput object --- 
+            chain_output_obj: Optional[WorkflowChainOutput] = None
+            if isinstance(chain_result, WorkflowChainOutput):
+                chain_output_obj = chain_result
+            elif isinstance(chain_result, dict) and "result" in chain_result and isinstance(chain_result["result"], WorkflowChainOutput):
+                 chain_output_obj = chain_result["result"]
+            elif isinstance(chain_result, dict) and all(key in chain_result for key in WorkflowChainOutput.model_fields.keys()):
+                try:
+                    chain_output_obj = WorkflowChainOutput(**chain_result)
+                except Exception as pydantic_err:
+                    logger.error(f"Failed to create WorkflowChainOutput from dict: {pydantic_err}")
+                    chain_output_obj = None # Failed to parse
             
-            # ainvoke 直接返回输出字典，不需要再取 "result"
-            # chain_output: WorkflowChainOutput = chain_result_dict.get("result")
-            
-            # 假设 ainvoke 返回的字典直接对应 WorkflowChainOutput 的字段，或者嵌套在某个键下
-            # 需要确认 WorkflowChain 的最终输出结构
-            # 暂时假设 chain_result_dict 就是我们期望的输出结构
-            if not isinstance(chain_result_dict, dict):
-                 # 如果不是字典，可能是 WorkflowChainOutput 对象或其他
-                 # 需要根据 WorkflowChain 的 output_keys 和 _acall 返回值调整
-                 # 假设 _acall 返回 {"result": WorkflowChainOutput}，那么需要取 result
-                 if isinstance(chain_result_dict, WorkflowChainOutput):
-                     chain_output_obj = chain_result_dict
-                 elif isinstance(chain_result_dict, dict) and "result" in chain_result_dict and isinstance(chain_result_dict["result"], WorkflowChainOutput):
-                      chain_output_obj = chain_result_dict["result"]
-                 else:
-                      logger.error(f"WorkflowChain ainvoke returned unexpected type: {type(chain_result_dict)}")
-                      raise Exception("WorkflowChain returned unexpected output type.")
-            elif "result" in chain_result_dict and isinstance(chain_result_dict["result"], WorkflowChainOutput):
-                 # 如果返回的是 {"result": WorkflowChainOutput}
-                 chain_output_obj = chain_result_dict["result"]
-            elif all(key in chain_result_dict for key in WorkflowChainOutput.model_fields.keys()):
-                 # 如果返回的字典直接包含 WorkflowChainOutput 的字段
-                 # 尝试从字典创建 WorkflowChainOutput 对象 (如果需要强类型)
-                 try:
-                      chain_output_obj = WorkflowChainOutput(**chain_result_dict)
-                 except Exception as pydantic_err:
-                      logger.error(f"Failed to create WorkflowChainOutput from dict: {pydantic_err}")
-                      raise Exception("WorkflowChain returned incompatible dictionary structure.")
+            if not chain_output_obj:
+                 logger.error(f"WorkflowChain ainvoke returned unexpected structure: {chain_result}")
+                 raise Exception("WorkflowChain returned unexpected output structure.")
+            # --- End Parsing --- 
+
+            # 3. Check if the output contains a stream generator
+            if chain_output_obj.stream_generator:
+                logger.info(f"WorkflowChain returned a stream generator for chat {chat_id}. Returning it directly.")
+                # Return the object with the wrapped generator
+                return chain_output_obj 
             else:
-                 # 未知结构
-                 logger.error(f"WorkflowChain ainvoke returned dictionary with unexpected keys: {chain_result_dict.keys()}")
-                 raise Exception("WorkflowChain returned dictionary with unexpected structure.")
+                # 4. Process non-streaming response (tool calls or direct text error)
+                logger.info(f"WorkflowChain returned non-streaming output for chat {chat_id}. Processing...")
+                ai_summary = chain_output_obj.summary
+                error = chain_output_obj.error
+                nodes_to_update = chain_output_obj.nodes
+                connections_to_update = chain_output_obj.connections
+                
+                if error:
+                    logger.error(f"WorkflowChain returned an error: {error}")
+                    self.add_message_to_chat(chat_id, "assistant", error)
+                    return chain_output_obj
+                    
+                if ai_summary:
+                    self.add_message_to_chat(chat_id, "assistant", ai_summary)
+                else:
+                     logger.warning(f"WorkflowChain returned no summary and no error for chat {chat_id}")
 
+                if nodes_to_update or connections_to_update:
+                    logger.info(f"Updating flow based on WorkflowChain output: {len(nodes_to_update) if nodes_to_update else 0} nodes, {len(connections_to_update) if connections_to_update else 0} connections")
+                    flow_update_result = self._update_flow_in_db(updated_chat.flow_id, nodes_to_update, connections_to_update)
+                    if not flow_update_result.get("success"):
+                        logger.error(f"Failed to update flow {updated_chat.flow_id} in database: {flow_update_result.get('message')}")
+                        chain_output_obj.error = (chain_output_obj.error + "; " if chain_output_obj.error else "") + "Flow update failed."
 
-            ai_response = chain_output_obj.summary
-            error = chain_output_obj.error
-            nodes_to_update = chain_output_obj.nodes
-            connections_to_update = chain_output_obj.connections
-            
-            if error:
-                 logger.error(f"WorkflowChain returned an error: {error}")
-                 # 即使出错，也记录AI的错误回复
-                 self.add_message_to_chat(chat_id, "assistant", error)
-                 return {"ai_response": error, "error": error}
-                 
-            # 3. 将 AI 回复添加到聊天记录
-            self.add_message_to_chat(chat_id, "assistant", ai_response)
-
-            # 4. (重要) 更新数据库中的流程图数据
-            flow_update_result = None
-            if nodes_to_update or connections_to_update:
-                 logger.info(f"Updating flow based on WorkflowChain output: {len(nodes_to_update)} nodes, {len(connections_to_update)} connections")
-                 flow_update_result = self._update_flow_in_db(updated_chat.flow_id, nodes_to_update, connections_to_update)
-                 if not flow_update_result.get("success"):
-                     # 记录流程图更新失败，但仍然返回聊天回复
-                     logger.error(f"Failed to update flow {updated_chat.flow_id} in database: {flow_update_result.get('message')}")
-
-            # 5. 准备返回给 API 层的结果
-            response = {
-                "ai_response": ai_response,
-                "nodes": nodes_to_update, # 返回给前端的节点更新
-                "connections": connections_to_update, # 返回给前端的连接更新
-                "flow_update_status": flow_update_result # 包含更新成功与否及消息
-            }
-            return response
+                logger.info(f"Returning processed non-streaming output for chat {chat_id}")
+                return chain_output_obj
 
         except Exception as e:
-            logger.error(f"Error processing chat message with WorkflowChain: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-            # 记录通用错误回复
+            logger.error(f"Error in process_chat_message for chat {chat_id}: {e}", exc_info=True)
             error_response = "抱歉，处理您的消息时遇到问题。"
-            self.add_message_to_chat(chat_id, "assistant", error_response)
-            return {"ai_response": error_response, "error": str(e)}
+            try:
+                self.add_message_to_chat(chat_id, "assistant", error_response)
+            except Exception as log_err:
+                 logger.error(f"Failed to add error message to chat {chat_id} after main processing error: {log_err}")
+            return {"error": str(e), "ai_response": error_response, "nodes": None, "connections": None}
 
-    def _update_flow_in_db(self, flow_id: str, nodes: List[Dict], connections: List[Dict]) -> Dict:
+    def _update_flow_in_db(self, flow_id: str, nodes: Optional[List[Dict]], connections: Optional[List[Dict]]) -> Dict:
         """将 WorkflowChain 生成的节点和连接更新到数据库中的 Flow 对象。"""
         try:
             flow = self.db.query(Flow).filter(Flow.id == flow_id).first()

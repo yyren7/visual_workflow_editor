@@ -1,0 +1,35 @@
+{
+  "category": "IO",
+  "block_name": "connect external io",
+  "description_jp": "外部機器 I/O の出力を操作する",
+  "input_variables": [
+    {
+      "name_jp": "deviceName",
+      "title_jp": "デバイス名",
+      "format_jp": "プルダウン",
+      "range_jp": "DIO000~DIO005（\"ContecDeviceUtility\"で設定した\"Device Name\"）",
+      "default_jp": "DIO000",
+      "content_jp": "操作対象のデバイス名"
+    },
+    {
+      "name_jp": "maker",
+      "title_jp": "メーカー",
+      "format_jp": "プルダウン",
+      "range_jp": "- CONTEC",
+      "default_jp": "CONTEC",
+      "content_jp": "対象 IO ユニットのメーカー"
+    },
+    {
+      "name_jp": "IONo",
+      "title_jp": "IO 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "IO No.1",
+      "content_jp": "操作対象の IO 番号"
+    }
+  ],
+  "usage_example_jp": "\"set external io output\" または \"wait external io input\"ブロック等を参照して下さい",
+  "usage_notes_jp": [
+    "\"set external io output\" または \"wait external io input\"等とセットで使用して下さい"
+  ]
+} 

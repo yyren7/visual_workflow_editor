@@ -1,0 +1,75 @@
+{
+  "category": "Pallet",
+  "block_name": "set palet",
+  "description_jp": "パレット内容を設定する",
+  "input_variables": [
+    {
+      "name_jp": "rowCount",
+      "title_jp": "行番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "row=2",
+      "content_jp": "対象となるパレットの行番号"
+    },
+    {
+      "name_jp": "colCount",
+      "title_jp": "列番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "col=2",
+      "content_jp": "対象となるパレットの行番号"
+    },
+    {
+      "name_jp": "cornerPointA",
+      "title_jp": "点 A",
+      "format_jp": "プルダウン",
+      "range_jp": "ティーチング表で設定したポイント名（最大 100 点）",
+      "default_jp": "P1 のポイント名",
+      "content_jp": "パレットの四隅点 A の位置名"
+    },
+    {
+      "name_jp": "cornerPointB",
+      "title_jp": "点 B",
+      "format_jp": "プルダウン",
+      "range_jp": "ティーチング表で設定したポイント名（最大 100 点）",
+      "default_jp": "P1 のポイント名",
+      "content_jp": "パレットの四隅点 B の位置名"
+    },
+    {
+      "name_jp": "cornerPointC",
+      "title_jp": "点 C",
+      "format_jp": "プルダウン",
+      "range_jp": "ティーチング表で設定したポイント名（最大 100 点）",
+      "default_jp": "P1 のポイント名",
+      "content_jp": "パレットの四隅点 C の位置名"
+    },
+    {
+      "name_jp": "cornerPointD",
+      "title_jp": "点 D",
+      "format_jp": "プルダウン",
+      "range_jp": "ティーチング表で設定したポイント名（最大 100 点）",
+      "default_jp": "P1 のポイント名",
+      "content_jp": "パレットの四隅点 D の位置名"
+    },
+    {
+      "name_jp": "usage",
+      "title_jp": "使用方法",
+      "format_jp": "プルダウン",
+      "range_jp": "- pick:ピック用\n\n- place:プレース用",
+      "default_jp": "pick",
+      "content_jp": "対象となるパレットの使用方法"
+    },
+    {
+      "name_jp": "palletNo",
+      "title_jp": "パレット番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "pallet No.1",
+      "content_jp": "対象となるパレットの番号"
+    }
+  ],
+  "usage_example_jp": "・\"Dobot MG400\"がパレタイズ（3×3）を行い、パレットが空になるとエラーが発生します\n\n・パレット詳細は下図のようになっています\n　- 点 A と点 B の間が\"rowCount\"\n　- 点 A と点 C の間が\"colCount\"\n　- ロボットハンドは、点 A→B→C の方向に移動します（青矢印）\n\n・下記サイドバーから対象のパレットの残数のモニタリングと変更できます。",
+  "usage_notes_jp": [
+    "\"move\"ブロックにパレットのオフセット設定するために、pallet No.を選択して下さい"
+  ]
+} 

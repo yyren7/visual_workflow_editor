@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="external_io">
+    <field name="IONo">1</field>
+    <field name="inputPinName">default_pin</field>
+  </block>
+</xml> 

@@ -1,0 +1,20 @@
+{
+  "category": "Robot",
+  "block_name": "wait",
+  "description_jp": "命令を送信するロボットを選択する",
+  "input_variables": [
+    {
+      "name_jp": "robotName",
+      "title_jp": "ロボット名",
+      "format_jp": "閲覧専用",
+      "range_jp": "開発済みのロボット 6 種類\n\n1. Dobot MG400\n2. Fairino FR\n3. Hitbot Z ARM\n4. YAMAHA Scara\n5. IAI Tabletop\n6. ***\n7. ***",
+      "default_jp": "\"Setting\"サイドバーで選択したロボット名",
+      "content_jp": "Robot カテゴリのブロック命令を送るためのロボット名"
+    }
+  ],
+  "usage_example_jp": "\"moveL\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "フローの先頭にのみ配置できます",
+    "同一ワークスペースに 2 つ以上配置すると意図しない動作となる場合があります"
+  ]
+} 

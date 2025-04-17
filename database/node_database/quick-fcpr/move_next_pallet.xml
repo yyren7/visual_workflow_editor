@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="move_next_pallet">
+    <field name="palletNo">1</field>
+  </block>
+</xml> 

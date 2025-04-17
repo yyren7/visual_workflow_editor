@@ -1,0 +1,19 @@
+{
+  "category": "Camera",
+  "block_name": "wait camera",
+  "description_jp": "カメラ PC から結果を取得するまで待機する",
+  "input_variables": [
+    {
+      "name_jp": "cameraNo",
+      "title_jp": "カメラ番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "camera No.1",
+      "content_jp": "カメラの接続を区別するために付与した任意の番号"
+    }
+  ],
+  "usage_example_jp": "\"run camera\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"run camera\"ブロック等とセットで使用して下さい"
+  ]
+} 

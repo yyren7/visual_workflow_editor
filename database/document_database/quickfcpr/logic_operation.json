@@ -1,0 +1,35 @@
+{
+  "category": "Logic",
+  "block_name": "logic operation",
+  "description_jp": "設定した比較演算結果を論理値として返す",
+  "input_variables": [
+    {
+      "name_jp": "leftLogic",
+      "title_jp": "左辺論理",
+      "format_jp": "ブロック",
+      "range_jp": "Logic カテゴリのブロック",
+      "default_jp": "なし",
+      "content_jp": "演算子で比較したい論理値"
+    },
+    {
+      "name_jp": "operator",
+      "title_jp": "演算子",
+      "format_jp": "プルダウン",
+      "range_jp": "2 種類\n・and: 論理積\n・or: 論理和",
+      "default_jp": "=(イコール)",
+      "content_jp": "操作を行うための演算子"
+    },
+    {
+      "name_jp": "rightLogic",
+      "title_jp": "右辺論理",
+      "format_jp": "ブロック",
+      "range_jp": "Logic カテゴリのブロック",
+      "default_jp": "なし",
+      "content_jp": "演算子で比較したい論理値"
+    }
+  ],
+  "usage_example_jp": "\"cnt1\"に 100 を代入した後、\"cnt2\"に 500 を代入します",
+  "usage_notes_jp": [
+    "\"start thread\"ブロック等と一緒に使用して下さい"
+  ]
+} 

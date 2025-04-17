@@ -1,0 +1,35 @@
+{
+  "category": "IO",
+  "block_name": "set external io output",
+  "description_jp": "外部機器 I/O の出力を操作する",
+  "input_variables": [
+    {
+      "name_jp": "IONo",
+      "title_jp": "IO 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "IO No.1",
+      "content_jp": "操作対象の IO 番号"
+    },
+    {
+      "name_jp": "outputPinName",
+      "title_jp": "出力ピン名",
+      "format_jp": "プルダウン",
+      "range_jp": "機器毎に異なる",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "出力を操作するピン名"
+    },
+    {
+      "name_jp": "outputPinStatus",
+      "title_jp": "出力ピン操作",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:アクティブ\n\n- OFF:非アクティブ",
+      "default_jp": "ON",
+      "content_jp": "対象出力ピンの操作方法"
+    }
+  ],
+  "usage_example_jp": "\"CONTEC\"の\"DO_0\"ピンを ON にします\n\n外部機器 IO サイドバーにて、ピン名を任意の文字に変更することも可能です",
+  "usage_notes_jp": [
+    "\"connect external io\"ブロックで IO 機器を定義してから使って下さい"
+  ]
+} 

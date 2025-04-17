@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_compare">
+    <field name="operator">EQ</field> <!-- JSON default 是 = -->
+    <value name="leftValue">
+      <block type="math_number"><field name="NUM">0</field></block>
+    </value>
+    <value name="rightValue">
+      <block type="math_number"><field name="NUM">0</field></block>
+    </value>
+  </block>
+</xml> 

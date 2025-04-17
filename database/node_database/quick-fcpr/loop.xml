@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="loop">
+    <statement name="DO">
+      <!-- 循环体内容，这里留空 -->
+    </statement>
+  </block>
+</xml> 

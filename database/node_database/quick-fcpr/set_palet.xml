@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_palet">
+    <field name="rowCount">2</field>
+    <field name="colCount">2</field>
+    <field name="cornerPointA">P1</field>
+    <field name="cornerPointB">P1</field>
+    <field name="cornerPointC">P1</field>
+    <field name="cornerPointD">P1</field>
+    <field name="usage">pick</field>
+    <field name="palletNo">1</field>
+  </block>
+</xml> 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="stop_robot_upon">
+    <field name="triggerCondition">-</field> <!-- default_jp 值 -->
+    <value name="operatingCondition">
+      <!-- 需要一个逻辑块作为默认值 -->
+      <block type="logic_boolean"><field name="BOOL">TRUE</field></block> <!-- 暂时用 TRUE 作为默认值 -->
+    </value>
+  </block>
+</xml> 

@@ -1,0 +1,8 @@
+{
+  "category": "Control",
+  "block_name": "wait run",
+  "description_jp": "Run ボタンが押下されるまで待機する",
+  "input_variables": [],
+  "usage_example_jp": "・\"Button サイドバー\"の\"Ready\"ボタンを押下すると\"Fairino FR\"が所定の位置まで移動します\n・\"Button サイドバー\"の\"Run\"ボタンを押下すると\"Fairino FR\"のループ動作が開始します",
+  "usage_notes_jp": []
+} 

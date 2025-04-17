@@ -1,0 +1,27 @@
+{
+  "category": "Robot",
+  "block_name": "stop robot upon",
+  "description_jp": "設定した条件成立でロボットが停止する",
+  "input_variables": [
+    {
+      "name_jp": "triggerCondition",
+      "title_jp": "動作開始条件詳細",
+      "format_jp": "プルダウン",
+      "range_jp": "・ー:常時\n・↑:立ち上がり\n・↓:立ち下がり",
+      "default_jp": "ー",
+      "content_jp": "動作を開始するための条件詳細"
+    },
+    {
+      "name_jp": "operatingCondition",
+      "title_jp": "動作開始条件",
+      "format_jp": "ブロック",
+      "range_jp": "論理値ブロック",
+      "default_jp": "なし",
+      "content_jp": "動作を開始するための条件"
+    }
+  ],
+  "usage_example_jp": "\"Fairino FR\"が動作中に、\"IO No.1\"の\"DI_0\"が ON になるとロボットが停止します。\n\n\"Button サイドバー\"にて、Pause ボタンの押下で動作の一時停止を解除できます。\n\nその後、Run ボタンの押下で動作を再開できます。",
+  "usage_notes_jp": [
+    "\"create_event\"ブロック内で使って下さい"
+  ]
+} 

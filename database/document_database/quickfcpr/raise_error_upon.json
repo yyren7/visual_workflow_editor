@@ -1,0 +1,36 @@
+{
+  "category": "Error",
+  "block_name": "raise error upon",
+  "description_jp": "設定した条件成立でエラーが発生する",
+  "input_variables": [
+    {
+      "name_jp": "errorMessage",
+      "title_jp": "エラーメッセージ",
+      "format_jp": "文字列",
+      "range_jp": "最大 50 文字",
+      "default_jp": "errorMessage",
+      "content_jp": "エラー画面に表示したいアルファベットのエラーメッセージ"
+    },
+    {
+      "name_jp": "triggerCondition",
+      "title_jp": "動作開始条件詳細",
+      "format_jp": "プルダウン",
+      "range_jp": "・ー:常時\n・↑:立ち上がり\n・↓:立ち下がり",
+      "default_jp": "ー",
+      "content_jp": "動作を開始するための条件詳細"
+    },
+    {
+      "name_jp": "operatingCondition",
+      "title_jp": "動作開始条件",
+      "format_jp": "ブロック",
+      "range_jp": "論理値ブロック",
+      "default_jp": "なし",
+      "content_jp": "動作を開始するための条件"
+    }
+  ],
+  "usage_example_jp": "\"Fairino FR\"の Pick&Place 回数が 5 回に到達すると、設定したエラーが発生します\n\n・\"Error Reset\"ボタンで発生しているエラーをリセットできます\n・リセット後に再開する場合は、\"Auto\"ボタンを再度押下して下さい",
+  "usage_notes_jp": [
+    "エラーメッセとして設定可能な文字列は、アルファベットのみです",
+    "\"create_event\"ブロック内で使って下さい"
+  ]
+} 

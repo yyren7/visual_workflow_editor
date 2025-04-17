@@ -1,0 +1,35 @@
+{
+  "category": "Math",
+  "block_name": "math arithmetic",
+  "description_jp": "変数に値を代入する",
+  "input_variables": [
+    {
+      "name_jp": "leftValue",
+      "title_jp": "左辺数値",
+      "format_jp": "ブロック",
+      "range_jp": "数値ブロック",
+      "default_jp": "なし",
+      "content_jp": "演算子で比較したい数値"
+    },
+    {
+      "name_jp": "operator",
+      "title_jp": "演算子",
+      "format_jp": "プルダウン",
+      "range_jp": "5 種類\n・+: 加算\n・-: 減算\n・\\*: 乗算\n・/: 除算\n・^: べき乗",
+      "default_jp": "+(加算)",
+      "content_jp": "操作を行うための演算子"
+    },
+    {
+      "name_jp": "rightValue",
+      "title_jp": "右辺数値",
+      "format_jp": "ブロック",
+      "range_jp": "数値ブロック",
+      "default_jp": "なし",
+      "content_jp": "演算子で比較したい数値"
+    }
+  ],
+  "usage_example_jp": "\"set number\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "変数に値を格納する前に、変数表で定義して下さい"
+  ]
+} 

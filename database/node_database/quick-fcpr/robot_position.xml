@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="robot_position">
+    <field name="axisName">X</field> <!-- 默认值通常是第一个选项，这里选 X -->
+  </block>
+</xml> 

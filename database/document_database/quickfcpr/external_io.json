@@ -1,0 +1,27 @@
+{
+  "category": "IO",
+  "block_name": "external io",
+  "description_jp": "外部機器 I/O 状態を論理値として返す",
+  "input_variables": [
+    {
+      "name_jp": "IONo",
+      "title_jp": "IO 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "IO No.1",
+      "content_jp": "操作対象の IO 番号"
+    },
+    {
+      "name_jp": "inputPinName",
+      "title_jp": "入力ピン名",
+      "format_jp": "プルダウン",
+      "range_jp": "機器毎に異なる",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "入力状態を取得するピン名"
+    }
+  ],
+  "usage_example_jp": "\"stop robot upon\"ブロックを参照して下さい\n\n外部機器 IO サイドバーにて、ピン名を任意の文字に変更することも可能です",
+  "usage_notes_jp": [
+    "\"connect external io\"ブロックで IO 機器を定義してから使って下さい"
+  ]
+} 

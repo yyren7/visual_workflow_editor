@@ -1,0 +1,35 @@
+{
+  "category": "Logic",
+  "block_name": "logic block",
+  "description_jp": "設定したブロックの状態を論理値として返す",
+  "input_variables": [
+    {
+      "name_jp": "blockName",
+      "title_jp": "ブロック名",
+      "format_jp": "プルダウン",
+      "range_jp": "各カテゴリに存在する上下接続可能なブロック名",
+      "default_jp": "moveL",
+      "content_jp": "状態を取得したいブロックの名前"
+    },
+    {
+      "name_jp": "blockNo",
+      "title_jp": "ブロック番号",
+      "format_jp": "プルダウン",
+      "range_jp": "各カテゴリに存在する上下接続可能なブロック数",
+      "default_jp": "1",
+      "content_jp": "状態を取得したいブロックの番号"
+    },
+    {
+      "name_jp": "action",
+      "title_jp": "ブロック番号",
+      "format_jp": "プルダウン",
+      "range_jp": "start: 動作開始\nstop: 動作完了",
+      "default_jp": "start",
+      "content_jp": "状態を取得したいブロックの動作形態"
+    }
+  ],
+  "usage_example_jp": "\"wait timer\"ブロックの動作（1000msec 待機）が完了後、\"cnt\"に 100 を代入します",
+  "usage_notes_jp": [
+    "\"wait block\"ブロック等と一緒に使用して下さい"
+  ]
+} 

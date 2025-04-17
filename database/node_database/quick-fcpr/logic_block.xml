@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_block">
+    <field name="blockName">moveL</field>
+    <field name="blockNo">1</field>
+    <field name="action">start</field>
+  </block>
+</xml> 

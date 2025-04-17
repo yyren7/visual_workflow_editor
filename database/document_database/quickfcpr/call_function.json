@@ -1,0 +1,10 @@
+{
+  "category": "Function",
+  "block_name": "call function",
+  "description_jp": "定義した関数を呼び出す",
+  "input_variables": [],
+  "usage_example_jp": "\"Fairino FR\"が Pick&Place ループをします",
+  "usage_notes_jp": [
+    "使用する前に\"call function\"ブロックで定義して下さい"
+  ]
+} 

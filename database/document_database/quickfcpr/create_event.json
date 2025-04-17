@@ -1,0 +1,10 @@
+{
+  "category": "Logic",
+  "block_name": "create event",
+  "description_jp": "設定した条件に応じて、動作の並行処理を行う",
+  "input_variables": [],
+  "usage_example_jp": "プログラムの実行開始で、定義した変数\"cnt\"に 100 を代入します",
+  "usage_notes_jp": [
+    "\"start thread\"ブロックの下に他のブロックを連結することはできません"
+  ]
+} 

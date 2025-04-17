@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_external_io_output_until">
+    <field name="IONo">1</field>
+    <field name="outputPinName">default_output_pin</field>
+    <field name="outputPinStatus">ON</field>
+    <field name="inputPinName">default_input_pin</field>
+    <field name="inputPinStatus">ON</field>
+  </block>
+</xml> 

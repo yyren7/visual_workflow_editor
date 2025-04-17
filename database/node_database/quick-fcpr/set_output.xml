@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_output">
+    <field name="outputPinName">default_pin</field> <!-- default_jp 提示为'番号が小さいピン名'，需要一个默认值 -->
+    <field name="outputPinStatus">ON</field>
+  </block>
+</xml> 

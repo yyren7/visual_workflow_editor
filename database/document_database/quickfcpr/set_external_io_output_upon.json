@@ -1,0 +1,52 @@
+{
+  "category": "IO",
+  "block_name": "set external io output upon",
+  "description_jp": "設定した条件成立で外部機器 I/O の出力を操作する",
+  "input_variables": [
+    {
+      "name_jp": "IONo",
+      "title_jp": "IO 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "IO No.1",
+      "content_jp": "操作対象の IO 番号"
+    },
+    {
+      "name_jp": "outputPinName",
+      "title_jp": "出力ピン名",
+      "format_jp": "プルダウン",
+      "range_jp": "機器毎に異なる",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "出力を操作するピン名"
+    },
+    {
+      "name_jp": "outputPinStatus",
+      "title_jp": "出力ピン操作",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:アクティブ\n- OFF:非アクティブ\n- 100msec:100msec 間隔で ON/OFF\n- 300msec:300msec 間隔で ON/OFF\n- 500msec:500msec 間隔で ON/OFF\n- 1000msec:1000msec 間隔で ON/OFF",
+      "default_jp": "ON",
+      "content_jp": "対象出力ピンの操作方法"
+    },
+    {
+      "name_jp": "triggerCondition",
+      "title_jp": "動作開始条件詳細",
+      "format_jp": "プルダウン",
+      "range_jp": "・ー:常時\n  ・↑:立ち上がり\n  ・↓:立ち下がり",
+      "default_jp": "ー",
+      "content_jp": "動作を開始するための条件詳細"
+    },
+    {
+      "name_jp": "operatingCondition",
+      "title_jp": "動作開始条件",
+      "format_jp": "ブロック",
+      "range_jp": "論理値ブロック",
+      "default_jp": "なし",
+      "content_jp": "動作を開始するための条件"
+    }
+  ],
+  "usage_example_jp": "\"Fairino FR\"の運転状態に応じて、次のように出力ピンを操作します。\n　- 異常停止中であれば、\"DO_0\"ピンを 500msec 間隔で ON/OFF\n　- 定常停止中であれば、\"DO_1\"ピンを ON\n　- 自動運転中であれば、\"DO_2\"ピンを ON\n\n外部機器 IO サイドバーにて、ピン名を任意の文字に変更することも可能です",
+  "usage_notes_jp": [
+    "\"connect external io\"ブロックで IO 機器を定義してから使って下さい",
+    "\"create_event\"ブロック内で使って下さい"
+  ]
+} 

@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, AsyncGenerator
 import json
 
 from langchain.chains.base import Chain
@@ -45,12 +45,15 @@ class WorkflowChainInput(BaseModel):
 class WorkflowChainOutput(BaseModel):
     nodes: List[Dict[str, Any]] = Field(default_factory=list)
     connections: List[Dict[str, Any]] = Field(default_factory=list)
-    summary: str = ""
+    summary: str = "" # Will hold text summary OR final message after tools
     error: Optional[str] = None
-    # 可以添加更多调试信息
-    # expanded_prompt: Optional[str] = None
-    # steps_taken: List[str] = Field(default_factory=list)
-    # tool_calls: List[Dict] = Field(default_factory=list)
+    # NEW: Add a field for the stream generator if applicable
+    stream_generator: Optional[AsyncGenerator[str, None]] = None
+    tool_calls_info: Optional[List[Dict[str, Any]]] = None # Info about tools being called
+    tool_results_info: Optional[List[Dict[str, Any]]] = None # Info about tool execution results
+
+    # Allow AsyncGenerator type
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 class WorkflowChain(Chain):
     """
@@ -100,7 +103,7 @@ class WorkflowChain(Chain):
                    ) -> Dict[str, Any]:
         """ 异步执行链的主要逻辑。 """
         user_input = inputs.get(self.input_key)
-        db_session = inputs.get(self.db_session_key) # 假设 db_session 通过输入传递
+        db_session = inputs.get(self.db_session_key)
         
         if not user_input:
             logger.error("WorkflowChain received no user_input.")
@@ -110,185 +113,167 @@ class WorkflowChain(Chain):
              return {"result": WorkflowChainOutput(summary="处理请求时发生内部错误。", error="Missing database session")}
 
         logger.info(f"WorkflowChain processing input: {user_input[:50]}...")
-
-        # 1. (可选) 扩展 Prompt (如果需要)
-        # expanded_prompt = await self.prompt_expander.expand(user_input)
-        # logger.info(f"Expanded prompt: {expanded_prompt[:50]}...")
-        current_prompt = user_input # 暂时不扩展
-
-        # 2. (可选) 检索上下文 (如果需要RAG)
-        # context = await self._gather_context(current_prompt)
-        # logger.info(f"Gathered context: {len(context)} documents")
-        context_str = "" # 暂时不使用上下文
-
-        # 3. 调用 LLM (初始调用，可能用于判断意图或直接回答)
-        #    这里简化为直接调用 LLM，实际可能需要更复杂的逻辑判断是否需要工具
+        
         try:
-            # 准备 LLM 消息 (这里简化，实际应包含上下文、历史等)
+            # --- Step 1: Initial non-streaming call to check for tool usage --- 
+            logger.info("Making initial non-streaming LLM call to check for tool usage...")
             messages_for_llm = [
-                {"role": "system", "content": "You are an AI assistant for creating flowcharts. You can use tools to create nodes, connect them, set properties, or ask for more information. Respond in Chinese."},
-                # {"role": "system", "content": f"Context:\n{context_str}"}, # 包含上下文（如果使用）
-                {"role": "user", "content": current_prompt}
+                {"role": "system", "content": "You are an AI assistant for creating flowcharts. You can use tools to create nodes, connect them, set properties, or ask for more information. Respond in Chinese."}, 
+                {"role": "user", "content": user_input}
             ]
+            tool_definitions = deepseek_tools_definition # Or get dynamically
             
-            # 获取工具定义 (用于 function calling)
-            # tool_definitions = self.tool_executor.get_tool_definitions() # 假设 ToolExecutor 有此方法
-            # 暂时硬编码工具定义 (需要从 definitions.py 获取)
-            # 修正导入的名称
-            from backend.langchainchat.tools.definitions import deepseek_tools_definition
-            tool_definitions = deepseek_tools_definition
-
-            # 调用 LLM 并期望它可能返回工具调用请求
-            logger.info("Calling LLM with prompt and tools...")
-            llm_response_content, success = await self.llm.chat_completion(
+            initial_response_data, success = await self.llm.chat_completion(
                 messages=messages_for_llm,
-                tools=tool_definitions
-                # 传递其他参数，如 temperature 等
+                tools=tool_definitions,
+                json_mode=False # Ensure not in JSON mode for tool check
             )
 
             if not success:
-                raise Exception("LLM chat completion failed.")
+                raise Exception(f"Initial LLM call failed: {initial_response_data}")
 
-            # 解析 LLM 响应，判断是否需要工具调用
-            # DeepSeek/OpenAI 返回的工具调用在 message.tool_calls 中
-            # 这里需要解析 llm_response_content，假设它是 JSON 字符串或字典
-            # TODO: 实际需要根据 self.llm.chat_completion 的返回值调整解析逻辑
-            # 假设 llm_response_content 可能是包含 tool_calls 的 AssistantMessage 字典形式
-            
+            # --- Step 2: Analyze response - Tool Calls or Text? ---
             tool_calls_detected = []
-            ai_summary = llm_response_content # 默认将 LLM 的直接回复作为总结
-
+            is_tool_call_response = False
             try:
-                # 尝试解析响应，查找工具调用
-                # 注意：openai client v1.x 返回的是 Pydantic 对象或字典，而不是纯字符串
-                # 我们需要适配 DeepSeekClient 返回的具体格式
-                # 假设 chat_completion 返回的是包含 message 对象的元组
-                # response_message: ChatCompletionMessage = llm_response_content # 假设是这个类型
-                # if response_message and response_message.tool_calls:
-                #     tool_calls_detected = response_message.tool_calls
-                #     ai_summary = response_message.content or "正在执行工具..." # 如果有工具调用，可能没有直接内容
+                # Attempt to parse as JSON (as returned by our modified chat_completion)
+                if initial_response_data.strip().startswith('{'):
+                     from openai.types.chat import ChatCompletionMessage
+                     response_message = ChatCompletionMessage.model_validate_json(initial_response_data)
+                     if response_message.tool_calls:
+                          tool_calls_detected = response_message.tool_calls
+                          is_tool_call_response = True
+                          logger.info(f"Detected {len(tool_calls_detected)} tool calls from initial response.")
+                     # else: it was JSON but not tool calls, treat as text below
+            except (json.JSONDecodeError, Exception) as parse_err:
+                 # Not valid JSON or not ChatCompletionMessage format - likely plain text
+                 logger.info(f"Initial response is not a tool call JSON ({parse_err}). Treating as text.")
+                 pass # Keep is_tool_call_response as False
+                 
+            # --- Step 3a: Handle Tool Calls (if detected) --- 
+            if is_tool_call_response and self.tool_executor:
+                logger.info("Handling detected tool calls...")
+                nodes_updated = []
+                connections_updated = []
+                tool_execution_errors = []
+                tool_results_summary_list = [] # Store simple summaries
+                tool_results_details = [] # Store more detailed results
+
+                ai_summary = "正在处理您的请求并执行相关工具..." # Intermediate message
                 
-                # -- 临时模拟解析，需要替换为真实逻辑 --
-                if isinstance(llm_response_content, str) and 'tool_calls' in llm_response_content:
-                     # 非常简化的假设，需要更健壮的解析
-                     try:
-                          response_data = json.loads(llm_response_content)
-                          if isinstance(response_data, dict) and 'tool_calls' in response_data:
-                               tool_calls_detected = response_data['tool_calls']
-                               ai_summary = response_data.get('content', "正在执行工具...")
-                          elif isinstance(response_data, dict) and 'content' in response_data:
-                              ai_summary = response_data['content']
-                              # else: ai_summary 保持原样
-                     except json.JSONDecodeError:
-                          ai_summary = llm_response_content # 解析失败，用原始字符串
-                # -- 结束模拟解析 --
+                # Prepare info about the calls themselves
+                tool_calls_info = [
+                    {"id": tc.id, "name": tc.function.name, "args": tc.function.arguments}
+                    for tc in tool_calls_detected
+                ]
 
-                logger.info(f"LLM direct response/summary: {ai_summary[:100]}...")
-                if tool_calls_detected:
-                    logger.info(f"Detected {len(tool_calls_detected)} tool calls.")
-                else:
-                    logger.info("No tool calls detected in LLM response.")
-
-            except Exception as parse_err:
-                logger.error(f"Error parsing LLM response for tool calls: {parse_err}", exc_info=True)
-                # 即使解析失败，也继续，使用原始回复
-                ai_summary = llm_response_content if isinstance(llm_response_content, str) else str(llm_response_content)
-
-
-            # 4. 如果需要工具调用，执行工具
-            nodes_updated = []
-            connections_updated = []
-            tool_execution_errors = []
-            tool_results_summary = [] # 收集工具执行结果的简单描述
-
-            if tool_calls_detected:
-                ai_summary = "正在处理您的请求..." # 更新摘要，提示正在执行操作
+                # --- Execute Tools --- 
                 for tool_call in tool_calls_detected:
-                    # TODO: 从 tool_call 中提取 tool_name 和 arguments
-                    # tool_call 的结构依赖于 LLM 返回格式 (OpenAI/DeepSeek)
-                    # 假设 tool_call 是类似 {'id': 'call_abc', 'function': {'name': 'create_node', 'arguments': '{...}'}, 'type': 'function'}
-                    
-                    tool_call_id = tool_call.get('id')
-                    function_info = tool_call.get('function')
+                    tool_call_id = tool_call.id
+                    function_info = tool_call.function
                     if not function_info or not tool_call_id:
                         logger.warning(f"Skipping invalid tool call format: {tool_call}")
                         continue
                         
-                    tool_name = function_info.get('name')
-                    tool_args_str = function_info.get('arguments')
+                    tool_name = function_info.name
+                    tool_args_str = function_info.arguments
                     
                     if not tool_name or tool_args_str is None:
                          logger.warning(f"Skipping tool call with missing name or arguments: {tool_call}")
                          continue
 
                     try:
-                        # 解析参数字符串为字典
                         tool_args = json.loads(tool_args_str)
                         logger.info(f"Executing tool '{tool_name}' with args: {tool_args}")
                         
-                        # 使用 ToolExecutor 执行
                         tool_result = await self.tool_executor.execute(
                             tool_name=tool_name,
                             parameters=tool_args,
-                            # db_session=db_session # 确保 ToolExecutor 或其调用的函数能接收 db_session
+                            db_session=db_session # Pass session if needed by tools
                         )
                         
                         logger.info(f"Tool '{tool_name}' executed. Success: {tool_result.success}, Result: {str(tool_result.result_data)[:100]}...")
+                        
+                        result_detail = {
+                            "tool_call_id": tool_call_id,
+                            "tool_name": tool_name,
+                            "success": tool_result.success,
+                            "result": tool_result.result_data if tool_result.success else None,
+                            "error": tool_result.error_message if not tool_result.success else None
+                        }
+                        tool_results_details.append(result_detail)
 
                         if tool_result.success:
-                            tool_results_summary.append(f"成功执行 {tool_name}。")
-                            # 根据工具类型聚合结果
+                            tool_results_summary_list.append(f"成功执行 {tool_name}。")
+                            # --- (Aggregate results based on tool type - same logic as before) ---
                             if tool_name == "create_node" and isinstance(tool_result.result_data, dict):
                                 nodes_updated.append(tool_result.result_data)
                             elif tool_name == "connect_nodes" and isinstance(tool_result.result_data, dict):
                                 connections_updated.append(tool_result.result_data)
-                            elif tool_name == "set_properties" and isinstance(tool_result.result_data, dict):
-                                # set_properties 可能返回更新后的节点或仅确认
-                                # 这里假设它不直接修改 nodes_updated/connections_updated
-                                # 但可以添加到 summary
-                                element_id = tool_result.result_data.get('element_id', '未知元素')
-                                tool_results_summary.append(f"已设置 {element_id} 的属性。")
+                            # ... (handle set_properties, ask_more_info, generate_text) ...
                             elif tool_name == "ask_more_info" and isinstance(tool_result.result_data, str):
-                                 # 如果是提问，将问题设为最终的 AI 回复
-                                 ai_summary = tool_result.result_data 
+                                 ai_summary = tool_result.result_data # Use question as final summary
                             elif tool_name == "generate_text" and isinstance(tool_result.result_data, str):
-                                 # 如果是文本生成，可以附加到 summary 或替换它
-                                 ai_summary += "\n\n" + tool_result.result_data
+                                 ai_summary += "\n\n" + tool_result.result_data # Append generated text
                         else:
                             error_msg = f"执行工具 '{tool_name}' 失败: {tool_result.error_message}"
                             logger.error(error_msg)
                             tool_execution_errors.append(error_msg)
-                            tool_results_summary.append(f"尝试执行 {tool_name} 时出错。")
+                            tool_results_summary_list.append(f"尝试执行 {tool_name} 时出错。")
                             
                     except json.JSONDecodeError:
-                        error_msg = f"无法解析工具 '{tool_name}' 的参数: {tool_args_str}"
-                        logger.error(error_msg)
-                        tool_execution_errors.append(error_msg)
+                         error_msg = f"无法解析工具 '{tool_name}' 的参数: {tool_args_str}"
+                         logger.error(error_msg)
+                         tool_execution_errors.append(error_msg)
                     except Exception as tool_exec_err:
                         error_msg = f"执行工具 '{tool_name}' 时发生意外错误: {tool_exec_err}"
                         logger.error(error_msg, exc_info=True)
                         tool_execution_errors.append(error_msg)
 
-                # 如果有工具执行，可以基于执行结果生成最终摘要
-                if tool_results_summary and not tool_execution_errors:
-                    # 如果没有提问工具覆盖 ai_summary，则生成一个总结性回复
-                    if not any(call.get('function', {}).get('name') == 'ask_more_info' for call in tool_calls_detected):
-                        ai_summary = "我已经根据您的请求执行了以下操作:\n- " + "\n- ".join(tool_results_summary)
+                # --- Generate final summary after tool execution --- 
+                if tool_results_summary_list and not tool_execution_errors:
+                    # Avoid overwriting ask_more_info result
+                    if not any(tc.function.name == 'ask_more_info' for tc in tool_calls_detected):
+                        ai_summary = "我已经根据您的请求执行了以下操作:\n- " + "\n- ".join(tool_results_summary_list)
                 elif tool_execution_errors:
-                    ai_summary = "处理您的请求时遇到一些问题:\n- " + "\n- ".join(tool_execution_errors) 
-                    ai_summary += "\n请检查您的指令或稍后再试。"
+                    ai_summary = "处理您的请求时遇到一些问题:\n- " + "\n- ".join(tool_execution_errors) + "\n请检查您的指令或稍后再试。"
 
-            # 5. 聚合结果并返回
-            final_output = WorkflowChainOutput(
-                summary=ai_summary,
-                nodes=nodes_updated or None, # 如果列表为空，返回 None
-                connections=connections_updated or None,
-                error="; ".join(tool_execution_errors) if tool_execution_errors else None
-            )
-            
-            logger.info("WorkflowChain finished processing.")
-            # LangChain 期望返回一个包含输出键的字典
-            return {"result": final_output}
+                # --- Return result for tool call path --- 
+                final_output = WorkflowChainOutput(
+                    summary=ai_summary,
+                    nodes=nodes_updated or None,
+                    connections=connections_updated or None,
+                    error="; ".join(tool_execution_errors) if tool_execution_errors else None,
+                    stream_generator=None, # No stream for tool calls
+                    tool_calls_info=tool_calls_info, # Include info about calls
+                    tool_results_info=tool_results_details # Include info about results
+                )
+                logger.info("WorkflowChain finished processing tool calls.")
+                return {"result": final_output}
+
+            # --- Step 3b: Handle Direct Text Response (No Tool Calls) --- 
+            else:
+                logger.info("No tool calls detected or tool executor not available. Proceeding with streaming text response.")
+                # LLM didn't request tools, or we don't have an executor.
+                # Now, make a streaming call to get the text response.
+                # We use the original messages again, but this time without tools.
+                
+                stream_generator = self.llm.stream_chat_completion(
+                    messages=messages_for_llm, # Use the same initial messages
+                    # No tools parameter for simple streaming
+                    # Other parameters like temperature could be passed if needed
+                )
+                
+                # Return the stream generator
+                final_output = WorkflowChainOutput(
+                    summary="", # Summary will be built by consuming the stream
+                    stream_generator=stream_generator, # Pass the generator
+                    error=None,
+                    tool_calls_info=None,
+                    tool_results_info=None
+                )
+                logger.info("WorkflowChain returning stream generator for text response.")
+                return {"result": final_output}
 
         except Exception as e:
             logger.error(f"Error in WorkflowChain execution: {e}", exc_info=True)

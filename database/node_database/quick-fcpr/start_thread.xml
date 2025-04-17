@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="start_thread">
+    <value name="startCondition">
+      <block type="logic_boolean"><field name="BOOL">TRUE</field></block>
+    </value>
+    <statement name="DO">
+    </statement>
+  </block>
+</xml> 

@@ -1,0 +1,19 @@
+{
+  "category": "Logic",
+  "block_name": "logic custom flag",
+  "description_jp": "定義した変数の論理値を返す",
+  "input_variables": [
+    {
+      "name_jp": "flagVar",
+      "title_jp": "フラグ変数",
+      "format_jp": "プルダウン",
+      "range_jp": "Flag 変数表で設定した変数名（最大 300 点）",
+      "default_jp": "Flag 変数表で最初に定義した最初の変数名",
+      "content_jp": "論理値型の変数"
+    }
+  ],
+  "usage_example_jp": "\"set flag\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"set flag\"ブロック等と一緒に使用して下さい"
+  ]
+} 

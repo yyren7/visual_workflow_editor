@@ -1,0 +1,10 @@
+{
+  "category": "Control",
+  "block_name": "return",
+  "description_jp": "ループ処理の最初に戻る",
+  "input_variables": [],
+  "usage_example_jp": "\"loop\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"loop\"ブロックと一緒に使用して下さい"
+  ]
+} 

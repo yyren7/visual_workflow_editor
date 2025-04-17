@@ -1,0 +1,17 @@
+{
+  "category": "Logic",
+  "block_name": "logic negate",
+  "description_jp": "設定した論理値の否定を返す",
+  "input_variables": [
+    {
+      "name_jp": "negateCondition",
+      "title_jp": "論理値",
+      "format_jp": "ブロック",
+      "range_jp": "論理値ブロック",
+      "default_jp": "なし",
+      "content_jp": "否定したい論理値"
+    }
+  ],
+  "usage_example_jp": "Fairino FR\"が動作中に、\"IO No.1\"の\"DI_0\"もしくは、\"DI_01\"が OFF になるとロボットが停止します。",
+  "usage_notes_jp": []
+} 

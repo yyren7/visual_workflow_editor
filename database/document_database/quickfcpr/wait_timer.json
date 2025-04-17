@@ -1,0 +1,19 @@
+{
+  "category": "Control",
+  "block_name": "wait timer",
+  "description_jp": "指定した時間だけ待機する",
+  "input_variables": [
+    {
+      "name_jp": "timerValue",
+      "title_jp": "待機時間",
+      "format_jp": "プルダウン",
+      "range_jp": "変数表で設定した変数名（最大 300 点）",
+      "default_jp": "変数表で最初に定義した変数名",
+      "content_jp": "動作を一時停止するための待機時間（msec）"
+    }
+  ],
+  "usage_example_jp": "プログラムが開始すると 300msec 待機します（\"_const_***\"はプルダウンメニューの下部に存在）",
+  "usage_notes_jp": [
+    "時間は msec 単位でのみ設定できます"
+  ]
+} 

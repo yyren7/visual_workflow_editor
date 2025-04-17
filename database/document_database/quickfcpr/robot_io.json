@@ -1,0 +1,19 @@
+{
+  "category": "Robot",
+  "block_name": "robot io",
+  "description_jp": "ロボット I/O 状態を論理値として返す",
+  "input_variables": [
+    {
+      "name_jp": "inputPinName",
+      "title_jp": "入力ピン名",
+      "format_jp": "プルダウン",
+      "range_jp": "ロボット毎に異なる",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "入力状態を取得するピン名"
+    }
+  ],
+  "usage_example_jp": "・\"DO00\"ピンが ON の場合、\"Fairino FR\"が A 点 →B 点 →D 点の順に移動します。\n・\"DO00\"ピンが ON の場合、\"Fairino FR\"が A 点 →C 点 →D 点の順に移動します。\n\nロボット IO サイドバーにて、ピン名を任意の文字に変更することも可能です",
+  "usage_notes_jp": [
+    "\"select\"ブロックでロボットを定義してから使って下さい"
+  ]
+} 

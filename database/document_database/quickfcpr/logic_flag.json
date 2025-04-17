@@ -1,0 +1,19 @@
+{
+  "category": "Logic",
+  "block_name": "logic flag",
+  "description_jp": "設定した論理値を返す",
+  "input_variables": [
+    {
+      "name_jp": "boolean",
+      "title_jp": "論理値",
+      "format_jp": "プルダウン",
+      "range_jp": "true: 真\nfalse: 偽",
+      "default_jp": "true",
+      "content_jp": "true（真）または false（偽）の値"
+    }
+  ],
+  "usage_example_jp": "\"start thread\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"start thread\"ブロック等と一緒に使用して下さい"
+  ]
+} 

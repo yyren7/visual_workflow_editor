@@ -1,0 +1,19 @@
+{
+  "category": "Pallet",
+  "block_name": "reset pallet",
+  "description_jp": "パレットの現在位置を始点（点 A）に戻す",
+  "input_variables": [
+    {
+      "name_jp": "palletNo",
+      "title_jp": "パレット番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "pallet No.1",
+      "content_jp": "対象となるパレットの番号"
+    }
+  ],
+  "usage_example_jp": "・\"Dobot MG400\"がパレタイズ（3×3）を永続的に行います",
+  "usage_notes_jp": [
+    "\"set pallet\"ブロックとセットで使用して下さい"
+  ]
+} 

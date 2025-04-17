@@ -1,0 +1,19 @@
+{
+  "category": "Logic",
+  "block_name": "start thread",
+  "description_jp": "条件に応じて内包したブロック動作を開始する",
+  "input_variables": [
+    {
+      "name_jp": "startCondition",
+      "title_jp": "開始条件",
+      "format_jp": "ブロック",
+      "range_jp": "論理値ブロック",
+      "default_jp": "なし",
+      "content_jp": "動作を開始するための条件論理値"
+    }
+  ],
+  "usage_example_jp": "プログラムの実行開始で、定義した変数\"cnt\"に 100 を代入します",
+  "usage_notes_jp": [
+    "\"start thread\"ブロックの下に他のブロックを連結することはできません"
+  ]
+} 

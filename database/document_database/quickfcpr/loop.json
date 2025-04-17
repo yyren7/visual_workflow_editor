@@ -1,0 +1,12 @@
+{
+  "category": "Control",
+  "block_name": "loop",
+  "description_jp": "内包したブロック動作のループ処理を行う",
+  "input_variables": [],
+  "usage_example_jp": "\"Fairino FR\"が Pick&Place ループをします",
+  "usage_notes_jp": [
+    "\"loop\"ブロックを 2 重すると意図しない動作となる場合があります",
+    "\"loop\"ブロックの下に他のブロックを連結することはできません",
+    "ループの完了は、\"return\"ブロックを使用して下さい"
+  ]
+} 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_plc_bit_during">
+    <field name="deviceName">R</field>
+    <field name="deviceWordNo">0</field>
+    <field name="deviceBitNo">00</field>
+    <field name="bitStatus">ON</field>
+    <value name="timerValue">
+      <block type="math_number"><field name="NUM">1000</field></block> <!-- 默认变量值，暂用1000 -->
+    </value>
+  </block>
+</xml> 

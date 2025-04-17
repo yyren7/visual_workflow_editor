@@ -1,0 +1,11 @@
+{
+  "category": "Robot",
+  "block_name": "move origin",
+  "description_jp": "ロボットを原点復帰する",
+  "input_variables": [],
+  "usage_example_jp": "\"IAI 3 軸テーブルトップ\"を原点復帰させ、\"Home\"位置に移動させます",
+  "usage_notes_jp": [
+    "インクリメント型のエンコーダーを備えたロボットにのみ必要となります",
+    "Dobot MG400、Fairino FR、Hitbot Z ARM には不要です"
+  ]
+} 

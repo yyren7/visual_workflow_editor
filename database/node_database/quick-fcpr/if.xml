@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="if">
+    <value name="IF0">
+      <block type="logic_boolean"><field name="BOOL">TRUE</field></block>
+    </value>
+    <statement name="DO0">
+    </statement>
+    <!-- 默认只有一个条件分支 -->
+  </block>
+</xml> 

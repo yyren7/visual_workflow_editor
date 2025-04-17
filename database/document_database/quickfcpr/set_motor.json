@@ -1,0 +1,19 @@
+{
+  "category": "Robot",
+  "block_name": "set motor",
+  "description_jp": "ロボットのサーボモータ電源を操作する",
+  "input_variables": [
+    {
+      "name_jp": "motorStatus",
+      "title_jp": "サーボモータ操作",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:電源起動\n\n- OFF:電源停止",
+      "default_jp": "ON",
+      "content_jp": "サーボモータ電源の操作方法"
+    }
+  ],
+  "usage_example_jp": "\"move\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"move\"ブロックを使用する前に配置して下さい"
+  ]
+} 

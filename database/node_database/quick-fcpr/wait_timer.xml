@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="wait_timer">
+    <value name="timerValue">
+      <block type="math_number"><field name="NUM">300</field></block> <!-- 默认 300ms -->
+    </value>
+  </block>
+</xml> 

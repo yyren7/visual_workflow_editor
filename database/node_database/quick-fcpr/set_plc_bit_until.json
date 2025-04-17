@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_plc_bit_until">
+    <field name="outDeviceName">R</field>
+    <field name="outDeviceWordNo">0</field>
+    <field name="outDeviceBitNo">00</field>
+    <field name="outBitStatus">ON</field>
+    <field name="inDeviceName">R</field>
+    <field name="inDeviceWordNo">0</field>
+    <field name="inDeviceBitNo">00</field>
+    <field name="inBitStatus">ON</field>
+  </block>
+</xml> 

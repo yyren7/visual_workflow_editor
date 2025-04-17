@@ -1,0 +1,27 @@
+{
+  "category": "PLC",
+  "block_name": "plc word",
+  "description_jp": "PLC の word デバイスの取得結果を数値として返す",
+  "input_variables": [
+    {
+      "name_jp": "deviceName",
+      "title_jp": "デバイス名",
+      "format_jp": "プルダウン",
+      "range_jp": "- DM デバイス",
+      "default_jp": "DM",
+      "content_jp": "PLC から取得する対象デバイス名の名前"
+    },
+    {
+      "name_jp": "deviceWordNo",
+      "title_jp": "デバイス WORD 番号",
+      "format_jp": "キーボード",
+      "range_jp": "対象メーカーの機種ごとに異なる",
+      "default_jp": "0",
+      "content_jp": "PLC から取得する対象デバイス名の WORD 番号"
+    }
+  ],
+  "usage_example_jp": "\"KEYENCE\"製 PLC の\"DM1000\"デバイスが\"100\"の時に、\"DM1001\"デバイスを\"200\"にします",
+  "usage_notes_jp": [
+    "\"connect plc\"ブロックとセットで使用して下さい"
+  ]
+} 

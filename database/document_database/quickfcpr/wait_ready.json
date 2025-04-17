@@ -1,0 +1,8 @@
+{
+  "category": "Control",
+  "block_name": "wait ready",
+  "description_jp": "Ready ボタンが押下されるまで待機する",
+  "input_variables": [],
+  "usage_example_jp": "\"wait run\"ブロックを参照して下さい",
+  "usage_notes_jp": []
+} 

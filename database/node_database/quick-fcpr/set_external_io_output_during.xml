@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_external_io_output_during">
+    <field name="IONo">1</field>
+    <field name="outputPinName">default_pin</field>
+    <field name="outputPinStatus">ON</field>
+    <value name="timerValue">
+       <block type="math_number"><field name="NUM">100</field></block> <!-- 暂时用 100ms 作为默认值 -->
+    </value>
+  </block>
+</xml> 

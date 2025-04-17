@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_operation">
+    <field name="operator">AND</field> <!-- JSON default 是 and，需要确认 XML 对应值 -->
+    <value name="leftLogic">
+      <block type="logic_boolean"><field name="BOOL">TRUE</field></block>
+    </value>
+    <value name="rightLogic">
+      <block type="logic_boolean"><field name="BOOL">TRUE</field></block>
+    </value>
+  </block>
+</xml> 

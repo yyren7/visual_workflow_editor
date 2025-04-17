@@ -1,0 +1,85 @@
+{
+  "category": "Robot",
+  "block_name": "moveL",
+  "description_jp": "ロボットを全軸絶対直線移動する",
+  "input_variables": [
+    {
+      "name_jp": "pointName",
+      "title_jp": "目標位置名",
+      "format_jp": "プルダウン",
+      "range_jp": "ティーチング表で設定したポイント名（最大 100 点）",
+      "default_jp": "P1 のポイント名",
+      "content_jp": "ロボットが到達する目標位置"
+    },
+    {
+      "name_jp": "X",
+      "title_jp": "X 軸動作有無",
+      "format_jp": "プルダウン",
+      "range_jp": "X: 有効\n-: 無効",
+      "default_jp": "X",
+      "content_jp": "X 軸の移動を許可"
+    },
+    {
+      "name_jp": "Y",
+      "title_jp": "Y 軸動作有無",
+      "format_jp": "プルダウン",
+      "range_jp": "Y: 有効\n-: 無効",
+      "default_jp": "Y",
+      "content_jp": "Y 軸の移動を許可"
+    },
+    {
+      "name_jp": "Z",
+      "title_jp": "Z 軸動作有無",
+      "format_jp": "プルダウン",
+      "range_jp": "Z: 有効\n-: 無効",
+      "default_jp": "Z",
+      "content_jp": "Z 軸の移動を許可"
+    },
+    {
+      "name_jp": "Rz",
+      "title_jp": "Rz 軸動作有無",
+      "format_jp": "プルダウン",
+      "range_jp": "Rz: 有効\n-: 無効",
+      "default_jp": "Rz",
+      "content_jp": "Rz 軸の移動を許可"
+    },
+    {
+      "name_jp": "Ry",
+      "title_jp": "Ry 軸動作有無",
+      "format_jp": "プルダウン",
+      "range_jp": "Ry: 有効\n-: 無効",
+      "default_jp": "Ry",
+      "content_jp": "Ry の移動を許可"
+    },
+    {
+      "name_jp": "Rx",
+      "title_jp": "Rx 軸動作有無",
+      "format_jp": "プルダウン",
+      "range_jp": "Rx: 有効\n-: 無効",
+      "default_jp": "Rx",
+      "content_jp": "Ry の移動を許可"
+    },
+    {
+      "name_jp": "pallet No.",
+      "title_jp": "パレット番号",
+      "format_jp": "プルダウン",
+      "range_jp": "pallet No.1 ~ 10",
+      "default_jp": "no pallet",
+      "content_jp": "目標位置をオフセットするためのパレット補正量"
+    },
+    {
+      "name_jp": "camera No.",
+      "title_jp": "カメラ番号",
+      "format_jp": "プルダウン",
+      "range_jp": "camera No.1 ~ 10",
+      "default_jp": "no camera",
+      "content_jp": "目標位置をオフセットするためのカメラ補正量"
+    }
+  ],
+  "usage_example_jp": "Dobot MG400 を目標位置\"Home\"へ移動する",
+  "usage_notes_jp": [
+    "\"select\"ブロックでロボットを定義してから使って下さい",
+    "\"set motor\"ブロックをサーボ電源を ON にした後に使って下さい",
+    "4 軸のロボットに対して、Rz が R(=Θ 回転)となります（Ry と Rx は無効）"
+  ]
+} 

@@ -1,0 +1,19 @@
+{
+  "category": "Math",
+  "block_name": "math number",
+  "description_jp": "数値を返す",
+  "input_variables": [
+    {
+      "name_jp": "value",
+      "title_jp": "数値",
+      "format_jp": "キーボード",
+      "range_jp": "32 ビット符号付き整数",
+      "default_jp": "0",
+      "content_jp": "キーボードから入力可能な任意の数値"
+    }
+  ],
+  "usage_example_jp": "\"set number\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"set number\"ブロック等と一緒に使用して下さい"
+  ]
+} 

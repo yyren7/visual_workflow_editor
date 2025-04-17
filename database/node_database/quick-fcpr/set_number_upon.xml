@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_number_upon">
+    <field name="dstValueVar">default_number_var</field>
+    <value name="srcValueVar">
+      <block type="math_number"><field name="NUM">0</field></block>
+    </value>
+    <field name="triggerCondition">-</field>
+    <value name="operatingCondition">
+      <block type="logic_boolean"><field name="BOOL">TRUE</field></block>
+    </value>
+  </block>
+</xml> 

@@ -1,0 +1,27 @@
+{
+  "category": "Robot",
+  "block_name": "wait input",
+  "description_jp": "ロボット I/O の入力が指定した条件となるまで待機する",
+  "input_variables": [
+    {
+      "name_jp": "inputPinName",
+      "title_jp": "入力ピン名",
+      "format_jp": "プルダウン",
+      "range_jp": "ロボット毎に変数名と数は異なる",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "入力を状態を取得するピン名"
+    },
+    {
+      "name_jp": "inputPinStatus",
+      "title_jp": "入力ピン操作方法",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:アクティブ\n\n- OFF:非アクティブ",
+      "default_jp": "ON",
+      "content_jp": "対象入力ピンの状態"
+    }
+  ],
+  "usage_example_jp": "\"Fairino FR\"の\"DI00\"ピンが ON するまで待機します\n\nロボット IO サイドバーにて、ピン名を任意の文字に変更することも可能です",
+  "usage_notes_jp": [
+    "\"select\"ブロックでロボットを定義してから使って下さい"
+  ]
+} 

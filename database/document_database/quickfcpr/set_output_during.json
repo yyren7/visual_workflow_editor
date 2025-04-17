@@ -1,0 +1,35 @@
+{
+  "category": "Robot",
+  "block_name": "set output during",
+  "description_jp": "ロボット I/O の出力を指定した時間だけ操作する",
+  "input_variables": [
+    {
+      "name_jp": "outputPinName",
+      "title_jp": "出力ピン名",
+      "format_jp": "プルダウン",
+      "range_jp": "ロボット毎に変数名と数は異なる",
+      "default_jp": "番号が小さいピン名",
+      "content_jp": "出力を操作するピン名"
+    },
+    {
+      "name_jp": "outputPinStatus",
+      "title_jp": "出力ピン操作方法",
+      "format_jp": "プルダウン",
+      "range_jp": "- ON:アクティブ\n\n- OFF:非アクティブ",
+      "default_jp": "ON",
+      "content_jp": "対象出力ピンの操作方法"
+    },
+    {
+      "name_jp": "timerValue",
+      "title_jp": "出力ピン操作時間",
+      "format_jp": "プルダウン",
+      "range_jp": "変数表で設定した変数名（最大 300 点）",
+      "default_jp": "変数表で最初に定義した変数名",
+      "content_jp": "対象出力ピンの操作時間（msec）"
+    }
+  ],
+  "usage_example_jp": "\"Fairino FR\"の\"DO00\"ピンを\"100msec\"ON にします（\"_const_***\"はプルダウンメニューの下部に存在）\n\nロボット IO サイドバーにて、ピン名を任意の文字に変更することも可能です",
+  "usage_notes_jp": [
+    "\"select\"ブロックでロボットを定義してから使って下さい"
+  ]
+} 

@@ -1,0 +1,43 @@
+{
+  "category": "Math",
+  "block_name": "set number upon",
+  "description_jp": "設定した条件成立で変数に値を代入する",
+  "input_variables": [
+    {
+      "name_jp": "dstValueVar",
+      "title_jp": "代入先数値変数",
+      "format_jp": "プルダウン",
+      "range_jp": "Number 変数表で設定した変数名（最大 300 点）",
+      "default_jp": "Number 変数表で最初に定義した変数",
+      "content_jp": "代入先の数値型の変数"
+    },
+    {
+      "name_jp": "srcValueVar",
+      "title_jp": "代入元数値変数",
+      "format_jp": "ブロック",
+      "range_jp": "数値ブロック",
+      "default_jp": "なし",
+      "content_jp": "代入元の数値型の変数"
+    },
+    {
+      "name_jp": "triggerCondition",
+      "title_jp": "動作開始条件詳細",
+      "format_jp": "プルダウン",
+      "range_jp": "・ー:常時\n・↑:立ち上がり\n・↓:立ち下がり",
+      "default_jp": "ー",
+      "content_jp": "動作を開始するための条件詳細"
+    },
+    {
+      "name_jp": "operatingCondition",
+      "title_jp": "動作開始条件",
+      "format_jp": "ブロック",
+      "range_jp": "論理値ブロック",
+      "default_jp": "なし",
+      "content_jp": "動作を開始するための条件"
+    }
+  ],
+  "usage_example_jp": "・\"DI_00\"ピンが ON になると、\"Fairino FR\"が Pick&Place 動作を行います\n・\"DI_00\"ピンが OFF になると、\"Fairino FR\"が待機します",
+  "usage_notes_jp": [
+    "変数に値を格納する前に、変数表で定義して下さい"
+  ]
+} 

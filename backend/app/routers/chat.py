@@ -1,12 +1,15 @@
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
+from typing import List, Dict, Any, Optional, AsyncGenerator
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Response, BackgroundTasks
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session
 import logging
+import json
 
 from backend.app import schemas
 from database.connection import get_db
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.chat_service import ChatService
+from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput
 from database.models import Flow
 
 logger = logging.getLogger(__name__)
@@ -163,86 +166,153 @@ async def update_chat(
     return updated_chat
 
 
-@router.post("/{chat_id}/messages", response_model=schemas.ChatMessageResponse)
+@router.post("/{chat_id}/messages")
 async def add_message(
     chat_id: str,
     message: schemas.ChatAddMessage,
-    db: Session = Depends(get_db), 
-    current_user: schemas.User = Depends(get_current_user)
-):
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+) -> Response:
     """
-    向聊天添加用户消息，触发处理流程，并返回 AI 响应和流程图更新。
-    必须登录并且只能操作自己流程图的聊天。
+    向聊天添加用户消息，触发处理流程。
+    根据处理结果返回流式响应 (文本) 或 JSON 响应 (工具调用/错误)。
+    使用后台任务在流结束后保存 AI 回复。
     """
     chat_service = ChatService(db)
     chat = chat_service.get_chat(chat_id)
     
     if not chat:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="聊天不存在"
-        )
-    
-    # 验证流程图属于当前用户
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="聊天不存在")
     verified_flow = verify_flow_ownership(chat.flow_id, current_user, db)
     logger.info(f"Flow ownership 验证通过 for flow: {verified_flow.id} linked to chat: {chat_id}")
-
-    # 1. 添加用户消息到历史记录 (这部分逻辑在 process_chat_message 内部处理了)
-    # updated_chat = chat_service.add_message_to_chat(
-    #     chat_id=chat_id,
-    #     role=message.role, # 应该始终是 'user'
-    #     content=message.content
-    # )
-    # if not updated_chat:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="添加用户消息失败"
-    #     )
-    
-    # 2. 调用服务层处理消息并获取 AI 回复
-    # 注意：message.role 应该由前端确保是 'user'
     if message.role != 'user':
-         logger.warning(f"Received message with role '{message.role}' in add_message endpoint. Processing as user message.")
+         logger.warning(f"Received message with role '{message.role}' in add_message. Processing as user message.")
          
     try:
-        response_data = await chat_service.process_chat_message(
+        # Call the service layer. It now returns WorkflowChainOutput or a Dict on error.
+        result_from_service = await chat_service.process_chat_message(
             chat_id=chat_id,
             user_message=message.content
         )
+        
+        # --- Check the type of result from service --- 
+        if isinstance(result_from_service, WorkflowChainOutput):
+            chain_output = result_from_service
+            
+            if chain_output.stream_generator:
+                # --- Handle Streaming Response with Background Save --- 
+                logger.info(f"Chat service returned stream for chat {chat_id}. Preparing StreamingResponse with background save.")
+                
+                # Get the original generator from the service output
+                original_generator = chain_output.stream_generator
+                
+                async def stream_wrapper_with_save(generator: AsyncGenerator[str, None]):
+                    accumulated_content = ""
+                    try:
+                        async for text_chunk in generator:
+                            accumulated_content += text_chunk
+                            yield text_chunk # Yield to client
+                    except Exception as e:
+                        logger.error(f"Error during stream generation for chat {chat_id}: {e}", exc_info=True)
+                        # Still try to save whatever was accumulated before the error
+                    finally:
+                        logger.info(f"Stream finished or terminated for chat {chat_id}. Adding background task to save content.")
+                        if accumulated_content:
+                            # Add the save operation as a background task
+                            # Pass necessary arguments: chat_id, role, content
+                            # IMPORTANT: chat_service.add_message_to_chat needs a valid db session.
+                            # BackgroundTasks run *after* the response, so the request-scoped session `db`
+                            # might be closed. We need a way to get a new session for the background task.
+                            # Option 1: Pass db session factory `get_db` (if possible)
+                            # Option 2: Modify `add_message_to_chat` to create its own session (less ideal)
+                            # Option 3: Create a helper function that gets a new session and calls add_message_to_chat.
+                            
+                            # --- Using Option 3: Define a helper --- 
+                            def save_message_task(c_id: str, role: str, content: str):
+                                logger.info(f"[BG Task {c_id}] Started: Save message.")
+                                db_session_bg = None # Initialize
+                                try:
+                                    from database.database import SessionLocal # Import session factory
+                                    db_session_bg = SessionLocal()
+                                    logger.info(f"[BG Task {c_id}] Created new DB session.")
+                                    
+                                    # Instantiate service with new session
+                                    chat_service_bg = ChatService(db_session_bg)
+                                    logger.info(f"[BG Task {c_id}] Instantiated ChatService with new session.")
+                                    
+                                    logger.info(f"[BG Task {c_id}] Calling add_message_to_chat...")
+                                    save_result = chat_service_bg.add_message_to_chat(c_id, role, content)
+                                    
+                                    if save_result:
+                                        logger.info(f"[BG Task {c_id}] Success: Saved message.")
+                                    else:
+                                        # add_message_to_chat logs its own errors, but log failure here too.
+                                        logger.error(f"[BG Task {c_id}] Failed: add_message_to_chat returned None or False.")
+                                        
+                                except ImportError as ie:
+                                     logger.error(f"[BG Task {c_id}] ImportError: Could not import SessionLocal. {ie}", exc_info=True)
+                                except Exception as bg_err:
+                                    logger.error(f"[BG Task {c_id}] Error during execution: {bg_err}", exc_info=True)
+                                finally:
+                                     if db_session_bg:
+                                         try:
+                                             db_session_bg.close()
+                                             logger.info(f"[BG Task {c_id}] Closed DB session.")
+                                         except Exception as close_err:
+                                              logger.error(f"[BG Task {c_id}] Error closing DB session: {close_err}", exc_info=True)
+                                     else:
+                                          logger.warning(f"[BG Task {c_id}] DB session was not created, nothing to close.")
+                                     logger.info(f"[BG Task {c_id}] Finished.")
+                                
+                            background_tasks.add_task(save_message_task, chat_id, "assistant", accumulated_content)
+                        else:
+                            logger.warning(f"Stream finished for chat {chat_id}, but no content accumulated for background save.")
+
+                # Return the streaming response, passing the background_tasks object
+                return StreamingResponse(stream_wrapper_with_save(original_generator), 
+                                         media_type="text/plain; charset=utf-8", 
+                                         background=background_tasks)
+            
+            else:
+                # --- Handle Non-Streaming JSON Response (Tool calls, errors, etc.) ---
+                logger.info(f"Chat service returned non-streaming output for chat {chat_id}. Preparing JSONResponse.")
+                # Exclude the (None) generator field before sending
+                response_data = chain_output.model_dump(exclude={'stream_generator'})
+                 # Update Flow's last_interacted_chat_id only on non-streaming success?
+                # Or keep it updated regardless? Let's keep it for now.
+                try:
+                    flow_to_update = db.query(Flow).filter(Flow.id == chat.flow_id).first()
+                    if flow_to_update:
+                        flow_to_update.last_interacted_chat_id = chat_id
+                        db.commit()
+                        logger.info(f"(Non-stream) Updated Flow {chat.flow_id} last_interacted_chat_id to {chat_id}")
+                except Exception as update_err:
+                    logger.error(f"(Non-stream) Failed to update Flow last_interacted_chat_id: {update_err}", exc_info=True)
+                    db.rollback()
+                
+                return JSONResponse(content=response_data)
+                
+        elif isinstance(result_from_service, dict) and "error" in result_from_service:
+             # --- Handle Initial Error Dictionary from Service --- 
+             logger.error(f"Chat service returned an initial error dictionary for chat {chat_id}: {result_from_service['error']}")
+             # You might want a specific status code here, e.g., 400 or 500
+             return JSONResponse(content=result_from_service, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+             # --- Unexpected result type from service --- 
+             logger.error(f"Chat service returned an unexpected result type for chat {chat_id}: {type(result_from_service)}")
+             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="处理消息时返回了意外的结果类型")
+
+    except HTTPException as http_exc:
+         # Re-raise HTTPExceptions (like 404 Not Found, 403 Forbidden)
+         raise http_exc
     except Exception as e:
-        logger.error(f"处理聊天消息时发生错误 (Chat ID: {chat_id}): {e}", exc_info=True)
+        # Catch-all for other unexpected errors during processing
+        logger.error(f"处理聊天消息端点时发生意外错误 (Chat ID: {chat_id}): {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"处理消息时发生内部错误"
         )
-
-    if not response_data or response_data.get("error"):
-        error_detail = response_data.get("error", "处理消息时返回未知错误") if response_data else "处理消息时返回空响应"
-        logger.error(f"ChatService process_chat_message 返回错误: {error_detail}")
-        # 即使处理出错，也可能需要返回部分信息给前端
-        # 这里我们返回包含错误信息的完整字典
-        # 或者可以根据错误类型决定是否抛出 HTTPException
-        # 为了前端能收到信息，我们暂时返回包含错误的字典
-        # 注意：这要求 response_model=schemas.ChatMessageResponse 包含 error 字段
-        return response_data or {"ai_response": "", "error": error_detail} 
-
-    # 3. 更新 Flow 的 last_interacted_chat_id (这个逻辑可以保留，确保流程最后交互信息正确)
-    try:
-        # 重新获取 flow 对象以确保数据最新
-        flow_to_update = db.query(Flow).filter(Flow.id == chat.flow_id).first()
-        if flow_to_update:
-            flow_to_update.last_interacted_chat_id = chat_id
-            db.commit()
-            logger.info(f"更新 Flow {chat.flow_id} 的 last_interacted_chat_id 为 {chat_id}")
-        else:
-             logger.warning(f"无法更新 Flow 的 last_interacted_chat_id，因为在处理消息后未能找到 Flow 对象 (Flow ID: {chat.flow_id})")
-    except Exception as update_err:
-        logger.error(f"更新 Flow last_interacted_chat_id 失败 (Flow: {chat.flow_id}, Chat: {chat_id}): {update_err}", exc_info=True)
-        db.rollback() # 回滚 Flow 更新失败
-        # 即使更新 Flow 失败，也应该返回聊天结果
-
-    # 4. 返回处理结果 (由 response_model=schemas.ChatMessageResponse 自动验证和序列化)
-    return response_data
 
 
 @router.delete("/{chat_id}", response_model=bool)

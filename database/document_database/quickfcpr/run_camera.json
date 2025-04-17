@@ -1,0 +1,33 @@
+{
+  "category": "Camera",
+  "block_name": "run camera",
+  "description_jp": "カメラ PC に実行命令を送信する",
+  "input_variables": [
+    {
+      "name_jp": "cameraNo",
+      "title_jp": "カメラ番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~10",
+      "default_jp": "camera No.1",
+      "content_jp": "カメラの接続を区別するために付与した任意の番号"
+    },
+    {
+      "name_jp": "programNo",
+      "title_jp": "プログラム番号",
+      "format_jp": "プルダウン",
+      "range_jp": "1~100",
+      "default_jp": "program No.1",
+      "content_jp": "カメラ PC で実行中のプログラム番号。この番号をカメラ PC に送信する"
+    }
+  ],
+  "usage_example_jp": "・カメラ No.1 からの結果が 1(=OK)ならば、\"Hitbot Z ARM\"がカメラ No.1 から取得した補正値を使って Pick&Place します\n・ロボットの Home 位置への移動とカメラの検出を、並列で行います",
+  "usage_notes_jp": [
+    "\"connect camera\"ブロック等とセットで使用して下さい",
+    "Facilea、Vision Master、VAST Vision などのビジョンと連携が可能です",
+    "　詳細については、使用するビジョンの資料をご確認下さい",
+    "カメラ動作命令について、TCP 経由で文字列形式の電文を送信しており、内容は下記です",
+    "　※プログラム番号のみ、ブロックから値を変更できます",
+    "「識別ヘッダー,プログラム番号,コンフィグ番号,モデル番号,ポジション番号 CRLF」",
+    "　　例. TR1,1,0,0,0\\r\\n"
+  ]
+} 

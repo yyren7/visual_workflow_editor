@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_custom_flag">
+    <field name="flagVar">default_flag_var</field> <!-- 需要默认变量名 -->
+  </block>
+</xml> 

@@ -1,0 +1,20 @@
+{
+  "category": "Function",
+  "block_name": "define function",
+  "description_jp": "関数を定義する",
+  "input_variables": [
+    {
+      "name_jp": "functionName",
+      "title_jp": "関数名",
+      "format_jp": "キーボード",
+      "range_jp": "最大 50 文字",
+      "default_jp": "do something",
+      "content_jp": "関数の名前"
+    }
+  ],
+  "usage_example_jp": "\"call function\"ブロックを参照して下さい",
+  "usage_notes_jp": [
+    "\"call function\"ブロックとセットで使用して下さい",
+    "\"define function\"ブロックを消去すると、同一名の\"call function\"ブロックも削除されます"
+  ]
+} 

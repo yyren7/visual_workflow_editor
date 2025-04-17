@@ -1,0 +1,35 @@
+{
+  "category": "PLC",
+  "block_name": "plc bit",
+  "description_jp": "PLC の bit デバイスの取得結果を論理値として返す",
+  "input_variables": [
+    {
+      "name_jp": "deviceName",
+      "title_jp": "デバイス名",
+      "format_jp": "プルダウン",
+      "range_jp": "- R デバイス\n\n- MR デバイス",
+      "default_jp": "R",
+      "content_jp": "PLC から取得する対象デバイス名の名前"
+    },
+    {
+      "name_jp": "deviceWordNo",
+      "title_jp": "デバイス WORD 番号",
+      "format_jp": "キーボード",
+      "range_jp": "対象メーカーの機種ごとに異なる",
+      "default_jp": "0",
+      "content_jp": "PLC から取得する対象デバイス名の WORD 番号"
+    },
+    {
+      "name_jp": "deviceBitNo",
+      "title_jp": "デバイス BIT 番号",
+      "format_jp": "プルダウン",
+      "range_jp": "00~16",
+      "default_jp": "00",
+      "content_jp": "PLC から取得する対象デバイス名の BIT 番号"
+    }
+  ],
+  "usage_example_jp": "\"KEYENCE\"製 PLC の\"R000\"デバイスが ON の時に、\"R001\"デバイスを ON にします",
+  "usage_notes_jp": [
+    "\"connect plc\"ブロックとセットで使用して下さい"
+  ]
+} 
