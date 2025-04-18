@@ -31,7 +31,7 @@ Python、Node.js などの依存関係をインストールする必要はなく
 ### 2. プロジェクトのクローンと開発コンテナの起動
 
 ```bash
-git clone https://github.com/あなたのユーザー名/visual_workflow_editor.git
+git clone https://github.com/あなたのユーザー名/visual_workflow_editor.git # あなたのリポジトリURLに置き換えてください
 cd visual_workflow_editor
 ```
 
@@ -51,11 +51,11 @@ VSCode でプロジェクトフォルダを開きます。「Devcontainer 設定
 VS Code Dev Container を使用しない場合は、プロジェクトで提供されているスクリプトを使用することもできます：
 
 ```bash
-# 開発環境を起動
-./scripts/dev.sh
+# 開発環境を起動（コンテナのビルド/再ビルドを含む）
+./start-dev.sh
 
-# コンテナを再構築（依存関係が更新された場合）
-./scripts/rebuild.sh
+# コンテナを明示的に再構築（必要な場合、例：Dockerfileの変更時）
+./scripts/rebuild-container.sh
 
 # サービスのステータスを確認
 ./scripts/check-status.sh
@@ -67,20 +67,40 @@ VS Code Dev Container を使用しない場合は、プロジェクトで提供�
 visual_workflow_editor/
 ├── .devcontainer/       # Dev Container設定
 ├── .github/workflows/   # GitHub Actions CI/CD設定
-├── backend/             # Pythonバックエンド
+├── backend/             # Pythonバックエンド (FastAPI)
 │   ├── app/             # アプリケーションコード
+│   ├── langchainchat/   # Langchainチャット関連コード
+│   ├── config/          # バックエンド固有の設定（もしあれば）
+│   ├── tests/           # バックエンドテスト
+│   ├── scripts/         # バックエンド固有のスクリプト（もしあれば）
+│   ├── requirements.txt # Python依存関係
+│   ├── run_backend.py   # バックエンド起動スクリプト
 │   └── Dockerfile       # バックエンドDockerの設定
-├── config/              # 設定ファイルディレクトリ
-│   └── global_variables.json # グローバル変数設定
-├── deployment/          # デプロイメント関連の設定
-├── dev_docs/            # 開発ドキュメント
+├── database/            # データベースファイル
+│   └── flow_editor.db   # SQLiteデータベースファイル
 ├── frontend/            # Reactフロントエンド
+│   ├── public/          # パブリックアセット
 │   ├── src/             # ソースコード
+│   ├── package.json     # Node.js依存関係
+│   ├── tsconfig.json    # TypeScript設定
+│   ├── craco.config.js  # Craco設定オーバーライド
 │   └── Dockerfile       # フロントエンドDockerの設定
 ├── logs/                # アプリケーションログ
-├── scripts/             # 開発スクリプト
+├── scripts/             # 一般的な開発スクリプト
+│   ├── check-status.sh
+│   ├── dev.sh           # (レガシーまたはヘルパースクリプトの可能性あり)
+│   ├── local-start.sh   # (レガシーまたはヘルパースクリプトの可能性あり)
+│   ├── post-create-fixed.sh # Dev Containerセットアップスクリプト
+│   ├── rebuild-container.sh
+│   ├── rebuild.sh       # (レガシーまたはヘルパースクリプトの可能性あり)
+│   └── update-version.sh # バージョン更新スクリプト
+├── .env                 # 環境変数（APIキー、DBパスなど）- **機密データはコミットしないでください**
+├── .gitignore           # Git無視設定
+├── start-dev.sh         # 開発環境を起動するためのメインスクリプト
 ├── CHANGELOG.md         # バージョン更新ログ
-└── README.md            # プロジェクト説明
+├── README.md            # プロジェクト説明（英語）
+├── README_ja.md         # プロジェクト説明（日本語）
+└── README_zh.md         # プロジェクト説明（中国語）
 ```
 
 ## 開発ワークフロー
@@ -92,11 +112,11 @@ visual_workflow_editor/
    # VS Code Dev Containerを使用している場合は、VS Codeのターミナルを直接使用
    ```
 
-2. **サービスの起動**
+2. **サービスの起動（Dev Container 内）**
 
    ```bash
-   # 開発コンテナでは、フロントエンドとバックエンドのサービスが自動的に起動
-   # 手動で起動する場合：
+   # 開発コンテナでは、フロントエンドとバックエンドのサービスがsupervisord経由で自動的に起動します（.devcontainer/devcontainer.json と scripts/post-create-fixed.sh を確認）
+   # 手動で起動する場合（デバッグなどで必要な場合）：
    cd /workspace/frontend && npm start
    cd /workspace/backend && python run_backend.py
    ```
@@ -104,10 +124,15 @@ visual_workflow_editor/
 3. **ログの表示**
 
    ```bash
-   # フロントエンドログ
-   tail -f /workspace/logs/frontend.log
+   # コンテナ内:
+   # まず supervisord のログを確認（.devcontainer/supervisor/supervisord.conf で設定）
+   tail -f /var/log/supervisor/frontend-stdout.log
+   tail -f /var/log/supervisor/frontend-stderr.log
+   tail -f /var/log/supervisor/backend-stdout.log
+   tail -f /var/log/supervisor/backend-stderr.log
 
-   # バックエンドログ
+   # アプリケーション固有のログ（設定されている場合）:
+   tail -f /workspace/logs/frontend.log
    tail -f /workspace/logs/backend.log
    ```
 
@@ -121,9 +146,14 @@ visual_workflow_editor/
 
 ## 設定
 
-- バックエンド設定は`backend/.env`ファイルにあります
-- グローバル変数は`config/global_variables.json`に保存されています
-- データベースは SQLite を使用し、`config/flow_editor.db`にあります
+- **環境変数**: 主な設定はプロジェクトルートの `.env` ファイルで管理されます。ファイルが存在しない場合は `example.env` から作成してください。これには以下が含まれます：
+  - `DATABASE_URL`: SQLite データベースへのパス（デフォルト：`sqlite:////workspace/database/flow_editor.db`）。
+  - `SECRET_KEY`: バックエンドアプリケーションのシークレットキー。
+  - API キー: `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `EMBEDDING_LMSTUDIO_API_KEY`（および関連設定）。それぞれのサービスを使用する場合は、これらを入力してください。
+  - `CORS_ORIGINS`: クロスオリジンリソース共有（CORS）を許可するオリジン。
+- **データベース**: SQLite を使用し、データベースファイルはデフォルトで `database/flow_editor.db` にあります（パスは `.env` で設定）。
+
+**重要**: 機密性の高い API キーをコミットしないように、`.env` ファイルを `.gitignore` に追加してください。
 
 ## バージョン管理
 

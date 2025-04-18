@@ -31,7 +31,7 @@ No need to install Python, Node.js or any other dependencies, everything runs in
 ### 2. Clone the Project and Start the Development Container
 
 ```bash
-git clone https://github.com/your-username/visual_workflow_editor.git
+git clone https://github.com/your-username/visual_workflow_editor.git # Replace with your repository URL
 cd visual_workflow_editor
 ```
 
@@ -51,11 +51,11 @@ Once the container is running:
 If you're not using VS Code Dev Container, you can also use the scripts provided in the project:
 
 ```bash
-# Start the development environment
-./scripts/dev.sh
+# Start the development environment (includes building/rebuilding containers)
+./start-dev.sh
 
-# Rebuild containers (when dependencies are updated)
-./scripts/rebuild.sh
+# Rebuild containers explicitly (if needed, e.g., Dockerfile changes)
+./scripts/rebuild-container.sh
 
 # Check service status
 ./scripts/check-status.sh
@@ -67,20 +67,40 @@ If you're not using VS Code Dev Container, you can also use the scripts provided
 visual_workflow_editor/
 ├── .devcontainer/       # Dev Container configuration
 ├── .github/workflows/   # GitHub Actions CI/CD configuration
-├── backend/             # Python backend
+├── backend/             # Python backend (FastAPI)
 │   ├── app/             # Application code
+│   ├── langchainchat/   # Langchain chat specific code
+│   ├── config/          # Backend specific configurations (if any)
+│   ├── tests/           # Backend tests
+│   ├── scripts/         # Backend specific scripts (if any)
+│   ├── requirements.txt # Python dependencies
+│   ├── run_backend.py   # Backend start script
 │   └── Dockerfile       # Backend Docker configuration
-├── config/              # Configuration files directory
-│   └── global_variables.json # Global variables configuration
-├── deployment/          # Deployment-related configuration
-├── dev_docs/            # Development documentation
+├── database/            # Database files
+│   └── flow_editor.db   # SQLite database file
 ├── frontend/            # React frontend
+│   ├── public/          # Public assets
 │   ├── src/             # Source code
+│   ├── package.json     # Node.js dependencies
+│   ├── tsconfig.json    # TypeScript configuration
+│   ├── craco.config.js  # Craco configuration override
 │   └── Dockerfile       # Frontend Docker configuration
 ├── logs/                # Application logs
-├── scripts/             # Development scripts
+├── scripts/             # General development scripts
+│   ├── check-status.sh
+│   ├── dev.sh           # (May be legacy or helper script)
+│   ├── local-start.sh   # (May be legacy or helper script)
+│   ├── post-create-fixed.sh # Dev container setup script
+│   ├── rebuild-container.sh
+│   ├── rebuild.sh       # (May be legacy or helper script)
+│   └── update-version.sh # Version update script
+├── .env                 # Environment variables (API Keys, DB path, etc.) - **DO NOT COMMIT SENSITIVE DATA**
+├── .gitignore           # Git ignore configuration
+├── start-dev.sh         # Main script to start development environment
 ├── CHANGELOG.md         # Version update log
-└── README.md            # Project description
+├── README.md            # Project description (English)
+├── README_ja.md         # Project description (Japanese)
+└── README_zh.md         # Project description (Chinese)
 ```
 
 ## Development Workflow
@@ -92,11 +112,11 @@ visual_workflow_editor/
    # If using VS Code Dev Container, use the VS Code terminal directly
    ```
 
-2. **Starting Services**
+2. **Starting Services (Inside Dev Container)**
 
    ```bash
-   # In the development container, frontend and backend services start automatically
-   # To start manually:
+   # In the development container, frontend and backend services start automatically via supervisord (check .devcontainer/devcontainer.json and scripts/post-create-fixed.sh)
+   # To start manually (if needed for debugging):
    cd /workspace/frontend && npm start
    cd /workspace/backend && python run_backend.py
    ```
@@ -104,10 +124,15 @@ visual_workflow_editor/
 3. **Viewing Logs**
 
    ```bash
-   # Frontend logs
-   tail -f /workspace/logs/frontend.log
+   # Inside the container:
+   # Check supervisord logs first (configured in .devcontainer/supervisor/supervisord.conf)
+   tail -f /var/log/supervisor/frontend-stdout.log
+   tail -f /var/log/supervisor/frontend-stderr.log
+   tail -f /var/log/supervisor/backend-stdout.log
+   tail -f /var/log/supervisor/backend-stderr.log
 
-   # Backend logs
+   # Application specific logs (if configured):
+   tail -f /workspace/logs/frontend.log
    tail -f /workspace/logs/backend.log
    ```
 
@@ -123,9 +148,14 @@ when pushed to the main or master branch.
 
 ## Configuration
 
-- Backend configuration is in the `backend/.env` file
-- Global variables are stored in `config/global_variables.json`
-- The database uses SQLite, located at `config/flow_editor.db`
+- **Environment Variables**: Main configuration is managed via the `.env` file in the project root. Create this file from `example.env` if it doesn't exist. It includes:
+  - `DATABASE_URL`: Path to the SQLite database (default: `sqlite:////workspace/database/flow_editor.db`).
+  - `SECRET_KEY`: Secret key for the backend application.
+  - API Keys: `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `EMBEDDING_LMSTUDIO_API_KEY` (and related settings). Fill these in if you intend to use the respective services.
+  - `CORS_ORIGINS`: Allowed origins for Cross-Origin Resource Sharing.
+- **Database**: Uses SQLite, the database file is located at `database/flow_editor.db` by default (path configured in `.env`).
+
+**Important**: Ensure the `.env` file is added to your `.gitignore` to avoid committing sensitive API keys.
 
 ## Version Management
 

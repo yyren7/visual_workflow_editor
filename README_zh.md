@@ -31,7 +31,7 @@
 ### 2. 克隆项目并启动开发容器
 
 ```bash
-git clone https://github.com/您的用户名/visual_workflow_editor.git
+git clone https://github.com/您的用户名/visual_workflow_editor.git # 替换为你的仓库地址
 cd visual_workflow_editor
 ```
 
@@ -51,11 +51,11 @@ cd visual_workflow_editor
 如果不使用 VS Code Dev Container，也可以使用项目提供的脚本进行开发：
 
 ```bash
-# 启动开发环境
-./scripts/dev.sh
+# 启动开发环境（包括构建/重建容器）
+./start-dev.sh
 
-# 重建容器（当依赖更新时）
-./scripts/rebuild.sh
+# 显式重建容器（如果需要，例如 Dockerfile 变更时）
+./scripts/rebuild-container.sh
 
 # 检查服务状态
 ./scripts/check-status.sh
@@ -67,20 +67,40 @@ cd visual_workflow_editor
 visual_workflow_editor/
 ├── .devcontainer/       # Dev Container配置
 ├── .github/workflows/   # GitHub Actions CI/CD配置
-├── backend/             # Python后端
+├── backend/             # Python后端 (FastAPI)
 │   ├── app/             # 应用代码
+│   ├── langchainchat/   # Langchain 聊天相关代码
+│   ├── config/          # 后端特定配置（如果有）
+│   ├── tests/           # 后端测试
+│   ├── scripts/         # 后端特定脚本（如果有）
+│   ├── requirements.txt # Python 依赖
+│   ├── run_backend.py   # 后端启动脚本
 │   └── Dockerfile       # 后端Docker配置
-├── config/              # 配置文件目录
-│   └── global_variables.json # 全局变量配置
-├── deployment/          # 部署相关配置
-├── dev_docs/            # 开发文档
+├── database/            # 数据库文件
+│   └── flow_editor.db   # SQLite 数据库文件
 ├── frontend/            # React前端
+│   ├── public/          # 公共资源
 │   ├── src/             # 源代码
+│   ├── package.json     # Node.js 依赖
+│   ├── tsconfig.json    # TypeScript 配置
+│   ├── craco.config.js  # Craco 配置覆盖
 │   └── Dockerfile       # 前端Docker配置
 ├── logs/                # 应用日志
-├── scripts/             # 开发脚本
+├── scripts/             # 通用开发脚本
+│   ├── check-status.sh
+│   ├── dev.sh           # (可能是旧的或辅助脚本)
+│   ├── local-start.sh   # (可能是旧的或辅助脚本)
+│   ├── post-create-fixed.sh # Dev Container 设置脚本
+│   ├── rebuild-container.sh
+│   ├── rebuild.sh       # (可能是旧的或辅助脚本)
+│   └── update-version.sh # 版本更新脚本
+├── .env                 # 环境变量（API密钥、数据库路径等）- **不要提交敏感数据**
+├── .gitignore           # Git 忽略配置
+├── start-dev.sh         # 启动开发环境的主脚本
 ├── CHANGELOG.md         # 版本更新日志
-└── README.md            # 项目说明
+├── README.md            # 项目说明（英文）
+├── README_ja.md         # 项目说明（日文）
+└── README_zh.md         # 项目说明（中文）
 ```
 
 ## 开发工作流
@@ -92,11 +112,11 @@ visual_workflow_editor/
    # 如果使用VS Code Dev Container，直接在VS Code终端中操作即可
    ```
 
-2. **启动服务**
+2. **启动服务（在 Dev Container 内）**
 
    ```bash
-   # 在开发容器中，前后端服务会自动启动
-   # 如需手动启动：
+   # 在开发容器中，前后端服务通过 supervisord 自动启动（查看 .devcontainer/devcontainer.json 和 scripts/post-create-fixed.sh）
+   # 如需手动启动（例如用于调试）：
    cd /workspace/frontend && npm start
    cd /workspace/backend && python run_backend.py
    ```
@@ -104,10 +124,15 @@ visual_workflow_editor/
 3. **查看日志**
 
    ```bash
-   # 前端日志
-   tail -f /workspace/logs/frontend.log
+   # 在容器内:
+   # 首先检查 supervisord 日志（在 .devcontainer/supervisor/supervisord.conf 中配置）
+   tail -f /var/log/supervisor/frontend-stdout.log
+   tail -f /var/log/supervisor/frontend-stderr.log
+   tail -f /var/log/supervisor/backend-stdout.log
+   tail -f /var/log/supervisor/backend-stderr.log
 
-   # 后端日志
+   # 应用特定日志（如果配置了）:
+   tail -f /workspace/logs/frontend.log
    tail -f /workspace/logs/backend.log
    ```
 
@@ -121,9 +146,14 @@ visual_workflow_editor/
 
 ## 配置说明
 
-- 后端配置在`backend/.env`文件中
-- 全局变量存储在`config/global_variables.json`中
-- 数据库使用 SQLite，文件位于`config/flow_editor.db`
+- **环境变量**: 主要配置通过项目根目录下的 `.env` 文件管理。如果该文件不存在，请从 `example.env` 创建。它包含：
+  - `DATABASE_URL`: SQLite 数据库路径（默认：`sqlite:////workspace/database/flow_editor.db`）。
+  - `SECRET_KEY`: 后端应用的密钥。
+  - API 密钥: `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `EMBEDDING_LMSTUDIO_API_KEY`（及相关设置）。如果你打算使用相应的服务，请填写这些密钥。
+  - `CORS_ORIGINS`: 允许跨域资源共享的源。
+- **数据库**: 使用 SQLite，数据库文件默认位于 `database/flow_editor.db`（路径在 `.env` 中配置）。
+
+**重要**: 确保将 `.env` 文件添加到 `.gitignore` 中，以避免提交敏感的 API 密钥。
 
 ## 版本管理
 

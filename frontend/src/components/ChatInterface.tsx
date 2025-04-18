@@ -663,7 +663,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
           {!isLoadingChat && hasActiveChat && messages.length === 0 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <Typography color="text.secondary">开始对话吧！</Typography>
+              <Typography color="black">开始对话吧！</Typography>
             </Box>
           )}
           {!isLoadingChat && messages.length > 0 && messages.map((message) => (
