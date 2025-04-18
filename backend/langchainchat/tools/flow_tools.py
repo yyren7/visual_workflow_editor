@@ -22,52 +22,6 @@ from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
 # Import the output parser (assuming it's needed for property generation)
 from backend.langchainchat.output_parsers.structured_parser import StructuredOutputParser
 
-# 当前活动的流程图ID，可以由会话管理器设置
-_active_flow_id = None
-
-def set_active_flow_id(flow_id: int):
-    """
-    设置当前活动的流程图ID
-    
-    Args:
-        flow_id: 流程图ID
-    """
-    global _active_flow_id
-    _active_flow_id = flow_id
-    logger.info(f"设置当前活动流程图ID: {flow_id}")
-
-def get_active_flow_id(db: Session = None) -> Optional[int]:
-    """
-    获取当前活动的流程图ID
-    如果未设置当前活动流程图ID，则获取最新的流程图ID
-    
-    Args:
-        db: 数据库会话，如果需要获取最新流程图
-        
-    Returns:
-        当前活动的流程图ID
-    """
-    global _active_flow_id
-    
-    # 如果已经设置了活动流程图ID，直接返回
-    if _active_flow_id is not None:
-        return _active_flow_id
-    
-    # 否则尝试获取最新的流程图ID
-    if db:
-        try:
-            from backend.app.services.flow_service import FlowService
-            flow_service = FlowService(db)
-            flows = flow_service.get_flows()
-            if flows:
-                newest_flow_id = flows[0].id
-                logger.info(f"获取最新流程图ID: {newest_flow_id}")
-                return newest_flow_id
-        except Exception as e:
-            logger.error(f"获取最新流程图ID失败: {str(e)}")
-    
-    return None
-
 # 节点创建工具 - 同步版本
 def create_node_tool_func(
     node_type: str,
@@ -214,15 +168,14 @@ def create_node_tool_func(
             
             # 获取流程图ID，优先使用传入的flow_id
             target_flow_id = flow_id
-            if not target_flow_id:
-                target_flow_id = get_active_flow_id(db)
             
+            # 如果没有提供 flow_id，则操作失败
             if not target_flow_id:
-                logger.error("没有找到活动的流程图")
+                logger.error("创建节点失败：必须提供 flow_id")
                 return {
                     "success": False, 
-                    "message": "没有找到活动的流程图",
-                    "error": "没有找到活动的流程图"
+                    "message": "创建节点失败：必须提供 flow_id",
+                    "error": "Missing required flow_id"
                 }
             
             logger.info(f"使用流程图ID: {target_flow_id}")
@@ -368,14 +321,14 @@ def connect_nodes_tool_func(
             
             # 获取流程图ID，优先使用传入的flow_id
             target_flow_id = flow_id
-            if not target_flow_id:
-                target_flow_id = get_active_flow_id(db)
             
+            # 如果没有提供 flow_id，则操作失败
             if not target_flow_id:
+                logger.error("连接节点失败：必须提供 flow_id")
                 return {
                     "success": False, 
-                    "message": "没有找到活动的流程图",
-                    "error": "没有找到活动的流程图"
+                    "message": "连接节点失败：必须提供 flow_id",
+                    "error": "Missing required flow_id"
                 }
             
             logger.info(f"使用流程图ID: {target_flow_id}")
@@ -472,14 +425,14 @@ def get_flow_info_tool_func(
             
             # 获取流程图ID，优先使用传入的flow_id
             target_flow_id = flow_id
-            if not target_flow_id:
-                target_flow_id = get_active_flow_id(db)
             
+            # 如果没有提供 flow_id，则操作失败
             if not target_flow_id:
+                logger.error("获取流程图信息失败：必须提供 flow_id")
                 return {
                     "success": False, 
-                    "message": "没有找到活动的流程图",
-                    "error": "没有找到活动的流程图"
+                    "message": "获取流程图信息失败：必须提供 flow_id",
+                    "error": "Missing required flow_id"
                 }
             
             logger.info(f"使用流程图ID: {target_flow_id}")

@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 class WorkflowChainInput(BaseModel):
     user_input: str
     db_session: Session # 用于访问应用层服务
+    flow_id: Optional[str] = None # 添加 flow_id
     # conversation_id: Optional[str] = None # 内存管理应由 Memory 组件处理
 
     # 允许任意类型，例如 SQLAlchemy Session
@@ -63,6 +64,7 @@ class WorkflowChain(Chain):
     input_key: str = "user_input"  # 定义主要的文本输入键
     output_key: str = "result"     # 定义主要的输出键
     db_session_key: str = "db_session" # 定义数据库会话键
+    flow_id_key: str = "flow_id" # 定义流程图 ID 键
     
     # 注入的依赖组件
     llm: DeepSeekLLM
@@ -80,7 +82,7 @@ class WorkflowChain(Chain):
 
     @property
     def input_keys(self) -> List[str]:
-        return [self.input_key, self.db_session_key]
+        return [self.input_key, self.db_session_key, self.flow_id_key]
 
     @property
     def output_keys(self) -> List[str]:
@@ -104,6 +106,7 @@ class WorkflowChain(Chain):
         """ 异步执行链的主要逻辑。 """
         user_input = inputs.get(self.input_key)
         db_session = inputs.get(self.db_session_key)
+        flow_id = inputs.get(self.flow_id_key) # 获取 flow_id
         
         if not user_input:
             logger.error("WorkflowChain received no user_input.")
@@ -111,8 +114,10 @@ class WorkflowChain(Chain):
         if not db_session:
              logger.error("WorkflowChain received no db_session.")
              return {"result": WorkflowChainOutput(summary="处理请求时发生内部错误。", error="Missing database session")}
+        if not flow_id:
+            logger.warning("WorkflowChain did not receive flow_id. Tools might default to the latest flow.")
 
-        logger.info(f"WorkflowChain processing input: {user_input[:50]}...")
+        logger.info(f"WorkflowChain processing input: {user_input[:50]}... for flow_id: {flow_id}")
         
         try:
             # --- Step 1: Initial non-streaming call to check for tool usage --- 
@@ -189,7 +194,8 @@ class WorkflowChain(Chain):
                         tool_result = await self.tool_executor.execute(
                             tool_name=tool_name,
                             parameters=tool_args,
-                            db_session=db_session # Pass session if needed by tools
+                            db_session=db_session, # Pass session if needed by tools
+                            flow_id=flow_id # 将 flow_id 传递给执行器
                         )
                         
                         logger.info(f"Tool '{tool_name}' executed. Success: {tool_result.success}, Result: {str(tool_result.result_data)[:100]}...")

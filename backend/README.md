@@ -59,7 +59,7 @@ backend/
 ├── langchainchat             # Langchain 核心 AI 逻辑目录
 │   ├── adapters/             # 适配器 (例如: 数据库内存适配器)
 │   ├── agents/               # Langchain Agent 相关 (可能包含自定义 Agent)
-│   ├── api/                  # Langchain 相关的 API 路由 (可能嵌入到 FastAPI 或独立)
+│   ├── api/                  # Langchain 相关的 API 路由 (可能嵌入到 FastAPI 或独立) - [已移除，或内容已合并]
 │   ├── callbacks/            # Langchain 回调处理 (用于监控、日志记录等)
 │   ├── chains/               # Langchain Chain 定义 (核心业务流程)
 │   │   ├── rag_chain.py      # 实现 RAG (Retrieval-Augmented Generation) 链
@@ -77,15 +77,11 @@ backend/
 │   ├── README.md             # Langchain 模块的说明
 │   ├── retrievers/           # 检索器 (用于 RAG, 基于 Embedding)
 │   ├── scripts/              # Langchain 相关的脚本
-│   ├── services/             # 基于 Langchain 组件构建的服务层
-│   │   ├── chat_service.py   # 核心 Langchain 聊天服务 (处理 LLM 调用, 记忆, 工具使用)
-│   │   ├── context_service.py # 管理聊天或 RAG 的上下文信息
-│   │   ├── qa_service.py     # 问答服务 (可能基于 RAG chain)
-│   │   └── unified_chat_service.py # 统一不同聊天模式的接口
+│   ├── services/             # [目录保留，但内部服务已移除或待定]
+│   │   └── __init__.py       # (已清空)
 │   ├── sessions/             # 会话数据存储 (例如: 文件会话)
 │   ├── tools/                # Langchain 工具定义和执行器 (Agent 可用的工具)
-│   ├── utils/                # Langchain 工具函数 (日志, 翻译等)
-│   └── vectorstore/          # 向量数据库交互逻辑 (配置或客户端)
+│   └── utils/                # Langchain 工具函数 (日志, context_collector 等)
 ├── __pycache__/              # Python 缓存 (顶层)
 ├── README.md                 # 本文档 (你正在阅读的文件)
 ├── requirements.txt          # Python 依赖库列表

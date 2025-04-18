@@ -2,6 +2,15 @@
 嵌入向量模块单元测试
 """
 
+# --- 添加 sys.path 修改 --- 
+import sys
+import os
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+    print(f"Added {project_root} to sys.path in test_embedding.py")
+# --- 结束 sys.path 修改 --- 
+
 import unittest
 import asyncio
 from unittest.mock import patch, MagicMock

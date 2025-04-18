@@ -4,7 +4,7 @@
 包含各种聊天和工具提示模板
 """
 
-from langchainchat.prompts.chat_prompts import (
+from .chat_prompts import (
     CHAT_PROMPT_TEMPLATE,
     ENHANCED_CHAT_PROMPT_TEMPLATE,
     CONTEXT_PROCESSING_TEMPLATE,

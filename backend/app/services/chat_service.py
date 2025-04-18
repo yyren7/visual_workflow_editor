@@ -270,11 +270,20 @@ class ChatService:
 
         # 2. 调用 WorkflowChain 处理输入
         try:
+            # 获取当前聊天关联的 flow_id
+            current_flow_id = updated_chat.flow_id
+            if not current_flow_id:
+                logger.error(f"Chat {chat_id} is not associated with a flow_id. Cannot proceed.")
+                return {"error": "聊天未关联流程图", "ai_response": None, "nodes": None, "connections": None}
+            
+            logger.info(f"Chat {chat_id} associated with flow_id: {current_flow_id}")
+            
             chain_input = {
                 "user_input": user_message,
-                "db_session": self.db
+                "db_session": self.db,
+                "flow_id": current_flow_id  # 将 flow_id 传递给链
             }
-            logger.debug(f"Invoking WorkflowChain for chat {chat_id}")
+            logger.debug(f"Invoking WorkflowChain for chat {chat_id} with input: {chain_input}") # 更新日志记录
             chain_result = await self.workflow_chain.ainvoke(chain_input)
             logger.debug(f"WorkflowChain returned type: {type(chain_result)}")
 

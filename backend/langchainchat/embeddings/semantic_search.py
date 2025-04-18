@@ -12,7 +12,7 @@ import uuid
 # from database.embedding import create_embedding
 # from database.embedding.utils import calculate_similarity
 # from database.models import JsonEmbedding
-from database.session import AsyncSessionLocal # Assuming AsyncSessionLocal might still be needed if db session is passed differently
+# from database.session import AsyncSessionLocal # [注释掉] Assuming AsyncSessionLocal might still be needed if db session is passed differently
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 

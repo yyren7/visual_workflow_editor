@@ -46,3 +46,5 @@ backend/langchainchat/sessions/*
 # Log files
 logs/*
 !logs/.keep
+
+1.epub

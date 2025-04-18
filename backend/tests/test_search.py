@@ -7,7 +7,7 @@ import asyncio
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import Session
 
-from backend.langchainchat.embeddings.semantic_search import search_by_text, search_by_vector
+from backend.langchainchat.embeddings.semantic_search import search_by_text
 from backend.langchainchat.embeddings.node_search import search_nodes, load_node_database
 
 
@@ -52,27 +52,6 @@ class TestSearchModules(unittest.TestCase):
         async def run_test():
             # 调用搜索API
             results = await search_by_text(self.mock_db, "测试查询")
-            
-            # 验证结果
-            self.assertEqual(len(results), 1)
-            self.assertEqual(results[0]["id"], 1)
-            self.assertEqual(results[0]["data"], {"test": "data"})
-            self.assertTrue("score" in results[0])
-        
-        # 运行测试
-        asyncio.run(run_test())
-    
-    @patch('backend.langchainchat.embeddings.semantic_search.calculate_similarity')
-    def test_search_by_vector(self, mock_similarity):
-        """测试向量语义搜索"""
-        # 模拟相似度计算
-        mock_similarity.return_value = 0.7
-        
-        # 使用asyncio运行异步函数
-        async def run_test():
-            # 调用搜索API
-            query_vector = [0.4, 0.5, 0.6]
-            results = await search_by_vector(self.mock_db, query_vector)
             
             # 验证结果
             self.assertEqual(len(results), 1)
