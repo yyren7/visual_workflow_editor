@@ -19,7 +19,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database.connection import Base
-from database.embedding import create_embedding, create_embedding_with_given_id, cosine_similarity
+from database.embedding import create_embedding, cosine_similarity
 from database.embedding.embedding_result import EmbeddingResult
 from database.embedding.utils import calculate_similarity
 from database.models import JsonEmbedding
@@ -92,37 +92,6 @@ class TestEmbeddingModule(unittest.TestCase):
         # 运行测试
         asyncio.run(run_test())
         
-    @patch('database.embedding.service.EmbeddingService.create_embedding_vector')
-    def test_create_json_embedding(self, mock_create_vector):
-        """测试创建JSON嵌入向量并保存到数据库"""
-        # 模拟向量生成
-        mock_create_vector.return_value = [0.1, 0.2, 0.3]
-        
-        # 使用asyncio运行异步函数
-        async def run_test():
-            # 模拟JSON数据
-            json_data = {"key": "value", "test": 123}
-            
-            # 调用API
-            with patch('database.embedding.models.JsonEmbedding') as mock_model:
-                # 配置模拟对象
-                mock_embedding = MagicMock()
-                mock_model.return_value = mock_embedding
-                
-                # 调用API
-                result = await create_embedding_with_given_id(self.mock_db, json_data)
-                
-                # 验证数据库操作
-                self.mock_db.add.assert_called_once()
-                self.mock_db.commit.assert_called_once()
-                self.mock_db.refresh.assert_called_once()
-                
-                # 确保create_embedding_vector被调用
-                mock_create_vector.assert_called_once()
-        
-        # 运行测试
-        asyncio.run(run_test())
-    
     @patch('database.embedding.api.EmbeddingService.get_instance')
     def test_get_embedding_model_info(self, mock_get_instance):
         """测试获取嵌入模型信息"""
