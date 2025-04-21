@@ -89,6 +89,8 @@ jobs:
             ghcr.io/${{ github.repository }}/frontend:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            REACT_APP_VERSION=${{ github.ref_name }}
 
       - name: 部署到GitHub Pages (如果适用)
         uses: peaceiris/actions-gh-pages@v3
