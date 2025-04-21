@@ -47,7 +47,7 @@ jobs:
 
       - name: 运行前端测试
         run: |
-          docker run --rm workflow-editor-frontend:latest npm test -- --watchAll=false --passWithNoTests
+          docker run --rm --workdir /app/frontend workflow-editor-frontend:latest npm test -- --watchAll=false --passWithNoTests
 
   deploy:
     needs: build-and-test
