@@ -39,7 +39,7 @@ class TestSearchModules(unittest.TestCase):
         pass
     
     @patch('backend.langchainchat.embeddings.semantic_search.create_embedding')
-    @patch('backend.langchainchat.embeddings.semantic_search.calculate_similarity')
+    @patch('database.embedding.utils.calculate_similarity')
     def test_search_by_text(self, mock_similarity, mock_create_embedding):
         """测试文本语义搜索"""
         # 模拟嵌入向量创建
