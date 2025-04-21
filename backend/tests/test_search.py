@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.langchainchat.embeddings.semantic_search import search_by_text
 from backend.langchainchat.embeddings.node_search import search_nodes, load_node_database
+from backend.langchainchat.embeddings.config import search_config
 
 
 class TestSearchModules(unittest.TestCase):
@@ -38,15 +39,22 @@ class TestSearchModules(unittest.TestCase):
         """测试后清理"""
         pass
     
-    @patch('backend.langchainchat.embeddings.semantic_search.create_embedding')
-    @patch('database.embedding.utils.calculate_similarity')
-    def test_search_by_text(self, mock_similarity, mock_create_embedding):
+    @patch('backend.langchainchat.embeddings.semantic_search.DatabaseEmbeddingService')
+    def test_search_by_text(self, mock_db_service_class):
         """测试文本语义搜索"""
-        # 模拟嵌入向量创建
-        mock_create_embedding.return_value = [0.4, 0.5, 0.6]
-        
-        # 模拟相似度计算
-        mock_similarity.return_value = 0.8
+        # 模拟 DatabaseEmbeddingService 实例及其 similarity_search 方法
+        mock_service_instance = MagicMock()
+        # Configure the return value for the async similarity_search method
+        # The return value should be a list of dicts as expected by the test
+        async def mock_similarity_search(*args, **kwargs):
+            # Simulate finding one result matching the setUp data
+            return [{
+                "id": 1,
+                "data": {"test": "data"},
+                "score": 0.8 # Example score
+            }]
+        mock_service_instance.similarity_search = MagicMock(side_effect=mock_similarity_search)
+        mock_db_service_class.return_value = mock_service_instance
         
         # 使用asyncio运行异步函数
         async def run_test():
@@ -58,6 +66,13 @@ class TestSearchModules(unittest.TestCase):
             self.assertEqual(results[0]["id"], 1)
             self.assertEqual(results[0]["data"], {"test": "data"})
             self.assertTrue("score" in results[0])
+            # Optionally, verify the similarity_search method was called correctly
+            mock_service_instance.similarity_search.assert_called_once_with(
+                db=self.mock_db, 
+                query="测试查询", 
+                threshold=search_config.DEFAULT_SIMILARITY_THRESHOLD, # Use the actual default from config
+                k=search_config.DEFAULT_SEARCH_LIMIT # Use the actual default from config
+            )
         
         # 运行测试
         asyncio.run(run_test())
