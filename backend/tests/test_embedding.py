@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from database.base import Base
+from database.connection import Base
 from database.embedding import create_embedding, create_embedding_with_given_id, cosine_similarity
 from database.embedding.embedding_result import EmbeddingResult
 from database.embedding.utils import calculate_similarity
