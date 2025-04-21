@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, WebSocket, WebSocketDisconnect, Request
 from sqlalchemy.orm import Session
+from fastapi.responses import StreamingResponse
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
-from database.connection import get_db
-from app.utils import optional_current_user, get_current_user
-from app.schemas import User
+from backend.database.connection import get_db
+from backend.app.utils import optional_current_user, get_current_user
+from backend.app.schemas import User
 
 # 聊天服务将在后续实现
-from langchainchat.services.chat_service import ChatService
+from backend.langchainchat.services.chat_service import ChatService
 
 router = APIRouter(
     prefix="/langchainchat",

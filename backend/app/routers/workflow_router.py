@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-from database.connection import get_db
-from app.services.workflow_prompt_service import WorkflowPromptService, WorkflowProcessResponse
-from app.utils_auth import get_current_user
-from app import schemas
+from backend.database.connection import get_db
+from backend.app.services.workflow_prompt_service import WorkflowPromptService, WorkflowProcessResponse
+from backend.app.utils_auth import get_current_user
+from backend.app.schemas import User
 import os
 import json
 from backend.config import APP_CONFIG
-from langchainchat.utils.translator import translator
+from backend.langchainchat.utils.translator import translator
 
 router = APIRouter(
     prefix="/workflow",
@@ -44,7 +44,7 @@ def get_global_variables_path():
 
 @router.get("/global-variables", response_model=Dict[str, Any])
 async def get_global_variables(
-    current_user: schemas.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     获取全局变量
@@ -84,7 +84,7 @@ async def get_global_variables(
 @router.post("/global-variables")
 async def update_global_variables(
     request: GlobalVariablesRequest = Body(...),
-    current_user: schemas.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     更新全局变量
@@ -109,7 +109,7 @@ async def update_global_variables(
 
 @router.delete("/global-variables")
 async def reset_global_variables(
-    current_user: schemas.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     重置全局变量（清空所有变量）
@@ -136,7 +136,7 @@ async def process_workflow_input(
     request: WorkflowRequest = Body(...),
     db: Session = Depends(get_db),
     workflow_service: WorkflowPromptService = Depends(get_workflow_service),
-    current_user: schemas.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     处理用户输入，创建或修改工作流（旧版API）
@@ -180,7 +180,7 @@ async def process_workflow_v2(
     request: WorkflowRequest = Body(...),
     db: Session = Depends(get_db),
     workflow_service: WorkflowPromptService = Depends(get_workflow_service),
-    current_user: schemas.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> WorkflowProcessResponse:
     """
     处理用户输入，创建或修改工作流（使用DeepSeek的新版API）

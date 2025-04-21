@@ -15,7 +15,7 @@ from pathlib import Path
 
 # 导入正确的配置字典
 from backend.config import APP_CONFIG, AI_CONFIG, LANGCHAIN_CONFIG
-from langchainchat.utils.logging import logger
+from backend.langchainchat.utils.logging import logger
 
 class EnhancedConversationMemory(ConversationBufferMemory):
     """

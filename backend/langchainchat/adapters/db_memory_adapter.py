@@ -1,8 +1,13 @@
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from database.models import Chat
-from langchainchat.memory.conversation_memory import EnhancedConversationMemory
+from langchain_core.chat_history import BaseChatMessageHistory
+from backend.langchainchat.memory.conversation_memory import EnhancedConversationMemory
 from datetime import datetime
+from langchain_core.messages import (
+    AIMessage, 
+    BaseMessage, 
+)
 
 class DatabaseMemoryAdapter:
     """数据库与LangChain记忆组件的适配器"""

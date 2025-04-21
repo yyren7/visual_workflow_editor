@@ -7,11 +7,17 @@ import logging
 import re
 
 # 导入DeepSeek模型
-from langchainchat.models.llm import get_chat_model
+from backend.langchainchat.models.llm import get_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.language_models import BaseChatModel
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 # 配置日志
 logger = logging.getLogger(__name__)
+
+# 翻译器缓存
+translation_cache = {}
 
 class Translator:
     """

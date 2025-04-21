@@ -10,10 +10,14 @@ import traceback
 import asyncio
 import sys
 
-from langchainchat.config import settings
-from langchainchat.utils.logging import logger
-from database.connection import get_db
-from langchainchat.tools.flow_tools import get_active_flow_id
+from langchain_core.documents import Document
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.prompts import ChatPromptTemplate
+
+from backend.langchainchat.config import settings
+from backend.langchainchat.utils.logging import logger
+from backend.database.connection import get_db
+from backend.langchainchat.tools.flow_tools import get_active_flow_id
 
 class ContextCollector:
     """
@@ -185,5 +189,12 @@ class ContextCollector:
             logger.error(f"收集流程图信息时出错: {str(e)}")
             logger.error(traceback.format_exc())
             return f"收集流程图信息失败: {str(e)}"
+
+def get_active_flow_context(data: Dict[str, Any]) -> str:
+    """
+    获取当前激活流程的上下文信息，并以字符串形式返回。
+    """
+    # Implementation of get_active_flow_context function
+    pass
 
 context_collector = ContextCollector() 
