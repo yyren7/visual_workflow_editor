@@ -24,6 +24,10 @@ from backend.langchainchat.chains.rag_chain import create_rag_chain, RAGInput
 from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
 from database.embedding.service import DatabaseEmbeddingService
 
+# --- 新增：导入 DbChatMemory 和 BaseMessage --- 
+from backend.langchainchat.memory.db_chat_memory import DbChatMemory
+from langchain_core.messages import BaseMessage
+
 logger = logging.getLogger(__name__)
 
 class ChatService:
@@ -206,13 +210,13 @@ class ChatService:
             更新后的Chat对象，如果失败则返回None
         """
         try:
+            # 1. 查询聊天对象
             chat = self.db.query(Chat).filter(Chat.id == chat_id).first()
             if not chat:
                 logger.error(f"聊天 {chat_id} 不存在，无法添加消息")
                 return None
             
-            # 获取现有聊天数据
-            # 使用 mutable_flag 技巧处理 JSON/JSONB 修改
+            # 2. 使用 MutableDict 安全地修改 chat_data
             from sqlalchemy.dialects.postgresql import JSONB
             from sqlalchemy.ext.mutable import MutableDict
             chat_data = MutableDict.as_mutable(chat.chat_data) if chat.chat_data else MutableDict()
@@ -224,37 +228,53 @@ class ChatService:
                  logger.warning(f"Chat {chat_id} messages is not a list, resetting.")
                  chat_data["messages"] = [] # 如果不是列表，重置
                  
-            # 添加新消息
-            chat_data["messages"].append({
+            # 3. 准备新消息
+            new_message = {
                 "role": role,
                 "content": content,
                 "timestamp": datetime.utcnow().isoformat()
-            })
+            }
+            # --- 添加详细日志 --- 
+            logger.debug(f"ChatService: Preparing to add message to chat {chat_id}: role='{role}', content='{content[:100]}...'" ) 
+                 
+            # 4. 添加新消息到列表
+            chat_data["messages"].append(new_message)
             
-            # 更新聊天数据和时间戳
+            # 5. 更新聊天对象的属性
             chat.chat_data = chat_data 
             chat.updated_at = datetime.utcnow()
             
-            self.db.add(chat) # 确保添加到 session
-            self.db.commit()
-            self.db.refresh(chat)
+            # 6. 提交到数据库
+            self.db.add(chat) # 将更改添加到 session
+            # --- 添加详细日志 --- 
+            logger.info(f"ChatService: Attempting commit for chat {chat_id}...") 
+            self.db.commit()  # <--- 提交事务
+            logger.info(f"ChatService: Commit successful for chat {chat_id}.") # 修改日志
+            logger.info(f"ChatService: Attempting refresh for chat {chat_id}...") # 添加日志
+            self.db.refresh(chat) # 刷新对象状态
+            logger.info(f"ChatService: Refresh successful for chat {chat_id}.") # 添加日志
             
-            logger.info(f"已向聊天 {chat_id} 添加一条 {role} 消息")
+            # 7. 记录成功日志 (在 commit 之后)
+            logger.info(f"已向聊天 {chat_id} 添加一条 {role} 消息 (verified after commit/refresh)") # 修改日志文本
             return chat
             
         except Exception as e:
-            self.db.rollback()
-            logger.error(f"向聊天 {chat_id} 添加消息失败: {str(e)}", exc_info=True) # 添加 exc_info=True
+            # --- 添加更详细的回滚日志 --- 
+            logger.error(f"向聊天 {chat_id} 添加消息失败: {str(e)}", exc_info=True)
+            logger.info(f"ChatService: Attempting rollback for chat {chat_id} due to error in add_message...") 
+            try:
+                self.db.rollback()
+                logger.info(f"ChatService: Rollback successful for chat {chat_id} in add_message.") 
+            except Exception as rb_err:
+                logger.error(f"ChatService: Rollback failed for chat {chat_id} in add_message: {rb_err}", exc_info=True) 
             return None
 
     async def process_chat_message(self, chat_id: str, user_message: str) -> WorkflowChainOutput | Dict[str, Any]:
         """
-        处理新的聊天消息，调用 WorkflowChain。
-        如果返回流，则直接传递生成器，由路由层处理保存。
-        如果返回工具结果，则处理并保存。
-
+        处理来自用户的聊天消息，可能涉及 RAG 或 Workflow。
+        
         Args:
-            chat_id: 当前聊天ID。
+            chat_id: 聊天ID。
             user_message: 用户发送的消息。
 
         Returns:
@@ -266,24 +286,43 @@ class ChatService:
         # 1. 将用户消息添加到聊天记录
         updated_chat = self.add_message_to_chat(chat_id, "user", user_message)
         if not updated_chat:
-             return {"error": "无法将用户消息添加到聊天记录", "ai_response": None, "nodes": None, "connections": None}
+             # 返回一个与 WorkflowChainOutput 兼容的错误结构
+             return WorkflowChainOutput(error="无法将用户消息添加到聊天记录", summary="系统错误")
 
-        # 2. 调用 WorkflowChain 处理输入
+        # --- 修改开始 --- 
+        # 2. 加载历史记录 (由 ChatService 负责)
+        history_messages: List[BaseMessage] = []
         try:
-            # 获取当前聊天关联的 flow_id
+            logger.info(f"ChatService attempting to load history for chat_id: {chat_id}")
+            # 使用 self.db 初始化 DbChatMemory
+            db_memory = DbChatMemory(chat_id=chat_id, db_session=self.db)
+            history_messages = db_memory.messages # 获取历史记录
+            logger.info(f"ChatService loaded {len(history_messages)} messages for chat {chat_id}.")
+        except Exception as mem_err:
+            # 如果加载历史失败，记录错误但继续（链将收到空历史）
+            logger.error(f"ChatService failed to load history for chat {chat_id}: {mem_err}", exc_info=True)
+            history_messages = [] # 确保是空列表
+
+        # 3. 调用 WorkflowChain 处理输入 (将历史作为输入传递)
+        try:
             current_flow_id = updated_chat.flow_id
             if not current_flow_id:
                 logger.error(f"Chat {chat_id} is not associated with a flow_id. Cannot proceed.")
-                return {"error": "聊天未关联流程图", "ai_response": None, "nodes": None, "connections": None}
+                # 返回一个与 WorkflowChainOutput 兼容的错误结构
+                return WorkflowChainOutput(error="聊天未关联流程图", summary="系统错误")
             
             logger.info(f"Chat {chat_id} associated with flow_id: {current_flow_id}")
             
             chain_input = {
                 "user_input": user_message,
                 "db_session": self.db,
-                "flow_id": current_flow_id  # 将 flow_id 传递给链
+                "flow_id": current_flow_id,
+                "chat_id": chat_id,
+                "history": history_messages # <--- 将加载的历史添加到输入中
             }
-            logger.debug(f"Invoking WorkflowChain for chat {chat_id} with input: {chain_input}") # 更新日志记录
+            # --- 修改结束 --- 
+            
+            logger.debug(f"Invoking WorkflowChain for chat {chat_id} with input keys: {list(chain_input.keys())}") # 更新日志记录
             chain_result = await self.workflow_chain.ainvoke(chain_input)
             logger.debug(f"WorkflowChain returned type: {type(chain_result)}")
 
@@ -302,16 +341,17 @@ class ChatService:
             
             if not chain_output_obj:
                  logger.error(f"WorkflowChain ainvoke returned unexpected structure: {chain_result}")
-                 raise Exception("WorkflowChain returned unexpected output structure.")
+                 # 返回一个与 WorkflowChainOutput 兼容的错误结构
+                 return WorkflowChainOutput(error="WorkflowChain returned unexpected output structure.", summary="系统错误")
             # --- End Parsing --- 
 
-            # 3. Check if the output contains a stream generator
-            if chain_output_obj.stream_generator:
-                logger.info(f"WorkflowChain returned a stream generator for chat {chat_id}. Returning it directly.")
-                # Return the object with the wrapped generator
+            # 4. Check if the output contains an event stream
+            if chain_output_obj.event_stream:
+                logger.info(f"WorkflowChain returned an event stream for chat {chat_id}. Returning it directly.")
+                # Return the object with the event stream generator
                 return chain_output_obj 
             else:
-                # 4. Process non-streaming response (tool calls or direct text error)
+                # 5. Process non-streaming response (tool calls or direct text error)
                 logger.info(f"WorkflowChain returned non-streaming output for chat {chat_id}. Processing...")
                 ai_summary = chain_output_obj.summary
                 error = chain_output_obj.error
@@ -320,11 +360,20 @@ class ChatService:
                 
                 if error:
                     logger.error(f"WorkflowChain returned an error: {error}")
-                    self.add_message_to_chat(chat_id, "assistant", error)
-                    return chain_output_obj
+                    # 如果链返回错误，也保存错误消息到聊天记录
+                    try:
+                        self.add_message_to_chat(chat_id, "assistant", error) # 保存错误信息
+                    except Exception as log_err:
+                        logger.error(f"Failed to add error message to chat {chat_id}: {log_err}")
+                    return chain_output_obj # 返回包含错误的原始对象
                     
                 if ai_summary:
-                    self.add_message_to_chat(chat_id, "assistant", ai_summary)
+                    # 只有在没有错误且有摘要时才保存摘要
+                    try:
+                        self.add_message_to_chat(chat_id, "assistant", ai_summary)
+                    except Exception as log_err:
+                         logger.error(f"Failed to add assistant summary to chat {chat_id}: {log_err}")
+                         # 即使保存摘要失败，也继续处理流程更新并返回结果
                 else:
                      logger.warning(f"WorkflowChain returned no summary and no error for chat {chat_id}")
 
@@ -333,6 +382,7 @@ class ChatService:
                     flow_update_result = self._update_flow_in_db(updated_chat.flow_id, nodes_to_update, connections_to_update)
                     if not flow_update_result.get("success"):
                         logger.error(f"Failed to update flow {updated_chat.flow_id} in database: {flow_update_result.get('message')}")
+                        # 将流程更新失败附加到错误信息中
                         chain_output_obj.error = (chain_output_obj.error + "; " if chain_output_obj.error else "") + "Flow update failed."
 
                 logger.info(f"Returning processed non-streaming output for chat {chat_id}")
@@ -345,7 +395,8 @@ class ChatService:
                 self.add_message_to_chat(chat_id, "assistant", error_response)
             except Exception as log_err:
                  logger.error(f"Failed to add error message to chat {chat_id} after main processing error: {log_err}")
-            return {"error": str(e), "ai_response": error_response, "nodes": None, "connections": None}
+            # 返回一个与 WorkflowChainOutput 兼容的错误结构
+            return WorkflowChainOutput(error=str(e), summary=error_response)
 
     def _update_flow_in_db(self, flow_id: str, nodes: Optional[List[Dict]], connections: Optional[List[Dict]]) -> Dict:
         """将 WorkflowChain 生成的节点和连接更新到数据库中的 Flow 对象。"""

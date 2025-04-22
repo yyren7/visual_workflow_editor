@@ -34,7 +34,7 @@ export interface JsonChatResponse {
 
 // Interface for the streaming response - now holds the stream directly
 export interface StreamedChatResponse {
-  stream: ReadableStream<Uint8Array>; 
+  stream: ReadableStream<Uint8Array>;
 }
 
 // Type guard to check the response type
@@ -49,6 +49,38 @@ export function isJsonResponse(response: any): response is JsonChatResponse {
 
 // Combined type for the sendMessage return value
 export type SendMessageResponse = StreamedChatResponse | JsonChatResponse;
+
+// --- 事件和回调类型定义 ---
+export interface LlmChunkEvent {
+  type: "llm_chunk";
+  data: { text: string };
+}
+
+export interface FinalResultEvent {
+  type: "final_result";
+  data: JsonChatResponse; // The non-streaming JSON result
+}
+
+export interface StreamEndEvent {
+  type: "stream_end";
+  data: { message: string };
+}
+
+export interface ErrorEvent {
+  type: "error";
+  data: { message: string;[key: string]: any }; // Allow additional error details
+}
+
+export interface PingEvent {
+  type: "ping";
+  data: {};
+}
+
+export type ChatEvent = LlmChunkEvent | FinalResultEvent | StreamEndEvent | ErrorEvent | PingEvent;
+
+export type OnChatEventCallback = (event: ChatEvent) => void;
+export type OnChatErrorCallback = (error: Error) => void;
+export type OnChatCloseCallback = () => void;
 
 // --- Chat 相关函数 ---
 
@@ -140,93 +172,111 @@ export const chatApi = {
   },
 
   // 发送消息
-  sendMessage: async (
+  sendMessage: (
     chatId: string,
     content: string,
+    onEvent: OnChatEventCallback,
+    onError: OnChatErrorCallback,
+    onClose: OnChatCloseCallback,
     role: string = 'user'
-  ): Promise<SendMessageResponse> => {
-    // Revert to using fetch for this specific endpoint to handle ReadableStream correctly in the browser.
-    // Axios with responseType: 'stream' doesn't work reliably in browsers.
-    const url = `${API_BASE_URL}/chats/${chatId}/messages`; // Use full URL for fetch
+  ): (() => void) => {
+    const postUrl = `${API_BASE_URL}/chats/${chatId}/messages`;
+    const eventUrl = `${API_BASE_URL}/chats/${chatId}/events`;
     const requestBody = { content, role };
+    let eventSource: EventSource | null = null;
 
-    // --- Manually retrieve token (using the correct key) --- 
-    const token = localStorage.getItem('access_token');
-    // Note: No console warning here if token is missing, 
-    // rely on backend to potentially reject or handle unauthenticated requests.
-    
-    console.log(`sendMessage: POST ${url} using fetch API`);
-    try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      // --- Manually add Authorization header --- 
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        // --- Manual error handling for fetch --- 
-        let errorData: any = { message: `HTTP error! status: ${response.status}` };
-        // Special handling for 401 Unauthorized (needed again for fetch)
-        if (response.status === 401) {
-             errorData.message = "认证失败或令牌无效，请重新登录。";
-             // Optionally clear token and trigger logout/redirect like the interceptor does
-             localStorage.removeItem('access_token');
-             window.dispatchEvent(new Event('loginChange')); 
+    const startStreaming = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
         }
-        try {
-          const errorJson = await response.json(); // Try to get error details from body
-          errorData = { ...errorData, ...errorJson };
-        } catch (e) {
-          // If body is not JSON or empty
-          const errorText = await response.text();
-          errorData.details = errorText.substring(0, 200); 
+
+        console.log(`sendMessage: Triggering backend with POST ${postUrl}`);
+        const postResponse = await fetch(postUrl, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!postResponse.ok) {
+          let errorData: any = { message: `Trigger POST failed! Status: ${postResponse.status}` };
+          try {
+            errorData = { ...errorData, ...(await postResponse.json()) };
+          } catch (e) {
+            errorData.details = await postResponse.text();
+          }
+          console.error("sendMessage: Trigger POST failed:", errorData);
+          onError(new Error(errorData.detail || errorData.message));
+          onClose();
+          return;
         }
-        console.error("sendMessage fetch error response:", errorData);
-        const error = new Error(errorData.detail || errorData.message);
-        (error as any).response = errorData; // Attach details if needed
-        throw error;
+        if (postResponse.status !== 202) {
+          console.warn(`sendMessage: Trigger POST returned status ${postResponse.status}, expected 202.`);
+        }
+        console.log(`sendMessage: Trigger POST successful (status ${postResponse.status}). Starting EventSource.`);
+
+        eventSource = new EventSource(eventUrl);
+
+        eventSource.onopen = () => {
+          console.log(`EventSource connected to ${eventUrl}`);
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('EventSource failed:', error);
+          const err = new Error('EventSource connection error.');
+          (err as any).originalEvent = error;
+          onError(err);
+          closeEventSource();
+        };
+
+        const addEventListener = <T extends ChatEvent>(eventType: T['type']) => {
+          eventSource?.addEventListener(eventType, (event: MessageEvent) => {
+            try {
+              const parsedData: T['data'] = JSON.parse(event.data);
+              console.log(`Received event [${eventType}]:`, parsedData);
+              onEvent({ type: eventType, data: parsedData } as T);
+
+              if (eventType === 'stream_end') {
+                closeEventSource();
+              }
+            } catch (e) {
+              console.error(`Error parsing event data for type ${eventType}:`, event.data, e);
+              onError(new Error(`Failed to parse event data: ${e}`));
+            }
+          });
+        };
+
+        addEventListener<LlmChunkEvent>('llm_chunk');
+        addEventListener<FinalResultEvent>('final_result');
+        addEventListener<StreamEndEvent>('stream_end');
+        addEventListener<ErrorEvent>('error');
+        addEventListener<PingEvent>('ping');
+
+      } catch (error: any) {
+        console.error('Error starting chat stream:', error);
+        onError(error instanceof Error ? error : new Error('Failed to start chat stream: ' + String(error)));
+        onClose();
       }
+    };
 
-      // --- Handle response based on Content-Type --- 
-      const contentType = response.headers.get('content-type');
-      console.log("sendMessage response contentType:", contentType);
-
-      if (contentType && contentType.includes('text/plain')) {
-         if (!response.body) {
-             throw new Error('Streaming response has no body');
-         }
-         console.log("sendMessage: Detected text/plain, returning stream from fetch response.body.");
-         // Return the ReadableStream from fetch
-         return { stream: response.body }; 
-      } else if (contentType && contentType.includes('application/json')) {
-         console.log("sendMessage: Detected application/json, parsing JSON.");
-         const jsonData: JsonChatResponse = await response.json();
-         console.log("sendMessage: Parsed JSON response:", jsonData);
-         return jsonData;
-      } else {
-         console.warn(`sendMessage: Unexpected content type: ${contentType}. Attempting to read as text.`);
-         const fallbackText = await response.text();
-         // Return as JSON response with summary and error indication
-         return { summary: fallbackText.substring(0, 500), error: `Unexpected content type: ${contentType}` };
+    const closeEventSource = () => {
+      if (eventSource) {
+        console.log(`Closing EventSource connection to ${eventUrl}`);
+        eventSource.close();
+        eventSource = null;
+        onClose();
       }
+    };
 
-    } catch (error: any) {
-       // Catch fetch-specific errors (e.g., network issues) or re-throw errors from response handling
-       console.error("Error in sendMessage fetch API call:", error);
-       // Ensure the error is an Error object
-       throw error instanceof Error ? error : new Error('Failed to send message: ' + String(error));
-    }
+    startStreaming();
+
+    return closeEventSource;
   },
 
-  // --- Keep updateChat and deleteChat as they were --- 
   updateChat: async (chatId: string, chatUpdate: { name?: string; chat_data?: any }): Promise<Chat> => {
     console.log(`API call: updateChat for chatId ${chatId} with data:`, chatUpdate);
     try {

@@ -22,7 +22,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 
 # 配置详细日志
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         # 控制台输出
@@ -30,8 +30,8 @@ logging.basicConfig(
         # 文件输出
         logging.handlers.RotatingFileHandler(
             log_dir / "app.log", # 使用 log_dir 变量
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=5,
+            maxBytes=1*1024*1024,  # 修改为 1MB
+            backupCount=1,         # 修改为 1 个备份
             encoding='utf-8'
         )
     ]
@@ -113,6 +113,10 @@ except Exception as e:
     logger.error(f"导入模块时出错: {e}")
     raise
 
+# --- 新增：导入 Pydantic 模型和依赖 --- 
+from backend.langchainchat.memory.db_chat_memory import DbChatMemory
+from backend.app.services.chat_service import ChatService # 确保 ChatService 已导入
+
 logger.info("创建数据库表...")
 # Create the database tables
 try:
@@ -121,6 +125,17 @@ try:
 except Exception as e:
     logger.error(f"创建数据库表失败: {e}")
     raise
+
+# --- 新增：解析 Pydantic 前向引用 --- 
+try:
+    logger.info("尝试重建 Pydantic 模型以解析前向引用...")
+    DbChatMemory.model_rebuild()
+    # 如果 ChatService 或其他模型也使用了前向引用，也在此调用
+    # ChatService.model_rebuild()
+    logger.info("Pydantic 模型重建成功")
+except Exception as e:
+    logger.error(f"重建 Pydantic 模型时出错: {e}", exc_info=True)
+    # 根据需要处理错误，例如退出应用。目前仅记录错误。
 
 logger.info("初始化FastAPI应用...")
 # Initialize FastAPI app

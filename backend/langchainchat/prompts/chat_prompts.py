@@ -1,4 +1,4 @@
-from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from typing import Optional
 import logging
 
@@ -171,6 +171,23 @@ CONTEXT_PROCESSING_TEMPLATE = ChatPromptTemplate.from_messages([
 请基于对话历史和用户回应，提供专业的下一步建议:
 """)
 ])
+
+# --- 新增：包含历史和流程上下文的工作流聊天模板 ---
+WORKFLOW_CHAT_PROMPT_TEMPLATE_WITH_CONTEXT = ChatPromptTemplate.from_messages([
+    SystemMessagePromptTemplate.from_template(
+        """你是一个专业的流程图 AI 助手。请根据用户的指令和当前的对话历史，以及下方提供的当前流程图上下文信息，来理解用户的意图并作出回应。
+你可以使用提供的工具来创建、修改流程图，或者直接回答用户的问题。请用中文回答。
+
+当前流程图上下文:
+---
+{flow_context}
+---
+"""
+    ),
+    MessagesPlaceholder(variable_name="history"), # 对话历史将插入这里
+    HumanMessagePromptTemplate.from_template("{input}") # 用户当前输入
+])
+# --- 结束新增 ---
 
 # 错误处理模板
 ERROR_HANDLING_TEMPLATE = ChatPromptTemplate.from_messages([

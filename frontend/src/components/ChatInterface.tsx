@@ -1,6 +1,13 @@
 // visual_workflow_editor/frontend/src/components/ChatInterface.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { chatApi, SendMessageResponse, StreamedChatResponse, JsonChatResponse, isStreamedResponse, isJsonResponse } from '../api/chatApi'; // 更新 chatApi 导入路径
+import {
+  chatApi,
+  JsonChatResponse,
+  ChatEvent,
+  OnChatEventCallback,
+  OnChatErrorCallback,
+  OnChatCloseCallback
+} from '../api/chatApi'; // 更新 chatApi 导入路径
 import { getLastChatIdForFlow } from '../api/flowApi'; // 更新 getLastChatIdForFlow 导入路径
 import { Message, Chat } from '../types'; // Assuming Chat type exists in types.ts
 import {
@@ -17,6 +24,7 @@ import {
   Check as CheckIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import ToolCallCard from './ToolCallCard'; // <-- 导入新组件
 
 // Interface for messages, potentially adding a type for tool cards
 interface DisplayMessage extends Message {
@@ -96,6 +104,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  const streamingAssistantMsgIdRef = useRef<string | null>(null);
+  const closeEventSourceRef = useRef<(() => void) | null>(null);
 
   // --- Data Fetching ---
 
@@ -218,19 +228,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // --- 新增：清理 Effect ---
+  useEffect(() => {
+    // 当组件卸载或 flowId/activeChatId 改变时，关闭任何活动的 EventSource 连接
+    return () => {
+      if (closeEventSourceRef.current) {
+        console.log("ChatInterface cleanup: Closing active EventSource.");
+        closeEventSourceRef.current();
+        closeEventSourceRef.current = null;
+      }
+    };
+  }, []); // 空依赖数组确保只在卸载时运行清理
+
   // --- Event Handlers ---
 
   const handleSelectChat = (chatId: string) => {
     if (chatId !== activeChatId) {
+      // --- 关闭旧的连接 ---
+      if (closeEventSourceRef.current) {
+        console.log("Switching chat: Closing previous EventSource.");
+        closeEventSourceRef.current();
+        closeEventSourceRef.current = null;
+      }
+      // --------------------
       console.log("Selecting chat:", chatId);
-      setActiveChatId(chatId); // This will trigger the useEffect to load messages
+      setActiveChatId(chatId);
       setIsRenamingChatId(null); // Cancel rename if a different chat is selected
     }
   };
 
   const handleCreateNewChat = async () => {
     if (!flowId || isCreatingChat) return;
-
+    // --- 关闭旧的连接 ---
+    if (closeEventSourceRef.current) {
+      console.log("Creating new chat: Closing previous EventSource.");
+      closeEventSourceRef.current();
+      closeEventSourceRef.current = null;
+    }
+    // --------------------
     setIsCreatingChat(true);
     setError(null);
     try {
@@ -251,134 +286,217 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!inputMessage.trim() || !activeChatId || isSending || isLoadingChat) return;
+
+    // --- 先关闭可能存在的旧连接 ---
+    if (closeEventSourceRef.current) {
+      console.log("Sending new message: Closing previous EventSource first.");
+      closeEventSourceRef.current();
+      closeEventSourceRef.current = null;
+    }
+    // -----------------------------
 
     setIsSending(true);
     setError(null);
     const userMessage: DisplayMessage = {
       role: 'user',
       content: inputMessage,
-      // Generate a more unique temporary ID for user message if needed for reverts
       timestamp: `user-${Date.now()}`,
       type: 'text'
     };
 
+    // 立即将用户消息添加到 UI
     setMessages(prev => [...prev, userMessage]);
     const messageToSend = inputMessage;
     setInputMessage('');
 
-    // Use a stable unique ID for the assistant message placeholder
+    // 添加助手消息占位符
     const assistantMessageId = `assistant-${Date.now()}`;
+    streamingAssistantMsgIdRef.current = assistantMessageId; // 记录当前流的消息 ID
     const assistantPlaceholder: DisplayMessage = {
       role: 'assistant',
-      content: '',
+      content: '', // 初始为空
       timestamp: assistantMessageId,
       type: 'text',
-      isStreaming: true
+      isStreaming: true // 标记为正在流式传输
     };
     setMessages(prev => [...prev, assistantPlaceholder]);
 
-    try {
-      console.log(`Sending message to chat ${activeChatId}`);
-      const response = await chatApi.sendMessage(activeChatId, messageToSend);
+    // --- 定义 SSE 回调 ---
+    const handleChatEvent: OnChatEventCallback = (event) => {
+      console.log("Received SSE Event:", JSON.stringify(event)); // 保持这个日志用于调试
 
-      if (isStreamedResponse(response)) {
-        console.log("Received stream response");
-        const reader = response.stream.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let accumulatedContent = '';
-        let reading = true;
+      setMessages(prevMessages => {
+        // 找到当前正在流式处理的助手消息
+        const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
+        // console.log("Found streaming index:", currentStreamingMsgIndex);
 
-        while (reading) {
-          try {
-            const { value, done } = await reader.read();
-            if (done) {
-              console.log("Stream finished");
-              reading = false; // Exit loop
-              break;
+        if (currentStreamingMsgIndex === -1 && event.type !== 'final_result' && event.type !== 'error') {
+          console.warn(`Received event type ${event.type} but no streaming message ref found.`);
+          return prevMessages;
+        }
+
+        const newMessages = [...prevMessages];
+
+        switch (event.type) {
+          case 'llm_chunk':
+            if (currentStreamingMsgIndex !== -1) {
+              const textChunk = event.data.text;
+              // console.log("Applying chunk:", textChunk);
+              const previousContent = newMessages[currentStreamingMsgIndex].content;
+              newMessages[currentStreamingMsgIndex] = {
+                ...newMessages[currentStreamingMsgIndex],
+                content: previousContent + textChunk,
+                isStreaming: true,
+                type: 'text',
+                toolInfo: undefined
+              };
+              // console.log("Updated content:", newMessages[currentStreamingMsgIndex].content);
+            } else {
+               console.warn("LLM Chunk received but no active streaming message found!");
             }
-            const chunk = decoder.decode(value, { stream: true });
-            accumulatedContent += chunk;
+            break;
+          case 'final_result':
+             const finalData = event.data;
+             let finalContent = finalData.summary || '';
+             let finalType: 'text' | 'tool_card' = 'text';
+             let finalToolInfo: JsonChatResponse | undefined = undefined;
 
-            // Update the specific assistant message content immutably
-            setMessages(prevMessages =>
-              prevMessages.map(msg =>
-                msg.timestamp === assistantMessageId
-                  ? { ...msg, content: accumulatedContent } // Update content
-                  : msg
-              )
-            );
-          } catch (streamError) {
-            console.error("Error reading stream:", streamError);
-            setError("读取 AI 响应流时出错");
-            reading = false; // Exit loop on error
-            // Update placeholder to show stream error
-            setMessages(prevMessages =>
-              prevMessages.map(msg =>
-                msg.timestamp === assistantMessageId
-                  ? { ...msg, content: accumulatedContent + "\n[流读取错误]", isStreaming: false }
-                  : msg
-              )
-            );
-            break; // Exit loop
-          }
+             if (finalData.error) {
+                 finalContent = `错误: ${finalData.error}`;
+                 setError(finalData.error); 
+             } else if (finalData.tool_calls_info || finalData.tool_results_info) {
+                 finalType = 'tool_card';
+                 finalContent = finalData.summary || '[工具执行完成]';
+                 finalToolInfo = finalData;
+             }
+
+             if (currentStreamingMsgIndex !== -1) {
+                 newMessages[currentStreamingMsgIndex] = {
+                     ...newMessages[currentStreamingMsgIndex],
+                     content: finalContent,
+                     type: finalType,
+                     toolInfo: finalToolInfo,
+                     isStreaming: false // 标记流结束
+                 };
+             } else {
+                  newMessages.push({
+                      role: 'assistant',
+                      content: finalContent,
+                      timestamp: `assistant-${Date.now()}`,
+                      type: finalType,
+                      toolInfo: finalToolInfo,
+                      isStreaming: false
+                  });
+             }
+             // --- 不在此处清除 Ref --- 
+             // streamingAssistantMsgIdRef.current = null; 
+             setIsSending(false); 
+            break;
+          case 'stream_end':
+            console.log("Stream end event received."); // 保持这个日志
+            if (currentStreamingMsgIndex !== -1) {
+              newMessages[currentStreamingMsgIndex] = {
+                ...newMessages[currentStreamingMsgIndex],
+                isStreaming: false
+              };
+            }
+            // --- 不在此处清除 Ref --- 
+            // streamingAssistantMsgIdRef.current = null; 
+            setIsSending(false); 
+            break;
+          case 'error':
+            console.error("Received error event:", event.data.message); // 保持这个日志
+            const errorMessage = `错误: ${event.data.message}`;
+            if (currentStreamingMsgIndex !== -1) {
+              newMessages[currentStreamingMsgIndex] = {
+                ...newMessages[currentStreamingMsgIndex],
+                content: newMessages[currentStreamingMsgIndex].content + `\n${errorMessage}`,
+                isStreaming: false
+              };
+            } else {
+               newMessages.push({
+                   role: 'assistant',
+                   content: errorMessage,
+                   timestamp: `error-${Date.now()}`,
+                   type: 'text',
+                   isStreaming: false
+               });
+            }
+            setError(event.data.message);
+            // --- 不在此处清除 Ref --- 
+            // streamingAssistantMsgIdRef.current = null; 
+            setIsSending(false); 
+            break;
+          case 'ping':
+             console.log("Received ping event from server.");
+             break;
+          default:
+            console.warn("Received unknown event type:", event);
         }
-        // Final update to mark streaming as complete (even if loop exited early due to error)
-        setMessages(prevMessages =>
-          prevMessages.map(msg =>
-            msg.timestamp === assistantMessageId
-              ? { ...msg, content: accumulatedContent, isStreaming: false }
-              : msg
-          )
-        );
+        return newMessages;
+      });
+    };
 
-      } else if (isJsonResponse(response)) {
-        console.log("Received JSON response:", response);
-        let assistantContent = '';
-        let messageType: 'text' | 'tool_card' = 'text';
-        let toolInfo: JsonChatResponse | undefined = undefined;
-
-        if (response.error) {
-          assistantContent = `错误: ${response.error}`;
-          setError(response.error);
-        } else if (response.tool_calls_info || response.tool_results_info) {
-          messageType = 'tool_card';
-          assistantContent = response.summary || '[工具执行信息]';
-          toolInfo = response;
-        } else {
-          assistantContent = response.summary || '';
-        }
-
-        setMessages(prevMessages => prevMessages.map(msg =>
-          msg.timestamp === assistantMessageId
-            ? { ...msg, content: assistantContent, type: messageType, toolInfo: toolInfo, isStreaming: false }
-            : msg
-        ));
-      } else {
-        throw new Error('Received unexpected response format from API');
-      }
-
-    } catch (err: any) {
-      console.error('Failed to send message or process response:', err);
-      const errorMessage = err.message || '发送消息失败';
+    const handleChatError: OnChatErrorCallback = (error) => {
+      console.error("Chat API Error:", error);
+      const errorMessage = error.message || "与服务器的连接出错";
       setError(errorMessage);
-      // Update the placeholder message to show the error
-      setMessages(prevMessages => prevMessages.map(msg =>
-        msg.timestamp === assistantMessageId
-          ? { ...msg, content: `错误: ${errorMessage}`, isStreaming: false }
-          : msg
-      ));
-    } finally {
+      // 更新可能存在的占位符以显示错误
+      setMessages(prevMessages => {
+        const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
+        if (currentStreamingMsgIndex !== -1) {
+          const newMessages = [...prevMessages];
+          newMessages[currentStreamingMsgIndex] = {
+            ...newMessages[currentStreamingMsgIndex],
+            content: newMessages[currentStreamingMsgIndex].content + `\n错误: ${errorMessage}`,
+            isStreaming: false
+          };
+          return newMessages;
+        }
+        // 如果没有占位符，可能需要添加新的错误消息，或者仅依赖全局错误状态
+        return prevMessages;
+      });
       setIsSending(false);
-      // Ensure the streaming flag is off in case of early exit/error
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.timestamp === assistantMessageId && msg.isStreaming
-            ? { ...msg, isStreaming: false }
-            : msg
-        )
+      // streamingAssistantMsgIdRef.current = null; // <-- 移除（或确认不存在）
+    };
+
+    const handleChatClose: OnChatCloseCallback = () => {
+      console.log("Chat EventSource closed."); // 保持这个日志
+      setMessages(prevMessages => {
+         const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
+         if (currentStreamingMsgIndex !== -1 && prevMessages[currentStreamingMsgIndex].isStreaming) {
+             const newMessages = [...prevMessages];
+             newMessages[currentStreamingMsgIndex] = {
+                 ...newMessages[currentStreamingMsgIndex],
+                 isStreaming: false
+             };
+             return newMessages;
+         }
+         return prevMessages; 
+      });
+      setIsSending(false); 
+      streamingAssistantMsgIdRef.current = null; // <-- **在这里清除 Ref**
+      closeEventSourceRef.current = null; 
+    };
+
+    // --- 调用新的 API ---
+    if (activeChatId) { // 再次确认 activeChatId 存在
+      // 保存关闭函数
+      closeEventSourceRef.current = chatApi.sendMessage(
+        activeChatId,
+        messageToSend,
+        handleChatEvent,
+        handleChatError,
+        handleChatClose
       );
+    } else {
+      console.error("Cannot send message, activeChatId is null");
+      setError("无法发送消息，没有活动的聊天。");
+      setIsSending(false);
+      // 清理可能已添加的占位符
+      setMessages(prev => prev.filter(msg => msg.timestamp !== assistantMessageId));
     }
   };
 
@@ -496,19 +614,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // --- Rendering Logic (Needs update for clickable nodes) ---
   const renderMessageContent = (message: DisplayMessage) => {
     if (message.type === 'tool_card' && message.toolInfo) {
-      // TODO: Render the ToolCallCard component here
-      // Pass message.toolInfo to the card component
-      // Example: return <ToolCallCard toolInfo={message.toolInfo} />;
+      // --- 使用 ToolCallCard ---
+      return <ToolCallCard toolInfo={message.toolInfo} />;
+      // -------------------------
+      /*  之前的占位符 Box
       return (
         <Box sx={{ border: '1px dashed grey', p: 1, borderRadius: 1, my: 0.5 }}>
           <Typography variant="caption" display="block" gutterBottom>工具执行信息:</Typography>
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
-            {message.content} {/* Display summary or placeholder */}
+            {message.content} 
           </Typography>
-          {/* Optionally display raw info for debugging */}
-          {/* <pre style={{fontSize: '0.7rem', overflowX: 'auto'}}>{JSON.stringify(message.toolInfo, null, 2)}</pre> */}
         </Box>
       );
+      */
     }
 
     // Original logic for rendering text, maybe with clickable nodes

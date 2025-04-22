@@ -40,7 +40,7 @@ case "$1" in
     
     # 创建后端 tmux 会话
     cd /workspace
-    tmux new-session -d -s backend 'python3 backend/run_backend.py | tee /workspace/logs/backend.log; read'
+    tmux new-session -d -s backend 'python3 backend/run_backend.py 2>&1 | tee /workspace/logs/backend.log; read'
     echo "后端服务已在 tmux 会话 'backend' 中启动"
     
     echo ""

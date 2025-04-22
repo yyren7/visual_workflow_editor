@@ -87,58 +87,22 @@ class DbChatMemory(BaseChatMessageHistory, BaseModel):
         return self.internal_messages
 
     def add_message(self, message: BaseMessage) -> None:
-        """将消息添加到内存并（尝试）保存到数据库。"""
-        self._load_messages() # 确保基础消息已加载
+        """将消息添加到内存中的消息列表。数据库保存由外部处理。"""
+        # self._load_messages() # Ensure messages loaded before appending, though likely already loaded if chain accessed .messages
+        logger.debug(f"Adding message to in-memory list for DbChatMemory instance (chat_id: {self.chat_id})")
         self.internal_messages.append(message)
-        
-        # 尝试将消息保存回数据库
-        try:
-            service = self._get_chat_service()
-            # 将 BaseMessage 转换回数据库所需的格式 {'role': ..., 'content': ...}
-            # 注意：这假设 ChatService.add_message_to_chat 或类似方法处理更新
-            msg_dict = message_to_dict(message)
-            role_map = {"human": "user", "ai": "assistant", "system": "system"}
-            role = role_map.get(msg_dict["type"].lower())
-            content = msg_dict.get("data", {}).get("content", "")
-            
-            if role and content:
-                logger.debug(f"Adding {role} message to DB for chat {self.chat_id}")
-                # 调用 ChatService 的方法来添加消息 (假设它处理数据库提交)
-                updated_chat = service.add_message_to_chat(self.chat_id, role, content)
-                if not updated_chat:
-                     logger.error(f"Failed to save message to DB for chat {self.chat_id} using ChatService.")
-                     # 可以选择是否在这里回滚内存中的添加
-                     # self.internal_messages.pop()
-            else:
-                 logger.warning(f"Could not determine role/content for message type {msg_dict['type']} for chat {self.chat_id}. Message not saved to DB.")
-
-        except Exception as e:
-            logger.error(f"Error saving message to DB for chat {self.chat_id}: {e}")
-            # 根据需要处理错误，例如标记内存为不同步状态
+        # 注意：不执行数据库保存操作，由外部 ChatService 处理。
 
     def clear(self) -> None:
-        """清除内存中的消息并（尝试）清除数据库中的消息。"""
-        logger.info(f"Clearing memory and DB messages for chat_id: {self.chat_id}")
+        """清除内存中的消息列表。数据库清除由外部处理。"""
+        logger.debug(f"Clearing in-memory messages for DbChatMemory instance (chat_id: {self.chat_id}). DB clear handled externally.")
         self.internal_messages = []
         self.is_initialized = True # 清除后标记为已初始化（空状态）
-        
-        # 尝试清除数据库中的消息
-        try:
-            service = self._get_chat_service()
-            chat = service.get_chat(self.chat_id)
-            if chat:
-                 # 更新 chat_data 为空消息列表
-                 # 注意：ChatService 可能需要一个专门的 clear_messages 方法
-                 updated_chat = service.update_chat(self.chat_id, chat_data={"messages": []})
-                 if not updated_chat:
-                      logger.error(f"Failed to clear messages in DB for chat {self.chat_id} using ChatService.")
-            else:
-                 logger.warning(f"Chat {self.chat_id} not found in DB. Cannot clear messages.")
-        except Exception as e:
-            logger.error(f"Error clearing DB messages for chat {self.chat_id}: {e}")
+        # 注意：不执行数据库清除操作，由外部 ChatService 处理。
 
 
 # --- 使用示例 (假设在 Chain 或 Agent 中) ---
+
 # def get_session(): # 你的 SQLAlchemy session 工厂
 #     db = SessionLocal() 
 #     try:
