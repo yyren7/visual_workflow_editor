@@ -39,14 +39,18 @@
         ],
         "sqltools.connections": [
           {
-            "name": "SQLite Database",
-            "driver": "SQLite",
-            "database": "/workspace/database/flow_editor.db"
+            "name": "PostgreSQL DB (Dev Container)",
+            "driver": "PostgreSQL",
+            "server": "db",
+            "port": 5432,
+            "database": "flow_editor_db",
+            "username": "yyren",
+            "password": "yyren123123"
           }
         ]
       }
     }
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y dos2unix && sudo dos2unix .devcontainer/post-create.sh && bash .devcontainer/post-create.sh",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y dos2unix postgresql-client && sudo dos2unix .devcontainer/post-create.sh && bash .devcontainer/post-create.sh",
   "remoteUser": "vscode"
 }

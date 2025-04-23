@@ -63,6 +63,19 @@ class FlowService:
         
         return result
     
+    def get_flow_instance(self, flow_id: str) -> Optional[Flow]:
+        """
+        获取 Flow 模型实例
+
+        Args:
+            flow_id: 流程图ID
+
+        Returns:
+            Flow 模型实例，如果不存在则返回 None
+        """
+        flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
+        return flow
+    
     def create_flow(self, owner_id: int, name: str = None, data: dict = None) -> Flow:
         """
         创建新的流程图

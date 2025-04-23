@@ -1,16 +1,19 @@
-version: '3'
+version: "3"
 
 services:
   dev:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
+    depends_on:
+      - db
     volumes:
       - ..:/workspace:cached
     environment:
       - DEBUG=1
       - SECRET_KEY=dev_secret_key
-      - DATABASE_URL=sqlite:///database/flow_editor.db
+      # - DATABASE_URL=sqlite:///database/flow_editor.db # 注释掉旧的 URL
+      - DATABASE_URL=postgresql+psycopg2://yyren:yyren123123@db:5432/flow_editor_db # 使用服务名 'db'
     ports:
       - "8000:8000"
       - "3000:3000"
@@ -19,17 +22,19 @@ services:
       - workflow-editor-net
 
   # 用于后端服务的PostgreSQL数据库，如果你使用PostgreSQL
-  # db:
-  #   image: postgres:13
-  #   restart: unless-stopped
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   environment:
-  #     - POSTGRES_PASSWORD=postgres
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_DB=flow_editor
-  #   networks:
-  #     - workflow-editor-net
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=yyren123123
+      - POSTGRES_USER=yyren
+      - POSTGRES_DB=flow_editor_db
+    ports:
+      - "5432:5432"
+    networks:
+      - workflow-editor-net
 
 networks:
   workflow-editor-net:
@@ -38,4 +43,4 @@ volumes:
   frontend-node-modules:
   workflow-logs:
   dependency-cache:
-  # postgres-data: 
+  postgres-data:

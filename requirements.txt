@@ -1,0 +1,11 @@
+# testing
+pytest
+
+# Database Migration
+alembic
+
+# PostgreSQL Driver
+psycopg2-binary
+
+# PostgreSQL Vector Extension Integration
+pgvector 

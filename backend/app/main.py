@@ -76,7 +76,7 @@ logger.info("开始导入模块...")
 
 # 首先导入数据库模型
 try:
-    from database.connection import engine, Base
+    from database.connection import Base 
     logger.info("导入database成功")
     
     # 导入数据库模型
@@ -116,15 +116,6 @@ except Exception as e:
 # --- 新增：导入 Pydantic 模型和依赖 --- 
 from backend.langchainchat.memory.db_chat_memory import DbChatMemory
 from backend.app.services.chat_service import ChatService # 确保 ChatService 已导入
-
-logger.info("创建数据库表...")
-# Create the database tables
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("数据库表创建成功")
-except Exception as e:
-    logger.error(f"创建数据库表失败: {e}")
-    raise
 
 # --- 新增：解析 Pydantic 前向引用 --- 
 try:

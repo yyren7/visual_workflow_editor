@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from backend.app import schemas
-from database.connection import get_db, SessionLocal
+from database.connection import get_db, get_db_context
 from database.models import User, Flow, VersionInfo
 from backend.config import APP_CONFIG
 import json
@@ -136,19 +136,19 @@ def get_version_info():
     """
     # 1. 优先从数据库读取
     try:
-        db = SessionLocal()
-        try:
-            db_version = db.query(VersionInfo).first()
-            if db_version:
-                logger.info(f"从数据库获取版本信息: {db_version.version}")
-                return {
-                    "version": db_version.version,
-                    "lastUpdated": db_version.last_updated
-                }
-        finally:
-            db.close()
+        with get_db_context() as db:
+            try:
+                db_version = db.query(VersionInfo).first()
+                if db_version:
+                    logger.info(f"从数据库获取版本信息: {db_version.version}")
+                    return {
+                        "version": db_version.version,
+                        "lastUpdated": db_version.last_updated
+                    }
+            except Exception as inner_e:
+                logger.warning(f"数据库查询版本信息时出错: {inner_e}")
     except Exception as e:
-        logger.warning(f"从数据库读取版本信息失败: {e}")
+        logger.warning(f"获取数据库会话或连接时出错: {e}")
     
     # 2. 尝试从环境变量读取
     if os.environ.get("APP_VERSION") and os.environ.get("APP_LAST_UPDATED"):

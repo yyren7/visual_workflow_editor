@@ -8,12 +8,12 @@ import asyncio # 确保导入 asyncio
 from collections import defaultdict # 导入 defaultdict
 
 from backend.app import schemas
-from database.connection import get_db
+from database.connection import get_db, get_db_context
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.chat_service import ChatService
+from backend.app.services.flow_service import FlowService
 from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput
 from database.models import Flow
-from database.connection import SessionLocal # Import session factory
 
 logger = logging.getLogger(__name__)
 
@@ -210,154 +210,164 @@ async def add_message(
 
     # --- 定义在后台处理流并将事件放入队列的任务 --- 
     async def process_and_publish_events(c_id: str, msg_content: str, queue: asyncio.Queue):
-        logger.info(f"[BG Task {c_id}] 开始处理消息并发布事件...")
-        final_content_to_save = "" # 用于保存最终的AI回复文本
-        has_stream_output = False
-        non_stream_result = None
-        db_session_bg = None
-        chat_service_bg = None # Initialize chat_service_bg
+        logger.debug(f"[Chat {c_id}] Background task started.")
+        final_content_to_save = None
+        is_error = False
+        error_content = None
+        tool_calls = []
+        final_flow_data = None # 用于存储最终的流程图数据
 
-        # --- Main try block for the background task --- 
-        try:
-            # --- Nested try...except for the service call --- 
-            result_from_service = None # Initialize result within the main try
+        with get_db_context() as db_session_bg:
+            logger.debug(f"[Chat {c_id}] Acquired DB session for background task.")
+            chat_service_bg = ChatService(db_session_bg)
+            flow_service_bg = FlowService(db_session_bg)
+            
             try:
-                db_session_bg = SessionLocal()
-                chat_service_bg = ChatService(db_session_bg)
-                logger.info(f"[BG Task {c_id}] Calling ChatService.process_chat_message...")
-                result_from_service = await chat_service_bg.process_chat_message(
-                    chat_id=c_id,
-                    user_message=msg_content
-                )
-                logger.info(f"[BG Task {c_id}] ChatService.process_chat_message returned type: {type(result_from_service)}")
-            except Exception as service_err:
-                logger.error(f"[BG Task {c_id}] Error calling ChatService.process_chat_message: {service_err}", exc_info=True)
-                # Set an error result dictionary
-                result_from_service = {"error": f"Error processing message: {service_err}"}
-            # --- End of nested try...except ---
+                # 从数据库获取完整的聊天历史（包含刚才添加的用户消息）
+                chat = chat_service_bg.get_chat(c_id)
+                if not chat:
+                    logger.error(f"[Chat {c_id}] Background task could not find chat.")
+                    await queue.put({"type": "error", "data": {"message": "Chat not found."}})
+                    return
+                    
+                flow_id = chat.flow_id
+                flow = flow_service_bg.get_flow_instance(flow_id) # 获取 Flow 实例
+                if not flow:
+                     logger.error(f"[Chat {c_id}] Background task could not find flow {flow_id}.")
+                     await queue.put({"type": "error", "data": {"message": f"Flow {flow_id} not found."}})
+                     return
+                     
+                current_messages = chat.chat_data.get('messages', [])
+                flow_data = flow.flow_data # 获取流程图数据
 
-            # --- Process the result (outside nested try...except, inside main try) ---
-            if isinstance(result_from_service, WorkflowChainOutput):
-                chain_output = result_from_service
-                if chain_output.event_stream:
-                    has_stream_output = True
-                    logger.info(f"[BG Task {c_id}] 检测到事件流，开始迭代...")
-                    async for event in chain_output.event_stream:
+                logger.info(f"[Chat {c_id}] Processing message with {len(current_messages)} history entries.")
+                chain = chat_service_bg.workflow_chain 
+                
+                # 使用 astream_events 处理流式响应，并提供所有必需的输入键
+                input_data = {
+                    "user_input": msg_content,
+                    "flow_id": flow_id,
+                    "chat_id": c_id,
+                    "history": current_messages
+                }
+                async for event in chain.astream_events(
+                    input_data, 
+                    version="v1"
+                ):
+                    kind = event["event"]
+                    tags = event.get("tags", [])
+                    
+                    if kind == "on_chat_model_stream":
+                        chunk = event["data"]["chunk"]
+                        if chunk.content:
+                            logger.debug(f'[Chat {c_id}] Streaming chunk: {chunk.content}')
+                            await queue.put({"type": "token", "data": chunk.content})
+                    elif kind == "on_tool_start":
+                         logger.info(f'[Chat {c_id}] Tool start event: {event["name"]}, Input: {event["data"].get("input")}')
+                         # 将工具调用信息暂存，等结束后一起放入 final_content_to_save
+                         tool_calls.append({
+                            "tool_name": event["name"],
+                            "tool_input": event["data"].get("input")
+                         })
+                         # 如果需要，也可以立即发送一个事件通知前端工具开始执行
+                         await queue.put({"type": "tool_start", "data": {"name": event["name"], "input": event["data"].get("input")}})
+                         
+                    elif kind == "on_tool_end":
+                        logger.info(f'[Chat {c_id}] Tool end event: {event["name"]}, Output: {event["data"].get("output")}')
+                        # 找到对应的工具调用并添加输出
+                        for call in tool_calls:
+                            if call["tool_name"] == event["name"] and "tool_output" not in call:
+                                call["tool_output"] = event["data"].get("output")
+                                break # 假设每个工具调用名称唯一
+                        # 发送事件通知前端工具结束执行
+                        await queue.put({"type": "tool_end", "data": {"name": event["name"], "output": event["data"].get("output")}})
+                        
+                    elif kind == "on_chain_end":
+                        # 检查是否有最终输出和可能的流程图更新
+                        output = event["data"].get('output')
+                        if isinstance(output, WorkflowChainOutput):
+                            final_content_to_save = output.final_answer
+                            final_flow_data = output.get_flow_data_if_updated() # 获取更新后的 flow_data
+                            logger.info(f"[Chat {c_id}] Chain ended. Final Answer: {final_content_to_save}")
+                            if final_flow_data:
+                                logger.info(f"[Chat {c_id}] Flow data was updated by the chain.")
+                        elif isinstance(output, str):
+                             final_content_to_save = output
+                             logger.info(f"[Chat {c_id}] Chain ended. Final Answer (string): {final_content_to_save}")
+                        else:
+                            logger.warning(f"[Chat {c_id}] Chain ended but output format is unexpected: {type(output)}")
+                    
+                    # 处理其他类型的事件 (可根据需要添加)
+                    # elif kind == "on_retriever_end":
+                    #     logger.debug(f'[Chat {c_id}] Retriever end event: {event["data"]}')
+                    # elif kind == "on_prompt_end":
+                    #     logger.debug(f'[Chat {c_id}] Prompt end event: {event["data"]}')
+                        
+            except Exception as e:
+                is_error = True
+                error_content = f"处理消息时出错: {str(e)}"
+                logger.error(f"[Chat {c_id}] Error during message processing: {e}", exc_info=True)
+                await queue.put({"type": "error", "data": {"message": error_content}})
+                
+            # <<< finally 块与 try/except 对齐 >>>
+            finally:
+                # <<< finally 内部代码增加一级缩进 >>>
+                logger.debug(f"[Chat {c_id}] Background task finally block entered.")
+                # 必须在 finally 块中，确保即使出错也发送结束标记
+                await queue.put(STREAM_END_SENTINEL)
+                logger.info(f"[Chat {c_id}] Stream end sentinel sent.")
+                
+                # --- 保存最终结果（助手回复或错误信息）--- 
+                logger.debug(f"[Chat {c_id}] Attempting to save final result.")
+                
+                content_to_add = None
+                role_to_add = None
+                
+                if is_error:
+                    content_to_add = error_content if error_content else "未知处理错误"
+                    role_to_add = 'system' 
+                elif final_content_to_save:
+                    if tool_calls:
+                        content_to_add = {
+                            "text": final_content_to_save,
+                            "tool_calls": tool_calls
+                        }
+                    else:
+                        content_to_add = final_content_to_save
+                    role_to_add = 'assistant'
+                
+                if content_to_add and role_to_add:
+                    logger.debug(f"[Chat {c_id}] Acquiring new DB session for saving final result...")
+                    with get_db_context() as db_session_for_save:
                         try:
-                            await asyncio.wait_for(queue.put(event), timeout=5.0)
-                            if event.get("type") == "llm_chunk":
-                                final_content_to_save += event.get("data", {}).get("text", "")
-                        except asyncio.TimeoutError:
-                            logger.error(f"[BG Task {c_id}] 事件队列已满或超时，无法放入事件: {event}")
-                            await queue.put({"type": "error", "data": {"message": "Internal queue full or timeout."}})
-                            break
-                        except Exception as put_err:
-                            logger.error(f"[BG Task {c_id}] 放入事件到队列时出错: {put_err}", exc_info=True)
-                            await queue.put({"type": "error", "data": {"message": f"Error queueing event: {put_err}"}})
-                            break
-                    logger.info(f"[BG Task {c_id}] 事件流处理完成。")
+                            logger.debug(f"[Chat {c_id}] Acquired save session. Role: {role_to_add}")
+                            chat_service_for_save = ChatService(db_session_for_save)
+                            flow_service_for_save = FlowService(db_session_for_save)
+                            
+                            # 添加助手消息或系统错误消息
+                            chat_service_for_save.add_message_to_chat(
+                                chat_id=c_id, 
+                                role=role_to_add,
+                                content=content_to_add
+                            )
+                            logger.info(f"[Chat {c_id}] Final {role_to_add} message/error saved to DB.")
+                            
+                            # 如果流程图有更新，保存流程图
+                            if final_flow_data:
+                                flow_to_update = flow_service_for_save.get_flow(flow_id)
+                                if flow_to_update:
+                                    flow_to_update.flow_data = final_flow_data
+                                    db_session_for_save.commit() # 提交流程图更新
+                                    logger.info(f"[Chat {c_id}] Updated flow data saved to DB for flow {flow_id}.")
+                                else:
+                                    logger.error(f"[Chat {c_id}] Could not find flow {flow_id} to save updated flow data.")
+                                    
+                        except Exception as save_err:
+                            logger.error(f"[Chat {c_id}] Error saving final message/error to DB: {save_err}", exc_info=True)
                 else:
-                    logger.info(f"[BG Task {c_id}] 收到非流式响应: {chain_output.model_dump(exclude={'event_stream'})}")
-                    non_stream_result = chain_output
-                    try:
-                        await asyncio.wait_for(queue.put({"type": "final_result", "data": chain_output.model_dump(exclude={'event_stream'})}), timeout=5.0)
-                        if chain_output.summary:
-                            final_content_to_save = chain_output.summary
-                        if chain_output.error:
-                            logger.error(f"[BG Task {c_id}] WorkflowChainOutput contained an error: {chain_output.error}")
-                    except asyncio.TimeoutError:
-                        logger.error(f"[BG Task {c_id}] 事件队列已满或超时，无法放入非流式结果")
-                    except Exception as put_err:
-                        logger.error(f"[BG Task {c_id}] 放入非流式结果到队列时出错: {put_err}", exc_info=True)
+                     logger.warning(f"[Chat {c_id}] No final content or error to save.")
 
-            elif isinstance(result_from_service, dict) and "error" in result_from_service:
-                logger.error(f"[BG Task {c_id}] Chat service 返回或产生错误字典: {result_from_service['error']}")
-                non_stream_result = result_from_service
-                try:
-                    await asyncio.wait_for(queue.put({"type": "error", "data": result_from_service}), timeout=5.0)
-                    final_content_to_save = result_from_service.get('summary', "处理时发生错误")
-                except asyncio.TimeoutError:
-                    logger.error(f"[BG Task {c_id}] 事件队列已满或超时，无法放入错误结果")
-                except Exception as put_err:
-                    logger.error(f"[BG Task {c_id}] 放入错误结果到队列时出错: {put_err}", exc_info=True)
-
-            elif result_from_service is None:
-                # This case might happen if the service call failed very early or was interrupted
-                logger.error(f"[BG Task {c_id}] Chat service call resulted in None.")
-                non_stream_result = {"error": "Internal error: Failed to get result from service."}
-                try:
-                     await asyncio.wait_for(queue.put({"type": "error", "data": non_stream_result}), timeout=5.0)
-                     final_content_to_save = "内部服务器错误"
-                except asyncio.TimeoutError:
-                     logger.error(f"[BG Task {c_id}] 事件队列已满或超时，无法放入内部错误结果")
-                except Exception as put_err:
-                     logger.error(f"[BG Task {c_id}] 放入内部错误结果到队列时出错: {put_err}", exc_info=True)
-
-            else:
-                # Handle unexpected result types
-                logger.error(f"[BG Task {c_id}] Chat service 返回未知结果类型: {type(result_from_service)}")
-                non_stream_result = {"error": f"Internal server error: Unexpected result type {type(result_from_service).__name__}."}
-                try:
-                    await asyncio.wait_for(queue.put({"type": "error", "data": non_stream_result}), timeout=5.0)
-                    final_content_to_save = "内部服务器错误"
-                except asyncio.TimeoutError:
-                    logger.error(f"[BG Task {c_id}] 事件队列已满或超时，无法放入未知错误结果")
-                except Exception as put_err:
-                    logger.error(f"[BG Task {c_id}] 放入未知错误结果到队列时出错: {put_err}", exc_info=True)
-
-        # --- Main finally block for the background task --- 
-        finally:
-            # --- 放入结束标记 ---
-            try:
-                logger.info(f"[BG Task {c_id}] 准备放入流结束标记到队列")
-                await asyncio.wait_for(queue.put(STREAM_END_SENTINEL), timeout=5.0)
-                logger.info(f"[BG Task {c_id}] 已放入流结束标记")
-            except Exception as final_put_err:
-                logger.error(f"[BG Task {c_id}] 放入结束标记时出错: {final_put_err}", exc_info=True)
-
-            # --- 后台保存最终回复 (使用新的独立 Session) --- 
-            if final_content_to_save:
-                 logger.info(f"[BG Task {c_id}] 准备保存最终的助手回复 (长度: {len(final_content_to_save)}) ...")
-                 db_session_for_save = None # Initialize
-                 try:
-                      logger.info(f"[BG Task {c_id}] 获取用于保存回复的 *新* DB Session...")
-                      db_session_for_save = SessionLocal() # <--- 获取 *新的* Session
-                      chat_service_for_save = ChatService(db_session_for_save) # <--- 使用新 Session 初始化 Service
-                      logger.info(f"[BG Task {c_id}] 使用新 Session 调用 add_message_to_chat 保存助手回复...")
-                      save_ok = chat_service_for_save.add_message_to_chat(c_id, "assistant", final_content_to_save)
-                      if save_ok:
-                           logger.info(f"[BG Task {c_id}] 成功保存助手回复 (使用新 Session)。")
-                      else:
-                           logger.error(f"[BG Task {c_id}] 保存助手回复失败 (使用新 Session, add_message_to_chat 返回失败)。")
-                 except Exception as save_err:
-                      logger.error(f"[BG Task {c_id}] 使用新 Session 保存助手回复时发生错误: {save_err}", exc_info=True)
-                 finally:
-                      if db_session_for_save: # <--- 关闭用于保存的 Session
-                           try:
-                                db_session_for_save.close()
-                                logger.info(f"[BG Task {c_id}] 关闭用于保存回复的 DB Session")
-                           except Exception as close_save_err:
-                                logger.error(f"[BG Task {c_id}] 关闭用于保存回复的 DB Session 时出错: {close_save_err}", exc_info=True)
-            else:
-                 # Log why nothing was saved
-                 logger.warning(f"[BG Task {c_id}] 没有累积的助手回复内容可保存。")
-                 if non_stream_result and isinstance(non_stream_result, WorkflowChainOutput) and (non_stream_result.nodes or non_stream_result.connections):
-                      logger.info(f"[BG Task {c_id}] (原因: 检测到工具调用结果且无摘要)")
-                 elif non_stream_result:
-                      logger.info(f"[BG Task {c_id}] (原因: 收到非流式结果但无内容可保存)")
-                 elif not has_stream_output:
-                      logger.info(f"[BG Task {c_id}] (原因: 未生成流式输出且无非流式结果)")
-
-            # --- 关闭后台任务启动时创建的 DB Session (db_session_bg) --- 
-            if db_session_bg: # db_session_bg 是 try 块中创建的那个
-                try:
-                    db_session_bg.close()
-                    logger.info(f"[BG Task {c_id}] 关闭后台 DB Session (在任务开始时创建的)")
-                except Exception as close_err:
-                    logger.error(f"[BG Task {c_id}] 关闭后台 DB Session (在任务开始时创建的) 时出错: {close_err}", exc_info=True)
-
-            logger.info(f"[BG Task {c_id}] 处理和发布事件的任务完成。")
-            # --- End of main finally block ---
+        # <<< with db_session_bg 结束 >>>
 
     # --- 启动后台任务 --- 
     background_tasks.add_task(process_and_publish_events, chat_id, message.content, event_queue)

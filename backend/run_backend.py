@@ -76,48 +76,37 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # 导入数据库模型和引擎，确保表结构会被创建
-from database.connection import Base, engine, SessionLocal
+from database.connection import Base, get_db_context
 from database.models import User, Flow, FlowVariable, VersionInfo
 from backend.config import APP_CONFIG
-
-# 创建数据库表结构，如果表不存在
-try:
-    print("正在创建数据库表结构...")
-    Base.metadata.create_all(bind=engine)
-    print("数据库表结构创建成功！")
-except Exception as e:
-    print(f"创建数据库表结构时出错: {str(e)}")
 
 # 将版本信息保存到数据库的函数
 def save_version_to_db(version_data):
     try:
-        # 获取数据库会话
-        db = SessionLocal()
-        try:
-            # 查找已有的版本记录
-            db_version = db.query(VersionInfo).first()
-            
-            if db_version:
-                # 更新现有记录
-                db_version.version = version_data.get("version", "0.0.0")
-                db_version.last_updated = version_data.get("lastUpdated", "未知")
-            else:
-                # 创建新记录
-                db_version = VersionInfo(
-                    version=version_data.get("version", "0.0.0"),
-                    last_updated=version_data.get("lastUpdated", "未知")
-                )
-                db.add(db_version)
-            
-            db.commit()
-            print(f"版本信息已保存到数据库: {db_version.version}, {db_version.last_updated}")
-        except Exception as e:
-            db.rollback()
-            print(f"保存版本信息到数据库时出错: {e}")
-        finally:
-            db.close()
+        with get_db_context() as db:
+            try:
+                # 查找已有的版本记录
+                db_version = db.query(VersionInfo).first()
+                
+                if db_version:
+                    # 更新现有记录
+                    db_version.version = version_data.get("version", "0.0.0")
+                    db_version.last_updated = version_data.get("lastUpdated", "未知")
+                else:
+                    # 创建新记录
+                    db_version = VersionInfo(
+                        version=version_data.get("version", "0.0.0"),
+                        last_updated=version_data.get("lastUpdated", "未知")
+                    )
+                    db.add(db_version)
+                
+                db.commit()
+                print(f"版本信息已保存到数据库: {db_version.version}, {db_version.last_updated}")
+            except Exception as e:
+                db.rollback()
+                print(f"保存版本信息到数据库时出错: {e}")
     except Exception as e:
-        print(f"连接数据库失败: {e}")
+        print(f"获取数据库连接或执行操作时出错: {e}")
 
 # 全局变量文件将在读取或创建流程图时动态处理，不在服务启动时初始化
 
@@ -196,6 +185,17 @@ if __name__ == "__main__":
     backend_dir = Path(__file__).parent.resolve()
     reload_dirs = [str(backend_dir)]
     
+    # <<< 添加调试：在启动 Uvicorn 前再次检查数据库连接 >>>
+    print("准备启动 Uvicorn...")
+    from database.connection import verify_connection
+    if verify_connection():
+        print("数据库连接在启动 Uvicorn 前验证成功。")
+    else:
+        print("\033[91m错误：数据库连接在启动 Uvicorn 前验证失败！请检查数据库服务和配置。\033[0m")
+        # 可以选择在这里退出，或者让 Uvicorn 尝试启动（可能会失败）
+        # sys.exit(1)
+    # <<< 结束调试 >>>
+
     # 使用uvicorn直接运行FastAPI应用
     uvicorn.run(
         "app.main:app",  # 使用app目录下的main.py入口

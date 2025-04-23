@@ -6,8 +6,11 @@
 
 ```
 database/
-├── flow_editor.db          # SQLite 数据库文件 (主要的关系型数据存储)
-├── node_database/          # 存储节点定义的目录 (似乎是 XML 格式)
+├── alembic/                # Alembic 数据库模式迁移目录
+│   ├── versions/           # Alembic 生成的迁移脚本
+│   ├── env.py              # Alembic 配置文件 (环境设置)
+│   └── script.py.mako      # Alembic 迁移脚本模板
+├── node_database/          # 存储节点定义的目录 (XML 格式)
 │   ├── mg400/              # 可能与特定设备/机器人 (MG400) 相关的节点
 │   ├── quick-fcpr/         # (新增) 与 quick-fcpr 相关的节点
 │   ├── condition.xml
@@ -29,15 +32,16 @@ database/
 │   ├── __pycache__/
 │   ├── service.py          # 嵌入服务核心逻辑
 │   └── utils.py            # 嵌入服务工具函数
-├── migrations/             # 数据库模式迁移脚本
-│   ├── fix_flow_variables.py # 修复 flow_variables 表结构的迁移脚本
+├── flow_database/          # (新增) 存放从旧 SQLite 导出的 Flow 数据 (JSON)
+├── migrations/             # (可选) 自定义数据迁移或一次性脚本目录
+│   ├── fix_flow_variables.py # 示例: 修复 flow_variables 表数据的脚本
 │   ├── __init__.py
-│   ├── migrate_chat_preference.py # 迁移聊天偏好设置的脚本
-│   ├── migrate_user_preference.py # 迁移用户偏好设置的脚本
+│   ├── migrate_chat_preference.py # 示例: 迁移聊天偏好设置的脚本
+│   ├── migrate_user_preference.py # 示例: 迁移用户偏好设置的脚本
 │   └── __pycache__/
 ├── __pycache__/            # Python 缓存
 ├── vectorstore/            # 向量数据库存储目录 (目前为空，可能计划使用)
-├── visuall/                # 数据库可视化和分析工具及输出
+├── visuall/                # 数据库可视化和分析工具及输出 (需要适配 PostgreSQL)
 │   ├── db_relationships.png # 数据库表关系图
 │   ├── db_report.html      # 数据库分析报告 (HTML)
 │   ├── db_summary.json     # 数据库结构摘要 (JSON)
@@ -56,10 +60,12 @@ database/
 │   ├── version_info.json   # version_info 表数据导出 (JSON)
 │   ├── version_info_column_types.png # version_info 表列类型图
 │   └── version_info_creation_timeline.png # version_info 表记录创建时间线图
-├── config.py               # 数据库相关配置 (可能包含连接参数等)
-├── connection.py           # 数据库连接管理 (建立会话 Session)
+├── alembic.ini             # Alembic 主配置文件 (通常在 database/ 目录下)
+├── config.py               # 数据库相关配置 (包含 PostgreSQL 连接参数)
+├── connection.py           # 数据库连接管理 (建立 PostgreSQL 会话 Session)
+├── export_flow_data_sqlite.py # (新增) 从旧 SQLite 数据库导出 Flow 数据的脚本
 ├── __init__.py             # database 包初始化
-├── init_db.py              # 数据库初始化脚本 (创建表)
+├── init_db.py              # (已弃用) 旧的数据库初始化脚本
 ├── models.py               # SQLAlchemy 数据模型定义 (对应数据库表结构)
 └── version.json            # 数据库版本或相关元数据
 ```
@@ -67,47 +73,62 @@ database/
 ## 核心组件
 
 - **`models.py`**: 定义了使用 SQLAlchemy ORM 映射的 Python 类，这些类对应数据库中的表结构。是数据库模式的核心定义文件。
-- **`connection.py`**: 负责建立和管理数据库连接。通常会创建一个数据库引擎 (Engine) 和会话工厂 (Session factory)，供应用的其他部分使用以与数据库交互。
-- **`config.py`**: 存储数据库连接字符串、路径或其他配置参数。
-- **`flow_editor.db`**: 项目主要的 SQLite 数据库文件。存储了应用运行所需的大部分关系型数据（如用户信息、工作流、变量等）。
-- **`migrations/`**: 包含用于修改数据库模式的脚本。当 `models.py` 中的模型发生变化时（例如添加新表、新列），会创建新的迁移脚本来更新现有数据库结构，而不是重新创建整个数据库。这对于维护生产环境数据至关重要。
-- **`init_db.py`**: 用于从头开始创建数据库和所有在 `models.py` 中定义的表。通常在首次部署或需要完全重置数据库时运行。
+- **`connection.py`**: 负责建立和管理 PostgreSQL 数据库连接。创建一个数据库引擎 (Engine) 和会话工厂 (Session factory)，供应用的其他部分使用。
+- **`config.py`**: 存储数据库连接字符串（指向 PostgreSQL）、路径或其他配置参数。**请确保这里的配置指向正确的 PostgreSQL 实例。**
+- **`alembic/` 和 `alembic.ini`**: 使用 [Alembic](https://alembic.sqlalchemy.org/en/latest/) 工具管理数据库模式迁移。`alembic/` 目录包含迁移脚本和环境配置，`alembic.ini` 是主配置文件。
+- **`migrations/`**: (可选) 此目录可能包含**自定义的数据迁移脚本**或只需要运行一次的脚本，用于处理 Alembic 自动迁移无法覆盖的数据转换或修复。模式迁移应使用 Alembic。
+- **`init_db.py`**: **(已弃用)** 此脚本用于创建旧的 SQLite 数据库和表。在使用 Alembic 和 PostgreSQL 后已不再需要。
 - **`embedding/`**: 包含与文本嵌入相关的服务代码。`lmstudio_client.py` 表明可能与本地运行的 LLM (如 LM Studio) 交互以生成嵌入向量。
 - **`node_database/` & `document_database/`**: 这两个目录似乎存储了与流程编辑器节点和文档相关的配置或定义，格式为 XML。
 - **`vectorstore/`**: 计划用于存储向量数据的目录，目前为空，但可能与 `embedding/` 服务配合使用，用于相似性搜索等功能。
+- **`flow_database/` & `export_flow_data_sqlite.py`**: 用于从迁移前的 SQLite 数据库 (`flow_editor.db`) 提取 Flow 相关数据并保存为 JSON 文件（存放于 `flow_database/`）。在完全迁移或不再需要旧数据后，这些可能可以移除。
 
-## 数据库初始化与迁移
+## 数据库初始化与迁移 (使用 Alembic)
 
-- **初始化数据库**: 如果是首次设置项目或需要清空并重建数据库，可以运行：
+项目现在使用 Alembic 来管理数据库模式的演变。
+
+- **首次初始化/应用所有迁移**: 要将数据库更新到最新的模式版本（包括首次创建所有表），请运行：
 
   ```bash
-  python database/init_db.py
+  cd /workspace/database  # 确保在包含 alembic.ini 的目录下
+  alembic upgrade head
   ```
 
-  _警告：这将删除 `flow_editor.db` 文件（如果存在）并创建一个新的空数据库。_
+  _注意：这需要你的 `alembic.ini` 和 `alembic/env.py` 文件已正确配置 PostgreSQL 数据库连接信息。_
 
-- **应用迁移**: 当数据模型 (`models.py`) 更新后，通常需要运行迁移脚本来更新现有数据库的结构。具体的运行方式取决于项目是否使用了像 Alembic 这样的迁移工具，或者是否需要手动执行 `migrations/` 目录下的特定脚本。请检查是否有主迁移脚本或相关说明。
-  例如，如果需要手动运行某个迁移脚本：
+- **生成新的迁移脚本**: 当你修改了 `models.py` 中的 SQLAlchemy 模型后，需要生成一个新的迁移脚本来反映这些更改：
+
   ```bash
-  python database/migrations/migrate_some_change.py
+  cd /workspace/database
+  alembic revision --autogenerate -m "描述你所做的模型更改"
   ```
-  _(请将 `migrate_some_change.py` 替换为实际需要运行的脚本名称)_。
+
+  这会基于模型和当前数据库状态的差异，在 `alembic/versions/` 目录下创建一个新的脚本文件。**请务必检查生成的脚本**，确保它准确反映了你的意图，特别是对于复杂更改。
+
+- **应用特定迁移或回滚**: Alembic 也支持升级到特定版本或降级。详情请查阅 [Alembic 文档](https://alembic.sqlalchemy.org/en/latest/tutorial.html)。
+
+- **自定义数据迁移**: 如果需要执行 `migrations/` 目录下的自定义数据迁移脚本，请按照脚本本身的说明或项目约定来运行。例如：
+  ```bash
+  python /workspace/database/migrations/migrate_some_data.py
+  ```
 
 ## 可视化工具
 
-`visuall/` 目录包含用于分析和可视化数据库结构的工具 (`db_visualize.py`, `db_visualizer.py`) 以及它们生成的各种输出文件（`.png` 图表, `.json` 数据导出, `.html` 报告）。这对于理解数据模型、表关系和数据分布非常有帮助。
+`visuall/` 目录包含用于分析和可视化数据库结构的工具 (`db_visualize.py`, `db_visualizer.py`)。
 
-可以运行以下命令重新生成可视化报告和图表：
+**重要**: 这些脚本最初可能是为 SQLite 设计的。你需要**检查并更新**这些脚本中的数据库连接逻辑，使其能够连接到 PostgreSQL 数据库，然后才能重新生成准确的可视化报告和图表。
+
+更新后，可以运行以下命令重新生成可视化内容：
 
 ```bash
 python database/visuall/db_visualize.py
 ```
 
-_(请确认此脚本的运行方式和依赖)_。
+_(请确认此脚本的运行方式和依赖，并确保它已适配 PostgreSQL)_。
 
 ## 技术栈提示
 
-- **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) (根据 `models.py` 和 `connection.py` 的结构推断)
-- **数据库:** [SQLite](https://www.sqlite.org/index.html) (基于 `flow_editor.db` 文件)
-- **迁移:** 自定义脚本 (`migrations/` 目录)，可能未使用 Alembic 等标准库。
+- **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/)
+- **数据库:** [PostgreSQL](https://www.postgresql.org/)
+- **迁移:** [Alembic](https://alembic.sqlalchemy.org/en/latest/) (用于模式迁移), 自定义脚本 (`migrations/` 目录，用于数据迁移)
 - **嵌入:** 可能使用了本地 LLM 服务 (如 LM Studio) 或其他嵌入模型库 (需查看 `embedding/service.py` 确认)。

@@ -12,6 +12,7 @@ from backend.langchainchat.output_parsers.structured_parser import StructuredOut
 # 从 pydantic 导入 BaseModel
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.orm import Session
+from database.connection import get_db_context # <--- 新增导入
 
 # 导入依赖组件
 from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 # 定义链的输入和输出模型
 class WorkflowChainInput(BaseModel):
     user_input: str
-    db_session: Session # 用于访问应用层服务
+    # db_session: Session # <-- 不再需要 db_session
     flow_id: Optional[str] = None # 添加 flow_id
     chat_id: Optional[str] = None # <--- 添加 chat_id
     history: List[BaseMessage] = Field(default_factory=list) # <--- 新增 history 字段
@@ -70,7 +71,7 @@ class WorkflowChain(Chain):
     """
     input_key: str = "user_input"  # 定义主要的文本输入键
     output_key: str = "result"     # 定义主要的输出键
-    db_session_key: str = "db_session" # 定义数据库会话键
+    # db_session_key: str = "db_session" # <-- 移除
     flow_id_key: str = "flow_id" # 定义流程图 ID 键
     chat_id_key: str = "chat_id" # <--- 新增 chat_id 键
     history_key: str = "history" # <--- 新增 history 输入键
@@ -94,8 +95,8 @@ class WorkflowChain(Chain):
 
     @property
     def input_keys(self) -> List[str]:
-        # <--- 添加 history_key
-        return [self.input_key, self.db_session_key, self.flow_id_key, self.chat_id_key, self.history_key]
+        # <--- 移除 db_session_key
+        return [self.input_key, self.flow_id_key, self.chat_id_key, self.history_key]
 
     @property
     def output_keys(self) -> List[str]:
@@ -123,7 +124,7 @@ class WorkflowChain(Chain):
         # --- 结束调试日志 ---
 
         user_input = inputs.get(self.input_key)
-        db_session = inputs.get(self.db_session_key)
+        # db_session = inputs.get(self.db_session_key) # <-- 移除
         flow_id = inputs.get(self.flow_id_key)
         chat_id = inputs.get(self.chat_id_key)
         history_messages_from_input = inputs.get(self.history_key, []) # <--- 从输入获取 history
@@ -132,9 +133,7 @@ class WorkflowChain(Chain):
         if not user_input:
             logger.error("WorkflowChain received no user_input.")
             return {"result": WorkflowChainOutput(summary="请输入您的问题或指令。", error="Missing user input")}
-        if not db_session:
-             logger.error("WorkflowChain received no db_session.")
-             return {"result": WorkflowChainOutput(summary="处理请求时发生内部错误。", error="Missing database session")}
+        # 不再需要检查 db_session 输入
         if not isinstance(history_messages_from_input, list) or not all(isinstance(m, BaseMessage) for m in history_messages_from_input):
             logger.error(f"WorkflowChain received invalid history format (type: {type(history_messages_from_input)}). Proceeding with empty history.")
             history_messages_from_input = [] # 使用空历史
@@ -147,30 +146,31 @@ class WorkflowChain(Chain):
             # --- Step 0: Load History using DbChatMemory --- (移除此代码块)
 
             # --- Step 0.5: Apply History Truncation/Windowing --- (修改：使用 history_messages_from_input)
+            history_messages_for_prompt = history_messages_from_input # <--- 使用来自输入的历史
             if len(history_messages_from_input) > self.history_max_messages:
                 logger.warning(f"History for chat {chat_id} exceeds limit ({self.history_max_messages}). Truncating.")
                 history_messages_for_prompt = history_messages_from_input[-self.history_max_messages:]
-            else:
-                history_messages_for_prompt = history_messages_from_input # <--- 使用来自输入的历史
             logger.info(f"Number of history messages prepared for prompt: {len(history_messages_for_prompt)}") # 添加日志
 
-            # --- Step 0.7: Get Current Flow Context --- (新增)
+            # --- Step 0.7: Get Current Flow Context (使用内部获取的 db_session) --- (新增)
             flow_context_str = "当前没有可用的流程图信息。"
             if flow_id:
-                try:
-                    flow = db_session.query(Flow).filter(Flow.id == flow_id).first()
-                    if flow and flow.flow_data:
-                        nodes_summary = f"节点数量: {len(flow.flow_data.get('nodes', []))}"
-                        connections_summary = f"连接数量: {len(flow.flow_data.get('connections', []))}"
-                        flow_context_str = f"流程图名称: {flow.name}\\n{nodes_summary}\\n{connections_summary}"
-                        logger.info(f"Successfully fetched flow context for flow {flow_id}")
-                    elif flow:
-                         flow_context_str = f"流程图名称: {flow.name} (内容为空)"
-                    else:
-                         logger.warning(f"Flow with id {flow_id} not found in DB.")
-                except Exception as flow_err:
-                    logger.error(f"Failed to fetch flow context for flow {flow_id}: {flow_err}", exc_info=True)
-                    flow_context_str = "获取流程图信息时出错。"
+                # <<< 使用 get_db_context 获取会话 >>>
+                with get_db_context() as db_session:
+                    try:
+                        flow = db_session.query(Flow).filter(Flow.id == flow_id).first()
+                        if flow and flow.flow_data:
+                            nodes_summary = f"节点数量: {len(flow.flow_data.get('nodes', []))}"
+                            connections_summary = f"连接数量: {len(flow.flow_data.get('connections', []))}"
+                            flow_context_str = f"流程图名称: {flow.name}\\n{nodes_summary}\\n{connections_summary}"
+                            logger.info(f"Successfully fetched flow context for flow {flow_id}")
+                        elif flow:
+                             flow_context_str = f"流程图名称: {flow.name} (内容为空)"
+                        else:
+                             logger.warning(f"Flow with id {flow_id} not found in DB.")
+                    except Exception as flow_err:
+                        logger.error(f"Failed to fetch flow context for flow {flow_id}: {flow_err}", exc_info=True)
+                        flow_context_str = "获取流程图信息时出错。"
             else:
                  logger.warning("flow_id not provided, cannot fetch flow context.")
 
@@ -249,138 +249,70 @@ class WorkflowChain(Chain):
 
                 # Prepare info about the calls themselves
                 tool_calls_info = [
-                    {"id": tc.id, "name": tc.function.name, "args": tc.function.arguments}
-                    for tc in tool_calls_detected
+                    {
+                        "id": call.id,
+                        "function_name": call.function.name,
+                        "function_args": call.function.arguments # Keep as string initially
+                    }
+                    for call in tool_calls_detected
                 ]
+                # Log the raw arguments for debugging
+                for call_info in tool_calls_info:
+                    logger.debug(f"Tool call prepared: ID={call_info['id']}, Func={call_info['function_name']}, Args={call_info['function_args']}")
 
-                # --- Execute Tools ---
-                for tool_call in tool_calls_detected:
-                    tool_call_id = tool_call.id
-                    function_info = tool_call.function
-                    if not function_info or not tool_call_id:
-                        logger.warning(f"Skipping invalid tool call format: {tool_call}")
-                        continue
+                # Execute tools (assuming ToolExecutor handles async execution)
+                # <<< ToolExecutor 不需要 db_session >>>
+                tool_results = await self.tool_executor.execute(tool_calls_detected)
 
-                    tool_name = function_info.name
-                    tool_args_str = function_info.arguments
+                # Process results
+                for result in tool_results:
+                    if result.is_error:
+                        tool_execution_errors.append(f"Error executing {result.tool_name}: {result.output}")
+                    if isinstance(result.output, dict):
+                        # Extract nodes and connections if present
+                        nodes_updated.extend(result.output.get("nodes", []))
+                        connections_updated.extend(result.output.get("connections", []))
+                        # Add simple summary if available
+                        summary = result.output.get("summary")
+                        if summary:
+                            tool_results_summary_list.append(summary)
+                    elif isinstance(result.output, str):
+                         tool_results_summary_list.append(result.output)
+                    
+                    # Store detailed result
+                    tool_results_details.append({"tool_name": result.tool_name, "output": result.output, "is_error": result.is_error})
 
-                    if not tool_name or tool_args_str is None:
-                         logger.warning(f"Skipping tool call with missing name or arguments: {tool_call}")
-                         continue
+                if tool_execution_errors:
+                    ai_summary = f"执行工具时遇到问题: {'; '.join(tool_execution_errors)}"
+                elif tool_results_summary_list:
+                     ai_summary = "\n".join(tool_results_summary_list)
+                else:
+                     ai_summary = "工具已执行，但没有返回文本摘要。"
 
-                    try:
-                        tool_args = json.loads(tool_args_str)
-                        logger.info(f"Executing tool '{tool_name}' with args: {tool_args}")
+                # --- Step 4: Return Result (for Tool Calls path) ---
+                return {"result": WorkflowChainOutput(nodes=nodes_updated, connections=connections_updated, summary=ai_summary, error="; ".join(tool_execution_errors) if tool_execution_errors else None, tool_calls_info=tool_calls_info, tool_results_info=tool_results_details)}
 
-                        tool_result = await self.tool_executor.execute(
-                            tool_name=tool_name,
-                            parameters=tool_args,
-                            db_session=db_session, # Pass session if needed by tools
-                            flow_id=flow_id # 将 flow_id 传递给执行器
-                        )
-
-                        logger.info(f"Tool '{tool_name}' executed. Success: {tool_result.success}, Result: {str(tool_result.result_data)[:100]}...")
-
-                        result_detail = {
-                            "tool_call_id": tool_call_id,
-                            "tool_name": tool_name,
-                            "success": tool_result.success,
-                            "result": tool_result.result_data if tool_result.success else None,
-                            "error": tool_result.error_message if not tool_result.success else None
-                        }
-                        tool_results_details.append(result_detail)
-
-                        if tool_result.success:
-                            tool_results_summary_list.append(f"成功执行 {tool_name}。")
-                            # --- (Aggregate results based on tool type - same logic as before) ---
-                            if tool_name == "create_node" and isinstance(tool_result.result_data, dict):
-                                nodes_updated.append(tool_result.result_data)
-                            elif tool_name == "connect_nodes" and isinstance(tool_result.result_data, dict):
-                                connections_updated.append(tool_result.result_data)
-                            # ... (handle set_properties, ask_more_info, generate_text) ...
-                            elif tool_name == "ask_more_info" and isinstance(tool_result.result_data, str):
-                                 ai_summary = tool_result.result_data # Use question as final summary
-                            elif tool_name == "generate_text" and isinstance(tool_result.result_data, str):
-                                 ai_summary += "\\n\\n" + tool_result.result_data # Append generated text
-                        else:
-                            error_msg = f"执行工具 '{tool_name}' 失败: {tool_result.error_message}"
-                            logger.error(error_msg)
-                            tool_execution_errors.append(error_msg)
-                            tool_results_summary_list.append(f"尝试执行 {tool_name} 时出错。")
-
-                    except json.JSONDecodeError:
-                         error_msg = f"无法解析工具 '{tool_name}' 的参数: {tool_args_str}"
-                         logger.error(error_msg)
-                         tool_execution_errors.append(error_msg)
-                    except Exception as tool_exec_err:
-                        error_msg = f"执行工具 '{tool_name}' 时发生意外错误: {tool_exec_err}"
-                        logger.error(error_msg, exc_info=True)
-                        tool_execution_errors.append(error_msg)
-
-                # --- Generate final summary after tool execution ---
-                if tool_results_summary_list and not tool_execution_errors:
-                    # Avoid overwriting ask_more_info result
-                    if not any(tc.function.name == 'ask_more_info' for tc in tool_calls_detected):
-                        ai_summary = "我已经根据您的请求执行了以下操作:\\n- " + "\\n- ".join(tool_results_summary_list)
-                elif tool_execution_errors:
-                    ai_summary = "处理您的请求时遇到一些问题:\\n- " + "\\n- ".join(tool_execution_errors) + "\\n请检查您的指令或稍后再试。"
-
-                # --- Return result for tool call path ---
-                final_output = WorkflowChainOutput(
-                    summary=ai_summary,
-                    nodes=nodes_updated or None,
-                    connections=connections_updated or None,
-                    error="; ".join(tool_execution_errors) if tool_execution_errors else None,
-                    event_stream=None, # <--- Ensure this uses event_stream=None
-                    tool_calls_info=tool_calls_info, # Include info about calls
-                    tool_results_info=tool_results_details # Include info about results
-                )
-                logger.info("WorkflowChain finished processing tool calls.")
-                return {"result": final_output}
-
-            # --- Step 3b: Handle Text/Streaming Response (no tool calls) ---
-            else:
-                logger.info(f"No tool calls detected. Making streaming LLM call (with history & flow context) for chat {chat_id}...")
-
-                async def event_generator() -> AsyncGenerator[Dict[str, Any], None]:
-                    """Wraps the LLM stream to yield structured events."""
-                    try:
-                        # Get the original text stream generator from the LLM
-                        text_stream = self.llm.stream_chat_completion(
-                            messages=messages_for_llm # 使用格式化后的字典列表
-                        )
-                        async for chunk in text_stream:
-                            if chunk: # Ensure chunk is not empty
-                                yield {"type": "llm_chunk", "data": {"text": chunk}}
-                        # Optionally yield a final 'stream_end' event if needed by frontend
-                        yield {"type": "stream_end", "data": {}}
-                        logger.info(f"LLM text stream finished for chat {chat_id}")
-                    except Exception as stream_err:
-                        logger.error(f"Error during LLM streaming for chat {chat_id}: {stream_err}", exc_info=True)
-                        # Yield an error event
-                        yield {"type": "error", "data": {"message": f"Streaming error: {stream_err}"}}
-
-                # Create the event stream generator
-                event_stream_gen = event_generator()
-
-                # --- 返回包含事件流生成器的结果 ---
-                final_output_object = WorkflowChainOutput(
-                    summary="", # Summary will be built on the frontend from chunks
-                    event_stream=event_stream_gen # Pass the new event generator
-                )
-                return {"result": final_output_object}
+            # --- Step 3b: Handle Text Response (Streaming) --- 
+            elif not is_tool_call_response:
+                logger.info(f"No tool calls detected. Proceeding with final response generation (was previously streaming logic).")
+                # In non-streaming _acall, we just need the final text from the initial call
+                final_summary = initial_response_data # Use the text from the initial call
+                # Clean up potential JSON wrapping if it wasn't a tool call
+                try:
+                    from openai.types.chat import ChatCompletionMessage
+                    if final_summary.strip().startswith('{'):
+                         response_message = ChatCompletionMessage.model_validate_json(final_summary)
+                         if response_message.content:
+                              final_summary = response_message.content
+                except Exception:
+                     pass # Keep original text if parsing fails
+                
+                logger.info(f"_acall returning final text summary (length: {len(final_summary)}): {final_summary[:100]}...")
+                return {"result": WorkflowChainOutput(summary=final_summary)}
 
         except Exception as e:
-            logger.error(f"Error in WorkflowChain _acall for chat {chat_id}: {e}", exc_info=True)
-            # Also yield an error event in the main exception handler if possible?
-            # This is tricky because we don't have the generator structure here.
-            # Returning a non-streaming error is safer for now.
-            final_output_object = WorkflowChainOutput(
-                 summary="处理您的请求时遇到内部错误。",
-                 error=f"Chain execution failed: {str(e)}",
-                 event_stream=None # Ensure event_stream is None on error
-            )
-            return {"result": final_output_object}
+            logger.error(f"Error in WorkflowChain _acall: {e}", exc_info=True)
+            return {"result": WorkflowChainOutput(summary="处理请求时发生意外错误。", error=str(e))}
 
     # 临时保留旧的上下文收集方法，需要重构为依赖注入
     async def _gather_context(self, query: str) -> List[Dict]:
