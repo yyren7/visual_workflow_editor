@@ -9,6 +9,7 @@ database/
 ├── flow_editor.db          # SQLite 数据库文件 (主要的关系型数据存储)
 ├── node_database/          # 存储节点定义的目录 (似乎是 XML 格式)
 │   ├── mg400/              # 可能与特定设备/机器人 (MG400) 相关的节点
+│   ├── quick-fcpr/         # (新增) 与 quick-fcpr 相关的节点
 │   ├── condition.xml
 │   ├── loop.xml
 │   ├── moveL.xml
@@ -17,7 +18,9 @@ database/
 │   └── set_motor.xml
 ├── document_database/      # 存储文档定义 (XML 格式)
 │   ├── mg400/              # 可能与特定设备/机器人 (MG400) 相关的文档
-│   └── flow.xml            # 流程定义文档
+│   ├── quickfcpr/          # (新增) 与 quickfcpr 相关的文档目录
+│   ├── flow.xml            # 流程定义文档
+│   └── quickfcpr.md        # (新增) quickfcpr 相关 Markdown 文档
 ├── embedding/              # 文本嵌入相关服务
 │   ├── api.py              # 提供嵌入服务的 API 接口 (可能被后端调用)
 │   ├── config.py           # 嵌入服务配置

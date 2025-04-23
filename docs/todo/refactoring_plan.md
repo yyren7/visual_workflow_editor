@@ -40,79 +40,56 @@
 - **操作 (选项 2: 版本控制 - 更复杂):** 引入 `FlowVersion` 表。在消息中存储版本 ID。需要更重大的模式更改。（为简单起见，先从选项 1 开始）。
 
 **2. 后端：`ChatService` (`backend/app/services/chat_service.py`)**
-**1. Backend: Fix Database Save Issue (`backend/app/routers/chat.py`)**
-_ **Action:** Modify the `process_and_publish_events` background task. In the `finally` block, when saving the final assistant reply (`final_content_to_save`):
-_ Obtain a **new, independent** database session specifically for this save operation: `db_session_for_save = SessionLocal()`.
-_ Initialize a **new** `ChatService` instance with this session: `chat_service_for_save = ChatService(db_session_for_save)`.
-_ Use this new service instance to call `add_message_to_chat`.
-_ Ensure `db_session_for_save` is closed in its own `try...finally` block.
-_ **Cleanup:** Ensure the original session (`db_session_bg`) created at the start of the task is still closed at the end of the main `finally` block. \* **Testing:** Verify that assistant replies are now consistently saved to the database after this change.
 
-**2. Frontend: Implement Persistent SSE Connection (`frontend/src/components/ChatInterface.tsx`, `frontend/src/api/chatApi.ts`)**
-_ **API (`chatApi.ts`):**
-_ Create a new function `connectToChatEvents(chatId, onEvent, onError, onClose)` that establishes the `GET /chats/{chatId}/events` EventSource connection and returns a `close` function. It does _not_ send any POST request.
-_ Create a new function `triggerChatProcessing(chatId, content, role)` that sends the `POST /chats/{chatId}/messages` request and returns `void` (fire-and-forget).
-_ Remove the old `sendMessage` function.
-_ **UI (`ChatInterface.tsx`):**
-_ Use a `useEffect` hook with `activeChatId` as a dependency to manage the SSE connection lifecycle:
-_ When `activeChatId` changes and is valid: Close any existing connection (using `closeEventSourceRef`), call `connectToChatEvents` to establish a new one, store the returned `close` function in `closeEventSourceRef`.
-_ The `useEffect` cleanup function should call the stored `close` function.
-_ Modify `handleSendMessage`: Remove logic for closing connections. Only add the user message locally and call `triggerChatProcessing`.
-_ Ensure `handleChatClose` (called by the connection cleanup) clears `streamingAssistantMsgIdRef`. \* **Testing:** Verify basic chat (streaming text, tool calls) works correctly without message loss, especially when sending messages quickly.
+- **修改 `add_message_to_chat`：** 添加可选的 `flow_snapshot` 参数。如果提供了该参数并且 `role=='assistant'`，则将其存储在消息字典中。
+- **修改 `process_chat_message`：** 在潜在的流程更新（`chain_output_obj.nodes/connections` 存在）后保存助手消息（摘要或错误）时，获取 _当前_ 的 `flow_data` 并将其作为 `flow_snapshot` 参数传递给 `add_message_to_chat`。
 
-## Part 2: Implement Message Editing & History/Flow Rollback
+**3. 后端：新的编辑 API 端点 (`backend/app/routers/chat.py`)**
 
-**Goal:** Allow users to edit their previous messages, triggering a rollback of subsequent history and potentially the associated flowchart state.
+- **操作：** 创建 `PUT /chats/{chat_id}/messages/{message_timestamp}` 端点。
+- **逻辑：** 1. 为此操作使用一个**新的数据库 Session**。 2. 通过 `message_timestamp` 找到目标用户消息。 3. **截断历史记录：** 移除目标消息之后的所有消息。更新目标消息的内容。**立即提交**此历史记录更改。 4. **查找检查点：** 定位到被编辑消息之前的、包含 `flow_snapshot` 的最后一条助手消息。将其用作回滚状态 (`checkpoint_flow_data`)。处理没有快照存在的情况（例如，使用初始状态或当前状态作为备用）。 5. **触发新的后台任务：** 启动一个新的任务 `process_edited_message_and_publish`，传递截断后的历史记录和 `checkpoint_flow_data`。 6. 返回 202 Accepted。
 
-**1. Backend: Database Model (`database/models.py`)**
-_ **Action (Option 1: Snapshot):** Modify `Chat.chat_data` structure. Add an optional `flow_snapshot: Optional[Dict]` field to assistant messages in the `messages` array to store relevant flowchart state (nodes, connections, etc.) at that point.
-_ **Action (Option 2: Versioning - More Complex):** Introduce a `FlowVersion` table. Store version IDs in messages. Requires more significant schema changes. (Start with Option 1 for simplicity).
+**4. 后端：新的后台任务 (`backend/app/routers/chat.py`)**
 
-**2. Backend: `ChatService` (`backend/app/services/chat_service.py`)**
-_ **Modify `add_message_to_chat`:** Add optional `flow_snapshot` parameter. If provided and `role=='assistant'`, store it within the message dictionary.
-_ **Modify `process_chat_message`:** When saving an assistant message (summary or error) after a potential flow update (`chain_output_obj.nodes/connections` exist), fetch the _current_ `flow_data` and pass it as the `flow_snapshot` argument to `add_message_to_chat`.
+- **操作：** 创建 `async def process_edited_message_and_publish(...)`。
+- **逻辑：** 类似于 `process_and_publish_events`，但是：
+  - 接受截断后的历史记录和检查点流程数据作为输入。
+  - **不再**保存（已经编辑过的）用户消息。
+  - 将截断后的历史记录和检查点数据传递给 `WorkflowChain`（可能需要修改 `WorkflowChain` 的输入/逻辑）。
+  - 处理生成的事件流或非流式响应。
+  - 保存最终的助手回复**并附带一个新的 `flow_snapshot`**（使用一个**新的数据库 Session** 进行保存）。
+  - 正确管理其自身的数据库 Session。
 
-**3. Backend: New Edit API Endpoint (`backend/app/routers/chat.py`)**
-_ **Action:** Create `PUT /chats/{chat_id}/messages/{message_timestamp}` endpoint.
-_ **Logic:** 1. Use a **new DB Session** for this operation. 2. Find the target user message by `message_timestamp`. 3. **Truncate History:** Remove all messages _after_ the target message. Update the target message's content. **Commit** this history change immediately. 4. **Find Checkpoint:** Locate the last assistant message _before_ the edited message that contains a `flow_snapshot`. Use this as the rollback state (`checkpoint_flow_data`). Handle cases where no snapshot exists (e.g., use initial state or current state as fallback). 5. **Trigger New Background Task:** Start a new task `process_edited_message_and_publish`, passing the truncated history and `checkpoint_flow_data`. 6. Return 202 Accepted.
+**5. 前端：编辑 UI (`frontend/src/components/ChatInterface.tsx`)**
 
-**4. Backend: New Background Task (`backend/app/routers/chat.py`)**
-_ **Action:** Create `async def process_edited_message_and_publish(...)`.
-_ **Logic:** Similar to `process_and_publish_events`, but:
-_ Takes truncated history and checkpoint flow data as input.
-_ Does **not** save the (already edited) user message again.
-_ Passes truncated history and checkpoint data to `WorkflowChain` (may require modifying `WorkflowChain` input/logic).
-_ Handles the resulting event stream or non-stream response.
-_ Saves the final assistant reply **with a new `flow_snapshot`** (using a **new DB Session** for the save).
-_ Manages its own DB session(s) correctly.
+- 为用户消息添加"编辑"按钮。
+- 添加状态 `editingMessageTimestamp: string | null`。
+- 实现 `handleStartEdit(timestamp, content)`：设置输入字段，设置 `editingMessageTimestamp`，更新 UI 以指示编辑模式。
+- 实现 `handleConfirmEdit()`：调用 `chatApi.editMessage`，执行乐观 UI 更新（更新消息内容，移除后续消息），重置编辑状态，清除输入。
+- 实现 `handleCancelEdit()`：重置编辑状态，清除输入。
+- 修改 `handleKeyPress` 以处理编辑模式下的 Enter 键。
 
-**5. Frontend: Edit UI (`frontend/src/components/ChatInterface.tsx`)**
-_ Add "Edit" button to user messages.
-_ Add state `editingMessageTimestamp: string | null`.
-_ Implement `handleStartEdit(timestamp, content)`: Set input field, set `editingMessageTimestamp`, update UI to indicate editing mode.
-_ Implement `handleConfirmEdit()`: Call `chatApi.editMessage`, perform optimistic UI update (update message content, remove subsequent messages), reset editing state, clear input.
-_ Implement `handleCancelEdit()`: Reset editing state, clear input.
-_ Modify `handleKeyPress` for Enter key in editing mode.
+**6. 前端：API (`frontend/src/api/chatApi.ts`)**
 
-**6. Frontend: API (`frontend/src/api/chatApi.ts`)** \* Add `editMessage(chatId, messageTimestamp, newContent)` function to send the PUT request.
+- 添加 `editMessage(chatId, messageTimestamp, newContent)` 函数以发送 PUT 请求。
 
-## Part 3: Code Cleanup & Refactoring
+## 第三部分：代码清理与重构
 
-**Goal:** Improve code maintainability and remove obsolete parts.
+**目标：** 提高代码可维护性并移除过时的部分。
 
-- Remove old `chatApi.sendMessage` and related frontend logic.
-- Refactor backend background tasks (`process_and_publish_events`, `process_edited_message_and_publish`) to extract common logic into helper functions (e.g., processing `WorkflowChainOutput`, putting events to queue, saving final reply with session management).
-- Review `ChatService` statefulness (optional).
-- Ensure consistent and robust error handling and logging throughout.
+- 移除旧的 `chatApi.sendMessage` 和相关的前端逻辑。
+- 重构后端后台任务（`process_and_publish_events`, `process_edited_message_and_publish`）以将通用逻辑提取到辅助函数中（例如，处理 `WorkflowChainOutput`、将事件放入队列、使用会话管理保存最终回复）。
+- 审查 `ChatService` 的状态性（可选）。
+- 确保整个过程中一致且健壮的错误处理和日志记录。
 
-## Execution Order & Testing Strategy
+## 执行顺序与测试策略
 
-1.  **Implement Part 1.1 (Backend DB Fix):** Test thoroughly to confirm reliable message saving.
-2.  **Implement Part 1.2 (Frontend SSE):** Test basic chat functionality, focusing on stream integrity and preventing lost messages.
-3.  **Implement Part 2 (Edit/Rollback - Backend first):**
-    - Implement backend DB changes (snapshots).
-    - Implement backend API endpoint and new background task. Test via API calls directly if needed.
-4.  **Implement Part 2 (Edit/Rollback - Frontend):**
-    - Implement frontend UI changes and API call.
-5.  **End-to-End Testing:** Test the complete edit/rollback feature.
-6.  **Implement Part 3 (Cleanup):** Refactor and remove dead code once features are stable.
+1.  **实现第一部分 1.1 (后端数据库修复):** 进行彻底测试以确认消息保存的可靠性。
+2.  **实现第一部分 1.2 (前端 SSE):** 测试基本的聊天功能，重点关注流的完整性并防止消息丢失。
+3.  **实现第二部分 (编辑/回滚 - 先后端):**
+    - 实现后端数据库更改（快照）。
+    - 实现后端 API 端点和新的后台任务。如果需要，直接通过 API 调用进行测试。
+4.  **实现第二部分 (编辑/回滚 - 前端):**
+    - 实现前端 UI 更改和 API 调用。
+5.  **端到端测试:** 测试完整的编辑/回滚功能。
+6.  **实现第三部分 (清理):** 一旦功能稳定，进行重构并移除不再使用的代码。

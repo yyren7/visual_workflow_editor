@@ -58,6 +58,7 @@ backend/
 ├── __init__.py               # backend 包初始化
 ├── langchainchat             # Langchain 核心 AI 逻辑目录
 │   ├── adapters/             # 适配器 (例如: 数据库内存适配器)
+│   │   └── db_memory_adapter.py # 将数据库作为 Langchain 内存后端的适配器
 │   ├── agents/               # Langchain Agent 相关 (可能包含自定义 Agent)
 │   ├── api/                  # Langchain 相关的 API 路由 (可能嵌入到 FastAPI 或独立) - [已移除，或内容已合并]
 │   ├── callbacks/            # Langchain 回调处理 (用于监控、日志记录等)
@@ -67,9 +68,12 @@ backend/
 │   ├── document_loaders/     # 文档加载器 (用于 RAG)
 │   ├── embeddings/           # 文本嵌入模型和向量搜索逻辑
 │   ├── __init__.py           # Langchain 模块初始化
-│   ├── llms/                 # 大语言模型客户端封装 (例如: Deepseek)
+│   ├── llms/                 # 大语言模型客户端封装
+│   │   └── deepseek_client.py # 封装 Deepseek LLM 接口的客户端
 │   ├── logs/                 # Langchain 特定的日志
-│   ├── memory/               # 对话记忆管理 (例如: 基于数据库存储历史记录)
+│   ├── memory/               # 对话记忆管理
+│   │   ├── conversation_memory.py # 通用对话记忆封装
+│   │   └── db_chat_memory.py # 基于数据库存储的聊天记忆实现
 │   ├── models/               # Langchain 数据模型 (例如: LLM 响应结构)
 │   ├── output_parsers/       # 解析 LLM 输出的解析器
 │   ├── prompts/              # Prompt 模板管理
@@ -81,6 +85,9 @@ backend/
 │   │   └── __init__.py       # (已清空)
 │   ├── sessions/             # 会话数据存储 (例如: 文件会话)
 │   ├── tools/                # Langchain 工具定义和执行器 (Agent 可用的工具)
+│   │   ├── definitions.py    # 工具的 Pydantic 定义
+│   │   ├── executor.py       # 执行工具的逻辑
+│   │   └── flow_tools.py     # 工作流相关的具体工具实现
 │   └── utils/                # Langchain 工具函数 (日志, context_collector 等)
 ├── __pycache__/              # Python 缓存 (顶层)
 ├── README.md                 # 本文档 (你正在阅读的文件)
