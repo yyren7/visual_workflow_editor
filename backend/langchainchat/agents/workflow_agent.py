@@ -12,7 +12,12 @@ from langchain.agents import AgentExecutor, create_structured_chat_agent # Impor
 # from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
 from langchain_core.agents import AgentAction, AgentActionMessageLog, AgentFinish # Need AgentActionMessageLog for type hint
 from langchain.tools.render import render_text_description
-# from langchain.output_parsers.structured_chat import StructuredChatOutputParser # Keep commented out for now
+# --- Try importing the parser again from the original path --- 
+# from langchain.agents.output_parsers.structured_chat import StructuredChatOutputParser # Original path incorrect
+# --- Try importing from langchain_core ---
+# from langchain_core.output_parsers.structured_chat import StructuredChatOutputParser # Also incorrect
+# --- Import using the exact path from documentation ---
+from langchain.agents.structured_chat.output_parser import StructuredChatOutputParser
 
 # 导入 LangChain 工具列表
 from backend.langchainchat.tools.flow_tools import flow_tools
@@ -56,9 +61,10 @@ def _create_deepseek_structured_agent_runnable(llm: BaseChatModel, tools: List[B
         )
         | prompt
         | llm
-        # | StructuredChatOutputParser(...) # Parser commented out for now
+        # --- Add back the Output Parser ---
+        | StructuredChatOutputParser(tool_names=[t.name for t in tools])
     )
-    logger.debug(f"Manually constructed agent runnable using format_log_to_messages.")
+    logger.debug(f"Manually constructed agent runnable using format_log_to_messages and Output Parser.")
 
     agent_executor = AgentExecutor(
         agent=agent,

@@ -13,6 +13,7 @@ from database.connection import get_db, get_db_context
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.chat_service import ChatService
 from backend.app.services.flow_service import FlowService
+from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput
 from database.models import Flow
 from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
 
@@ -266,13 +267,16 @@ async def add_message(
                 logger.info(f"[Chat {c_id}] Processing message with {len(langchain_history)} history entries.")
                 agent_executor = chat_service_bg.workflow_agent_executor
 
-                # 使用 astream_events 处理流式响应，并提供所有必需的输入键
+                # 构建 Agent 输入字典
                 agent_input = {
                     "input": msg_content,
                     "chat_history": langchain_history,
-                    "flow_context": flow_data, # 传递流程数据作为上下文
+                    "flow_context": flow_data,
+                    "flow_id": flow_id
                 }
+                logger.info(f"[Chat {c_id}] Prepared agent input: keys={list(agent_input.keys())}")
 
+                # 使用 astream_events 处理流式响应，并提供所有必需的输入键
                 logger.debug(f"[Chat {c_id}] Invoking agent_executor.astream_log with input keys: {list(agent_input.keys())}")
 
                 # --- 使用 astream_log 处理流式响应 --- (新逻辑)
