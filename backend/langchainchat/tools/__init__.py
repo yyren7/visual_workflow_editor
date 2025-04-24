@@ -4,6 +4,6 @@
 包含流程图创建和操作相关工具
 """
 
-from .flow_tools import get_flow_tools
+from .flow_tools import flow_tools
 
-__all__ = ["get_flow_tools"]
+__all__ = ["flow_tools"]

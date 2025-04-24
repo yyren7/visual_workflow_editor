@@ -195,4 +195,48 @@ ERROR_HANDLING_TEMPLATE = ChatPromptTemplate.from_messages([
 
 请保持专业、礼貌，并尽可能提供有用的建议。"""),
     HumanMessagePromptTemplate.from_template("处理以下请求时发生错误: {input}\n\n错误信息: {error}\n\n请提供友好的解释和可能的解决方案:")
-]) 
+])
+
+# --- 新增：结构化聊天 Agent 的 Prompt 模板 ---
+# 修改后的版本，确保包含 tools, tool_names, 和 agent_scratchpad
+STRUCTURED_CHAT_AGENT_PROMPT = ChatPromptTemplate.from_messages([
+    ("system",
+     """尽可能地帮助用户。你是一个专门用于创建和管理工作流图表的 AI 助手。
+
+     你可以使用以下工具：
+
+     {tools}
+
+     请使用以下格式来使用工具：
+
+     ```json
+     {{
+       "action": $TOOL_NAME,
+       "action_input": $INPUT
+     }}
+     ```
+
+     如果你使用工具，$INPUT 应该是一个符合该工具 schema 的 JSON 对象。
+
+     $TOOL_NAME 必须是以下之一：{tool_names}
+
+     当你需要回复用户，或者你不需要使用工具时，你必须使用以下格式：
+
+     ```json
+     {{
+       "action": "final_answer",
+       "action_input": "你的回复内容"
+     }}
+     ```
+
+     请记住始终使用提供的确切工具名称。请用中文回答。
+
+     当前工作流上下文：
+     {flow_context}
+     """
+    ),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad") # 添加 agent_scratchpad 占位符
+])
+# --- 结束新增 --- 

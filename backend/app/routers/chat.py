@@ -13,7 +13,6 @@ from database.connection import get_db, get_db_context
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.chat_service import ChatService
 from backend.app.services.flow_service import FlowService
-from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput
 from database.models import Flow
 from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
 

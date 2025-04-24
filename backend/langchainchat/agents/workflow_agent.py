@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional, Type
+from typing import Dict, Any, List, Optional, Type, Tuple
 import logging # Import logging
 
 from langchain_core.runnables import Runnable, RunnableConfig, RunnablePassthrough
@@ -9,8 +9,13 @@ from langchain_core.tools import StructuredTool, BaseTool # Import BaseTool as w
 from langchain.agents import AgentExecutor, create_structured_chat_agent # Import AgentExecutor and constructor
 # Removed unused format_tools_for_llm and parse_llm_output placeholders
 # from langchain.agents.format_scratchpad.structured_chat import format_to_structured_chat_scratchpad # Might not be needed directly
+# from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
+from langchain_core.agents import AgentAction, AgentActionMessageLog, AgentFinish # Need AgentActionMessageLog for type hint
+from langchain.tools.render import render_text_description
+# from langchain.output_parsers.structured_chat import StructuredChatOutputParser # Keep commented out for now
 
-from backend.langchainchat.tools.executor import ToolExecutor
+# 导入 LangChain 工具列表
+from backend.langchainchat.tools.flow_tools import flow_tools
 
 # 根据官方文档，直接从 langchain_deepseek 导入 ChatDeepSeek (注意大小写)
 from langchain_deepseek import ChatDeepSeek 
@@ -23,60 +28,37 @@ except ImportError:
     ChatGoogleGenerativeAI = Type['ChatGoogleGenerativeAI'] # type: ignore
     logger.warning("langchain-google-genai not installed. Gemini agent support will be unavailable.")
 
+# 导入新的 Agent Prompt
+from backend.langchainchat.prompts.chat_prompts import STRUCTURED_CHAT_AGENT_PROMPT
+
+# --- Import specific formatter and other necessary components ---
+# from langchain.agents import create_structured_chat_agent # Remove this if not used
+# from langchain.agents.format_scratchpad.log_to_messages import format_log_to_messages # Try this formatter - Incorrect import?
+import langchain.agents.format_scratchpad.log_to_messages as log_formatter_module # Import module instead
+
 logger = logging.getLogger(__name__) # Setup logger
 
-# --- Internal function specifically for DeepSeek/Structured Chat Agent --- 
+# --- Internal function specifically for DeepSeek/Structured Chat Agent ---
 def _create_deepseek_structured_agent_runnable(llm: BaseChatModel, tools: List[BaseTool]) -> Runnable:
     """
-    Internal helper to create the AgentExecutor using the structured chat approach,
-    suitable for models like DeepSeek that benefit from explicit JSON instructions.
+    Internal helper using manual chain construction with format_log_to_messages.
     """
-    tool_names = ", ".join([t.name for t in tools])
+    prompt = STRUCTURED_CHAT_AGENT_PROMPT
+    logger.debug(f"Using imported STRUCTURED_CHAT_AGENT_PROMPT for DeepSeek agent.")
 
-    system_prompt_template = """Respond to the human as helpfully as possible. 
-You have access to the following tools:
-
-{tools}
-
-Use a json blob to specify a tool by providing an action key (tool name) and an action_input key (tool input).
-
-Valid "action" values: "final_answer" or [{tool_names}]
-
-Provide only ONE action per $JSON_BLOB, as shown:
-
-```json
-{{
-  "action": $TOOL_NAME,
-  "action_input": $INPUT
-}}
-```
-
-Should you decide to respond with a final answer, output ONLY a single json blob, as shown below:
-
-```json
-{{
-  "action": "final_answer",
-  "action_input": "Your final response to the human goes here."
-}}
-```
-Remember to ALWAYS use the exact tool names provided.
-
-CURRENT WORKFLOW CONTEXT:
-{flow_context}
-    """
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt_template),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
-
-    prompt = prompt.partial(tool_names=tool_names)
-    logger.debug(f"DeepSeek Structured Prompt (partial): {prompt}")
-
-    agent = create_structured_chat_agent(llm, tools, prompt)
-    logger.debug(f"Created structured chat agent for DeepSeek: {agent}")
+    # --- Manually construct the agent chain --- 
+    agent = (
+        RunnablePassthrough.assign(
+            # Calculate agent_scratchpad using format_log_to_messages from the imported module
+            agent_scratchpad=lambda x: log_formatter_module.format_log_to_messages(x.get("intermediate_steps", [])),
+            tools=lambda x: render_text_description(tools),
+            tool_names=lambda x: ", ".join([t.name for t in tools])
+        )
+        | prompt
+        | llm
+        # | StructuredChatOutputParser(...) # Parser commented out for now
+    )
+    logger.debug(f"Manually constructed agent runnable using format_log_to_messages.")
 
     agent_executor = AgentExecutor(
         agent=agent,
@@ -84,18 +66,20 @@ CURRENT WORKFLOW CONTEXT:
         verbose=True,
         handle_parsing_errors="Check your output and make sure it conforms to the JSON format instructions in the system prompt!",
         max_iterations=10,
+        return_intermediate_steps=True, # Required for the lambda to get intermediate_steps
     )
     return agent_executor
 
 # --- Factory function to create the appropriate agent based on LLM type --- 
-def create_workflow_agent_runnable(llm: BaseChatModel, tool_executor: ToolExecutor) -> Runnable:
+def create_workflow_agent_runnable(llm: BaseChatModel) -> Runnable:
     """
     Factory function to create the appropriate workflow agent runnable 
     based on the provided LLM type.
     """
-    tools: List[BaseTool] = tool_executor.get_langchain_tools()
+    # 直接使用导入的 tools 列表
+    tools: List[BaseTool] = flow_tools
     if not tools:
-        logger.warning("No Langchain tools were generated by ToolExecutor. Agent might not function correctly.")
+        logger.warning("No Langchain tools were found in flow_tools. Agent might not function correctly.")
 
     # --- Select Agent Strategy based on LLM type --- 
     

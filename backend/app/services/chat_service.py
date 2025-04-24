@@ -16,13 +16,13 @@ from database.models import Chat, Flow
 # 导入 WorkflowChain (如果 chat service 需要直接触发工作流修改)
 # from backend.langchainchat.chains.workflow_chain import WorkflowChain, WorkflowChainOutput
 # 导入构建 RAG/Workflow 链所需的依赖 (这些通常在应用启动时初始化并注入)
-from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
-from backend.langchainchat.tools.executor import ToolExecutor
+# 移除 ToolExecutor 导入
+# from backend.langchainchat.tools.executor import ToolExecutor
 # from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
 # from database.embedding.service import DatabaseEmbeddingService
 
 # --- RAG 相关导入 ---
-from backend.langchainchat.chains.rag_chain import create_rag_chain, RAGInput
+# from backend.langchainchat.chains.rag_chain import create_rag_chain, RAGInput
 from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
 from database.embedding.service import DatabaseEmbeddingService
 
@@ -40,14 +40,14 @@ from langchain_core.language_models import BaseChatModel # 导入 BaseChatModel
 logger = logging.getLogger(__name__)
 
 class ChatService:
-    """聊天服务，管理聊天记录并与 RAG/Workflow 系统交互"""
+    """聊天服务，管理聊天记录并与 Agent 系统交互"""
     
     def __init__(self, db: Session):
         self.db = db
-        # 将 Agent Executor 的初始化推迟到第一次需要时，或者在此处初始化
+        # 将 Agent Executor 的初始化推迟到第一次需要时
         self._agent_executor = None # 初始化为 None
-        # Tool Executor 可能也需要延迟初始化或在这里创建
-        self._tool_executor = ToolExecutor(db_session=self.db) # 假设 ToolExecutor 需要 db
+        # 移除 RAG Chain 相关属性
+        # self.rag_chain = None 
     
     def _get_active_llm(self) -> BaseChatModel:
         """根据环境变量选择并实例化活动 LLM。"""
@@ -96,32 +96,20 @@ class ChatService:
                 # 1. 获取活动的 LLM 实例
                 active_llm = self._get_active_llm()
                 
-                # 2. 获取 Tool Executor (确保它已准备好)
-                # 如果 ToolExecutor 需要特定于请求的数据，则不应在此处创建
-                if self._tool_executor is None:
-                     self._tool_executor = ToolExecutor(db_session=self.db) # 重新确认或初始化
-                     logger.info("Initialized ToolExecutor in workflow_agent_executor property.")
+                # 2. 移除 Tool Executor 初始化
+                # if self._tool_executor is None:
+                #      # 使用获取到的 active_llm 初始化 ToolExecutor
+                #      self._tool_executor = ToolExecutor(llm_client=active_llm) 
+                #      logger.info("Initialized ToolExecutor in workflow_agent_executor property.")
 
-                # 3. 创建 Agent Runnable
-                self._agent_executor = create_workflow_agent_runnable(active_llm, self._tool_executor)
+                # 3. 创建 Agent Runnable (不再需要传递 tool_executor)
+                self._agent_executor = create_workflow_agent_runnable(llm=active_llm)
                 logger.info("Successfully created Workflow Agent Executor.")
             except Exception as e:
                 logger.error(f"Failed to create workflow agent executor: {e}", exc_info=True)
                 # 根据需要决定是否抛出异常或返回 None
                 raise RuntimeError(f"Could not create agent executor: {e}")
         return self._agent_executor
-
-    def _initialize_rag_chain(self):
-        """ 初始化 RAG Chain (示例，实际应使用依赖注入) """
-        logger.info("Initializing RAGChain in ChatService (example setup)")
-        # llm 实例已在 __init__ 中创建
-        embedding_service = DatabaseEmbeddingService() # 创建嵌入服务实例
-        
-        retriever = EmbeddingRetriever(db_session=self.db, embedding_service=embedding_service)
-        
-        # 使用工厂函数创建 RAG 链
-        rag_chain = create_rag_chain(llm=self.llm, retriever=retriever)
-        return rag_chain
 
     def create_chat(self, flow_id: str, name: str = "新聊天", chat_data: Dict[str, Any] = None) -> Optional[Chat]:
         """
@@ -316,98 +304,6 @@ class ChatService:
                 logger.info(f"ChatService: Rollback successful for chat {chat_id} in add_message.") 
             except Exception as rb_err:
                 logger.error(f"ChatService: Rollback failed for chat {chat_id} in add_message: {rb_err}", exc_info=True) 
-            return None
-
-    # --- 新增 RAG 交互方法 ---
-    async def get_rag_response(self, chat_id: str, question: str) -> Optional[Dict[str, Any]]:
-        """
-        获取 RAG 响应并更新聊天记录。
-
-        Args:
-            chat_id: 聊天ID。
-            question: 用户提出的问题。
-
-        Returns:
-            包含 RAG 响应内容的字典，如果失败则返回 None。
-            例如: {"answer": "...", "context": [...]}
-        """
-        logger.info(f"正在为聊天 {chat_id} 获取 RAG 响应，问题: '{question[:50]}...'")
-        try:
-            chat = self.get_chat(chat_id)
-            if not chat:
-                logger.error(f"聊天 {chat_id} 未找到，无法获取 RAG 响应")
-                return None
-
-            if not self.rag_chain:
-                logger.error("RAG 链未初始化，无法获取响应")
-                # 尝试重新初始化？或者直接返回错误
-                # self.rag_chain = self._initialize_rag_chain()
-                # if not self.rag_chain: # 如果再次失败
-                return None
-
-            # 1. 提取聊天历史 (如果需要传递给 RAG 链)
-            # 注意：当前的 RAGChain 实现 (create_rag_chain) 可能只需要问题和检索到的文档
-            # chat_history = chat.chat_data.get("messages", [])
-            # 可以选择性地格式化或截断历史记录
-            # formatted_history = format_history_for_rag(chat_history) # 示例
-
-            # 2. 准备 RAG 链的输入
-            rag_input = RAGInput(
-                question=question,
-                # chat_history=formatted_history # 如果 RAG 链需要历史记录
-            )
-
-            # 3. 调用 RAG 链 (异步)
-            # rag_chain 是一个 Runnable 对象
-            logger.debug(f"Invoking RAG chain for chat {chat_id} with input: {rag_input.dict()}")
-            response = await self.rag_chain.ainvoke(rag_input.dict())
-            logger.debug(f"RAG chain response received for chat {chat_id}: {response}")
-
-
-            # 4. 处理响应
-            # 响应的结构取决于 RAG 链的定义，通常包含 'answer' 和 'context'
-            answer = response.get("answer", "抱歉，我无法回答这个问题。")
-            context_docs = response.get("context", []) # 检索到的文档
-
-            logger.info(f"成功为聊天 {chat_id} 获取 RAG 响应。答案: '{answer[:50]}...'")
-
-            # 5. 将用户问题和 RAG 回答添加到聊天记录 (异步添加?)
-            # 注意：add_message_to_chat 是同步的，在异步方法中调用需要注意
-            # 最好将数据库操作也异步化，或使用 asyncio.to_thread
-            # 这里暂时保持同步调用，但标记为潜在的阻塞点
-            user_msg_added = self.add_message_to_chat(chat_id, role="user", content=question)
-            if user_msg_added:
-                 assistant_msg_added = self.add_message_to_chat(chat_id, role="assistant", content=answer) # 只记录答案
-                 if not assistant_msg_added:
-                     logger.error(f"Failed to add assistant message to chat {chat_id}")
-            else:
-                 logger.error(f"Failed to add user message to chat {chat_id}")
-
-
-            # 6. 返回响应给调用者 (例如 API 端点)
-            # 确保 Document 对象可以被序列化
-            serializable_context = []
-            if context_docs:
-                try:
-                    serializable_context = [doc.dict() if hasattr(doc, 'dict') else repr(doc) for doc in context_docs]
-                except Exception as serialize_err:
-                    logger.warning(f"Could not serialize context documents for chat {chat_id}: {serialize_err}")
-                    serializable_context = [repr(doc) for doc in context_docs] # Fallback to repr
-
-
-            return {
-                "answer": answer,
-                "context": serializable_context # 返回可序列化的上下文
-            }
-
-        except Exception as e:
-            logger.error(f"为聊天 {chat_id} 获取 RAG 响应时出错: {str(e)}", exc_info=True)
-            # 异步地添加错误消息
-            try:
-                self.add_message_to_chat(chat_id, role="user", content=question)
-                self.add_message_to_chat(chat_id, role="assistant", content=f"处理您的问题时遇到错误，请稍后再试。")
-            except Exception as log_err:
-                 logger.error(f"Failed to add error message to chat {chat_id}: {log_err}")
             return None
 
     def delete_chat(self, chat_id: str) -> bool:

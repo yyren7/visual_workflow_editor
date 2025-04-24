@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional, Type, Union, Tuple
 from pydantic import BaseModel, Field
-from langchain.tools import BaseTool, Tool
+from langchain_core.tools import StructuredTool, BaseTool
 import logging
 import uuid
 import os
@@ -8,6 +8,9 @@ import json
 import httpx
 import asyncio
 from sqlalchemy.orm import Session
+from database.connection import get_db, get_db_context
+from backend.app.services.flow_service import FlowService
+from backend.app.services.flow_variable_service import FlowVariableService
 
 # Use correct absolute path for logger import
 from backend.langchainchat.utils.logging import logger
@@ -19,21 +22,18 @@ from .definitions import (
 )
 # Import the necessary LLM client class
 from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
-# Import the output parser (assuming it's needed for property generation)
-from backend.langchainchat.output_parsers.structured_parser import StructuredOutputParser
 
-# 节点创建工具 - 同步版本
+# --- 1. 定义同步工具函数 --- 
 def create_node_tool_func(
     node_type: str,
     node_label: Optional[str] = None, 
     properties: Optional[Dict[str, Any]] = None,
     position: Optional[Dict[str, float]] = None,
-    # 添加可能的替代参数名
     node_name: Optional[str] = None,
     label: Optional[str] = None,
-    type: Optional[str] = None,  # 兼容可能的type参数
-    flow_id: Optional[str] = None,  # 添加flow_id参数
-    **kwargs  # 捕获任何其他参数
+    type: Optional[str] = None,
+    flow_id: Optional[str] = None,
+    **kwargs
 ) -> Dict[str, Any]:
     """
     创建流程图节点
@@ -53,7 +53,6 @@ def create_node_tool_func(
         节点创建结果
     """
     try:
-        # 添加详细的调试日志
         logger.info("=" * 40)
         logger.info("创建节点工具函数被调用")
         logger.info(f"节点类型参数: node_type={node_type}, type={type}")
@@ -153,19 +152,9 @@ def create_node_tool_func(
             }
         }
         logger.info(f"创建节点数据: id={node_id}, type={node_type}, label={effective_label}")
-        
-        # 使用同步方式调用API
+
+        # 使用上下文管理器进行数据库操作
         try:
-            # 这里我们使用内部API直接创建节点
-            from database.connection import get_db
-            from backend.app.services.flow_service import FlowService
-            
-            # 获取数据库会话
-            db = next(get_db())
-            
-            # 获取流服务
-            flow_service = FlowService(db)
-            
             # 获取流程图ID，优先使用传入的flow_id
             target_flow_id = flow_id
             
@@ -179,63 +168,63 @@ def create_node_tool_func(
                 }
             
             logger.info(f"使用流程图ID: {target_flow_id}")
-            
-            # 获取当前流程图数据
-            flow_data = flow_service.get_flow(target_flow_id)
-            if not flow_data:
-                logger.error(f"无法获取流程图(ID={target_flow_id})数据")
-                return {
-                    "success": False,
-                    "message": f"无法获取流程图(ID={target_flow_id})数据",
-                    "error": f"无法获取流程图(ID={target_flow_id})数据"
-                }
-            
-            # 确保nodes字段存在
-            if "nodes" not in flow_data:
-                flow_data["nodes"] = []
+
+            # 使用上下文管理器获取db会话
+            with get_db_context() as db:
+                flow_service = FlowService(db)
                 
-            # 添加新节点到节点列表
-            flow_data["nodes"].append(node_data)
+                # 获取当前流程图数据
+                flow_data = flow_service.get_flow(target_flow_id)
+                if not flow_data:
+                    logger.error(f"无法获取流程图(ID={target_flow_id})数据")
+                    return {
+                        "success": False,
+                        "message": f"无法获取流程图(ID={target_flow_id})数据",
+                        "error": f"无法获取流程图(ID={target_flow_id})数据"
+                    }
+                
+                # 确保nodes字段存在
+                if "nodes" not in flow_data:
+                    flow_data["nodes"] = []
+                    
+                # 添加新节点到节点列表
+                flow_data["nodes"].append(node_data)
+                
+                # 更新流程图数据
+                success = flow_service.update_flow(
+                    flow_id=target_flow_id,
+                    data=flow_data,
+                    name=flow_data.get("name") # Pass name explicitly if it exists in flow_data
+                )
             
-            # 更新流程图数据
-            success = flow_service.update_flow(
-                flow_id=target_flow_id,
-                data=flow_data,
-                name=flow_data.get("name") # Pass name explicitly if it exists in flow_data
-            )
-            
-            if not success:
-                logger.error(f"更新流程图失败 for flow {target_flow_id}")
-                # Return success: False if DB update fails
+                if not success:
+                    logger.error(f"更新流程图失败 for flow {target_flow_id}")
+                    # Return success: False if DB update fails
+                    return {
+                        "success": False,
+                        "message": f"创建节点 '{effective_label}' 成功，但更新数据库失败",
+                        "error": "数据库更新失败",
+                        "node_data": node_data # Still return the intended node data for context
+                    }
+                
+                logger.info(f"节点创建并保存成功: {node_id}") # Updated log message
+                logger.info("=" * 40)
                 return {
-                    "success": False,
-                    "message": f"创建节点 '{effective_label}' 成功，但更新数据库失败",
-                    "error": "数据库更新失败",
-                    "node_data": node_data # Still return the intended node data for context
+                    "success": True,
+                    "message": f"成功创建并保存节点: {effective_label} (类型: {node_type})", # Updated message
+                    "node_data": node_data
                 }
-            
-            logger.info(f"节点创建并保存成功: {node_id}") # Updated log message
-            logger.info("=" * 40)
-            return {
-                "success": True,
-                "message": f"成功创建并保存节点: {effective_label} (类型: {node_type})", # Updated message
-                "node_data": node_data
-            }
         except Exception as e:
             # This exception is for the API call block (getting flow, updating flow)
             logger.error(f"数据库操作失败: {str(e)}")
             import traceback
             logger.error(f"错误详情: {traceback.format_exc()}")
-            
-            # --- 修改错误处理 ---
-            # Return success: False on DB operation error
             return {
                 "success": False,
                 "message": f"创建节点 '{effective_label}' 时数据库操作失败",
                 "error": f"数据库错误: {str(e)}",
                 "node_data": node_data # Return intended node data for context
             }
-            # --- 结束修改 ---
         
     except Exception as e:
         # This is for general errors before DB operations
@@ -249,50 +238,12 @@ def create_node_tool_func(
             "error": str(e)
         }
 
-# 使用Tool工厂函数创建工具
-create_node_tool = Tool(
-    name="create_node",
-    description="""创建一个新的流程图节点。
-    参数:
-    - node_type (必需): 节点类型，如"moveL", "movel", "process", "decision"等，也可使用type参数
-    - node_label (可选): 节点标签，如果未提供则使用node_type作为标签，也可使用node_name或label参数
-    - properties (可选): 节点属性字典，可包含节点特定的配置参数。所有缺失的属性都会使用默认值自动填充
-                       包括control_x、control_y等属性，默认值均为"enable"
-    - position (可选): 节点位置，包含x和y坐标的对象，如果未提供则自动生成随机位置
-    
-    示例用法:
-    create_node(node_type="moveL")
-    create_node(node_type="process", node_label="处理数据")
-    create_node(node_type="moveL", properties={"control_x": "enable", "control_y": "enable"})
-    create_node(type="moveL", node_name="移动节点")
-    
-    注意：
-    1. 即使不提供任何可选参数，也能成功创建节点，所有必要的属性都会自动填充默认值
-    2. 工具会自动处理inputs参数中的常见参数别名，如node_name代替node_label
-    3. 对于movel类型节点，工具会自动提供点位列表、控制参数等默认值
-    """,
-    func=create_node_tool_func,
-)
-
-# 连接节点工具函数
 def connect_nodes_tool_func(
     source_id: str,
     target_id: str,
     label: Optional[str] = None,
-    flow_id: Optional[str] = None  # 添加flow_id参数
+    flow_id: Optional[str] = None
 ) -> Dict[str, Any]:
-    """
-    连接两个流程图节点
-    
-    Args:
-        source_id: 源节点ID
-        target_id: 目标节点ID
-        label: 连接标签
-        flow_id: 流程图ID，如果提供则优先使用
-        
-    Returns:
-        连接创建结果
-    """
     try:
         logger.info(f"连接节点: {source_id} -> {target_id}")
         
@@ -311,18 +262,8 @@ def connect_nodes_tool_func(
             "markerEnd": {"type": "arrowclosed", "color": "#888", "width": 20, "height": 20}
         }
         
-        # 调用API创建连接
+        # 使用上下文管理器进行数据库操作
         try:
-            # 这里使用内部API直接创建连接
-            from database.connection import get_db
-            from backend.app.services.flow_service import FlowService
-            
-            # 获取数据库会话
-            db = next(get_db())
-            
-            # 获取流服务
-            flow_service = FlowService(db)
-            
             # 获取流程图ID，优先使用传入的flow_id
             target_flow_id = flow_id
             
@@ -336,43 +277,48 @@ def connect_nodes_tool_func(
                 }
             
             logger.info(f"使用流程图ID: {target_flow_id}")
-            
-            # 获取当前流程图数据
-            flow_data = flow_service.get_flow(target_flow_id)
-            if not flow_data:
-                return {
-                    "success": False,
-                    "message": f"无法获取流程图(ID={target_flow_id})数据",
-                    "error": f"无法获取流程图(ID={target_flow_id})数据"
-                }
-            
-            # 确保edges字段存在
-            if "edges" not in flow_data:
-                flow_data["edges"] = []
+
+            # 使用上下文管理器获取db会话
+            with get_db_context() as db:
+                flow_service = FlowService(db)
                 
-            # 添加新连接到edges列表
-            flow_data["edges"].append(edge_data)
+                # 获取当前流程图数据
+                flow_data = flow_service.get_flow(target_flow_id)
+                if not flow_data:
+                    return {
+                        "success": False,
+                        "message": f"无法获取流程图(ID={target_flow_id})数据",
+                        "error": f"无法获取流程图(ID={target_flow_id})数据"
+                    }
+                
+                # 确保edges字段存在
+                if "edges" not in flow_data:
+                    flow_data["edges"] = []
+                    
+                # 添加新连接到edges列表
+                flow_data["edges"].append(edge_data)
+                
+                # 更新流程图数据
+                success = flow_service.update_flow(
+                    flow_id=target_flow_id,
+                    data=flow_data,
+                    name=flow_data.get("name") # 明确传递 name
+                )
             
-            # 更新流程图数据
-            success = flow_service.update_flow(
-                flow_id=target_flow_id,
-                data=flow_data
-            )
+                if not success:
+                    logger.error(f"更新流程图失败")
+                    return {
+                        "success": False,
+                        "message": "更新流程图失败",
+                        "error": "更新流程图失败"
+                    }
             
-            if not success:
-                logger.error(f"更新流程图失败")
+                logger.info(f"连接创建成功: {connection_id}")
                 return {
-                    "success": False,
-                    "message": "更新流程图失败",
-                    "error": "更新流程图失败"
+                    "success": True,
+                    "message": f"成功连接节点: {source_id} -> {target_id}",
+                    "connection_data": edge_data
                 }
-            
-            logger.info(f"连接创建成功: {connection_id}")
-            return {
-                "success": True,
-                "message": f"成功连接节点: {source_id} -> {target_id}",
-                "connection_data": edge_data
-            }
         except Exception as e:
             logger.error(f"API调用失败: {str(e)}")
             import traceback
@@ -393,43 +339,11 @@ def connect_nodes_tool_func(
             "error": str(e)
         }
 
-# 使用Tool工厂函数创建连接节点工具
-connect_nodes_tool = Tool(
-    name="connect_nodes",
-    description="连接两个流程图节点",
-    func=connect_nodes_tool_func,
-)
-
-# 获取流程图信息工具函数
 def get_flow_info_tool_func(
-    flow_id: Optional[str] = None  # 添加flow_id参数
+    flow_id: Optional[str] = None
 ) -> Dict[str, Any]:
-    """
-    获取当前流程图的信息
-    
-    Args:
-        flow_id: 流程图ID，如果提供则优先使用
-        
-    Returns:
-        流程图信息
-    """
     try:
         logger.info("获取流程图信息")
-        
-        # --- 修改：不再手动获取/关闭DB Session，依赖外部传入或上下文 ---
-        # from database.connection import get_db
-        # from backend.app.services.flow_service import FlowService
-        # db = next(get_db())
-        # try:
-        # ... existing logic ...
-        # finally:
-        #    db.close() # <-- REMOVE THIS
-        # --- 结束修改 ---
-
-        # 假设 FlowService 实例和 flow_id 通过某种方式获得
-        # 这里我们需要调整函数签名或依赖注入方式
-        # 为了演示，我们假设 FlowService 和 flow_id 存在
-        # 在实际应用中，ToolExecutor 调用此函数时需要传递 flow_id
 
         if not flow_id:
             logger.error("获取流程图信息失败：必须提供 flow_id")
@@ -439,9 +353,10 @@ def get_flow_info_tool_func(
                 "error": "Missing required flow_id"
             }
         
-        # --- 使用 get_db_context 获取 session --- 
-        with get_db_context() as db_session_info:
-            flow_service = FlowService(db_session_info)
+        # 使用上下文管理器获取db会话
+        with get_db_context() as db:
+            flow_service = FlowService(db)
+            variable_service = FlowVariableService(db)
             logger.info(f"使用流程图ID: {flow_id}")
             
             # 获取流程图详情
@@ -451,18 +366,11 @@ def get_flow_info_tool_func(
                 return {"success": False, "message": f"未找到流程图 {flow_id}", "error": "Flow not found"}
 
             # 获取流程变量
-            variable_service = FlowVariableService(db_session_info)
             variables = variable_service.get_variables(flow_id)
-            # ---------------------------------------
             
-            # --- 修改：返回完整节点和边数据 --- 
+            # 获取节点和边
             nodes = flow_data.get("nodes", [])
             edges = flow_data.get("edges", []) 
-            
-            # --- 修改：不再只返回摘要 --- 
-            # node_summaries = [] 
-            # for node in nodes[:10]: ...
-            # --- 结束修改 ---
             
             # 构建返回信息
             return {
@@ -473,48 +381,124 @@ def get_flow_info_tool_func(
                     "name": flow_data.get("name", "未命名流程图"),
                     "created_at": flow_data.get("created_at", "未知"),
                     "updated_at": flow_data.get("updated_at", "未知"),
-                    # --- 修改：包含完整节点、边和变量 --- 
                     "nodes": nodes,
                     "edges": edges,
                     "variables": variables
-                    # --- 结束修改 ---
-                    # "node_count": len(nodes),
-                    # "connection_count": len(edges),
-                    # "node_summaries": node_summaries
                 }
             }
         
     except Exception as e:
-        logger.error(f"获取流程图信息时出错 (flow_id: {flow_id}): {str(e)}")
-        import traceback
-        logger.error(f"错误详情: {traceback.format_exc()}")
-        return {
-            "success": False,
-            "message": f"获取流程图信息失败: {str(e)}",
-            "error": str(e)
-        }
+        logger.error(f"获取流程图信息时出错: {str(e)}", exc_info=True)
+        return {"success": False, "message": f"获取流程图信息失败: {str(e)}"}
 
-# 使用Tool工厂函数创建获取流程图信息工具
-get_flow_info_tool = Tool(
-    name="get_flow_info",
-    description="获取当前流程图的信息",
-    func=get_flow_info_tool_func,
+# --- 新增: RAG 检索工具函数 --- 
+def retrieve_context_func(query: str, flow_id: Optional[str] = None) -> Dict[str, Any]:
+    """根据用户查询从知识库检索相关上下文。"""
+    logger.info(f"检索上下文: 查询='{query[:50]}...', flow_id={flow_id}")
+    try:
+        with get_db_context() as db:
+            # 实例化依赖
+            from database.embedding.service import DatabaseEmbeddingService
+            from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
+
+            embedding_service = DatabaseEmbeddingService() # 通常 Embedding Service 不需要 db
+            # EmbeddingRetriever 需要 db 和 embedding_service
+            retriever = EmbeddingRetriever(db_session=db, embedding_service=embedding_service)
+            
+            # 执行检索 (调用异步方法需要处理事件循环)
+            # 为了简化，这里我们假设有一个同步的 get_relevant_documents 或直接调用异步
+            # 注意：直接在同步函数中调用异步函数需要特定处理
+            # 这里我们尝试直接调用异步方法，但这在某些环境中可能无效
+            try:
+                import asyncio
+                # 尝试获取现有事件循环，否则创建新的
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                
+                documents = loop.run_until_complete(retriever._aget_relevant_documents(query, run_manager=None)) # 传递 None run_manager
+            except Exception as async_err:
+                 logger.error(f"调用异步检索时出错: {async_err}. 尝试同步方法 (可能为空).")
+                 # 如果异步调用失败，尝试调用同步（可能为空）
+                 documents = retriever._get_relevant_documents(query, run_manager=None)
+
+            if not documents:
+                logger.info("未检索到相关上下文。")
+                return {"success": True, "message": "未找到相关信息。", "retrieved_context": "未找到相关信息。"}
+
+            # 格式化文档内容
+            formatted_docs = "\n\n---\n\n".join([
+                f"来源: {doc.metadata.get('source', '未知')}\n内容: {doc.page_content}" 
+                for doc in documents
+            ])
+            logger.info(f"成功检索到 {len(documents)} 个文档。")
+            return {
+                "success": True, 
+                "message": f"成功检索到 {len(documents)} 条相关信息。", 
+                "retrieved_context": formatted_docs
+            }
+
+    except Exception as e:
+        logger.error(f"检索上下文时出错: {e}", exc_info=True)
+        return {"success": False, "message": f"检索信息时出错: {e}", "retrieved_context": "检索信息时出错。"}
+
+# --- 2. 定义 Pydantic V2 Schema --- 
+class CreateNodeSchema(BaseModel):
+    node_type: str = Field(description="The type of the node to create.")
+    node_label: Optional[str] = Field(None, description="The label for the node. Uses node_type if not provided.")
+    properties: Optional[Dict[str, Any]] = Field(None, description="Properties for the node.")
+    position: Optional[Dict[str, float]] = Field(None, description="Position (x, y) for the node.")
+    flow_id: Optional[str] = Field(description="The ID of the workflow to add the node to.")
+
+class ConnectNodesSchema(BaseModel):
+    source_id: str = Field(description="The ID of the source node.")
+    target_id: str = Field(description="The ID of the target node.")
+    label: Optional[str] = Field(None, description="Label for the connection.")
+    flow_id: Optional[str] = Field(description="The ID of the workflow where the connection belongs.")
+
+class GetFlowInfoSchema(BaseModel):
+    flow_id: Optional[str] = Field(description="The ID of the workflow to get information about.")
+
+# --- 新增: RAG 检索工具 Schema --- 
+class RetrieveContextSchema(BaseModel):
+    query: str = Field(description="The user query to search for relevant context.")
+    # flow_id 暂时可选，未来可能用于特定流程的知识库
+    flow_id: Optional[str] = Field(None, description="(Optional) The ID of the current workflow to scope the search.")
+
+# --- 3. 创建 StructuredTool 实例 --- 
+create_node_tool = StructuredTool.from_function(
+    func=create_node_tool_func,
+    name="create_node",
+    description="Creates a new node in the workflow diagram. Specify node type, label, position, properties and the flow_id.",
+    args_schema=CreateNodeSchema
 )
 
-# 提供一个简单的工具列表
-def get_flow_tools() -> List[BaseTool]:
-    """
-    获取流程工具列表
-    
-    Returns:
-        工具列表
-    """
-    logger.info("获取流程工具列表")
-    return [
-        create_node_tool,
-        connect_nodes_tool,
-        get_flow_info_tool
-    ]
+connect_nodes_tool = StructuredTool.from_function(
+    func=connect_nodes_tool_func,
+    name="connect_nodes",
+    description="Connects two nodes in the workflow diagram using their source_id and target_id. Also requires the flow_id.",
+    args_schema=ConnectNodesSchema
+)
+
+get_flow_info_tool = StructuredTool.from_function(
+    func=get_flow_info_tool_func,
+    name="get_flow_info",
+    description="Retrieves information about the current workflow, such as nodes, connections, and variables. Requires the flow_id.",
+    args_schema=GetFlowInfoSchema
+)
+
+# --- 新增: RAG 检索工具实例 --- 
+retrieve_context_tool = StructuredTool.from_function(
+    func=retrieve_context_func,
+    name="retrieve_context",
+    description="Searches the knowledge base for context relevant to the user's query. Use this before answering questions that require external knowledge.",
+    args_schema=RetrieveContextSchema
+)
+
+# --- 4. 导出工具列表 (添加新工具) --- 
+flow_tools: List[BaseTool] = [create_node_tool, connect_nodes_tool, get_flow_info_tool, retrieve_context_tool]
 
 # ======================
 # 工具实现函数
