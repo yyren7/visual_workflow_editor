@@ -24,13 +24,18 @@ import {
   Check as CheckIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
-import ToolCallCard from './ToolCallCard'; // <-- 导入新组件
 
-// Interface for messages, potentially adding a type for tool cards
+// Interface for messages, updated for new event structure
 interface DisplayMessage extends Message {
-  type?: 'text' | 'tool_card'; // Add type for rendering
-  toolInfo?: JsonChatResponse; // Store tool info if it's a tool card
-  isStreaming?: boolean; // Indicate if assistant message is currently streaming
+  type: 'text' | 'tool_status' | 'error'; // Refined types
+  isStreaming?: boolean; // Indicate if assistant text message is currently streaming
+
+  // Fields for tool status messages
+  toolName?: string;
+  toolInput?: any;
+  toolOutputSummary?: string;
+  toolStatus?: 'running' | 'completed' | 'error'; // Status of the tool call
+  toolErrorMessage?: string; // Specific error message for a tool failure
 }
 
 interface ChatInterfaceProps {
@@ -47,22 +52,28 @@ const formatMessagesToMarkdown = (messages: DisplayMessage[], chatName: string):
   messages.forEach(message => {
     const role = message.role.charAt(0).toUpperCase() + message.role.slice(1);
     markdown += `## ${role}\n\n`;
-    // TODO: Format tool card info for markdown if needed
-    if (message.type === 'tool_card' && message.toolInfo) {
-      markdown += `**[Tool Execution Card]**\n`;
-      markdown += `* Summary: ${message.toolInfo.summary || 'N/A'}\n`;
-      if (message.toolInfo.tool_calls_info) {
-        markdown += `* Calls: ${JSON.stringify(message.toolInfo.tool_calls_info)}\n`;
-      }
-      if (message.toolInfo.tool_results_info) {
-        markdown += `* Results: ${JSON.stringify(message.toolInfo.tool_results_info)}\n`;
-      }
-      if (message.toolInfo.error) {
-        markdown += `* Error: ${message.toolInfo.error}\n`;
-      }
-      markdown += `\n`;
+    // Remove specific handling for old 'tool_card' type
+    // if (message.type === 'tool_card' && message.toolInfo) {
+    //   markdown += `**[Tool Execution Card]**\n`;
+    //   markdown += `* Summary: ${message.toolInfo.summary || 'N/A'}\n`;
+    //   if (message.toolInfo.tool_calls_info) {
+    //     markdown += `* Calls: ${JSON.stringify(message.toolInfo.tool_calls_info)}\n`;
+    //   }
+    //   if (message.toolInfo.tool_results_info) {
+    //     markdown += `* Results: ${JSON.stringify(message.toolInfo.tool_results_info)}\n`;
+    //   }
+    //   if (message.toolInfo.error) {
+    //     markdown += `* Error: ${message.toolInfo.error}\n`;
+    //   }
+    //   markdown += `\n`;
+    // } else {
+    //   markdown += `${message.content}\n\n`;
+    // }
+    // Render base content (might need refinement for tool_status later)
+    if (message.type === 'tool_status') {
+         markdown += `**[Tool: ${message.toolName || 'Unknown'}]** - Status: ${message.toolStatus}${message.toolOutputSummary ? '\nOutput: ' + message.toolOutputSummary : ''}${message.toolErrorMessage ? '\nError: ' + message.toolErrorMessage : ''}\n\n`;
     } else {
-      markdown += `${message.content}\n\n`;
+         markdown += `${message.content}\n\n`;
     }
     markdown += `---\n\n`;
   });
@@ -328,111 +339,210 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log("Received SSE Event:", JSON.stringify(event)); // 保持这个日志用于调试
 
       setMessages(prevMessages => {
-        // 找到当前正在流式处理的助手消息
-        const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
+        // const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
+        const newMessages = [...prevMessages]; // Create mutable copy
+        const currentStreamingMsgIndex = newMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current && msg.type === 'text');
         // console.log("Found streaming index:", currentStreamingMsgIndex);
 
-        if (currentStreamingMsgIndex === -1 && event.type !== 'final_result' && event.type !== 'error') {
-          console.warn(`Received event type ${event.type} but no streaming message ref found.`);
-          return prevMessages;
-        }
+        // if (currentStreamingMsgIndex === -1 && event.type !== 'final_result' && event.type !== 'error') {
+        //   console.warn(`Received event type ${event.type} but no streaming message ref found.`);
+        //   return prevMessages;
+        // }
+        // Allow events even if no streaming message ref exists yet (e.g., first token or tool call)
 
-        const newMessages = [...prevMessages];
+        // const newMessages = [...prevMessages];
 
         switch (event.type) {
-          case 'llm_chunk':
-            if (currentStreamingMsgIndex !== -1) {
-              const textChunk = event.data.text;
-              // console.log("Applying chunk:", textChunk);
-              const previousContent = newMessages[currentStreamingMsgIndex].content;
-              newMessages[currentStreamingMsgIndex] = {
-                ...newMessages[currentStreamingMsgIndex],
-                content: previousContent + textChunk,
-                isStreaming: true,
-                type: 'text',
-                toolInfo: undefined
+          case 'token':
+            const token = event.data;
+            // Capture ref value before async update
+            const currentStreamingId = streamingAssistantMsgIdRef.current;
+            const streamingMsgIndex = newMessages.findIndex(msg => msg.timestamp === currentStreamingId && msg.type === 'text');
+
+            if (streamingMsgIndex !== -1) {
+              // Append token to existing streaming message
+              newMessages[streamingMsgIndex] = {
+                ...newMessages[streamingMsgIndex],
+                content: newMessages[streamingMsgIndex].content + token,
+                isStreaming: true, // Keep streaming flag
               };
-              // console.log("Updated content:", newMessages[currentStreamingMsgIndex].content);
             } else {
-               console.warn("LLM Chunk received but no active streaming message found!");
+              // If no streaming message exists, create it ONLY if token is not empty
+              if (token) {
+                const assistantMessageId = currentStreamingId || `assistant-${Date.now()}`;
+                if (!currentStreamingId) {
+                    streamingAssistantMsgIdRef.current = assistantMessageId; // Update ref if it was null
+                }
+                newMessages.push({
+                  role: 'assistant',
+                  content: token,
+                  timestamp: assistantMessageId,
+                  type: 'text',
+                  isStreaming: true,
+                });
+              } else {
+                  console.log("Ignoring empty token for new message creation.");
+              }
             }
             break;
-          case 'final_result':
-             const finalData = event.data;
-             let finalContent = finalData.summary || '';
-             let finalType: 'text' | 'tool_card' = 'text';
-             let finalToolInfo: JsonChatResponse | undefined = undefined;
 
-             if (finalData.error) {
-                 finalContent = `错误: ${finalData.error}`;
-                 setError(finalData.error); 
-             } else if (finalData.tool_calls_info || finalData.tool_results_info) {
-                 finalType = 'tool_card';
-                 finalContent = finalData.summary || '[工具执行完成]';
-                 finalToolInfo = finalData;
-             }
-
-             if (currentStreamingMsgIndex !== -1) {
-                 newMessages[currentStreamingMsgIndex] = {
-                     ...newMessages[currentStreamingMsgIndex],
-                     content: finalContent,
-                     type: finalType,
-                     toolInfo: finalToolInfo,
-                     isStreaming: false // 标记流结束
-                 };
-             } else {
-                  newMessages.push({
-                      role: 'assistant',
-                      content: finalContent,
-                      timestamp: `assistant-${Date.now()}`,
-                      type: finalType,
-                      toolInfo: finalToolInfo,
-                      isStreaming: false
-                  });
-             }
-             // --- 不在此处清除 Ref --- 
-             // streamingAssistantMsgIdRef.current = null; 
-             setIsSending(false); 
+          // case 'final_result': // Removed
+          //    const finalData = event.data;
+          //    ...
+          //   break;
+          case 'tool_start':
+            // Insert a new message indicating the tool call is starting
+            const toolStartMsgId = `tool-${event.data.name}-${Date.now()}`;
+            const toolStartMessage: DisplayMessage = {
+                 role: 'assistant', // Rendered as assistant message for flow
+                 content: '', // No main text content
+                 timestamp: toolStartMsgId,
+                 type: 'tool_status',
+                 toolName: event.data.name,
+                 toolInput: event.data.input,
+                 toolStatus: 'running',
+                 isStreaming: false, // This message itself isn't streaming text
+            };
+            // Insert *before* the current text streaming message if it exists
+            if (currentStreamingMsgIndex !== -1) {
+                newMessages.splice(currentStreamingMsgIndex, 0, toolStartMessage);
+            } else {
+                newMessages.push(toolStartMessage); // Append if no text stream yet
+            }
             break;
+
+          case 'tool_end':
+            // Find the *last* running tool message with the matching name
+            const toolEndMsgIndex = newMessages.findLastIndex(msg =>
+                msg.type === 'tool_status' &&
+                msg.toolName === event.data.name &&
+                msg.toolStatus === 'running'
+            );
+            if (toolEndMsgIndex !== -1) {
+              newMessages[toolEndMsgIndex] = {
+                ...newMessages[toolEndMsgIndex],
+                toolStatus: 'completed',
+                toolOutputSummary: event.data.output_summary,
+              };
+            } else {
+                 console.warn(`Received tool_end for ${event.data.name} but no matching running tool message found.`);
+                 // Optionally add a new completed tool message as fallback?
+                 const toolEndFallback: DisplayMessage = {
+                     role: 'assistant',
+                     content: '',
+                     timestamp: `tool-end-fallback-${event.data.name}-${Date.now()}`,
+                     type: 'tool_status',
+                     toolName: event.data.name,
+                     toolStatus: 'completed',
+                     toolOutputSummary: event.data.output_summary,
+                     isStreaming: false
+                 };
+                 if (currentStreamingMsgIndex !== -1) {
+                    newMessages.splice(currentStreamingMsgIndex, 0, toolEndFallback);
+                 } else {
+                    newMessages.push(toolEndFallback);
+                 }
+            }
+            break;
+
           case 'stream_end':
             console.log("Stream end event received."); // 保持这个日志
-            if (currentStreamingMsgIndex !== -1) {
-              newMessages[currentStreamingMsgIndex] = {
-                ...newMessages[currentStreamingMsgIndex],
-                isStreaming: false
-              };
-            }
-            // --- 不在此处清除 Ref --- 
-            // streamingAssistantMsgIdRef.current = null; 
-            setIsSending(false); 
-            break;
-          case 'error':
-            console.error("Received error event:", event.data.message); // 保持这个日志
-            const errorMessage = `错误: ${event.data.message}`;
-            if (currentStreamingMsgIndex !== -1) {
-              newMessages[currentStreamingMsgIndex] = {
-                ...newMessages[currentStreamingMsgIndex],
-                content: newMessages[currentStreamingMsgIndex].content + `\n${errorMessage}`,
-                isStreaming: false
+            // Capture the ID before the async state update
+            const idToMarkAsFinished = streamingAssistantMsgIdRef.current;
+            // Find the message using the captured ID
+            const finishedMsgIndex = newMessages.findIndex(msg => msg.timestamp === idToMarkAsFinished);
+
+            if (finishedMsgIndex !== -1) {
+              newMessages[finishedMsgIndex] = {
+                ...newMessages[finishedMsgIndex],
+                isStreaming: false // Mark the text message as complete
               };
             } else {
-               newMessages.push({
-                   role: 'assistant',
-                   content: errorMessage,
-                   timestamp: `error-${Date.now()}`,
-                   type: 'text',
-                   isStreaming: false
-               });
+                // Handle case where only tool calls might have happened (or ref was somehow lost)
+                // Try to find the last assistant message and mark it as not streaming
+                const lastAssistantMsgIndex = newMessages.findLastIndex(msg => msg.role === 'assistant');
+                if (lastAssistantMsgIndex !== -1 && newMessages[lastAssistantMsgIndex].isStreaming) {
+                     console.warn("Stream end: Could not find message by ref, marking last assistant message as finished.");
+                     newMessages[lastAssistantMsgIndex] = {...newMessages[lastAssistantMsgIndex], isStreaming: false };
+                }
             }
-            setError(event.data.message);
-            // --- 不在此处清除 Ref --- 
+            // --- 不在此处清除 Ref 或 设置 isSending --- 
             // streamingAssistantMsgIdRef.current = null; 
-            setIsSending(false); 
+            break;
+          case 'error':
+            console.error("Received error event:", event.data); // Log the full data object
+            const errorData = event.data;
+            const errorMessage = `错误 (阶段: ${errorData.stage || '未知'}): ${errorData.message}`;
+            setError(errorMessage); // Set global error state
+
+            if (errorData.tool_name) {
+                // Find the running tool message to mark as error
+                const toolErrorMsgIndex = newMessages.findLastIndex(msg =>
+                    msg.type === 'tool_status' &&
+                    msg.toolName === errorData.tool_name &&
+                    msg.toolStatus === 'running'
+                );
+                if (toolErrorMsgIndex !== -1) {
+                    newMessages[toolErrorMsgIndex] = {
+                        ...newMessages[toolErrorMsgIndex],
+                        toolStatus: 'error',
+                        toolErrorMessage: errorData.message, // Store specific message
+                    };
+                } else {
+                     console.warn(`Received tool error for ${errorData.tool_name} but no matching running tool message found.`);
+                     // Add a generic error message instead
+                     if (currentStreamingMsgIndex !== -1) {
+                        newMessages[currentStreamingMsgIndex] = {
+                           ...newMessages[currentStreamingMsgIndex],
+                           content: newMessages[currentStreamingMsgIndex].content + `\n\n${errorMessage}`,
+                           isStreaming: false,
+                        };
+                     } else {
+                         // Add a new error message block if no streaming message
+                         const errorMsgId = streamingAssistantMsgIdRef.current || `error-${Date.now()}`;
+                         if (!streamingAssistantMsgIdRef.current) {
+                             streamingAssistantMsgIdRef.current = errorMsgId; // Use ref for consistency
+                         }
+                         newMessages.push({
+                             role: 'assistant', // Render as assistant
+                             content: errorMessage,
+                             timestamp: errorMsgId,
+                             type: 'error', // Use specific error type
+                             isStreaming: false,
+                         });
+                     }
+                }
+            } else {
+                 // General error, append to streaming message or add new one
+                 if (currentStreamingMsgIndex !== -1) {
+                   newMessages[currentStreamingMsgIndex] = {
+                     ...newMessages[currentStreamingMsgIndex],
+                     content: newMessages[currentStreamingMsgIndex].content + `\n\n${errorMessage}`,
+                     isStreaming: false, // Stop streaming on error
+                     type: 'error' // Mark message as error type? Or keep text?
+                   };
+                 } else {
+                     const errorMsgId = streamingAssistantMsgIdRef.current || `error-${Date.now()}`;
+                     if (!streamingAssistantMsgIdRef.current) {
+                         streamingAssistantMsgIdRef.current = errorMsgId;
+                     }
+                     newMessages.push({
+                         role: 'assistant',
+                         content: errorMessage,
+                         timestamp: errorMsgId,
+                         type: 'error',
+                         isStreaming: false,
+                     });
+                 }
+            }
+            setIsSending(false); // Stop sending indicator on error
+            // No need to clear ref here, handleChatClose does it
             break;
           case 'ping':
              console.log("Received ping event from server.");
              break;
           default:
+            // Use exhaustiveness check helper if possible, or log warning
             console.warn("Received unknown event type:", event);
         }
         return newMessages;
@@ -464,18 +574,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const handleChatClose: OnChatCloseCallback = () => {
       console.log("Chat EventSource closed."); // 保持这个日志
-      setMessages(prevMessages => {
-         const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
-         if (currentStreamingMsgIndex !== -1 && prevMessages[currentStreamingMsgIndex].isStreaming) {
-             const newMessages = [...prevMessages];
-             newMessages[currentStreamingMsgIndex] = {
-                 ...newMessages[currentStreamingMsgIndex],
-                 isStreaming: false
-             };
-             return newMessages;
-         }
-         return prevMessages; 
-      });
+      // No longer need to update isStreaming here, stream_end handles it.
+      // setMessages(prevMessages => { ... }); 
       setIsSending(false); 
       streamingAssistantMsgIdRef.current = null; // <-- **在这里清除 Ref**
       closeEventSourceRef.current = null; 
@@ -612,49 +712,71 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const inputDisabled = !hasActiveChat || isSending || isLoadingChat || isLoadingList || isCreatingChat;
 
   // --- Rendering Logic (Needs update for clickable nodes) ---
+  // --- Rendering Logic (Updated for tool_status) ---
   const renderMessageContent = (message: DisplayMessage) => {
-    if (message.type === 'tool_card' && message.toolInfo) {
-      // --- 使用 ToolCallCard ---
-      return <ToolCallCard toolInfo={message.toolInfo} />;
-      // -------------------------
-      /*  之前的占位符 Box
-      return (
-        <Box sx={{ border: '1px dashed grey', p: 1, borderRadius: 1, my: 0.5 }}>
-          <Typography variant="caption" display="block" gutterBottom>工具执行信息:</Typography>
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
-            {message.content} 
-          </Typography>
-        </Box>
-      );
-      */
+    // Ensure old 'tool_card' logic is completely removed
+    // if (message.type === 'tool_card' && message.toolInfo) { ... }
+
+    if (message.type === 'tool_status') {
+        // ... (rendering logic for tool_status remains the same as previous edit) ...
+        return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {message.toolStatus === 'running' && <CircularProgress size={16} />}
+                {message.toolStatus === 'completed' && <CheckIcon fontSize="small" color="success" />}
+                {message.toolStatus === 'error' && <CloseIcon fontSize="small" color="error" />}
+                <Typography variant="body2" component="span" sx={{ fontWeight: 'bold' }}>
+                  Tool: {message.toolName || 'Unknown Tool'}
+                </Typography>
+                <Typography variant="caption" component="span">
+                  ({message.toolStatus})
+                </Typography>
+              </Box>
+              {message.toolStatus === 'completed' && message.toolOutputSummary && (
+                <Typography variant="body2" sx={{ pl: 3, whiteSpace: 'pre-wrap' }}>
+                  Output: {message.toolOutputSummary}
+                </Typography>
+              )}
+               {message.toolStatus === 'error' && message.toolErrorMessage && (
+                <Typography variant="body2" color="error" sx={{ pl: 3, whiteSpace: 'pre-wrap' }}>
+                  Error: {message.toolErrorMessage}
+                </Typography>
+              )}
+            </Box>
+          );
     }
 
-    // Original logic for rendering text, maybe with clickable nodes
+    if (message.type === 'error') {
+        // ... (rendering logic for error remains the same) ...
+        return <Typography color="error">{message.content}</Typography>;
+    }
+
+    // Default to text rendering logic
+    // ... (rendering logic for text remains the same) ...
     const parts = message.content.split(/(\[Node: [a-zA-Z0-9_-]+\])/g);
     return (
-      <>
-        {parts.map((part, index) => {
-          const match = part.match(/\[Node: ([a-zA-Z0-9_-]+)\]/);
-          if (match) {
-            const nodeId = match[1];
-            return (
-              <Button
-                key={index}
-                size="small"
-                variant="text"
-                onClick={() => onNodeSelect(nodeId)}
-                sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline', textTransform: 'none', display: 'inline', lineHeight: 'inherit' }}
-              >
-                (Node: {nodeId})
-              </Button>
-            );
-          }
-          return <span key={index}>{part}</span>;
-        })}
-        {/* Show streaming indicator */}
-        {message.isStreaming && <CircularProgress size={12} sx={{ ml: 1, verticalAlign: 'middle' }} />}
-      </>
-    );
+        <>
+          {parts.map((part, index) => {
+            const match = part.match(/\[Node: ([a-zA-Z0-9_-]+)\]/);
+            if (match) {
+              const nodeId = match[1];
+              return (
+                <Button
+                  key={index}
+                  size="small"
+                  variant="text"
+                  onClick={() => onNodeSelect(nodeId)}
+                  sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline', textTransform: 'none', display: 'inline', lineHeight: 'inherit' }}
+                >
+                  (Node: {nodeId})
+                </Button>
+              );
+            }
+            return <span key={index} style={{ whiteSpace: 'pre-wrap'}}>{part}</span>;
+          })}
+          {message.isStreaming && message.type === 'text' && <CircularProgress size={12} sx={{ ml: 1, verticalAlign: 'middle' }} />}
+        </>
+      );
   };
 
   return (
@@ -766,6 +888,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             mb: 1,
             backgroundColor: '#ffffff',
             position: 'relative',
+            ...(!hasActiveChat && {
+              opacity: 0.6,
+            }),
           }}
         >
           {isLoadingChat && (
@@ -775,8 +900,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
           {!isLoadingChat && !hasActiveChat && (
             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', textAlign: 'center', p: 2 }}>
-              <Typography variant="h6" gutterBottom>请选择或创建聊天</Typography>
-              <Typography color="text.secondary">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
+              <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>请选择或创建聊天</Typography>
+              <Typography color="black">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
             </Box>
           )}
           {!isLoadingChat && hasActiveChat && messages.length === 0 && (

@@ -200,48 +200,52 @@ def create_node_tool_func(
             # 更新流程图数据
             success = flow_service.update_flow(
                 flow_id=target_flow_id,
-                data=flow_data
+                data=flow_data,
+                name=flow_data.get("name") # Pass name explicitly if it exists in flow_data
             )
             
             if not success:
-                logger.error(f"更新流程图失败")
+                logger.error(f"更新流程图失败 for flow {target_flow_id}")
+                # Return success: False if DB update fails
                 return {
                     "success": False,
-                    "message": "更新流程图失败",
-                    "error": "更新流程图失败"
+                    "message": f"创建节点 '{effective_label}' 成功，但更新数据库失败",
+                    "error": "数据库更新失败",
+                    "node_data": node_data # Still return the intended node data for context
                 }
             
-            logger.info(f"节点创建成功: {node_id}")
+            logger.info(f"节点创建并保存成功: {node_id}") # Updated log message
             logger.info("=" * 40)
             return {
                 "success": True,
-                "message": f"成功创建节点: {effective_label} (类型: {node_type})",
+                "message": f"成功创建并保存节点: {effective_label} (类型: {node_type})", # Updated message
                 "node_data": node_data
             }
         except Exception as e:
-            logger.error(f"API调用失败: {str(e)}")
+            # This exception is for the API call block (getting flow, updating flow)
+            logger.error(f"数据库操作失败: {str(e)}")
             import traceback
             logger.error(f"错误详情: {traceback.format_exc()}")
             
-            # 即使API调用失败，我们仍然返回节点数据
-            # 这样LLM至少可以继续工作流程，即使节点未保存到数据库
-            logger.info(f"返回虚拟节点数据: {node_id}")
-            logger.info("=" * 40)
+            # --- 修改错误处理 ---
+            # Return success: False on DB operation error
             return {
-                "success": True,
-                "message": f"创建了虚拟节点: {effective_label} (类型: {node_type})",
-                "node_data": node_data,
-                "warning": "节点未保存到数据库，但已创建虚拟节点以继续工作流"
+                "success": False,
+                "message": f"创建节点 '{effective_label}' 时数据库操作失败",
+                "error": f"数据库错误: {str(e)}",
+                "node_data": node_data # Return intended node data for context
             }
+            # --- 结束修改 ---
         
     except Exception as e:
-        logger.error(f"创建节点时出错: {str(e)}")
+        # This is for general errors before DB operations
+        logger.error(f"创建节点准备阶段出错: {str(e)}")
         import traceback
         logger.error(f"错误详情: {traceback.format_exc()}")
         logger.info("=" * 40)
         return {
             "success": False,
-            "message": f"创建节点失败: {str(e)}",
+            "message": f"创建节点准备阶段失败: {str(e)}",
             "error": str(e)
         }
 
@@ -412,71 +416,76 @@ def get_flow_info_tool_func(
     try:
         logger.info("获取流程图信息")
         
-        # 使用内部API获取流程图信息
-        from database.connection import get_db
-        from backend.app.services.flow_service import FlowService
+        # --- 修改：不再手动获取/关闭DB Session，依赖外部传入或上下文 ---
+        # from database.connection import get_db
+        # from backend.app.services.flow_service import FlowService
+        # db = next(get_db())
+        # try:
+        # ... existing logic ...
+        # finally:
+        #    db.close() # <-- REMOVE THIS
+        # --- 结束修改 ---
+
+        # 假设 FlowService 实例和 flow_id 通过某种方式获得
+        # 这里我们需要调整函数签名或依赖注入方式
+        # 为了演示，我们假设 FlowService 和 flow_id 存在
+        # 在实际应用中，ToolExecutor 调用此函数时需要传递 flow_id
+
+        if not flow_id:
+            logger.error("获取流程图信息失败：必须提供 flow_id")
+            return {
+                "success": False, 
+                "message": "获取流程图信息失败：必须提供 flow_id",
+                "error": "Missing required flow_id"
+            }
         
-        # 获取数据库会话
-        db = next(get_db())
-        
-        try:
-            # 获取流服务
-            flow_service = FlowService(db)
-            
-            # 获取流程图ID，优先使用传入的flow_id
-            target_flow_id = flow_id
-            
-            # 如果没有提供 flow_id，则操作失败
-            if not target_flow_id:
-                logger.error("获取流程图信息失败：必须提供 flow_id")
-                return {
-                    "success": False, 
-                    "message": "获取流程图信息失败：必须提供 flow_id",
-                    "error": "Missing required flow_id"
-                }
-            
-            logger.info(f"使用流程图ID: {target_flow_id}")
+        # --- 使用 get_db_context 获取 session --- 
+        with get_db_context() as db_session_info:
+            flow_service = FlowService(db_session_info)
+            logger.info(f"使用流程图ID: {flow_id}")
             
             # 获取流程图详情
-            flow_data = flow_service.get_flow(target_flow_id)
+            flow_data = flow_service.get_flow(flow_id)
+            if not flow_data:
+                logger.warning(f"无法找到流程图 {flow_id}")
+                return {"success": False, "message": f"未找到流程图 {flow_id}", "error": "Flow not found"}
+
+            # 获取流程变量
+            variable_service = FlowVariableService(db_session_info)
+            variables = variable_service.get_variables(flow_id)
+            # ---------------------------------------
             
-            # 提取节点和连接
+            # --- 修改：返回完整节点和边数据 --- 
             nodes = flow_data.get("nodes", [])
-            edges = flow_data.get("edges", [])  # 使用edges而不是connections
+            edges = flow_data.get("edges", []) 
             
-            # 构建节点摘要
-            node_summaries = []
-            for node in nodes[:10]:  # 限制节点数量，避免响应过大
-                node_id = node.get("id", "未知")
-                node_type = node.get("type", "未知")
-                node_label = node.get("data", {}).get("label", "未命名")
-                node_summaries.append({
-                    "id": node_id,
-                    "type": node_type,
-                    "label": node_label
-                })
+            # --- 修改：不再只返回摘要 --- 
+            # node_summaries = [] 
+            # for node in nodes[:10]: ...
+            # --- 结束修改 ---
             
             # 构建返回信息
             return {
                 "success": True,
                 "message": "成功获取流程图信息",
                 "flow_info": {
-                    "flow_id": target_flow_id,
+                    "flow_id": flow_id,
                     "name": flow_data.get("name", "未命名流程图"),
                     "created_at": flow_data.get("created_at", "未知"),
                     "updated_at": flow_data.get("updated_at", "未知"),
-                    "node_count": len(nodes),
-                    "connection_count": len(edges),
-                    "node_summaries": node_summaries
+                    # --- 修改：包含完整节点、边和变量 --- 
+                    "nodes": nodes,
+                    "edges": edges,
+                    "variables": variables
+                    # --- 结束修改 ---
+                    # "node_count": len(nodes),
+                    # "connection_count": len(edges),
+                    # "node_summaries": node_summaries
                 }
             }
         
-        finally:
-            # 关闭数据库会话
-            db.close()
-        
     except Exception as e:
-        logger.error(f"获取流程图信息时出错: {str(e)}")
+        logger.error(f"获取流程图信息时出错 (flow_id: {flow_id}): {str(e)}")
         import traceback
         logger.error(f"错误详情: {traceback.format_exc()}")
         return {

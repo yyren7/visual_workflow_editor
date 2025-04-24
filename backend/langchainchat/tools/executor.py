@@ -1,6 +1,7 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import asyncio
+from langchain_core.tools import StructuredTool
 
 # 导入工具实现函数
 from .flow_tools import (
@@ -37,152 +38,116 @@ class ToolExecutor:
             llm_client: LLM 客户端实例，用于传递给需要调用 LLM 的工具。
         """
         self.llm_client = llm_client
-        # 将工具函数映射到名称
-        self.tool_functions = {
-            "create_node": create_node_func,
-            "connect_nodes": connect_nodes_func,
-            "set_properties": set_properties_func,
-            "ask_more_info": ask_more_info_func,
-            "generate_text": generate_text_func,
-            # 也可以使用 ToolType 枚举作为键
-            # ToolType.NODE_CREATION: create_node_func,
-            # ...
+        # Map *synchronous* tool functions intended for the Agent
+        self.agent_tool_functions = {
+            "create_node": create_node_tool_func,
+            "connect_nodes": connect_nodes_tool_func,
+            "get_flow_info": get_flow_info_tool_func,
+            # Add other sync functions if available and needed by agent
+            # "set_properties": set_properties_func, # Needs a sync wrapper or agent shouldn't use directly?
+            # "ask_more_info": ask_more_info_func, # Likely requires LLM call, better within agent logic?
+            # "generate_text": generate_text_func # Requires LLM, better within agent?
         }
-        # 将参数模型映射到名称 (用于验证)
-        self.param_models = {
+        # Map Pydantic models for argument validation for *synchronous* tools
+        self.agent_param_models = {
             "create_node": NodeParams,
             "connect_nodes": ConnectionParams,
-            "set_properties": PropertyParams,
-            "ask_more_info": QuestionsParams,
-            "generate_text": TextGenerationParams,
+            "get_flow_info": None, # No Pydantic model for this one
+            # "set_properties": PropertyParams,
+            # "ask_more_info": QuestionsParams,
+            # "generate_text": TextGenerationParams,
+        }
+        # Add descriptions for the Agent tools
+        self.agent_tool_descriptions = {
+             "create_node": "Creates a new node in the workflow diagram. Specify node type, label, position, etc.",
+             "connect_nodes": "Connects two nodes in the workflow diagram using their source and target handles.",
+             "get_flow_info": "Retrieves information about the current workflow, such as nodes, connections, and variables.",
+             # Add descriptions for other agent tools
         }
 
-    async def execute(self, tool_name: str, parameters: Dict[str, Any], db_session=None, flow_id: Optional[str] = None) -> ToolResult:
-        """
-        执行指定的工具。
-        
-        Args:
-            tool_name: 要执行的工具名称 (应与 tool_functions 中的键匹配)。
-            parameters: 工具所需的参数字典。
-            db_session: 数据库会话 (可选, 传递给需要的工具)。
-            flow_id: 当前流程图 ID (可选, 传递给需要的工具)。
-            
-        Returns:
-            工具执行结果。
-        """
-        logger.info(f"Attempting to execute tool: {tool_name} with params: {parameters} for flow_id: {flow_id}")
-        
-        if tool_name not in self.tool_functions:
-            logger.error(f"Unknown tool name: {tool_name}")
-            return ToolResult(success=False, message=f"未知的工具: {tool_name}")
-        
-        # 获取对应的工具函数和参数模型
-        tool_func = self.tool_functions[tool_name]
-        param_model = self.param_models.get(tool_name)
-        
-        try:
-            # 验证参数
-            if param_model:
-                # 将 flow_id 添加到参数字典中，以便 Pydantic 模型可以接收它 (如果定义了)
-                # 或者，如果工具函数直接接收 flow_id，则不需要在这里添加
-                # 当前 flow_tools.py 中的异步工具函数不直接接收 flow_id，而是 ToolResult 模型
-                # 而同步的 *_tool_func 接收 flow_id
-                # 为了兼容性，我们先尝试验证 Pydantic 模型，然后将 flow_id 传递给函数
-                validated_params = param_model(**parameters)
-            else:
-                # 如果没有定义参数模型，直接使用原始参数 (可能不安全)
-                 logger.warning(f"No parameter model defined for tool {tool_name}. Using raw params.")
-                 validated_params = parameters # 或者返回错误
-                 # return ToolResult(success=False, message=f"工具 {tool_name} 未定义参数模型")
-            
-            # 调用工具函数，传入验证后的参数和 LLM 客户端
-            # 注意：validated_params 是 Pydantic 模型实例
-            # 检查工具函数签名是否需要 db_session 或 flow_id
-            # 当前异步函数 (create_node_func 等) 的签名是 (params: Model, llm_client: LLM)
-            # 同步函数 (create_node_tool_func 等) 的签名包含 flow_id
-            # 这里执行的是异步函数，它们不直接接收 flow_id。 flow_id 应该在异步函数内部需要时获取。
-            # 但是，WorkflowChain 现在调用的是这里的 execute 方法，所以我们需要决定如何处理 flow_id
-            
-            # 方案1 (当前选择): 异步工具函数内部不使用 flow_id，依赖于之前的设置或默认行为 (需要修改工具函数)
-            # 方案2: 修改异步工具函数签名以接收 flow_id
-            # 方案3: 在这里根据 tool_name 调用不同的实现 (同步/异步)
-            
-            # --- 采用方案1的思路，异步工具函数签名不变 --- 
-            # 如果需要，LLM 客户端可以传递给需要它的工具
-            # result = await tool_func(validated_params, self.llm_client)
-            
-            # --- 尝试修改以适配新的调用方式 --- 
-            # 这里需要确定 tool_func 指向的是哪个函数
-            # 假设 tool_functions 映射的是异步函数 (如 create_node_func)
-            # 这些异步函数签名是 (params: Model, llm_client: LLM)
-            # 它们不直接接收 flow_id。 flow_id 需要在这些函数内部处理，
-            # 或者我们应该在这里调用能处理 flow_id 的同步函数 ( *_tool_func)。
-            
-            # --- 修正：让 ToolExecutor 调用能处理 flow_id 的同步函数 --- 
-            sync_tool_functions = {
-                "create_node": create_node_tool_func,
-                "connect_nodes": connect_nodes_tool_func,
-                "get_flow_info": get_flow_info_tool_func,
-                # 其他工具可能没有同步版本或不需要 flow_id
-            }
-            sync_param_models = {
-                "create_node": NodeParams, # 使用 Pydantic 模型验证
-                "connect_nodes": ConnectionParams,
-                "get_flow_info": None # get_flow_info 不使用 Pydantic 模型
-            }
-            
-            if tool_name in sync_tool_functions:
-                sync_tool_func = sync_tool_functions[tool_name]
-                sync_param_model = sync_param_models.get(tool_name)
-                
-                # 准备参数，合并 flow_id
-                call_params = {**parameters, "flow_id": flow_id} 
-                
-                # 验证参数 (如果模型存在)
-                if sync_param_model:
-                     try:
-                         # Pydantic 模型不一定有 flow_id，直接传递原始参数给函数
-                         # validated_call_params = sync_param_model(**call_params)
-                         pass # 跳过 Pydantic 验证，让函数自己处理
-                     except Exception as pydantic_err:
-                          logger.error(f"Parameter validation failed for sync tool {tool_name}: {pydantic_err}")
-                          raise pydantic_err # 重新抛出错误
-                
-                # 调用同步工具函数
-                # 注意：同步函数在异步方法中调用，需要使用 asyncio.to_thread
-                tool_result_dict = await asyncio.to_thread(
-                    sync_tool_func, 
-                    **call_params # 解包参数字典
-                )
-                # 将字典结果转换为 ToolResult 对象
-                result = ToolResult(
-                    success=tool_result_dict.get("success", False),
-                    message=tool_result_dict.get("message", ""),
-                    data=tool_result_dict.get("node_data") or tool_result_dict.get("connection_data") or tool_result_dict.get("flow_info"),
-                    error_message=tool_result_dict.get("error")
-                )
-                
-            elif tool_name in self.tool_functions: # 回退到原来的异步工具调用
-                 tool_func = self.tool_functions[tool_name]
-                 param_model = self.param_models.get(tool_name)
-                 if param_model:
-                      validated_params = param_model(**parameters)
-                 else:
-                      validated_params = parameters
-                 # 异步函数不接收 flow_id 或 db_session
-                 result = await tool_func(validated_params, self.llm_client)
-            else:
-                 # 不应该到达这里，因为前面已经检查过 tool_name
-                  raise ValueError(f"Tool function mapping error for {tool_name}")
+    def get_langchain_tools(self) -> List[StructuredTool]:
+        """Creates and returns a list of Langchain StructuredTool objects for the agent."""
+        langchain_tools = []
+        for name, func in self.agent_tool_functions.items():
+            description = self.agent_tool_descriptions.get(name, f"Executes the {name} tool.") # Default description
+            args_schema = self.agent_param_models.get(name)
 
-            logger.info(f"Tool {tool_name} executed successfully.")
+            # Ensure the function is actually callable (it should be)
+            if not callable(func):
+                 logger.warning(f"Tool function for '{name}' is not callable. Skipping.")
+                 continue
+
+            try:
+                 tool = StructuredTool.from_function(
+                     func=func,
+                     name=name,
+                     description=description,
+                     args_schema=args_schema,
+                     # handle_tool_error=True, # Consider adding error handling
+                 )
+                 langchain_tools.append(tool)
+                 logger.debug(f"Successfully created StructuredTool for: {name}")
+            except Exception as e:
+                 logger.error(f"Failed to create StructuredTool for '{name}': {e}", exc_info=True)
+
+        logger.info(f"Generated {len(langchain_tools)} Langchain tools.")
+        return langchain_tools
+
+    async def execute(self, tool_name: str, parameters: Dict[str, Any], db_session=None, flow_id: Optional[str] = None) -> ToolResult:
+        """Executes the specified tool (used internally or potentially by custom logic)."""
+        logger.info(f"Attempting to execute tool: {tool_name} with params: {parameters} for flow_id: {flow_id}")
+
+        # Use the agent_tool_functions map for execution consistency
+        if tool_name not in self.agent_tool_functions:
+            # Maybe check other internal function maps if needed, or just error out
+            logger.error(f"Unknown or non-agent tool name provided to execute: {tool_name}")
+            return ToolResult(success=False, message=f"未知或非代理可用工具: {tool_name}")
+
+        tool_func = self.agent_tool_functions[tool_name]
+        param_model = self.agent_param_models.get(tool_name)
+
+        try:
+            # Prepare parameters, including flow_id needed by sync funcs
+            call_params = {**parameters, "flow_id": flow_id}
+
+            # Validate parameters using Pydantic model IF one exists
+            if param_model:
+                try:
+                    # Create model instance ONLY with keys defined in the model
+                    # Pydantic v2 automatically ignores extra fields by default
+                    # For Pydantic v1, might need: validated_params = param_model.parse_obj(parameters)
+                    validated_params_dict = param_model(**parameters).dict()
+                    # Re-add flow_id if it's not part of the Pydantic model but needed by the function
+                    call_params_for_func = {**validated_params_dict, "flow_id": flow_id}
+                    logger.debug(f"Validated params for {tool_name}: {validated_params_dict}")
+                except Exception as pydantic_err:
+                     logger.error(f"Parameter validation failed for tool {tool_name} using {param_model.__name__}: {pydantic_err}")
+                     raise pydantic_err # Re-raise validation error
+            else:
+                 # No Pydantic model, pass parameters directly (including flow_id)
+                 call_params_for_func = call_params
+                 logger.debug(f"No Pydantic model for {tool_name}, using raw params: {call_params_for_func}")
+
+
+            # Execute the synchronous tool function in a separate thread
+            tool_result_dict = await asyncio.to_thread(
+                tool_func,
+                **call_params_for_func # Pass validated & prepared args
+            )
+
+            # Convert dict result to ToolResult object
+            result = ToolResult(
+                success=tool_result_dict.get("success", False),
+                message=tool_result_dict.get("message", ""),
+                data=tool_result_dict.get("node_data") or tool_result_dict.get("connection_data") or tool_result_dict.get("flow_info"), # Adapt based on tool output keys
+                error_message=tool_result_dict.get("error")
+            )
+
+            logger.info(f"Tool {tool_name} executed. Success: {result.success}")
             return result
-            
+
         except Exception as e:
-            logger.error(f"Error executing tool {tool_name}: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            # 返回 Pydantic 验证错误或其他执行错误
+            logger.error(f"Error executing tool {tool_name}: {str(e)}", exc_info=True)
             return ToolResult(success=False, message=f"执行工具 {tool_name} 时出错: {str(e)}")
 
 # 注意：

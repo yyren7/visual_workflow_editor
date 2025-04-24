@@ -3,16 +3,18 @@ from datetime import datetime
 import logging
 import uuid
 import json
+import os # 导入 os 模块
 
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from fastapi import HTTPException, status
 
 from database.models import Chat, Flow
 
 # 导入 RAG 链/Agent (假设路径和名称)
 # from backend.langchainchat.chains.rag_chain import RAGChain # 或者 Agent
 # 导入 WorkflowChain (如果 chat service 需要直接触发工作流修改)
-from backend.langchainchat.chains.workflow_chain import WorkflowChain, WorkflowChainOutput
+# from backend.langchainchat.chains.workflow_chain import WorkflowChain, WorkflowChainOutput
 # 导入构建 RAG/Workflow 链所需的依赖 (这些通常在应用启动时初始化并注入)
 from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
 from backend.langchainchat.tools.executor import ToolExecutor
@@ -27,6 +29,13 @@ from database.embedding.service import DatabaseEmbeddingService
 # --- 新增：导入 DbChatMemory 和 BaseMessage --- 
 from backend.langchainchat.memory.db_chat_memory import DbChatMemory
 from langchain_core.messages import BaseMessage
+# --- 新增：导入新的 Agent Runnable 创建函数 ---
+from backend.langchainchat.agents.workflow_agent import create_workflow_agent_runnable
+from langchain_core.runnables import Runnable # 导入 Runnable 类型提示
+# 根据官方文档，直接从 langchain_deepseek 导入 ChatDeepSeek
+from langchain_deepseek import ChatDeepSeek 
+from langchain_google_genai import ChatGoogleGenerativeAI # 导入 Gemini
+from langchain_core.language_models import BaseChatModel # 导入 BaseChatModel
 
 logger = logging.getLogger(__name__)
 
@@ -35,32 +44,72 @@ class ChatService:
     
     def __init__(self, db: Session):
         self.db = db
-        # 初始化 LLM 客户端 (应考虑单例或共享实例)
-        self.llm = DeepSeekLLM()
-        
-        # 初始化 WorkflowChain
-        self.workflow_chain: WorkflowChain = self._initialize_workflow_chain()
-        # 初始化 RAGChain
-        self.rag_chain = self._initialize_rag_chain() # RAGChain 返回的是 Runnable
+        # 将 Agent Executor 的初始化推迟到第一次需要时，或者在此处初始化
+        self._agent_executor = None # 初始化为 None
+        # Tool Executor 可能也需要延迟初始化或在这里创建
+        self._tool_executor = ToolExecutor(db_session=self.db) # 假设 ToolExecutor 需要 db
     
-    def _initialize_workflow_chain(self) -> WorkflowChain:
-        """ 初始化 WorkflowChain (示例，实际应使用依赖注入) """
-        # 这里仅为示例，实际需要正确初始化和配置所有依赖
-        logger.info("Initializing WorkflowChain in ChatService (example setup)")
-        # llm 实例已在 __init__ 中创建
-        tool_executor = ToolExecutor(llm_client=self.llm)
-        # 其他依赖如 prompt_expander, retriever 等需要实例化
-        # embedding_service = DatabaseEmbeddingService()
-        # retriever = EmbeddingRetriever(db_session=self.db, embedding_service=embedding_service)
-        
-        # 创建 WorkflowChain 实例
-        chain = WorkflowChain(
-            llm=self.llm,
-            tool_executor=tool_executor
-            # retriever=retriever, # 添加其他需要的组件
-            # ... 其他依赖
-        )
-        return chain
+    def _get_active_llm(self) -> BaseChatModel:
+        """根据环境变量选择并实例化活动 LLM。"""
+        provider = os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower()
+        logger.info(f"Active LLM provider selected: {provider}")
+
+        if provider == "gemini":
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                logger.error("GOOGLE_API_KEY environment variable not set.")
+                raise ValueError("GOOGLE_API_KEY environment variable not set.")
+            try:
+                # 'gemini-pro' 是一个常见的模型，你可能需要根据可用性调整
+                # convert_system_message_to_human=True 对于某些Agent类型使用Gemini时是必要的
+                llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=api_key, convert_system_message_to_human=True)
+                logger.info("Instantiated ChatGoogleGenerativeAI (Gemini).")
+                return llm
+            except Exception as e:
+                logger.error(f"Failed to instantiate ChatGoogleGenerativeAI: {e}", exc_info=True)
+                raise ValueError(f"Failed to instantiate Gemini LLM: {e}")
+
+        elif provider == "deepseek":
+            # ChatDeepSeek 构造函数通常会自动从环境变量读取 DEEPSEEK_API_KEY
+            # 无需手动传递 api_key 参数，除非你想覆盖环境变量
+            # api_key = os.getenv("DEEPSEEK_API_KEY")
+            # if not api_key:
+            #     logger.error("DEEPSEEK_API_KEY environment variable not set.")
+            #     raise ValueError("DEEPSEEK_API_KEY environment variable not set.")
+            try:
+                llm = ChatDeepSeek(model="deepseek-chat") # 假设 'deepseek-chat' 是支持工具调用的模型
+                logger.info("Instantiated ChatDeepSeek.")
+                return llm
+            except Exception as e:
+                logger.error(f"Failed to instantiate ChatDeepSeek: {e}", exc_info=True)
+                raise ValueError(f"Failed to instantiate DeepSeek LLM: {e}")
+        else:
+            logger.error(f"Unsupported LLM provider specified: {provider}")
+            raise ValueError(f"Unsupported LLM provider: {provider}. Choose 'deepseek' or 'gemini'.")
+
+    @property
+    def workflow_agent_executor(self):
+        """获取或创建 Agent Executor 实例。"""
+        if self._agent_executor is None:
+            logger.info("Workflow Agent Executor not initialized. Creating now...")
+            try:
+                # 1. 获取活动的 LLM 实例
+                active_llm = self._get_active_llm()
+                
+                # 2. 获取 Tool Executor (确保它已准备好)
+                # 如果 ToolExecutor 需要特定于请求的数据，则不应在此处创建
+                if self._tool_executor is None:
+                     self._tool_executor = ToolExecutor(db_session=self.db) # 重新确认或初始化
+                     logger.info("Initialized ToolExecutor in workflow_agent_executor property.")
+
+                # 3. 创建 Agent Runnable
+                self._agent_executor = create_workflow_agent_runnable(active_llm, self._tool_executor)
+                logger.info("Successfully created Workflow Agent Executor.")
+            except Exception as e:
+                logger.error(f"Failed to create workflow agent executor: {e}", exc_info=True)
+                # 根据需要决定是否抛出异常或返回 None
+                raise RuntimeError(f"Could not create agent executor: {e}")
+        return self._agent_executor
 
     def _initialize_rag_chain(self):
         """ 初始化 RAG Chain (示例，实际应使用依赖注入) """
@@ -268,177 +317,6 @@ class ChatService:
             except Exception as rb_err:
                 logger.error(f"ChatService: Rollback failed for chat {chat_id} in add_message: {rb_err}", exc_info=True) 
             return None
-
-    async def process_chat_message(self, chat_id: str, user_message: str) -> WorkflowChainOutput | Dict[str, Any]:
-        """
-        处理来自用户的聊天消息，可能涉及 RAG 或 Workflow。
-        
-        Args:
-            chat_id: 聊天ID。
-            user_message: 用户发送的消息。
-
-        Returns:
-            WorkflowChainOutput 对象 (可能包含原始 stream_generator 或工具信息) 
-            或在初始错误时返回包含 error 的字典。
-        """
-        logger.info(f"Processing message for chat {chat_id}: {user_message[:50]}...")
-        
-        # 1. 将用户消息添加到聊天记录
-        updated_chat = self.add_message_to_chat(chat_id, "user", user_message)
-        if not updated_chat:
-             # 返回一个与 WorkflowChainOutput 兼容的错误结构
-             return WorkflowChainOutput(error="无法将用户消息添加到聊天记录", summary="系统错误")
-
-        # --- 修改开始 --- 
-        # 2. 加载历史记录 (由 ChatService 负责)
-        history_messages: List[BaseMessage] = []
-        try:
-            logger.info(f"ChatService attempting to load history for chat_id: {chat_id}")
-            # 使用 self.db 初始化 DbChatMemory
-            db_memory = DbChatMemory(chat_id=chat_id, db_session=self.db)
-            history_messages = db_memory.messages # 获取历史记录
-            logger.info(f"ChatService loaded {len(history_messages)} messages for chat {chat_id}.")
-        except Exception as mem_err:
-            # 如果加载历史失败，记录错误但继续（链将收到空历史）
-            logger.error(f"ChatService failed to load history for chat {chat_id}: {mem_err}", exc_info=True)
-            history_messages = [] # 确保是空列表
-
-        # 3. 调用 WorkflowChain 处理输入 (将历史作为输入传递)
-        try:
-            current_flow_id = updated_chat.flow_id
-            if not current_flow_id:
-                logger.error(f"Chat {chat_id} is not associated with a flow_id. Cannot proceed.")
-                # 返回一个与 WorkflowChainOutput 兼容的错误结构
-                return WorkflowChainOutput(error="聊天未关联流程图", summary="系统错误")
-            
-            logger.info(f"Chat {chat_id} associated with flow_id: {current_flow_id}")
-            
-            chain_input = {
-                "user_input": user_message,
-                "db_session": self.db,
-                "flow_id": current_flow_id,
-                "chat_id": chat_id,
-                "history": history_messages # <--- 将加载的历史添加到输入中
-            }
-            # --- 修改结束 --- 
-            
-            logger.debug(f"Invoking WorkflowChain for chat {chat_id} with input keys: {list(chain_input.keys())}") # 更新日志记录
-            chain_result = await self.workflow_chain.ainvoke(chain_input)
-            logger.debug(f"WorkflowChain returned type: {type(chain_result)}")
-
-            # --- Parse the result to get WorkflowChainOutput object --- 
-            chain_output_obj: Optional[WorkflowChainOutput] = None
-            if isinstance(chain_result, WorkflowChainOutput):
-                chain_output_obj = chain_result
-            elif isinstance(chain_result, dict) and "result" in chain_result and isinstance(chain_result["result"], WorkflowChainOutput):
-                 chain_output_obj = chain_result["result"]
-            elif isinstance(chain_result, dict) and all(key in chain_result for key in WorkflowChainOutput.model_fields.keys()):
-                try:
-                    chain_output_obj = WorkflowChainOutput(**chain_result)
-                except Exception as pydantic_err:
-                    logger.error(f"Failed to create WorkflowChainOutput from dict: {pydantic_err}")
-                    chain_output_obj = None # Failed to parse
-            
-            if not chain_output_obj:
-                 logger.error(f"WorkflowChain ainvoke returned unexpected structure: {chain_result}")
-                 # 返回一个与 WorkflowChainOutput 兼容的错误结构
-                 return WorkflowChainOutput(error="WorkflowChain returned unexpected output structure.", summary="系统错误")
-            # --- End Parsing --- 
-
-            # 4. Check if the output contains an event stream
-            if chain_output_obj.event_stream:
-                logger.info(f"WorkflowChain returned an event stream for chat {chat_id}. Returning it directly.")
-                # Return the object with the event stream generator
-                return chain_output_obj 
-            else:
-                # 5. Process non-streaming response (tool calls or direct text error)
-                logger.info(f"WorkflowChain returned non-streaming output for chat {chat_id}. Processing...")
-                ai_summary = chain_output_obj.summary
-                error = chain_output_obj.error
-                nodes_to_update = chain_output_obj.nodes
-                connections_to_update = chain_output_obj.connections
-                
-                if error:
-                    logger.error(f"WorkflowChain returned an error: {error}")
-                    # 如果链返回错误，也保存错误消息到聊天记录
-                    try:
-                        self.add_message_to_chat(chat_id, "assistant", error) # 保存错误信息
-                    except Exception as log_err:
-                        logger.error(f"Failed to add error message to chat {chat_id}: {log_err}")
-                    return chain_output_obj # 返回包含错误的原始对象
-                    
-                if ai_summary:
-                    # 只有在没有错误且有摘要时才保存摘要
-                    try:
-                        self.add_message_to_chat(chat_id, "assistant", ai_summary)
-                    except Exception as log_err:
-                         logger.error(f"Failed to add assistant summary to chat {chat_id}: {log_err}")
-                         # 即使保存摘要失败，也继续处理流程更新并返回结果
-                else:
-                     logger.warning(f"WorkflowChain returned no summary and no error for chat {chat_id}")
-
-                if nodes_to_update or connections_to_update:
-                    logger.info(f"Updating flow based on WorkflowChain output: {len(nodes_to_update) if nodes_to_update else 0} nodes, {len(connections_to_update) if connections_to_update else 0} connections")
-                    flow_update_result = self._update_flow_in_db(updated_chat.flow_id, nodes_to_update, connections_to_update)
-                    if not flow_update_result.get("success"):
-                        logger.error(f"Failed to update flow {updated_chat.flow_id} in database: {flow_update_result.get('message')}")
-                        # 将流程更新失败附加到错误信息中
-                        chain_output_obj.error = (chain_output_obj.error + "; " if chain_output_obj.error else "") + "Flow update failed."
-
-                logger.info(f"Returning processed non-streaming output for chat {chat_id}")
-                return chain_output_obj
-
-        except Exception as e:
-            logger.error(f"Error in process_chat_message for chat {chat_id}: {e}", exc_info=True)
-            error_response = "抱歉，处理您的消息时遇到问题。"
-            try:
-                self.add_message_to_chat(chat_id, "assistant", error_response)
-            except Exception as log_err:
-                 logger.error(f"Failed to add error message to chat {chat_id} after main processing error: {log_err}")
-            # 返回一个与 WorkflowChainOutput 兼容的错误结构
-            return WorkflowChainOutput(error=str(e), summary=error_response)
-
-    def _update_flow_in_db(self, flow_id: str, nodes: Optional[List[Dict]], connections: Optional[List[Dict]]) -> Dict:
-        """将 WorkflowChain 生成的节点和连接更新到数据库中的 Flow 对象。"""
-        try:
-            flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
-            if not flow:
-                return {"success": False, "message": f"Flow {flow_id} not found for update."}
-            
-            # 获取当前流程图数据
-            # 使用 MutableDict 处理 JSONB 修改
-            from sqlalchemy.ext.mutable import MutableDict
-            flow_data = MutableDict.as_mutable(flow.flow_data) if flow.flow_data else MutableDict()
-            
-            # 如果没有 flow_data，初始化基本结构
-            if not flow_data:
-                 flow_data = MutableDict({"nodes": [], "connections": [], "variables": {}})
-            elif "nodes" not in flow_data:
-                 flow_data["nodes"] = []
-            elif "connections" not in flow_data:
-                 flow_data["connections"] = []
-
-            # 更新节点和连接 (这里简单地用新的替换旧的，实际可能需要更复杂的合并逻辑)
-            # 注意：这会丢失旧节点/连接。如果需要合并，逻辑会复杂得多。
-            if nodes is not None: # 允许只更新其中之一
-                 flow_data["nodes"] = nodes
-            if connections is not None:
-                 flow_data["connections"] = connections
-                 
-            # 更新数据库
-            flow.flow_data = flow_data
-            flow.updated_at = datetime.utcnow()
-            self.db.add(flow)
-            self.db.commit()
-            logger.info(f"Successfully updated flow {flow_id} in database.")
-            return {"success": True, "message": "Flow updated successfully."}
-            
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"Error updating flow {flow_id} in DB: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return {"success": False, "message": f"Database error during flow update: {e}"}
 
     # --- 新增 RAG 交互方法 ---
     async def get_rag_response(self, chat_id: str, question: str) -> Optional[Dict[str, Any]]:

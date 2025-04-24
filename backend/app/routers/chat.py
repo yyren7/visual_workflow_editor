@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Optional, AsyncGenerator
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Response, BackgroundTasks
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import JSONResponse
+from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 import logging
 import json
@@ -14,6 +15,7 @@ from backend.app.services.chat_service import ChatService
 from backend.app.services.flow_service import FlowService
 from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput
 from database.models import Flow
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,21 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+# --- 辅助函数：将数据库消息格式转换为 Langchain 格式 ---
+def _format_messages_to_langchain(messages: List[Dict]) -> List[BaseMessage]:
+    """将包含 'role' 和 'content' 的字典列表转换为 Langchain BaseMessage 列表。"""
+    langchain_messages = []
+    for message in messages:
+        role = message.get("role")
+        content = message.get("content", "")
+        if role == "user":
+            langchain_messages.append(HumanMessage(content=content))
+        elif role == "assistant":
+            langchain_messages.append(AIMessage(content=content))
+        # 可以选择性地处理其他 role，例如 'system'
+        # else:
+        #     logger.warning(f"Unknown message role '{role}' encountered during formatting.")
+    return langchain_messages
 
 @router.post("/", response_model=schemas.Chat)
 async def create_chat(
@@ -210,164 +227,241 @@ async def add_message(
 
     # --- 定义在后台处理流并将事件放入队列的任务 --- 
     async def process_and_publish_events(c_id: str, msg_content: str, queue: asyncio.Queue):
+        """
+        后台任务：处理新消息，使用 Agent Executor 生成回复，并将事件放入队列。
+        """
         logger.debug(f"[Chat {c_id}] Background task started.")
-        final_content_to_save = None
         is_error = False
-        error_content = None
-        tool_calls = []
-        final_flow_data = None # 用于存储最终的流程图数据
+        error_data = {}
+        final_reply_accumulator = "" # 用于累积最终回复
 
-        with get_db_context() as db_session_bg:
-            logger.debug(f"[Chat {c_id}] Acquired DB session for background task.")
-            chat_service_bg = ChatService(db_session_bg)
-            flow_service_bg = FlowService(db_session_bg)
-            
-            try:
-                # 从数据库获取完整的聊天历史（包含刚才添加的用户消息）
+        try:
+            # --- 使用上下文管理器获取数据库会话 ---
+            with get_db_context() as db_session_bg:
+                logger.debug(f"[Chat {c_id}] Acquired DB session for background task.")
+                chat_service_bg = ChatService(db_session_bg)
+                flow_service_bg = FlowService(db_session_bg) # 在同一会话中创建 FlowService
+
+                # --- 获取聊天和流程数据 ---
                 chat = chat_service_bg.get_chat(c_id)
                 if not chat:
                     logger.error(f"[Chat {c_id}] Background task could not find chat.")
-                    await queue.put({"type": "error", "data": {"message": "Chat not found."}})
+                    await queue.put({"type": "error", "data": {"message": "Chat not found.", "stage": "setup"}})
                     return
-                    
+
                 flow_id = chat.flow_id
                 flow = flow_service_bg.get_flow_instance(flow_id) # 获取 Flow 实例
                 if not flow:
                      logger.error(f"[Chat {c_id}] Background task could not find flow {flow_id}.")
-                     await queue.put({"type": "error", "data": {"message": f"Flow {flow_id} not found."}})
+                     await queue.put({"type": "error", "data": {"message": f"Flow {flow_id} not found.", "stage": "setup"}})
                      return
-                     
+
                 current_messages = chat.chat_data.get('messages', [])
+                # --- 将原始消息格式转换为 LangChain BaseMessage 对象 ---
+                # 移除旧的、错误的导入
+                # from backend.langchainchat.memory.db_chat_memory import messages_to_langchain # 导入转换函数
+                langchain_history = _format_messages_to_langchain(current_messages) # 使用新的辅助函数
+                # ----------------------------------------------------
                 flow_data = flow.flow_data # 获取流程图数据
 
-                logger.info(f"[Chat {c_id}] Processing message with {len(current_messages)} history entries.")
-                chain = chat_service_bg.workflow_chain 
-                
-                # 使用 astream_events 处理流式响应，并提供所有必需的输入键
-                input_data = {
-                    "user_input": msg_content,
-                    "flow_id": flow_id,
-                    "chat_id": c_id,
-                    "history": current_messages
-                }
-                async for event in chain.astream_events(
-                    input_data, 
-                    version="v1"
-                ):
-                    kind = event["event"]
-                    tags = event.get("tags", [])
-                    
-                    if kind == "on_chat_model_stream":
-                        chunk = event["data"]["chunk"]
-                        if chunk.content:
-                            logger.debug(f'[Chat {c_id}] Streaming chunk: {chunk.content}')
-                            await queue.put({"type": "token", "data": chunk.content})
-                    elif kind == "on_tool_start":
-                         logger.info(f'[Chat {c_id}] Tool start event: {event["name"]}, Input: {event["data"].get("input")}')
-                         # 将工具调用信息暂存，等结束后一起放入 final_content_to_save
-                         tool_calls.append({
-                            "tool_name": event["name"],
-                            "tool_input": event["data"].get("input")
-                         })
-                         # 如果需要，也可以立即发送一个事件通知前端工具开始执行
-                         await queue.put({"type": "tool_start", "data": {"name": event["name"], "input": event["data"].get("input")}})
-                         
-                    elif kind == "on_tool_end":
-                        logger.info(f'[Chat {c_id}] Tool end event: {event["name"]}, Output: {event["data"].get("output")}')
-                        # 找到对应的工具调用并添加输出
-                        for call in tool_calls:
-                            if call["tool_name"] == event["name"] and "tool_output" not in call:
-                                call["tool_output"] = event["data"].get("output")
-                                break # 假设每个工具调用名称唯一
-                        # 发送事件通知前端工具结束执行
-                        await queue.put({"type": "tool_end", "data": {"name": event["name"], "output": event["data"].get("output")}})
-                        
-                    elif kind == "on_chain_end":
-                        # 检查是否有最终输出和可能的流程图更新
-                        output = event["data"].get('output')
-                        if isinstance(output, WorkflowChainOutput):
-                            final_content_to_save = output.final_answer
-                            final_flow_data = output.get_flow_data_if_updated() # 获取更新后的 flow_data
-                            logger.info(f"[Chat {c_id}] Chain ended. Final Answer: {final_content_to_save}")
-                            if final_flow_data:
-                                logger.info(f"[Chat {c_id}] Flow data was updated by the chain.")
-                        elif isinstance(output, str):
-                             final_content_to_save = output
-                             logger.info(f"[Chat {c_id}] Chain ended. Final Answer (string): {final_content_to_save}")
-                        else:
-                            logger.warning(f"[Chat {c_id}] Chain ended but output format is unexpected: {type(output)}")
-                    
-                    # 处理其他类型的事件 (可根据需要添加)
-                    # elif kind == "on_retriever_end":
-                    #     logger.debug(f'[Chat {c_id}] Retriever end event: {event["data"]}')
-                    # elif kind == "on_prompt_end":
-                    #     logger.debug(f'[Chat {c_id}] Prompt end event: {event["data"]}')
-                        
-            except Exception as e:
-                is_error = True
-                error_content = f"处理消息时出错: {str(e)}"
-                logger.error(f"[Chat {c_id}] Error during message processing: {e}", exc_info=True)
-                await queue.put({"type": "error", "data": {"message": error_content}})
-                
-            # <<< finally 块与 try/except 对齐 >>>
-            finally:
-                # <<< finally 内部代码增加一级缩进 >>>
-                logger.debug(f"[Chat {c_id}] Background task finally block entered.")
-                # 必须在 finally 块中，确保即使出错也发送结束标记
-                await queue.put(STREAM_END_SENTINEL)
-                logger.info(f"[Chat {c_id}] Stream end sentinel sent.")
-                
-                # --- 保存最终结果（助手回复或错误信息）--- 
-                logger.debug(f"[Chat {c_id}] Attempting to save final result.")
-                
-                content_to_add = None
-                role_to_add = None
-                
-                if is_error:
-                    content_to_add = error_content if error_content else "未知处理错误"
-                    role_to_add = 'system' 
-                elif final_content_to_save:
-                    if tool_calls:
-                        content_to_add = {
-                            "text": final_content_to_save,
-                            "tool_calls": tool_calls
-                        }
-                    else:
-                        content_to_add = final_content_to_save
-                    role_to_add = 'assistant'
-                
-                if content_to_add and role_to_add:
-                    logger.debug(f"[Chat {c_id}] Acquiring new DB session for saving final result...")
-                    with get_db_context() as db_session_for_save:
-                        try:
-                            logger.debug(f"[Chat {c_id}] Acquired save session. Role: {role_to_add}")
-                            chat_service_for_save = ChatService(db_session_for_save)
-                            flow_service_for_save = FlowService(db_session_for_save)
-                            
-                            # 添加助手消息或系统错误消息
-                            chat_service_for_save.add_message_to_chat(
-                                chat_id=c_id, 
-                                role=role_to_add,
-                                content=content_to_add
-                            )
-                            logger.info(f"[Chat {c_id}] Final {role_to_add} message/error saved to DB.")
-                            
-                            # 如果流程图有更新，保存流程图
-                            if final_flow_data:
-                                flow_to_update = flow_service_for_save.get_flow(flow_id)
-                                if flow_to_update:
-                                    flow_to_update.flow_data = final_flow_data
-                                    db_session_for_save.commit() # 提交流程图更新
-                                    logger.info(f"[Chat {c_id}] Updated flow data saved to DB for flow {flow_id}.")
-                                else:
-                                    logger.error(f"[Chat {c_id}] Could not find flow {flow_id} to save updated flow data.")
-                                    
-                        except Exception as save_err:
-                            logger.error(f"[Chat {c_id}] Error saving final message/error to DB: {save_err}", exc_info=True)
-                else:
-                     logger.warning(f"[Chat {c_id}] No final content or error to save.")
+                logger.info(f"[Chat {c_id}] Processing message with {len(langchain_history)} history entries.")
+                agent_executor = chat_service_bg.workflow_agent_executor
 
-        # <<< with db_session_bg 结束 >>>
+                # 使用 astream_events 处理流式响应，并提供所有必需的输入键
+                agent_input = {
+                    "input": msg_content,
+                    "chat_history": langchain_history,
+                    "flow_context": flow_data, # 传递流程数据作为上下文
+                }
+
+                logger.debug(f"[Chat {c_id}] Invoking agent_executor.astream_log with input keys: {list(agent_input.keys())}")
+
+                # --- 使用 astream_log 处理流式响应 --- (新逻辑)
+                async for log_entry in agent_executor.astream_log(agent_input): # 移除 include_metadata=True
+                    # log_entry 是一个 LogEntry 对象，包含 ops 列表
+                    # 我们需要解析 ops 来理解发生了什么
+                    # logger.debug(f"[Chat {c_id}] Received log entry: {log_entry}") # 调试时取消注释
+
+                    # 遍历 log_entry 中的操作 (ops)
+                    for op in log_entry.ops:
+                        # --- 在这里添加详细日志 ---
+                        logger.debug(f"[Chat {c_id}] Raw log entry op: {op}")
+                        # --------------------------
+                        op_path = op.get("path", "") # 获取操作路径
+
+                        # 1. 检测 LLM Token 输出 (需要根据实际输出调整路径判断)
+                        # 示例路径: '/logs/ChatOpenAI/streamed_output_str/-' 或 '/logs/RunnableSequence/streamed_output_str/-'
+                        # 或者检查 op['op'] == 'add' 且路径包含 'streamed_output_str'
+                        if "streamed_output_str" in op_path and op["op"] == "add":
+                            token = op.get("value", "")
+                            if isinstance(token, str):
+                                # logger.debug(f"[Chat {c_id}] LLM Token: {token}")
+                                await queue.put({"type": "token", "data": token})
+                                # *** 将 token 累积到 final_reply_accumulator ***
+                                final_reply_accumulator += token
+                                # logger.debug(f"[Chat {c_id}] Accumulated reply length: {len(final_reply_accumulator)}") # Optional debug log
+                                # -----------------------------------------------
+                                # TODO: 需要区分思考过程的 token 和最终答案的 token 吗？
+                                # 目前先将所有 token 都发送，并在循环外累积最终答案
+                                # 如果 agent runnable 最后一块是最终答案，可以尝试在这里累积
+                                # (但 astream_log 不保证最后一定是答案的 token)
+                                # *** 临时累积方案：假设最终答案是连续的 token 流 ***
+                                # 需要找到更好的方式判断是否为最终答案的 token
+                                # 例如，检查是否在某个特定的最终步骤下
+                                # if op_path.startswith("/logs/FinalAnswerRunnable"): # 假设的路径
+                                # pass # 仅发送 token，不在此累加 # <--- REMOVED pass
+
+                        # 2. 检测工具调用开始 (需要根据实际输出调整路径判断)
+                        # 示例路径: '/logs/AgentExecutor/tool_calls/-' or '/logs/MyAgent/tool_calls/-'
+                        # 或者检查 op['op'] == 'add' 且路径包含 'tool_calls'
+                        # Langchain AgentExecutor 通常在 /logs/AgentExecutor/iterations/.../tool_invocation 下
+                        # 需要找到可靠的路径来提取 tool_name 和 tool_input
+                        # 这是一个可能的路径，需要根据实际情况调整
+                        if op_path.endswith("/tool_invocation") and op["op"] == "add": # 假设这是工具调用的开始
+                            tool_call_data = op.get("value")
+                            if isinstance(tool_call_data, dict):
+                                 tool_name = tool_call_data.get("tool_name") # 可能需要调整key
+                                 tool_input = tool_call_data.get("tool_input") # 可能需要调整key
+                                 if tool_name and tool_input is not None:
+                                     logger.info(f"[Chat {c_id}] Tool Start: {tool_name} with input: {tool_input}")
+                                     await queue.put({"type": "tool_start", "data": {"name": tool_name, "input": tool_input}})
+                                     # --- 将工具开始信息追加到累加器 ---
+                                     # try:
+                                     #     input_str = json.dumps(tool_input, ensure_ascii=False, indent=2)
+                                     # except TypeError:
+                                     #     input_str = str(tool_input)
+                                     # tool_start_md = f"\\n\\n**[Tool Start: {tool_name}]**\\n*Input:*\\n```json\\n{input_str}\\n```\\n*Status: Running...*\\n\"
+                                     # final_reply_accumulator += tool_start_md
+                                     # ----------------------------------
+                                 else:
+                                     logger.warning(f"[Chat {c_id}] Could not extract tool_name/tool_input from tool_invocation op: {tool_call_data}")
+
+
+                        # 3. 检测工具调用结束/结果 (需要根据实际输出调整路径判断)
+                        # 示例路径: '/logs/AgentExecutor/tool_result' or '/logs/ToolExecutor/final_output'
+                        # Langchain AgentExecutor 通常在 /logs/AgentExecutor/iterations/.../tool_result 下
+                        # 需要找到可靠的路径来提取 tool_name 和 output_summary
+                        if op_path.endswith("/tool_result") and op["op"] == "add":
+                            tool_result_data = op.get("value")
+                            if isinstance(tool_result_data, dict):
+                                tool_name = tool_result_data.get("tool_name") # TODO: 如何可靠获取?
+                                output_raw = tool_result_data.get("tool_output") # 可能需要调整key
+                                if output_raw is not None:
+                                    output_summary = str(output_raw) # 简单转为字符串作为摘要
+                                    tool_name_or_unknown = tool_name or "Unknown Tool"
+                                    logger.info(f"[Chat {c_id}] Tool End: ({tool_name_or_unknown}) with output summary: {output_summary[:100]}...")
+                                    await queue.put({"type": "tool_end", "data": {"name": tool_name_or_unknown, "output_summary": output_summary}})
+                                    # --- 将工具结束信息追加到累加器 ---
+                                    # tool_end_md = f"\\n**[Tool End: {tool_name_or_unknown}]**\\n*Status: Completed*\\n*Output Summary:*\\n```\\n{output_summary}\\n```\\n\\n\"
+                                    # final_reply_accumulator += tool_end_md
+                                    # ----------------------------------
+                                else:
+                                     logger.warning(f"[Chat {c_id}] Could not extract tool_output from tool_result op: {tool_result_data}")
+
+
+                        # 4. 尝试从最终输出块获取完整回复 (需要根据 Agent 实现调整)
+                        # LangChain AgentExecutor 通常将最终输出放在 run['output'] 中
+                        # 在 astream_log 中，可能是在某个特定的 op_path 下，例如 '/final_output' 或根路径的 'replace' 操作
+                        # *** 注意：之前的累积 token 方式可能不准确，应依赖这里的逻辑 ***
+                        if op_path == "/final_output" and op["op"] == "replace": # 这是一个假设的路径
+                           final_output_value = op.get("value")
+                           if isinstance(final_output_value, dict) and "output" in final_output_value:
+                               final_reply_accumulator = final_output_value["output"] # 覆盖累积结果
+                               logger.info(f"[Chat {c_id}] Got final reply from final_output op: {final_reply_accumulator}")
+                               # 停止累积 token? 还是让 token 流继续完成?
+                        # 移除错误地访问 log_entry.state 的逻辑
+                        # elif op_path == "" and op["op"] == "replace" and "final_output" in log_entry.state: # 另一种可能的最终输出信号
+                        #    final_output_state = log_entry.state.get("final_output")
+                        #    if isinstance(final_output_state, dict) and "output" in final_output_state:
+                        #        final_reply_accumulator = final_output_state["output"] # 覆盖累积结果
+                        #        logger.info(f"[Chat {c_id}] Got final reply from root replace op state: {final_reply_accumulator}")
+
+        except Exception as e:
+            is_error = True
+            error_message = f"Error processing chat message: {str(e)}"
+            logger.error(f"[Chat {c_id}] {error_message}", exc_info=True)
+            # 尝试确定错误阶段
+            stage = "unknown" # 默认
+            # TODO: 根据异常类型或发生位置判断 stage ('llm', 'tool', 'parsing', 'agent')
+            # 例如: if isinstance(e, LLMError): stage = 'llm'
+            error_data = {"message": error_message, "stage": stage}
+            try:
+                await queue.put({"type": "error", "data": error_data})
+            except asyncio.QueueFull:
+                logger.error(f"[Chat {c_id}] Failed to put error message in full queue.")
+            except Exception as qe:
+                 logger.error(f"[Chat {c_id}] Failed to put error message in queue: {qe}")
+
+        finally:
+            logger.debug(f"[Chat {c_id}] Background task finally block reached. Is error: {is_error}")
+            # --- 数据库保存逻辑 (步骤 3 - 修正结构) ---
+            if not is_error and final_reply_accumulator:
+                try: # <-- TRY block starts here
+                    # 使用新的独立数据库 Session 进行保存
+                    logger.info(f"[Chat {c_id}] Attempting to save messages using new DB session.")
+                    with get_db_context() as db_session_for_save:
+                       chat_service_for_save = ChatService(db_session_for_save)
+                       
+                       # --- 先保存用户消息 ---
+                       logger.info(f"[Chat {c_id}] Attempting to save user message (length: {len(msg_content)})...")
+                       user_save_success = chat_service_for_save.add_message_to_chat(
+                           chat_id=c_id,
+                           role="user",
+                           content=msg_content
+                       )
+                       if not user_save_success:
+                            logger.error(f"[Chat {c_id}] Failed to save user message in finally block.")
+                            # Decide whether to proceed with saving assistant message or raise error
+                       else:
+                            logger.info(f"[Chat {c_id}] User message saved to DB.")
+                       # -----------------------
+
+                       # TODO: 获取 Agent 执行后最终的 flow_data (如果 Agent 修改了它)
+                       # final_flow_data = agent_executor.get_final_flow_data() # 假设有这样的方法
+
+                       # 再保存助手消息
+                       logger.info(f"[Chat {c_id}] Attempting to save assistant message (length: {len(final_reply_accumulator)})...")
+                       assistant_save_success = chat_service_for_save.add_message_to_chat(
+                           chat_id=c_id,
+                           role="assistant",
+                           content=final_reply_accumulator
+                       )
+                       if not assistant_save_success:
+                           logger.error(f"[Chat {c_id}] Failed to save assistant message in finally block.")
+                       else:
+                            logger.info(f"[Chat {c_id}] Assistant message saved to DB.")
+                       # TODO: Add flow update logic if needed
+                except Exception as save_err: # <-- EXCEPT block corresponding to the TRY above
+                    logger.error(f"[Chat {c_id}] Failed to save messages or flow data in finally block: {save_err}", exc_info=True)
+            elif is_error:
+                # 考虑是否要将错误信息保存到聊天记录中？
+                logger.warning(f"[Chat {c_id}] Skipping save due to error during agent execution. Error data: {error_data}")
+                # 可以在这里用新 session 保存一条 system 错误消息
+                # try:
+                #     with get_db_context() as db_session_for_error_save:
+                #         chat_service_for_error_save = ChatService(db_session_for_error_save)
+                #         chat_service_for_error_save.add_message_to_chat(
+                #             chat_id=c_id,
+                #             role="system", # 或者 assistant?
+                #             content=f"Error during processing: {error_data.get('message', 'Unknown error')}"
+                #         )
+                #         logger.info(f"[Chat {c_id}] Saved error message to chat history.")
+                # except Exception as error_save_err:
+                #         logger.error(f"[Chat {c_id}] Failed to save error message to chat history: {error_save_err}", exc_info=True)
+            else:
+                 logger.warning(f"[Chat {c_id}] Skipping save because final reply was empty or null.")
+            # --- 结束数据库保存逻辑 ---
+
+            # --- 发送流结束标记 --- 
+            try:
+                logger.debug(f"[Chat {c_id}] Putting STREAM_END_SENTINEL into queue.")
+                await queue.put(STREAM_END_SENTINEL)
+                logger.debug(f"[Chat {c_id}] Stream end sentinel sent.")
+            except asyncio.QueueFull:
+                 logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in full queue.")
+            except Exception as qe:
+                 logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
+            # No nested finally needed here for the sentinel sending
 
     # --- 启动后台任务 --- 
     background_tasks.add_task(process_and_publish_events, chat_id, message.content, event_queue)
@@ -383,74 +477,92 @@ async def get_chat_events(chat_id: str):
     用于客户端通过 EventSource 连接以接收聊天事件。
     """
     logger.info(f"收到对 chat {chat_id} 事件流的 GET 请求")
-    
+
     # 查找对应的队列
     if chat_id not in active_chat_queues:
         logger.warning(f"请求 chat {chat_id} 的事件流，但队列不存在")
         # 可以选择返回 404 或等待一小段时间？返回 404 更清晰
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No active event stream found for chat {chat_id}. Process might not have started or has finished.")
-        
+
     event_queue = active_chat_queues[chat_id]
     logger.info(f"找到 chat {chat_id} 的事件队列，准备发送 SSE 事件")
 
-    # --- Corrected sse_event_sender function --- 
     async def sse_event_sender():
+        """
+        异步生成器，从队列中获取事件并格式化为 SSE。
+        """
+        logger.debug(f"Starting SSE event sender for chat {chat_id}")
         is_first_event = True
-        try: # <--- Main try block
+        try:
             while True:
-                try:
-                    # 从队列获取事件，设置超时以防队列永久阻塞
-                    event = await asyncio.wait_for(event_queue.get(), timeout=60.0) 
-                except asyncio.TimeoutError:
-                     # 长时间没有事件，发送一个心跳或结束？
-                     logger.debug(f"等待 chat {chat_id} 事件超时，发送心跳")
-                     yield "event: ping\ndata: {}\n\n"
-                     continue # 继续等待下一个事件
+                event_data = await event_queue.get()
+                
+                # 检查是否是结束标记
+                if event_data is STREAM_END_SENTINEL:
+                    logger.info(f"收到 chat {chat_id} 的流结束标记，发送 stream_end 事件并关闭 SSE 连接")
+                    # 先发送 stream_end 事件
+                    yield {
+                        "event": STREAM_END_SENTINEL.get("type", "stream_end"),
+                        "data": json.dumps(STREAM_END_SENTINEL.get("data", {}))
+                    }
+                    event_queue.task_done() # 标记处理完成
+                    break # 然后结束循环
 
-                # 检查结束标记
-                if event == STREAM_END_SENTINEL:
-                    logger.info(f"收到 chat {chat_id} 的流结束标记，关闭 SSE 连接")
-                    yield f"event: {STREAM_END_SENTINEL['type']}\ndata: {json.dumps(STREAM_END_SENTINEL['data'])}\n\n"
-                    # event_queue.task_done() # 标记处理完成
-                    break # 退出循环，结束流
-                
-                # 格式化并发送事件
-                event_type = event.get("type", "message") # 默认事件类型
-                event_data = event.get("data", {})
-                try:
-                    data_json = json.dumps(event_data)
-                except TypeError:
-                    logger.error(f"序列化事件数据为 JSON 失败 (type: {event_type}, chat: {chat_id})", exc_info=True)
-                    data_json = json.dumps({"error": "Failed to serialize event data"})
-                    event_type = "error" # 将事件类型改为 error
-                
-                sse_message = f"event: {event_type}\ndata: {data_json}\n\n"
-                yield sse_message
-                # event_queue.task_done() # 标记处理完成
-                
-                # 添加日志记录第一个事件
-                if is_first_event:
-                     logger.info(f"已发送第一个 SSE 事件 (type: {event_type}) 到 chat {chat_id} 的监听者")
-                     is_first_event = False
+                # 确保 event_data 是字典，包含 'type' 和 'data'
+                if isinstance(event_data, dict) and "type" in event_data and "data" in event_data:
+                    event_type = event_data.get("type", "message")
+                    data_payload = event_data.get("data", {})
+                    
+                    # 根据数据类型决定是否需要 json.dumps
+                    if isinstance(data_payload, str): 
+                        # 对于 token 等简单字符串，直接发送
+                        formatted_data = data_payload
+                    else:
+                        # 对于字典等复杂类型，进行 json.dumps
+                        try:
+                            formatted_data = json.dumps(data_payload)
+                        except TypeError:
+                            logger.error(f"序列化事件数据为 JSON 失败 (type: {event_type}, chat: {chat_id})", exc_info=True)
+                            # 发送一个错误事件替代
+                            event_type = "error"
+                            formatted_data = json.dumps({"message": f"Failed to serialize event data for type {event_type}", "stage": "sse_formatting"})
 
-        # --- Correctly indented except and finally blocks --- 
+                    if is_first_event:
+                        logger.info(f"已发送第一个 SSE 事件 (type: {event_type}) 到 chat {chat_id} 的监听者")
+                        is_first_event = False
+                        
+                    # logger.debug(f"Sending SSE event: type={event_type}, data={formatted_data}") # 调试时取消注释
+                    yield {
+                        "event": event_type,
+                        "data": formatted_data # 发送已格式化的数据
+                    }
+                else:
+                    logger.warning(f"Invalid event data format received for chat {chat_id}: {event_data}")
+
+                event_queue.task_done()
+
         except asyncio.CancelledError:
-             logger.info(f"客户端断开了 chat {chat_id} 的事件流连接")
+            logger.info(f"SSE 事件发送器 for chat {chat_id} 被取消")
+            # 可以在这里进行清理工作，但通常由 finally 处理
         except Exception as e:
-             logger.error(f"发送 chat {chat_id} 的 SSE 事件时出错: {e}", exc_info=True)
-             # 尝试发送最后一个错误事件
-             try:
-                 error_data = json.dumps({"message": f"Server error during event sending: {e}"})
-                 yield f"event: error\ndata: {error_data}\n\n"
-             except Exception:
-                 pass # 忽略发送最终错误的失败
+            logger.error(f"SSE 事件发送器 for chat {chat_id} 发生错误: {e}", exc_info=True)
         finally:
-             logger.info(f"SSE 事件发送器完成或终止 for chat {chat_id}")
-             # 注意：不在此处删除队列，因为后台任务可能还在运行或需要清理
-             # 清理逻辑需要更健壮的设计
-    # --- End of sse_event_sender function ---
+            logger.info(f"SSE 事件发送器完成或终止 for chat {chat_id}")
+            # 从 active_chat_queues 中移除队列，避免内存泄漏
+            if chat_id in active_chat_queues:
+                # 确保队列为空，防止未处理的任务
+                # while not event_queue.empty():
+                #     try:
+                #         event_queue.get_nowait()
+                #         event_queue.task_done()
+                #     except asyncio.QueueEmpty:
+                #         break
+                #     except Exception as eqe:
+                #         logger.warning(f"Error emptying queue during finally block for chat {chat_id}: {eqe}")
+                del active_chat_queues[chat_id]
+                logger.info(f"已移除 chat {chat_id} 的事件队列")
 
-    return StreamingResponse(sse_event_sender(), media_type="text/event-stream")
+    return EventSourceResponse(sse_event_sender())
 
 
 @router.delete("/{chat_id}", response_model=bool)

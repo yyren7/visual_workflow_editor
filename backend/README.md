@@ -197,3 +197,36 @@ pytest tests/
 
 - `__pycache__/` 和 `log/` 目录通常不需要提交到版本控制，建议添加到 `.gitignore`。
 - **数据库设置**: 根据 `config/db_config.py` 中的配置，确保你已经设置了相应的数据库（例如，创建数据库、用户、授权等）。如果项目包含数据库迁移脚本（可能位于 `scripts/` 目录或使用 Alembic 等工具），请在首次启动或模型更改后运行它们。
+
+## 环境变量
+
+Configure the following environment variables for the backend:
+
+- `DATABASE_URL`: The connection string for the PostgreSQL database (e.g., `postgresql://user:password@host:port/dbname`).
+- `SECRET_KEY`: A secret key for encoding JWT tokens.
+- `ALGORITHM`: The algorithm used for JWT encoding (e.g., `HS256`).
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: The expiry time for access tokens in minutes.
+- `DEEPSEEK_API_KEY`: Your API key for the DeepSeek LLM service.
+- `GOOGLE_API_KEY`: (Optional) Your API key for the Google Generative AI (Gemini) service.
+- `ACTIVE_LLM_PROVIDER`: (Optional) Specifies the LLM provider to use. Set to `deepseek` (default) or `gemini`. Ensure the corresponding API key is also set.
+- `LANGCHAIN_TRACING_V2`: (Optional) Set to `true` to enable LangSmith tracing.
+- `LANGCHAIN_API_KEY`: (Optional) Your LangSmith API key if tracing is enabled.
+
+## Setup and Running
+
+1.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    # Make sure langchain-deepseek and langchain-google-genai are included
+    ```
+2.  **Set Environment Variables:** Configure the variables listed above (e.g., using a `.env` file and `python-dotenv`).
+3.  **Run Database Migrations:** (If using Alembic)
+    ```bash
+    alembic upgrade head
+    ```
+4.  **Start the Server:**
+    ```bash
+    uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+    ```
+
+The API documentation will be available at `http://localhost:8000/docs`.

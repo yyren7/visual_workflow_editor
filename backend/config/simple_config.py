@@ -48,11 +48,11 @@ class SimpleConfig:
     # AI提供商配置
     AI_CONFIG = {
         "USE_DEEPSEEK": os.getenv("USE_DEEPSEEK", "1") == "1",
-        "USE_GOOGLE_AI": os.getenv("USE_GOOGLE_AI", "0") == "1",
         "DEEPSEEK_BASE_URL": os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
         "DEEPSEEK_API_KEY": os.getenv("DEEPSEEK_API_KEY", ""),
         "DEEPSEEK_MODEL": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-        "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY", "")
+        "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY", ""),
+        "ACTIVE_LLM_PROVIDER": os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower()
     }
 
     # LangChain配置
@@ -63,7 +63,9 @@ class SimpleConfig:
         "MAX_HISTORY_LENGTH": int(os.getenv("MAX_HISTORY_LENGTH", "10")),
         "DEFAULT_CONTEXT_WINDOW": int(os.getenv("DEFAULT_CONTEXT_WINDOW", "1000")),
         "DEFAULT_TEMPERATURE": 0.3,
-        "DEFAULT_MAX_TOKENS": 1500
+        "DEFAULT_MAX_TOKENS": 1500,
+        "LANGCHAIN_TRACING_V2": os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true",
+        "LANGCHAIN_API_KEY": os.getenv("LANGCHAIN_API_KEY")
     }
 
     # 计算LLM API设置
@@ -95,6 +97,25 @@ class SimpleConfig:
         self.LANGCHAIN_CONFIG["LANGCHAIN_LOG_FILE"] = str(log_dir_path / "langchain.log")
         self.LANGCHAIN_CONFIG["LANGCHAIN_DEBUG_LOG_FILE"] = str(log_dir_path / "langchain_debug.log")
         self.LANGCHAIN_CONFIG["DEEPSEEK_LOG_FILE"] = str(log_dir_path / "deepseek_api.log")
+
+    def _validate_config(self):
+        """验证必要的配置项是否已设置。"""
+        # 验证数据库 URL
+        if not self.DB_CONFIG["DATABASE_URL"]:
+            raise ValueError("错误：数据库连接 URL (DATABASE_URL) 未在 .env 文件中设置。")
+
+        # 根据 ACTIVE_LLM_PROVIDER 验证 AI Key
+        provider = self.AI_CONFIG["ACTIVE_LLM_PROVIDER"]
+        if provider == 'deepseek' and not self.AI_CONFIG["DEEPSEEK_API_KEY"]:
+            print("警告：LLM 提供商设置为 'deepseek'，但 DEEPSEEK_API_KEY 未设置。")
+        elif provider == 'gemini' and not self.AI_CONFIG["GOOGLE_API_KEY"]:
+            print("警告：LLM 提供商设置为 'gemini'，但 GOOGLE_API_KEY 未设置。")
+        elif provider not in ['deepseek', 'gemini']:
+            print(f"警告：不支持的 LLM 提供商 '{provider}'。请设置为 'deepseek' 或 'gemini'。")
+        
+        # 验证 LangSmith 配置 (如果启用)
+        if self.LANGCHAIN_CONFIG["LANGCHAIN_TRACING_V2"] and not self.LANGCHAIN_CONFIG["LANGCHAIN_API_KEY"]:
+            print("警告：LangSmith 追踪已启用 (LANGCHAIN_TRACING_V2=true)，但 LANGCHAIN_API_KEY 未设置。")
 
 # Instantiate the configuration
 config = SimpleConfig()

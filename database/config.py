@@ -2,9 +2,35 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# 显式加载项目根目录的.env文件
-workspace_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env')
-load_dotenv(dotenv_path=workspace_env_path)
+# 加载 .env 文件
+load_dotenv()
+
+# 数据库配置
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@host:port/dbname")
+
+# JWT 配置
+SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+
+# AI 配置
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# REMOVED: USE_GOOGLE_AI: bool = False  # 禁用Google AI
+ACTIVE_LLM_PROVIDER = os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower()
+
+# LangSmith Tracing (Optional)
+LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY")
+
+# 检查必要的 AI 配置 (根据 ACTIVE_LLM_PROVIDER)
+if ACTIVE_LLM_PROVIDER == "deepseek" and not DEEPSEEK_API_KEY:
+    print("警告: ACTIVE_LLM_PROVIDER 设置为 deepseek, 但 DEEPSEEK_API_KEY 未设置.")
+elif ACTIVE_LLM_PROVIDER == "gemini" and not GOOGLE_API_KEY:
+    print("警告: ACTIVE_LLM_PROVIDER 设置为 gemini, 但 GOOGLE_API_KEY 未设置.")
+
+# 可以在这里添加其他应用配置，例如 CORS 设置等
+# ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"] # 前端地址示例
 
 class Config:
     """
@@ -13,22 +39,16 @@ class Config:
     PROJECT_NAME: str = "Flow Editor"
     BASE_URL: str = "http://localhost:8000"  # Default base URL
     API_PREFIX: str = "/api"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your_secret_key")  # Use environment variable, default to "your_secret_key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
+    SECRET_KEY: str = SECRET_KEY
+    ALGORITHM: str = ALGORITHM
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = ACCESS_TOKEN_EXPIRE_MINUTES
 
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///database/flow_editor.db")
+    DATABASE_URL: str = DATABASE_URL
 
     # LLM API settings
-    USE_GOOGLE_AI: bool = False  # 禁用Google AI
     USE_DEEPSEEK: bool = True  # 启用DeepSeek
-    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    
-    
-    # DeepSeek API设置
     DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
     
     # 兼容旧代码的配置
