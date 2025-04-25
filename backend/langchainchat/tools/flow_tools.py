@@ -12,6 +12,9 @@ from database.connection import get_db, get_db_context
 from backend.app.services.flow_service import FlowService
 from backend.app.services.flow_variable_service import FlowVariableService
 
+# Import context variable
+from backend.langchainchat.context import current_flow_id_var
+
 # Use correct absolute path for logger import
 from backend.langchainchat.utils.logging import logger
 
@@ -32,33 +35,36 @@ def create_node_tool_func(
     node_name: Optional[str] = None,
     label: Optional[str] = None,
     type: Optional[str] = None,
-    flow_id: Optional[str] = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
-    创建流程图节点
+    Creates a node in the current workflow diagram.
     
     Args:
-        node_type: 节点类型
-        node_label: 节点标签，如果未提供则使用节点类型作为标签
-        properties: 节点属性
-        position: 节点位置
-        node_name: node_label的别名
-        label: node_label的别名
-        type: node_type的别名
-        flow_id: 流程图ID，如果提供则优先使用
-        **kwargs: 捕获任何其他参数
+        node_type: Type of the node.
+        node_label: Label for the node (uses node_type if not provided).
+        properties: Properties for the node.
+        position: Position (x, y) for the node.
+        node_name: Alias for node_label.
+        label: Alias for node_label.
+        type: Alias for node_type.
+        **kwargs: Catch any other arguments.
         
     Returns:
-        节点创建结果
+        Node creation result.
     """
     try:
+        # --- Get flow_id from context ---
+        target_flow_id = current_flow_id_var.get()
+        if not target_flow_id:
+            logger.error("创建节点失败：无法从上下文中获取当前的 flow_id")
+            return {"success": False, "message": "无法获取当前流程ID", "error": "Context error: Missing flow_id"}
+        # --------------------------------
+
         logger.info("=" * 40)
-        logger.info("创建节点工具函数被调用")
+        logger.info(f"创建节点工具函数被调用 (Flow ID: {target_flow_id})")
         logger.info(f"节点类型参数: node_type={node_type}, type={type}")
         logger.info(f"节点标签参数: node_label={node_label}, node_name={node_name}, label={label}")
-        logger.info(f"流程图ID: flow_id={flow_id}")
-        logger.info(f"其他参数: kwargs={kwargs}")
         
         # 处理参数别名
         if node_type is None and type is not None:
@@ -92,7 +98,7 @@ def create_node_tool_func(
             
         # 从kwargs中提取可能的属性
         for key, value in kwargs.items():
-            if key not in ['node_type', 'node_label', 'position', 'node_name', 'label', 'type', 'flow_id']:
+            if key not in ['node_type', 'node_label', 'position', 'node_name', 'label', 'type']:
                 all_properties[key] = value
         
         # 生成唯一ID，遵循前端格式：nodeType-timestamp
@@ -155,18 +161,6 @@ def create_node_tool_func(
 
         # 使用上下文管理器进行数据库操作
         try:
-            # 获取流程图ID，优先使用传入的flow_id
-            target_flow_id = flow_id
-            
-            # 如果没有提供 flow_id，则操作失败
-            if not target_flow_id:
-                logger.error("创建节点失败：必须提供 flow_id")
-                return {
-                    "success": False, 
-                    "message": "创建节点失败：必须提供 flow_id",
-                    "error": "Missing required flow_id"
-                }
-            
             logger.info(f"使用流程图ID: {target_flow_id}")
 
             # 使用上下文管理器获取db会话
@@ -242,10 +236,17 @@ def connect_nodes_tool_func(
     source_id: str,
     target_id: str,
     label: Optional[str] = None,
-    flow_id: Optional[str] = None
 ) -> Dict[str, Any]:
+    """Connects two nodes in the current workflow diagram."""
     try:
-        logger.info(f"连接节点: {source_id} -> {target_id}")
+        # --- Get flow_id from context ---
+        target_flow_id = current_flow_id_var.get()
+        if not target_flow_id:
+            logger.error("连接节点失败：无法从上下文中获取当前的 flow_id")
+            return {"success": False, "message": "无法获取当前流程ID", "error": "Context error: Missing flow_id"}
+        # --------------------------------
+        
+        logger.info(f"连接节点: {source_id} -> {target_id} (Flow ID: {target_flow_id})")
         
         # 生成唯一ID
         connection_id = f"reactflow__edge-{source_id}output-{target_id}input"  # 使用与前端一致的边ID格式
@@ -264,18 +265,6 @@ def connect_nodes_tool_func(
         
         # 使用上下文管理器进行数据库操作
         try:
-            # 获取流程图ID，优先使用传入的flow_id
-            target_flow_id = flow_id
-            
-            # 如果没有提供 flow_id，则操作失败
-            if not target_flow_id:
-                logger.error("连接节点失败：必须提供 flow_id")
-                return {
-                    "success": False, 
-                    "message": "连接节点失败：必须提供 flow_id",
-                    "error": "Missing required flow_id"
-                }
-            
             logger.info(f"使用流程图ID: {target_flow_id}")
 
             # 使用上下文管理器获取db会话
@@ -340,105 +329,84 @@ def connect_nodes_tool_func(
         }
 
 def get_flow_info_tool_func(
-    flow_id: Optional[str] = None
+    # No parameters needed from LLM anymore
+    # flow_id: Optional[str] = None # Removed
 ) -> Dict[str, Any]:
+    """Retrieves information about the current workflow (nodes, connections, variables)."""
     try:
-        logger.info("获取流程图信息")
-
-        if not flow_id:
-            logger.error("获取流程图信息失败：必须提供 flow_id")
-            return {
-                "success": False, 
-                "message": "获取流程图信息失败：必须提供 flow_id",
-                "error": "Missing required flow_id"
-            }
+        # --- Get flow_id from context ---
+        target_flow_id = current_flow_id_var.get()
+        if not target_flow_id:
+            logger.error("获取流程图信息失败：无法从上下文中获取当前的 flow_id")
+            return {"success": False, "message": "无法获取当前流程ID", "error": "Context error: Missing flow_id"}
+        # --------------------------------
         
-        # 使用上下文管理器获取db会话
+        logger.info(f"获取流程图信息 (Flow ID: {target_flow_id})")
+        
+        # DB operations using target_flow_id (Copied and adapted)
         with get_db_context() as db:
             flow_service = FlowService(db)
             variable_service = FlowVariableService(db)
-            logger.info(f"使用流程图ID: {flow_id}")
-            
-            # 获取流程图详情
-            flow_data = flow_service.get_flow(flow_id)
+            logger.info(f"使用流程图ID: {target_flow_id}")
+            flow_data = flow_service.get_flow(target_flow_id)
             if not flow_data:
-                logger.warning(f"无法找到流程图 {flow_id}")
-                return {"success": False, "message": f"未找到流程图 {flow_id}", "error": "Flow not found"}
-
-            # 获取流程变量
-            variables = variable_service.get_variables(flow_id)
-            
-            # 获取节点和边
+                return {"success": False, "message": f"未找到流程图 {target_flow_id}", "error": "Flow not found"}
+            variables = variable_service.get_variables(target_flow_id)
             nodes = flow_data.get("nodes", [])
             edges = flow_data.get("edges", []) 
-            
-            # 构建返回信息
             return {
-                "success": True,
-                "message": "成功获取流程图信息",
+                "success": True, "message": "成功获取流程图信息",
                 "flow_info": {
-                    "flow_id": flow_id,
+                    "flow_id": target_flow_id,
                     "name": flow_data.get("name", "未命名流程图"),
                     "created_at": flow_data.get("created_at", "未知"),
                     "updated_at": flow_data.get("updated_at", "未知"),
-                    "nodes": nodes,
-                    "edges": edges,
-                    "variables": variables
+                    "nodes": nodes, "edges": edges, "variables": variables
                 }
             }
-        
+            
     except Exception as e:
         logger.error(f"获取流程图信息时出错: {str(e)}", exc_info=True)
         return {"success": False, "message": f"获取流程图信息失败: {str(e)}"}
 
-# --- 新增: RAG 检索工具函数 --- 
-def retrieve_context_func(query: str, flow_id: Optional[str] = None) -> Dict[str, Any]:
-    """根据用户查询从知识库检索相关上下文。"""
-    logger.info(f"检索上下文: 查询='{query[:50]}...', flow_id={flow_id}")
+def retrieve_context_func(
+    # Remove flow_id parameter
+    query: str, 
+    # flow_id: Optional[str] = None # Removed
+) -> Dict[str, Any]:
+    """Searches the knowledge base for context relevant to the user's query."""
+    # --- Get flow_id from context (but retrieval might not actually use it yet) ---
+    # target_flow_id = current_flow_id_var.get() # We get it, but the RAG logic might not use it.
+    # logger.info(f"检索上下文: 查询='{query[:50]}...', Flow ID (from context): {target_flow_id}")
+    # Let's keep the original logging for now, as RAG might not be flow-specific yet
+    logger.info(f"检索上下文: 查询='{query[:50]}...'") 
+    # -----------------------------------------------------------------------------
     try:
         with get_db_context() as db:
-            # 实例化依赖
             from database.embedding.service import DatabaseEmbeddingService
             from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
-
-            embedding_service = DatabaseEmbeddingService() # 通常 Embedding Service 不需要 db
-            # EmbeddingRetriever 需要 db 和 embedding_service
+            embedding_service = DatabaseEmbeddingService() 
             retriever = EmbeddingRetriever(db_session=db, embedding_service=embedding_service)
             
-            # 执行检索 (调用异步方法需要处理事件循环)
-            # 为了简化，这里我们假设有一个同步的 get_relevant_documents 或直接调用异步
-            # 注意：直接在同步函数中调用异步函数需要特定处理
-            # 这里我们尝试直接调用异步方法，但这在某些环境中可能无效
+            # Async retrieval logic (Copied)
             try:
                 import asyncio
-                # 尝试获取现有事件循环，否则创建新的
-                try:
-                    loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                
-                documents = loop.run_until_complete(retriever._aget_relevant_documents(query, run_manager=None)) # 传递 None run_manager
+                try: loop = asyncio.get_running_loop()
+                except RuntimeError: loop = asyncio.new_event_loop(); asyncio.set_event_loop(loop)
+                documents = loop.run_until_complete(retriever._aget_relevant_documents(query, run_manager=None))
             except Exception as async_err:
                  logger.error(f"调用异步检索时出错: {async_err}. 尝试同步方法 (可能为空).")
-                 # 如果异步调用失败，尝试调用同步（可能为空）
                  documents = retriever._get_relevant_documents(query, run_manager=None)
 
             if not documents:
-                logger.info("未检索到相关上下文。")
                 return {"success": True, "message": "未找到相关信息。", "retrieved_context": "未找到相关信息。"}
 
-            # 格式化文档内容
             formatted_docs = "\n\n---\n\n".join([
                 f"来源: {doc.metadata.get('source', '未知')}\n内容: {doc.page_content}" 
                 for doc in documents
             ])
             logger.info(f"成功检索到 {len(documents)} 个文档。")
-            return {
-                "success": True, 
-                "message": f"成功检索到 {len(documents)} 条相关信息。", 
-                "retrieved_context": formatted_docs
-            }
+            return {"success": True, "message": f"成功检索到 {len(documents)} 条相关信息。", "retrieved_context": formatted_docs}
 
     except Exception as e:
         logger.error(f"检索上下文时出错: {e}", exc_info=True)
@@ -446,58 +414,59 @@ def retrieve_context_func(query: str, flow_id: Optional[str] = None) -> Dict[str
 
 # --- 2. 定义 Pydantic V2 Schema --- 
 class CreateNodeSchema(BaseModel):
+    # Remove flow_id field
     node_type: str = Field(description="The type of the node to create.")
     node_label: Optional[str] = Field(None, description="The label for the node. Uses node_type if not provided.")
     properties: Optional[Dict[str, Any]] = Field(None, description="Properties for the node.")
     position: Optional[Dict[str, float]] = Field(None, description="Position (x, y) for the node.")
-    flow_id: Optional[str] = Field(description="The ID of the workflow to add the node to.")
+    # flow_id: Optional[str] = Field(description="The ID of the workflow to add the node to.") # Removed
 
 class ConnectNodesSchema(BaseModel):
+    # Remove flow_id field
     source_id: str = Field(description="The ID of the source node.")
     target_id: str = Field(description="The ID of the target node.")
     label: Optional[str] = Field(None, description="Label for the connection.")
-    flow_id: Optional[str] = Field(description="The ID of the workflow where the connection belongs.")
+    # flow_id: Optional[str] = Field(description="The ID of the workflow where the connection belongs.") # Removed
 
 class GetFlowInfoSchema(BaseModel):
-    flow_id: Optional[str] = Field(description="The ID of the workflow to get information about.")
+    # Remove flow_id field - No fields needed from LLM
+    pass # Tool now takes no arguments from LLM
 
-# --- 新增: RAG 检索工具 Schema --- 
 class RetrieveContextSchema(BaseModel):
+    # Remove flow_id field
     query: str = Field(description="The user query to search for relevant context.")
-    # flow_id 暂时可选，未来可能用于特定流程的知识库
-    flow_id: Optional[str] = Field(None, description="(Optional) The ID of the current workflow to scope the search.")
+    # flow_id: Optional[str] = Field(None, description="(Optional) The ID of the current workflow to scope the search.") # Removed
 
 # --- 3. 创建 StructuredTool 实例 --- 
 create_node_tool = StructuredTool.from_function(
     func=create_node_tool_func,
     name="create_node",
-    description="Creates a new node in the workflow diagram. Specify node type, label, position, properties and the flow_id.",
+    description="Creates a new node in the current workflow diagram. Specify node type, label, position, and properties.", # Removed flow_id mention
     args_schema=CreateNodeSchema
 )
 
 connect_nodes_tool = StructuredTool.from_function(
     func=connect_nodes_tool_func,
     name="connect_nodes",
-    description="Connects two nodes in the workflow diagram using their source_id and target_id. Also requires the flow_id.",
+    description="Connects two nodes in the current workflow diagram using their source_id and target_id.", # Removed flow_id mention
     args_schema=ConnectNodesSchema
 )
 
 get_flow_info_tool = StructuredTool.from_function(
     func=get_flow_info_tool_func,
     name="get_flow_info",
-    description="Retrieves information about the current workflow, such as nodes, connections, and variables. Requires the flow_id.",
-    args_schema=GetFlowInfoSchema
+    description="Retrieves information about the current workflow, such as nodes, connections, and variables.", # Removed flow_id mention
+    args_schema=GetFlowInfoSchema # Schema now has no args
 )
 
-# --- 新增: RAG 检索工具实例 --- 
 retrieve_context_tool = StructuredTool.from_function(
     func=retrieve_context_func,
     name="retrieve_context",
     description="Searches the knowledge base for context relevant to the user's query. Use this before answering questions that require external knowledge.",
-    args_schema=RetrieveContextSchema
+    args_schema=RetrieveContextSchema # Removed flow_id mention
 )
 
-# --- 4. 导出工具列表 (添加新工具) --- 
+# --- 4. 导出工具列表 (保持不变) --- 
 flow_tools: List[BaseTool] = [create_node_tool, connect_nodes_tool, get_flow_info_tool, retrieve_context_tool]
 
 # ======================

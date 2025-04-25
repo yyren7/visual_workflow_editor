@@ -1,5 +1,9 @@
+import logging # Ensure logging is imported
+
+logger = logging.getLogger(__name__) # Setup logger earlier
+
 from typing import Dict, Any, List, Optional, Type, Tuple
-import logging # Import logging
+# import logging # Remove redundant import later
 
 from langchain_core.runnables import Runnable, RunnableConfig, RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder # Removed PromptTemplate import if not needed elsewhere
@@ -40,8 +44,6 @@ from backend.langchainchat.prompts.chat_prompts import STRUCTURED_CHAT_AGENT_PRO
 # from langchain.agents import create_structured_chat_agent # Remove this if not used
 # from langchain.agents.format_scratchpad.log_to_messages import format_log_to_messages # Try this formatter - Incorrect import?
 import langchain.agents.format_scratchpad.log_to_messages as log_formatter_module # Import module instead
-
-logger = logging.getLogger(__name__) # Setup logger
 
 # --- Internal function specifically for DeepSeek/Structured Chat Agent ---
 def _create_deepseek_structured_agent_runnable(llm: BaseChatModel, tools: List[BaseTool]) -> Runnable:

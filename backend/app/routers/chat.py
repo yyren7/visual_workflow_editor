@@ -7,13 +7,13 @@ import logging
 import json
 import asyncio # 确保导入 asyncio
 from collections import defaultdict # 导入 defaultdict
+from backend.langchainchat.context import current_flow_id_var # <--- Import context variable
 
 from backend.app import schemas
 from database.connection import get_db, get_db_context
 from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.chat_service import ChatService
 from backend.app.services.flow_service import FlowService
-from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput
 from database.models import Flow
 from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
 
@@ -250,6 +250,11 @@ async def add_message(
                     return
 
                 flow_id = chat.flow_id
+                # --- Set the context variable --- 
+                current_flow_id_var.set(flow_id) # <--- Set context variable here
+                logger.debug(f"[Chat {c_id}] Set current_flow_id context variable to: {flow_id}")
+                # --------------------------------
+
                 flow = flow_service_bg.get_flow_instance(flow_id) # 获取 Flow 实例
                 if not flow:
                      logger.error(f"[Chat {c_id}] Background task could not find flow {flow_id}.")
@@ -272,7 +277,7 @@ async def add_message(
                     "input": msg_content,
                     "chat_history": langchain_history,
                     "flow_context": flow_data,
-                    "flow_id": flow_id
+                    # "flow_id": flow_id # Optional: Keep or remove, tools won't use it directly
                 }
                 logger.info(f"[Chat {c_id}] Prepared agent input: keys={list(agent_input.keys())}")
 
@@ -396,6 +401,10 @@ async def add_message(
                  logger.error(f"[Chat {c_id}] Failed to put error message in queue: {qe}")
 
         finally:
+            # --- Reset the context variable (important!) ---
+            current_flow_id_var.set(None)
+            logger.debug(f"[Chat {c_id}] Reset current_flow_id context variable.")
+            # ----------------------------------------------
             logger.debug(f"[Chat {c_id}] Background task finally block reached. Is error: {is_error}")
             # --- 数据库保存逻辑 (步骤 3 - 修正结构) ---
             if not is_error and final_reply_accumulator:

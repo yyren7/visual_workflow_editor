@@ -1,0 +1,605 @@
+--- 正在验证 AI 配置 ---
+--- AI 配置验证结束 ---
+系统版本: 0.3.4
+最后更新: 2025-03-11
+版本信息已保存到数据库: 0.3.4, 2025-03-11
+===== 环境变量调试信息 =====
+时间: 2025-04-25T05:22:43.876174
+Python版本: 3.10.12 (main, Feb  4 2025, 14:57:36) [GCC 11.4.0]
+DEEPSEEK_API_KEY: sk-fa08f...3fa5 (长度: 35字符)
+DEEPSEEK_BASE_URL: https://api.deepseek.com
+所有环境变量: ['ACCESS_TOKEN_EXPIRE_MINUTES', 'ACTIVE_LLM_PROVIDER', 'ALGORITHM', 'APP_LAST_UPDATED', 'APP_VERSION', 'CORS_ORIGINS', 'DATABASE_URL', 'DEBUG', 'DEEPSEEK_API_KEY', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_MODEL', 'EMBEDDING_LMSTUDIO_API_BASE_URL', 'EMBEDDING_LMSTUDIO_API_KEY', 'EMBEDDING_USE_LMSTUDIO', 'GOOGLE_API_KEY', 'HOME', 'HOSTNAME', 'LANGCHAIN_API_KEY', 'LANGCHAIN_TRACING_V2', 'LC_CTYPE', 'LESSCLOSE', 'LESSOPEN', 'LS_COLORS', 'OLDPWD', 'PATH', 'PROMPT_DIRTRIM', 'PWD', 'PYTHONPATH', 'REMOTE_CONTAINERS', 'REMOTE_CONTAINERS_IPC', 'REMOTE_CONTAINERS_SOCKETS', 'SECRET_KEY', 'SHELL', 'SHLVL', 'TERM', 'TERM_PROGRAM', 'TERM_PROGRAM_VERSION', 'TMUX', 'TMUX_PANE', 'USER', '_']
+=======================
+准备启动 Uvicorn...
+数据库连接在启动 Uvicorn 前验证成功。
+--- 正在验证 AI 配置 ---
+--- AI 配置验证结束 ---
+2025-04-25 05:22:44 - langchain_chat - INFO - 日志已配置: 级别=INFO, 文件=logs/langchain.log
+2025-04-25 05:22:44 - langchain_chat - INFO - Langchain debug logging enabled, writing to logs/langchain_debug.log
+使用自动计算的模板目录路径: /workspace/database/node_database
+开始递归扫描模板目录: /workspace/database/node_database
+正在扫描目录: /workspace/database/node_database
+  - 在此目录找到 6 个XML文件
+正在扫描目录: /workspace/database/node_database/mg400
+  - 在此目录找到 67 个XML文件
+正在扫描目录: /workspace/database/node_database/quick-fcpr
+  - 在此目录找到 49 个XML文件
+总共发现 122 个XML文件
+解析XML文件: /workspace/database/node_database/moveL.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: moveL 从文件 moveL.xml
+解析XML文件: /workspace/database/node_database/condition.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: condition 从文件 condition.xml
+解析XML文件: /workspace/database/node_database/set_motor.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_motor 从文件 set_motor.xml
+解析XML文件: /workspace/database/node_database/loop.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: loop 从文件 loop.xml
+解析XML文件: /workspace/database/node_database/select_robot.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: select_robot 从文件 select_robot.xml
+解析XML文件: /workspace/database/node_database/return.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: return 从文件 return.xml
+解析XML文件: /workspace/database/node_database/mg400/DI.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: DI 从文件 DI.xml
+解析XML文件: /workspace/database/node_database/mg400/GetCoils.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetCoils 从文件 GetCoils.xml
+解析XML文件: /workspace/database/node_database/mg400/CalcUser.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: CalcUser 从文件 CalcUser.xml
+解析XML文件: /workspace/database/node_database/mg400/RobotMode.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: RobotMode 从文件 RobotMode.xml
+解析XML文件: /workspace/database/node_database/mg400/GetAngle.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetAngle 从文件 GetAngle.xml
+解析XML文件: /workspace/database/node_database/mg400/GetInRegs.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetInRegs 从文件 GetInRegs.xml
+解析XML文件: /workspace/database/node_database/mg400/SetUser.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetUser 从文件 SetUser.xml
+解析XML文件: /workspace/database/node_database/mg400/SetPayLoad.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetPayLoad 从文件 SetPayLoad.xml
+解析XML文件: /workspace/database/node_database/mg400/GetPalletPose.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetPalletPose 从文件 GetPalletPose.xml
+解析XML文件: /workspace/database/node_database/mg400/RelMovLUser.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: RelMovLUser 从文件 RelMovLUser.xml
+解析XML文件: /workspace/database/node_database/mg400/CP.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: CP 从文件 CP.xml
+解析XML文件: /workspace/database/node_database/mg400/ResetRobot.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ResetRobot 从文件 ResetRobot.xml
+解析XML文件: /workspace/database/node_database/mg400/ClearError.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ClearError 从文件 ClearError.xml
+解析XML文件: /workspace/database/node_database/mg400/AccJ.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: AccJ 从文件 AccJ.xml
+解析XML文件: /workspace/database/node_database/mg400/DO.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: DO 从文件 DO.xml
+解析XML文件: /workspace/database/node_database/mg400/MovJ.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: MovJ 从文件 MovJ.xml
+解析XML文件: /workspace/database/node_database/mg400/ToolDI.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ToolDI 从文件 ToolDI.xml
+解析XML文件: /workspace/database/node_database/mg400/InverseSolution.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: InverseSolution 从文件 InverseSolution.xml
+解析XML文件: /workspace/database/node_database/mg400/RelMovJUser.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: RelMovJUser 从文件 RelMovJUser.xml
+解析XML文件: /workspace/database/node_database/mg400/MovL.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: MovL 从文件 MovL.xml
+解析XML文件: /workspace/database/node_database/mg400/Wait.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Wait 从文件 Wait.xml
+解析XML文件: /workspace/database/node_database/mg400/GetErrorID.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetErrorID 从文件 GetErrorID.xml
+解析XML文件: /workspace/database/node_database/mg400/DOGroup.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: DOGroup 从文件 DOGroup.xml
+解析XML文件: /workspace/database/node_database/mg400/ModbusClose.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ModbusClose 从文件 ModbusClose.xml
+解析XML文件: /workspace/database/node_database/mg400/MoveJog.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: MoveJog 从文件 MoveJog.xml
+解析XML文件: /workspace/database/node_database/mg400/ToolDOExecute.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ToolDOExecute 从文件 ToolDOExecute.xml
+解析XML文件: /workspace/database/node_database/mg400/AccL.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: AccL 从文件 AccL.xml
+解析XML文件: /workspace/database/node_database/mg400/MovJIO.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: MovJIO 从文件 MovJIO.xml
+解析XML文件: /workspace/database/node_database/mg400/Pause.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Pause 从文件 Pause.xml
+解析XML文件: /workspace/database/node_database/mg400/SyncAll.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SyncAll 从文件 SyncAll.xml
+解析XML文件: /workspace/database/node_database/mg400/ContinueScript.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ContinueScript 从文件 ContinueScript.xml
+解析XML文件: /workspace/database/node_database/mg400/ModbusCreate.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ModbusCreate 从文件 ModbusCreate.xml
+解析XML文件: /workspace/database/node_database/mg400/SetArmOrientation.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetArmOrientation 从文件 SetArmOrientation.xml
+解析XML文件: /workspace/database/node_database/mg400/GetInBits.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetInBits 从文件 GetInBits.xml
+解析XML文件: /workspace/database/node_database/mg400/DOExecute.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: DOExecute 从文件 DOExecute.xml
+解析XML文件: /workspace/database/node_database/mg400/SetHoldRegs.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetHoldRegs 从文件 SetHoldRegs.xml
+解析XML文件: /workspace/database/node_database/mg400/Tool.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Tool 从文件 Tool.xml
+解析XML文件: /workspace/database/node_database/mg400/ToolDO.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: ToolDO 从文件 ToolDO.xml
+解析XML文件: /workspace/database/node_database/mg400/Arc.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Arc 从文件 Arc.xml
+解析XML文件: /workspace/database/node_database/mg400/Circle.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Circle 从文件 Circle.xml
+解析XML文件: /workspace/database/node_database/mg400/Sync.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Sync 从文件 Sync.xml
+解析XML文件: /workspace/database/node_database/mg400/SetTool.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetTool 从文件 SetTool.xml
+解析XML文件: /workspace/database/node_database/mg400/JointMovJ.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: JointMovJ 从文件 JointMovJ.xml
+解析XML文件: /workspace/database/node_database/mg400/SpeedJ.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SpeedJ 从文件 SpeedJ.xml
+解析XML文件: /workspace/database/node_database/mg400/EmergencyStop.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: EmergencyStop 从文件 EmergencyStop.xml
+解析XML文件: /workspace/database/node_database/mg400/DisableRobot.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: DisableRobot 从文件 DisableRobot.xml
+解析XML文件: /workspace/database/node_database/mg400/GetPose.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetPose 从文件 GetPose.xml
+解析XML文件: /workspace/database/node_database/mg400/CalcTool.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: CalcTool 从文件 CalcTool.xml
+解析XML文件: /workspace/database/node_database/mg400/PalletCreate.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: PalletCreate 从文件 PalletCreate.xml
+解析XML文件: /workspace/database/node_database/mg400/EnableRobot.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: EnableRobot 从文件 EnableRobot.xml
+解析XML文件: /workspace/database/node_database/mg400/StopDrag.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: StopDrag 从文件 StopDrag.xml
+解析XML文件: /workspace/database/node_database/mg400/SpeedFactor.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SpeedFactor 从文件 SpeedFactor.xml
+解析XML文件: /workspace/database/node_database/mg400/SpeedL.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SpeedL 从文件 SpeedL.xml
+解析XML文件: /workspace/database/node_database/mg400/MovLIO.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: MovLIO 从文件 MovLIO.xml
+解析XML文件: /workspace/database/node_database/mg400/StartDrag.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: StartDrag 从文件 StartDrag.xml
+解析XML文件: /workspace/database/node_database/mg400/PauseScript.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: PauseScript 从文件 PauseScript.xml
+解析XML文件: /workspace/database/node_database/mg400/SetCollisionLevel.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetCollisionLevel 从文件 SetCollisionLevel.xml
+解析XML文件: /workspace/database/node_database/mg400/GetHoldRegs.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: GetHoldRegs 从文件 GetHoldRegs.xml
+解析XML文件: /workspace/database/node_database/mg400/SetCoils.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: SetCoils 从文件 SetCoils.xml
+解析XML文件: /workspace/database/node_database/mg400/Continue.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Continue 从文件 Continue.xml
+解析XML文件: /workspace/database/node_database/mg400/StopScript.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: StopScript 从文件 StopScript.xml
+解析XML文件: /workspace/database/node_database/mg400/Arch.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: Arch 从文件 Arch.xml
+解析XML文件: /workspace/database/node_database/mg400/User.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: User 从文件 User.xml
+解析XML文件: /workspace/database/node_database/mg400/MovJExt.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: MovJExt 从文件 MovJExt.xml
+解析XML文件: /workspace/database/node_database/mg400/RelJointMovJ.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: RelJointMovJ 从文件 RelJointMovJ.xml
+解析XML文件: /workspace/database/node_database/mg400/PositiveSolution.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: PositiveSolution 从文件 PositiveSolution.xml
+解析XML文件: /workspace/database/node_database/mg400/RunScript.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: RunScript 从文件 RunScript.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/logic_custom_flag.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_custom_flag 从文件 logic_custom_flag.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_external_io_output_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_external_io_output_upon 从文件 set_external_io_output_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/raise_error_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: raise_error_upon 从文件 raise_error_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_output_until.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_output_until 从文件 set_output_until.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_flag.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_flag 从文件 set_flag.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_external_io_output_during.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_external_io_output_during 从文件 set_external_io_output_during.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/moveL.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+警告: 模板类型 'moveL' 已存在 (来自 moveL.xml), 将被 moveL.xml 覆盖
+成功加载模板: moveL 从文件 moveL.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait_block.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_block 从文件 wait_block.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_palet.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_palet 从文件 set_palet.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/raise_error.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: raise_error 从文件 raise_error.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait_ready.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: wait_ready 从文件 wait_ready.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait_timer.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_timer 从文件 wait_timer.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/logic_block.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_block 从文件 logic_block.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/if.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: if 从文件 if.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_external_io_output.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_external_io_output 从文件 set_external_io_output.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait_external_io_input.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_external_io_input 从文件 wait_external_io_input.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_number_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_number_upon 从文件 set_number_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait_input.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_input 从文件 wait_input.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_motor.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+警告: 模板类型 'set_motor' 已存在 (来自 set_motor.xml), 将被 set_motor.xml 覆盖
+成功加载模板: set_motor 从文件 set_motor.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/math_arithmetic.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: math_arithmetic 从文件 math_arithmetic.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: wait 从文件 wait.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/move_origin.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: move_origin 从文件 move_origin.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_output.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_output 从文件 set_output.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/connect_camera.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: connect_camera 从文件 connect_camera.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/reset_pallet.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: reset_pallet 从文件 reset_pallet.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/external_io.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: external_io 从文件 external_io.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/moveP.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: moveP 从文件 moveP.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_flag_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_flag_upon 从文件 set_flag_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/run_camera_wait.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: run_camera_wait 从文件 run_camera_wait.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_output_during.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_output_during 从文件 set_output_during.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/loop.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+警告: 模板类型 'loop' 已存在 (来自 loop.xml), 将被 loop.xml 覆盖
+成功加载模板: loop 从文件 loop.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/move_next_pallet.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: move_next_pallet 从文件 move_next_pallet.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/connect_external_io.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: connect_external_io 从文件 connect_external_io.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/logic_negate.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_negate 从文件 logic_negate.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/set_number.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_number 从文件 set_number.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/logic_flag.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_flag 从文件 logic_flag.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/run_camera.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: run_camera 从文件 run_camera.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/stop_robot_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: stop_robot_upon 从文件 stop_robot_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/math_number.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: math_number 从文件 math_number.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/robot_position.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: robot_position 从文件 robot_position.xml
+Error parsing template /workspace/database/node_database/quick-fcpr/return.xml: no element found: line 1, column 1
+警告: 未能从文件创建模板 return.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/wait_run.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: wait_run 从文件 wait_run.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/math_custom_number.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: math_custom_number 从文件 math_custom_number.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr/create_event.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml

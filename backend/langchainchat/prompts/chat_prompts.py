@@ -201,9 +201,11 @@ ERROR_HANDLING_TEMPLATE = ChatPromptTemplate.from_messages([
 # 修改后的版本，确保包含 tools, tool_names, 和 agent_scratchpad
 STRUCTURED_CHAT_AGENT_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
-     """尽可能地帮助用户。你是一个专门用于创建和管理工作流图表的 AI 助手。
+     """你是工作流图表 AI 助手，专注于帮助用户使用 Blockly 风格的块来设计、修改和优化机器人控制流程图。
 
-     你可以使用以下工具：
+     重要规则：对于和流程图设计、修改、优化无关的用户输入，请忽略无关内容，并简单重申你的主要职责是协助进行机器人流程图的设计。只有和任务相关的输入才进行针对性的回复或使用工具。
+
+     可用工具：
 
      {tools}
 
@@ -237,6 +239,6 @@ STRUCTURED_CHAT_AGENT_PROMPT = ChatPromptTemplate.from_messages([
     ),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad") # 添加 agent_scratchpad 占位符
+    MessagesPlaceholder(variable_name="agent_scratchpad")
 ])
 # --- 结束新增 --- 
