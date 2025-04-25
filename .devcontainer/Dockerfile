@@ -13,12 +13,14 @@ RUN apt-get update && apt-get install -y \
     tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 Node.js 16（与前端 Dockerfile 保持一致）
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g npm@8.19.4 \
-    && node --version \
-    && npm --version
+# 安装 Node.js 22（与前端 Dockerfile 保持一致）
+ARG NODE_VERSION="22"
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest && \
+    node --version && \
+    npm --version
 
 # 安装 Python 3.10（与后端一致）
 RUN apt-get update && apt-get install -y \

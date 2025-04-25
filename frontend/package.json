@@ -2,6 +2,9 @@
   "name": "visual-workflow-editor-frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
@@ -29,7 +32,7 @@
     "@craco/craco": "^7.1.0",
     "@types/file-saver": "^2.0.5",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^16.18.126",
+    "@types/node": "^20.14.12",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/react-resizable": "^3.0.8",
