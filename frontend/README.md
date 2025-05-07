@@ -14,7 +14,7 @@ frontend/
 ├── src/                      # 应用源代码目录
 │   ├── api/                  # API 请求封装 (与后端交互)
 │   │   ├── apiClient.ts      # 配置 Axios 实例，添加请求/响应拦截器（如自动附加认证Token、处理401错误）。
-│   │   ├── chatApi.ts        # 封装与聊天相关的后端 API 调用（普通聊天记录CRUD，Langchain聊天，SSE事件处理）。
+│   │   ├── chatApi.ts        # 封装与聊天相关的后端 API 调用（聊天记录CRUD，LangGraph聊天流式处理），支持SSE事件处理（token、tool_start、tool_end、error）以展示LangGraph Agent的思考过程和工具调用。
 │   │   ├── flowApi.ts        # 封装与工作流相关的后端 API 调用（CRUD、获取用户流程列表、复制、设置最后选择等）。
 │   │   ├── llmApi.ts         # 封装与 LLM 相关的后端 API 调用（生成节点、更新节点、处理工作流提示）。
 │   │   ├── nodeTemplates.ts  # 封装获取后端节点模板的 API 调用。
@@ -35,7 +35,7 @@ frontend/
 │   │   │   ├── InputNode.tsx         # 输入节点 (通常只有一个输出)。
 │   │   │   ├── OutputNode.tsx        # 输出节点 (通常只有一个输入)。
 │   │   │   └── ProcessNode.tsx       # 处理/任务节点 (通常有输入和输出)。
-│   │   ├── ChatInterface.tsx   # 聊天界面组件，包含聊天列表侧边栏和主聊天窗口，支持发送消息、SSE流式响应、聊天记录管理(创建/删除/重命名/下载)。
+│   │   ├── ChatInterface.tsx   # 聊天界面组件，包含聊天列表侧边栏和主聊天窗口，支持发送消息、LangGraph流式响应(思考过程、工具调用的实时展示)，以及聊天记录管理(创建/删除/重命名/下载)。
 │   │   ├── DraggableResizableContainer.tsx # 提供可拖拽、可调整大小的容器 HOC，用于包裹面板组件。
 │   │   ├── EditorAppBar.tsx    # 流程图编辑器的顶部应用栏，包含流程图名称编辑、菜单(切换面板)、节点添加、布局、语言选择、用户菜单(选择流程图、登出)、保存状态显示。
 │   │   ├── FlowCanvas.tsx      # 封装 React Flow 画布，处理节点/边的渲染、连接、拖拽、缩放、背景、控件、面板(版本信息、布局按钮)等。

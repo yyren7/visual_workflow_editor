@@ -114,7 +114,7 @@ except Exception as e:
     raise
 
 # --- 新增：导入 Pydantic 模型和依赖 --- 
-from backend.langchainchat.memory.db_chat_memory import DbChatMemory
+from backend.langgraphchat.memory.db_chat_memory import DbChatMemory
 from backend.app.services.chat_service import ChatService # 确保 ChatService 已导入
 
 # --- 新增：解析 Pydantic 前向引用 --- 
@@ -219,7 +219,7 @@ async def startup_event():
     print("节点模板加载成功")
     
     # 不再需要初始化节点类型提示服务
-    # 它将在langchainchat/prompts/chat_prompts.py中按需创建
+    # 它将在langgraphchat/prompts/chat_prompts.py中按需创建
 
 @app.get("/")
 async def root():
@@ -272,7 +272,7 @@ async def validate_api_configuration():
         # 尝试验证 DeepSeek 客户端模块
         try:
             # 尝试导入新的 DeepSeekLLM 类来验证模块是否存在
-            from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
+            from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
             # 之前获取实例的代码不再需要
             # logger.info("✓ DeepSeek客户端服务初始化成功") # 旧日志
             logger.info("✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功") # 新日志

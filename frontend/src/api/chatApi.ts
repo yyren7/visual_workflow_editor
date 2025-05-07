@@ -126,7 +126,7 @@ export const sendChatMessage = async (request: ChatRequest): Promise<ChatRespons
       language: currentLanguage
     };
 
-    const response: AxiosResponse<ChatResponse> = await apiClient.post('/langchainchat/message', requestWithLanguage);
+    const response: AxiosResponse<ChatResponse> = await apiClient.post('/langgraphchat/message', requestWithLanguage);
     return response.data;
   } catch (error) {
     console.error("Error sending chat message:", error);
@@ -141,7 +141,7 @@ export const sendChatMessage = async (request: ChatRequest): Promise<ChatRespons
 export const getChatConversations = async (): Promise<Array<any>> => {
   console.log("getChatConversations request");
   try {
-    const response: AxiosResponse<Array<any>> = await apiClient.get('/langchainchat/conversations');
+    const response: AxiosResponse<Array<any>> = await apiClient.get('/langgraphchat/conversations');
     return response.data;
   } catch (error) {
     console.error("Error getting chat conversations:", error);
@@ -157,7 +157,7 @@ export const getChatConversations = async (): Promise<Array<any>> => {
 export const deleteChatConversation = async (conversation_id: string): Promise<any> => {
   console.log("deleteChatConversation request:", conversation_id);
   try {
-    const response: AxiosResponse<any> = await apiClient.delete(`/langchainchat/conversations/${conversation_id}`);
+    const response: AxiosResponse<any> = await apiClient.delete(`/langgraphchat/conversations/${conversation_id}`);
     return response.data;
   } catch (error) {
     console.error("Error deleting chat conversation:", error);

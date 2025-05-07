@@ -13,10 +13,10 @@ from backend.app.services.flow_service import FlowService
 from backend.app.services.flow_variable_service import FlowVariableService
 
 # Import context variable
-from backend.langchainchat.context import current_flow_id_var
+from backend.langgraphchat.context import current_flow_id_var
 
 # Use correct absolute path for logger import
-from backend.langchainchat.utils.logging import logger
+from backend.langgraphchat.utils.logging import logger
 
 # Import Pydantic models and ToolResult
 from .definitions import (
@@ -24,7 +24,8 @@ from .definitions import (
     QuestionsParams, TextGenerationParams, ToolResult
 )
 # Import the necessary LLM client class
-from backend.langchainchat.llms.deepseek_client import DeepSeekLLM
+from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
+from backend.langgraphchat.retrievers.embedding_retriever import EmbeddingRetriever
 
 # --- 1. 定义同步工具函数 --- 
 def create_node_tool_func(
@@ -384,7 +385,7 @@ def retrieve_context_func(
     try:
         with get_db_context() as db:
             from database.embedding.service import DatabaseEmbeddingService
-            from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
+            from backend.langgraphchat.retrievers.embedding_retriever import EmbeddingRetriever
             embedding_service = DatabaseEmbeddingService() 
             retriever = EmbeddingRetriever(db_session=db, embedding_service=embedding_service)
             

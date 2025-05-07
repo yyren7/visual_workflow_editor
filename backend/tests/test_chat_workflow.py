@@ -6,7 +6,7 @@ from typing import AsyncGenerator
 
 # Import necessary classes
 # from backend.app.services.chat_service import ChatService
-# from backend.langchainchat.chains.workflow_chain import WorkflowChainOutput, WorkflowChain # Removed
+# from backend.langgraphchat.chains.workflow_chain import WorkflowChainOutput, WorkflowChain # Removed
 # from database.models import Chat, Flow, User # Assuming User model exists
 
 # === Tests below are commented out because they target the removed ChatService.process_chat_message method ===

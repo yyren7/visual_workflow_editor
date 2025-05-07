@@ -7,9 +7,9 @@ import asyncio
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import Session
 
-from backend.langchainchat.embeddings.semantic_search import search_by_text
-from backend.langchainchat.embeddings.node_search import search_nodes, load_node_database
-from backend.langchainchat.embeddings.config import search_config
+from backend.langgraphchat.embeddings.semantic_search import search_by_text
+from backend.langgraphchat.embeddings.node_search import search_nodes, load_node_database
+from backend.langgraphchat.embeddings.config import search_config
 
 
 class TestSearchModules(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestSearchModules(unittest.TestCase):
         """测试后清理"""
         pass
     
-    @patch('backend.langchainchat.embeddings.semantic_search.DatabaseEmbeddingService')
+    @patch('backend.langgraphchat.embeddings.semantic_search.DatabaseEmbeddingService')
     def test_search_by_text(self, mock_db_service_class):
         """测试文本语义搜索"""
         # 模拟 DatabaseEmbeddingService 实例及其 similarity_search 方法
@@ -77,7 +77,7 @@ class TestSearchModules(unittest.TestCase):
         # 运行测试
         asyncio.run(run_test())
     
-    @patch('backend.langchainchat.embeddings.node_search.load_node_database')
+    @patch('backend.langgraphchat.embeddings.node_search.load_node_database')
     def test_node_search(self, mock_load_database):
         """测试节点搜索"""
         # 模拟节点数据库
@@ -106,7 +106,7 @@ class TestSearchModules(unittest.TestCase):
         # 运行测试
         asyncio.run(run_test())
     
-    @patch('backend.langchainchat.embeddings.node_search._get_node_template_service')
+    @patch('backend.langgraphchat.embeddings.node_search._get_node_template_service')
     @patch('os.path.exists')
     @patch('os.listdir')
     def test_load_node_database(self, mock_listdir, mock_exists, mock_get_service):

@@ -1,6 +1,6 @@
-# LangChain 聊天模块
+# LangGraph 聊天模块
 
-本模块基于 LangChain 框架实现了聊天功能，支持 DeepSeek API 进行对话，并能够集成流程图相关工具。
+本模块基于 LangGraph 框架实现了聊天功能，支持 DeepSeek API 进行对话，并能够集成流程图相关工具。
 
 ## 功能特点
 
@@ -8,11 +8,12 @@
 2. **会话管理**：支持创建、保存和恢复会话历史
 3. **工具集成**：提供流程图创建、修改和查询工具
 4. **可配置**：通过配置文件可自定义聊天行为
+5. **状态图执行**：使用 LangGraph 的状态图实现更灵活的对话流程
 
 ## 目录结构
 
 ```
-backend.langchainchat/
+backend.langgraphchat/
 ├── __init__.py             # 模块初始化
 ├── config.py              # 配置设置
 ├── api/                   # API接口
@@ -31,6 +32,10 @@ backend.langchainchat/
 ├── prompts/               # 提示模板
 │   ├── __init__.py
 │   └── chat_prompts.py    # 聊天提示模板
+├── graph/                 # LangGraph 图定义
+│   ├── __init__.py
+│   ├── agent_state.py     # 代理状态定义
+│   └── workflow_graph.py  # 工作流图定义
 ├── services/              # 服务组件
 │   ├── __init__.py
 │   └── chat_service.py    # 聊天服务
@@ -47,7 +52,7 @@ backend.langchainchat/
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from backend.app.database import get_db
-from backend.langchainchat import chat_service
+from backend.langgraphchat import chat_service
 
 async def process_message(message: str, db: Session = Depends(get_db)):
     """处理聊天消息"""
@@ -62,7 +67,7 @@ async def process_message(message: str, db: Session = Depends(get_db)):
 ### 工具使用示例
 
 ```python
-from backend.langchainchat.tools.flow_tools import get_flow_tools
+from backend.langgraphchat.tools.flow_tools import get_flow_tools
 
 # 获取所有流程图工具
 tools = get_flow_tools()
@@ -86,6 +91,15 @@ result = create_node_tool._run(
 - `TEMPERATURE`: 温度参数，控制随机性
 - `MAX_TOKENS`: 最大生成令牌数
 - `SESSIONS_DB_PATH`: 会话保存路径
+
+## LangGraph 与 LangChain 的区别
+
+LangGraph 是 LangChain 的扩展，提供了更灵活的状态图执行模式：
+
+1. **状态管理**：LangGraph 通过 StateGraph 管理对话状态
+2. **条件路由**：支持基于状态的条件路由，可以构建更复杂的对话流程
+3. **并行处理**：支持并行节点执行
+4. **事件流**：支持流式处理事件，实时反馈对话进度
 
 ## 开发
 

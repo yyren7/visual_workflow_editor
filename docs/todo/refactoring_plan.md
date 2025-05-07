@@ -1,143 +1,166 @@
-# 重构计划：Agentic 流式 SSE、数据库保存、编辑/回滚功能
+# 重构计划：迁移到 LangGraph、实现 Agentic 流式 SSE、数据库保存、编辑/回滚功能
 
-本文档概述了重构聊天功能的计划，旨在实现 Agentic 交互（流式思考、工具使用）、解决当前数据库保存问题，并实现消息编辑和历史/流程回滚功能。
+本文档概述了重构聊天功能的计划。**首要目标是将当前的 LangChain Agent 实现迁移到 LangGraph 架构，以更好地管理复杂的状态和流程。** 随后，我们将实现 Agentic 交互（流式思考、工具使用）、解决数据库保存问题，并实现消息编辑和历史/流程回滚功能。
 
-## 核心概念：Agentic 流式交互
+## 核心概念：LangGraph 与 Agentic 流式交互
 
-目标是让后端 Agent 的 "思考 -> 行动决策 -> 行动 -> 观察" 循环通过 SSE 流实时反馈给前端，提供更透明、动态的用户体验。我们将利用 LangChain 的 `AgentExecutor`（或类似的自定义 Runnable 结构）及其 `astream_log` 方法来实现这一点。
+**LangGraph 迁移**：我们将利用 LangGraph 来构建一个有状态的图，该图表示 Agent 的决策流程。这能更清晰地管理 Agent 的内部状态、工具调用之间的转换以及循环逻辑。
 
-## 第一部分：实现 Agentic 流式 SSE 和后端基础
+**Agentic 流式交互**：目标是让后端 LangGraph Agent 的 "思考 -> 行动决策 -> 行动 -> 观察" 循环通过 SSE 流实时反馈给前端，提供更透明、动态的用户体验。我们将利用 LangGraph 的流式输出能力（如 `stream` 或 `astream_log` 方法，具体取决于 LangGraph 如何集成 LangChain 的日志/事件系统）来实现这一点。
 
-**目标：** 建立后端 Agent 执行和流式事件推送的基础，并修复数据库保存问题。
+## 第零部分：迁移到 LangGraph 并清理
 
-**1. 后端：引入 Agent Executor (`backend/app/services/chat_service.py`, 新文件 `backend/langchainchat/agents/workflow_agent.py`)**
+**目标：** 将现有的 `WorkflowAgent` 实现重构为 LangGraph，并移除因迁移而变得冗余的 LangChain Agent 组件。
 
-- **考虑:** 是否还需要单独的 `RAGChain`，或者 RAG 功能可以通过工具集成到 Agent 中。
+**1. 后端：设计 LangGraph 状态与图结构 (`backend/langgraphchat/graph/` - 新目录)** - ✅
 
-**2. 后端：改造后台任务以使用 Agent (`backend/app/routers/chat.py`)**
+- **定义状态 (State):** 创建一个 Pydantic 模型或 TypedDict 来表示 LangGraph 的状态。此状态应至少包含：
+  - `input`: 用户当前输入。
+  - `chat_history`: 对话历史。
+  - `flow_context`: 当前流程图的上下文信息。
+  - `intermediate_steps` (或类似名称): 用于存储工具调用和结果的列表，供 Agent 内部循环使用。
+  - `current_flow_id`: 当前操作的流程图 ID。
+  - (可选) `agent_outcome`: 用于存储 Agent 的最终决策 (是调用工具还是回复用户)。
+- **设计图节点 (Nodes):**
+  - **Agent 节点**: 负责调用 LLM 进行思考和决策（是调用工具还是直接回复）。输入为当前状态，输出为 AgentAction 或 AgentFinish (或 LangGraph 中的等效概念)。
+  - **工具执行节点**: 负责执行 Agent 决策的工具。输入为 AgentAction，输出为工具的观察结果 (Observation)。可以为每个工具创建一个节点，或者一个通用的工具执行节点。
+- **设计图边 (Edges):**
+  - **条件边**: 根据 Agent 节点的输出（调用工具还是结束）来决定下一个节点。
+  - 如果是工具调用，则路由到相应的工具执行节点。
+  - 如果是结束/直接回复，则路由到结束节点。
+  - **普通边**: 从工具执行节点返回到 Agent 节点，以便 Agent 可以处理工具的观察结果并继续。
+- **创建 LangGraph 实例**: 在新文件（例如 `backend/langgraphchat/graph/workflow_graph.py`）中，使用定义的状态、节点和边来构建 `StateGraph`。
 
-- **~~操作 (`process_and_publish_events`):~~**
-  - **~~获取 Agent Executor:** 从 `chat_service_bg` 获取 `workflow_agent_executor`。~~
-  - **~~准备 Agent 输入:** 构造传递给 Agent 的输入字典，应包含 `input` (用户消息), `chat_history` (格式化后的 `current_messages`), `flow_context` (从 `flow_data` 提取), 以及可能需要的 `flow_id`, `chat_id` (如果工具需要)。~~
-  - **~~调用 `astream_log`:** 使用 `agent_executor.astream_log(agent_input, ...)` 替代 `chain.astream_events(...)`。~~
-  - **~~实现事件映射:** 在 `async for log_entry in agent_executor.astream_log(...)` 循环中：~~
-    - **~~解析 `log_entry`:** 分析 `log_entry` 的内容和路径 (`log_entry.ops`) 来识别不同的 Agent 步骤。~~
-    - **~~映射到 SSE 事件:**~~
-      - **~~LLM Token (思考/回复):** 当日志显示 LLM 正在输出时 (e.g., `op['path']` contains `/streamed_output_str/-` or similar)，提取 token `chunk`，`await queue.put({"type": "token", "data": chunk})`。~~
-      - **~~工具调用开始:** 当日志显示 Agent 决定调用工具时 (e.g., `op['path']` ends with `/tool_calls/-`), 提取工具名称和输入参数，`await queue.put({"type": "tool_start", "data": {"name": ..., "input": ...}})`。~~
-      - **~~工具调用结束:** 当日志显示工具执行完成时 (e.g., `op['path']` ends with `/tool_result`), 提取工具名称和结果摘要，`await queue.put({"type": "tool_end", "data": {"name": ..., "output_summary": ...}})`。~~
-      - **~~错误:** 捕获 Agent 执行过程中的错误，并放入队列 `await queue.put({"type": "error", ...})`。~~
-        - **~~详细说明：** 错误事件 (`"type": "error"`) 的 `data` 字段应至少包含错误消息 (`message`)、错误发生的阶段 (`stage`, 如 'llm', 'tool', 'parsing')，如果适用，还应包含工具名称 (`tool_name`)。后端在发送错误后，应考虑是否中止后续执行，并将错误信息记录到聊天历史或日志中。前端需要清晰地向用户展示错误信息。未来可考虑针对特定类型的错误（如网络超时）添加重试逻辑。~~
-  - **~~累积最终回复:** 在循环中，维护一个变量 (`final_reply_accumulator`)，将所有最终回复阶段的 LLM token 拼接起来。~~
-  - **~~注意 `astream_log` 解析:** 解析 `astream_log` 的结构化输出虽然可行，但需要细致的实现，特别是处理并发工具调用或嵌套逻辑时，日志条目的顺序和路径可能变得复杂。~~
-- **测试:** 验证 Agent 的基本流程（无工具调用）能够流式输出到前端。验证工具调用流程是否能正确触发 `tool_start` 和 `tool_end` 事件。
+**2. 后端：实现 LangGraph 节点逻辑 (`backend/langgraphchat/graph/workflow_graph.py`)** - ✅
 
-**3. 后端：修复数据库保存 (`backend/app/routers/chat.py`)**
+- **Agent 节点函数**:
+  - 接收当前 LangGraph 状态。
+  - 使用 `STRUCTURED_CHAT_AGENT_PROMPT` (可能需要微调以适应 LangGraph 的输入/输出)、LLM (从 `ChatService._get_active_llm()` 获取) 和工具描述来调用 LLM。
+  - 解析 LLM 的输出，判断是工具调用 (`AgentAction`) 还是最终回复 (`AgentFinish`)。
+  - 更新 LangGraph 状态（例如，存储 `agent_outcome`）。
+- **工具执行节点函数(群组)**:
+  - 接收当前 LangGraph 状态 (其中应包含 `AgentAction`)。
+  - 根据 `AgentAction` 中的工具名称和输入，执行相应的工具函数 (从 `backend/langgraphchat/tools/flow_tools.py` 调用)。
+  - 将工具的输出 (Observation) 添加到状态的 `intermediate_steps` 中。
+  - 更新 LangGraph 状态。
 
-- **~~操作 (`process_and_publish_events` 的 `finally` 块):~~**
-  - ~~使用**新的独立数据库 Session** (`with get_db_context() as db_session_for_save:`) 来保存最终结果。~~
-  - ~~使用此新 Session 初始化 `ChatService` (`chat_service_for_save = ChatService(db_session_for_save)`).~~
-  - ~~从 `final_reply_accumulator` 获取最终回复内容。~~
-  - ~~从 Agent 执行结果中提取最终的 `flow_data` (如果 Agent 修改了流程)。~~
-  - ~~调用 `chat_service_for_save.add_message_to_chat(...)` 保存助手回复。~~
-  - ~~如果 `final_flow_data` 存在，使用新 Session 更新 `Flow`。~~
-- **测试:** 确认在 Agent 流程结束后，助手回复和潜在的流程更新能可靠地保存到数据库。
+**3. 后端：编译 LangGraph 并提供接口 (`backend/langgraphchat/graph/workflow_graph.py`, `backend/app/services/chat_service.py`)** - ✅
 
-**4. 前端：适配新的 SSE 事件 (`frontend/src/api/chatApi.ts`, `frontend/src/components/ChatInterface.tsx`)**
+- **编译图**: 调用 `graph.compile()` 生成可执行的 LangGraph runnable。
+- **修改 `ChatService`**:
+  - 移除旧的 `_agent_executor` 属性和 `create_workflow_agent_runnable` 方法。
+  - 添加新的属性或方法来获取/创建已编译的 LangGraph runnable。例如 `self.workflow_graph = compile_workflow_graph()`。
+  - `generate_response_stream` (或其他响应生成方法) 现在将调用 LangGraph runnable 的 `stream` 或 `astream_log` (或 `ainvoke` 等，取决于如何处理流)。
 
-- **~~API (`chatApi.ts`):~~**
-  - ~~定义新的 SSE 事件类型接口，如 `ToolStartEvent`, `ToolEndEvent`。更新 `ChatEvent` 类型联合。~~
-  - ~~**(维持现状)** `connectToChatEvents` 和 `triggerChatProcessing` 的分离设计是好的，保持不变。旧的 `sendMessage` 应该已经被移除。~~
-- **~~UI (`ChatInterface.tsx`):~~**
-  - ~~**(维持现状)** 使用 `useEffect` 管理 SSE 连接生命周期的逻辑是正确的。~~
-  - ~~**修改 `handleChatEvent`:**~~
-    - ~~添加 `case "tool_start":` 处理逻辑：找到或创建一个表示该工具调用的消息项（可能需要新的 `messageId` 或标记），并将其状态设置为"加载中"，显示工具名称和输入。~~
-    - ~~添加 `case "tool_end":` 处理逻辑：更新对应的工具消息项，显示结果摘要或完成状态。~~
-    - ~~确保 `case "token":` 能正确处理思考和最终回复阶段的 token 流，将其追加到当前正在生成的助手消息中。~~
-  - ~~**UI 组件:** 可能需要改进 `ToolCallCard` 或引入新的渲染逻辑来更好地展示工具执行的中间状态和最终结果。~~
-- **测试:** 验证前端能够正确接收并渲染新的 `tool_start`, `tool_end` 事件，并流畅地展示思考、工具执行、最终回复的整个过程。
+**4. 后端：清理冗余文件** - ✅
+
+- **删除 `backend/langgraphchat/agents/workflow_agent.py`**: 因为其逻辑已被新的 LangGraph 实现取代。
+- **审查 `backend/langgraphchat/prompts/chat_prompts.py`**: `STRUCTURED_CHAT_AGENT_PROMPT` 仍会使用，但其他与旧 Agent 相关的特定 Prompt (如果有) 可能需要移除或调整。
+- **审查 `ChatService`**: 移除所有仅与旧 `AgentExecutor` 相关的逻辑。 - ✅
+- **全局替换**: 将 `backend.langchainchat` 文件夹名全局替换为 `backend.langgraphchat`，以确保导入路径的一致性。 - ✅
+- **修复 LangGraph 兼容性**: 更新`workflow_graph.py`中的导入语句，使用最新的`langgraph.prebuilt.ToolNode`API 替代旧的`ToolExecutor`和`ToolInvocation`，以兼容 LangGraph 0.4.2 版本。- ✅
+
+**5. 测试 LangGraph 核心功能** - (尚未执行)
+
+- **单元测试**: 测试各个 LangGraph 节点（Agent 决策、工具执行）的逻辑。
+- **集成测试**: 测试完整的 LangGraph 执行流程（不含 SSE，仅关注输入输出和状态转换），确保它能正确调用工具并最终产生回复。验证 `DbChatMemory` 和 `current_flow_id_var` (如果工具仍然直接使用它，或者其值被正确传入 LangGraph 状态) 是否按预期工作。
+
+## 第一部分：实现 Agentic 流式 SSE 和后端基础 (基于 LangGraph)
+
+**目标：** 建立后端 LangGraph Agent 执行和流式事件推送的基础，并修复数据库保存问题。
+
+**1. 后端：改造后台任务以使用 LangGraph (`backend/app/routers/chat.py`)** - ✅
+
+- **操作 (`process_and_publish_events`):**
+  - **获取 LangGraph Runnable:** 从 `ChatService` 获取已编译的 `workflow_graph`。
+  - **准备 LangGraph 输入:** 构造传递给 LangGraph 的初始状态字典，应包含 `input` (用户消息), `chat_history` (格式化后的 `current_messages`), `flow_context` (从 `flow_data` 提取), `current_flow_id`。
+  - **调用 `stream` 或 `astream_log`:** 使用 `workflow_graph.stream(graph_input, ...)` 或 `workflow_graph.astream_log(graph_input, ...)`。
+  - **实现事件映射:** 在 `async for event in workflow_graph.stream(...)` (或 `astream_log`) 循环中：
+    - **解析 `event`:** 分析 LangGraph 返回的事件/日志结构。LangGraph 的流式输出通常会包含每个节点执行前后的状态、节点的输入输出等。
+    - **映射到 SSE 事件:**
+      - **LLM Token (思考/回复):** 当事件表明是 Agent 节点正在输出 LLM 的 token 时，提取 token `chunk`, `await queue.put({"type": "token", "data": chunk})`。
+      - **工具调用开始:** 当事件表明 Agent 节点决定调用工具，并且图即将转换到工具执行节点时，提取工具名称和输入参数, `await queue.put({"type": "tool_start", "data": {"name": ..., "input": ...}})`。
+      - **工具调用结束:** 当事件表明工具执行节点已完成，并返回结果时，提取工具名称和结果摘要, `await queue.put({"type": "tool_end", "data": {"name": ..., "output_summary": ...}})`。
+      - **错误:** 捕获 LangGraph 执行过程中的错误，并放入队列 `await queue.put({"type": "error", ...})`。
+      - **详细说明：** 错误事件 (`"type": "error"`) 的 `data` 字段应至少包含错误消息 (`message`), 错误发生的阶段 (`stage`, 如 'llm', 'tool', 'graph_node'), 如果适用，还应包含工具名称或节点名称 (`tool_name`/`node_name`)。
+      - **累积最终回复:** 在循环中，维护一个变量 (`final_reply_accumulator`), 将所有最终回复阶段的 LLM token 拼接起来。
+  - **测试:** 验证 LangGraph 的基本流程（无工具调用）能够流式输出到前端。验证工具调用流程是否能正确触发 `tool_start` 和 `tool_end` 事件。
+
+**2. 后端：修复数据库保存 (`backend/app/routers/chat.py`)** - ✅
+
+- 使用**新的独立数据库 Session** (`with get_db_context() as db_session_for_save:`) 来保存最终结果。
+  - 使用此新 Session 初始化 `ChatService` (`chat_service_for_save = ChatService(db_session_for_save)`).
+  - 从 `final_reply_accumulator` 获取最终回复内容。
+  - 从 LangGraph 执行的最终状态中提取最终的 `flow_data` (如果图的执行修改了流程图状态并将其保存在最终状态中)。
+  - 调用 `chat_service_for_save.add_message_to_chat(...)` 保存助手回复。
+  - 如果 `final_flow_data` 存在，使用新 Session 更新 `Flow`。
+  - **测试:** 确认在 LangGraph 流程结束后，助手回复和潜在的流程更新能可靠地保存到数据库。
+
+**3. 前端：适配新的 SSE 事件 (`frontend/src/api/chatApi.ts`, `frontend/src/components/ChatInterface.tsx`)** - (与原始计划相同，主要是适配 LangGraph 可能产生的事件结构和时序) - **API (`chatApi.ts`):** 定义新的 SSE 事件类型接口。 - **UI (`ChatInterface.tsx`):** 修改 `handleChatEvent` 来处理 `tool_start`, `tool_end`, `token`, `error` 事件。 - **测试:** 验证前端能够正确接收并渲染新的 `tool_start`, `tool_end` 事件，并流畅地展示思考、工具执行、最终回复的整个过程。
 
 ## 第二部分：实现消息编辑与历史/流程回滚 (依赖第一部分完成)
 
-**目标：** 允许用户编辑消息，触发后续历史和流程的回滚，并重新运行 Agent。
+**目标：** 允许用户编辑消息，触发后续历史和流程的回滚，并基于 LangGraph 重新运行。
 
-**1. 后端：数据库模型 (`database/models.py`)**
+**1. 后端：数据库模型 (`database/models.py`)** - (与原始计划相同) 在 `Chat.chat_data.messages` 中的**助手消息**里添加 `flow_snapshot: Optional[Dict]` 字段。
 
-- **操作 (快照):** 在 `Chat.chat_data.messages` 中的**助手消息**里添加 `flow_snapshot: Optional[Dict]` 字段。
-- **详细说明:**
-  - 当前 `Chat` 模型使用 `chat_data = Column(JSON, ...)` 来存储包含用户和助手消息的列表。在此 JSON 结构内部的助手消息对象中添加 `flow_snapshot` 键，无需修改数据库表模式，是与现有结构兼容且影响最小的方式。
-  - `flow_snapshot` 被定义为生成该助手消息时**完整的流程图状态 (`Flow.flow_data`) 的副本**。它用于在编辑/回滚时恢复流程状态。
-  - _（注意：虽然 PostgreSQL 的 `JSONB` 类型在查询 JSON 内部数据时通常性能更好，但为保持与现有模型的一致性，此处继续使用 `JSON` 类型。）_
+**2. 后端：`ChatService` (`backend/app/services/chat_service.py`)** - (与原始计划相同) 修改 `add_message_to_chat`：添加 `flow_snapshot` 参数。
 
-**2. 后端：`ChatService` (`backend/app/services/chat_service.py`)**
+**3. 后端：新的编辑 API 端点 (`backend/app/routers/chat.py`)** - (与原始计划相同) 创建 `PUT /chats/{chat_id}/messages/{message_timestamp}`。 - **逻辑调整**: - 触发编辑后台任务时，传递 `checkpoint_flow_data`，这将作为 LangGraph 初始状态的一部分。
 
-- **修改 `add_message_to_chat`：** 添加 `flow_snapshot` 参数，如果提供且 `role=='assistant'` 则保存。
+**4. 后端：新的编辑后台任务 (`backend/app/routers/chat.py`)** - **操作：** 创建 `async def process_edited_message_and_publish(c_id, edited_msg_content, truncated_history, checkpoint_flow_data, queue)`。 - **逻辑：** - **准备 LangGraph 输入:** - **恢复流程状态:** (关键步骤) `checkpoint_flow_data` 将用于初始化 LangGraph 状态中的 `flow_context` 部分。 - 使用 `edited_msg_content` 作为新的 `input`，`truncated_history` 作为 `chat_history`，并将恢复后的 `flow_context` (从 `checkpoint_flow_data` 构建) 和 `current_flow_id` 传递给 LangGraph 的初始状态。 - **运行 LangGraph:** 调用 `workflow_graph.stream(...)` 或 `astream_log(...)`。 - **处理事件流:** 与 `process_and_publish_events` 类似。 - **保存结果 (finally 块):** - 保存最终的助手回复，**附带当前流程状态（从 LangGraph 最终状态中获取）作为新的 `flow_snapshot`**。
 
-**3. 后端：新的编辑 API 端点 (`backend/app/routers/chat.py`)**
+**5. 前端：编辑 UI (`frontend/src/components/ChatInterface.tsx`)** - (与原始计划相同)
 
-- **操作：** 创建 `PUT /chats/{chat_id}/messages/{message_timestamp}`。
-- **逻辑：**
-  - 使用**新 Session**。
-  - 找到目标用户消息并更新其内容。
-  - **截断历史:** 移除目标消息时间戳之后的所有消息。**提交**更改。
-  - **查找检查点:** 找到编辑点之前的、最新的包含 `flow_snapshot` 的助手消息。获取其 `flow_snapshot` 作为 `checkpoint_flow_data` (即恢复点完整的流程状态)。处理无快照的情况（可能需要从初始状态或最近的已知状态开始）。
-  - **触发编辑后台任务:** 启动 `process_edited_message_and_publish`，传递 `chat_id`，编辑后的 `message` (或仅内容)，截断后的历史 `truncated_history`，以及 `checkpoint_flow_data`。
-  - 返回 202。
+**6. 前端：API (`frontend/src/api/chatApi.ts`)** - (与原始计划相同)
 
-**4. 后端：新的编辑后台任务 (`backend/app/routers/chat.py`)**
+## 第三部分：代码清理与重构 (后 LangGraph 迁移)
 
-- **操作：** 创建 `async def process_edited_message_and_publish(c_id, edited_msg_content, truncated_history, checkpoint_flow_data, queue)`。
-- **逻辑：**
-  - 获取 `ChatService`, `FlowService` 等 (使用 `get_db_context`)。
-  - **准备 Agent 输入:**
-    - **恢复流程状态:** (关键步骤) 使用 `checkpoint_flow_data` 更新（覆盖）当前 `Flow` 对象的 `flow_data`。
-    - **准备上下文 (`flow_context`):** 从恢复后的 `flow_data` 中提取或处理 Agent 运行时所需的流程信息，将其作为 `flow_context`。（`flow_context` 是 Agent 的运行时输入，可能是 `flow_data` 的子集或处理后的版本）。
-    - 使用 `edited_msg_content` 作为新的 `input`，`truncated_history` 作为 `chat_history`，并将准备好的 `flow_context` 传递给 Agent。
-  - **运行 Agent:** 调用 `agent_executor.astream_log(...)`。
-  - **处理事件流:** 与 `process_and_publish_events` 类似，解析日志，映射到 SSE 事件并放入队列。
-  - **累积最终回复。**
-  - **保存结果 (finally 块):**
-    - 使用**新 Session**。
-    - 保存最终的助手回复，**附带当前流程状态作为新的 `flow_snapshot`**。
-    - 如果 Agent 执行修改了流程，保存更新后的 `Flow` 数据。
+**目标：** 提高可维护性，移除因引入 LangGraph 而产生的其他冗余或过时代码。
 
-**5. 前端：编辑 UI (`frontend/src/components/ChatInterface.tsx`)**
-
-- (与原始计划类似) 添加编辑按钮、编辑状态、确认/取消逻辑。
-- `handleConfirmEdit` 调用 `chatApi.editMessage`，并执行乐观 UI 更新（修改消息，移除后续消息）。
-
-**6. 前端：API (`frontend/src/api/chatApi.ts`)**
-
-- 添加 `editMessage(chatId, messageTimestamp, newContent)`。
-
-## 第三部分：代码清理与重构
-
-**目标：** 提高可维护性，移除冗余代码。
-
-- 移除旧的 `WorkflowChain`（如果完全被 Agent 取代）。
-- 重构 `process_and_publish_events` 和 `process_edited_message_and_publish`，提取通用逻辑（如事件映射、最终结果累积、数据库保存）。
-- 审查并确保 `ChatService`、`ToolExecutor` 等是无状态的或正确处理状态。
-- 完善错误处理和日志记录。
-- 更新或添加必要的单元测试和集成测试。
+- 审查并确保 `ChatService`、工具函数等与 LangGraph 的集成是清晰和高效的。
+- 完善错误处理和日志记录，特别关注 LangGraph 执行过程中的错误。
+- 更新或添加必要的单元测试和集成测试，覆盖 LangGraph 的各种路径和状态。
 
 ## 执行顺序与测试策略
 
-1.  **实现第一部分 1 & 2 (后端 Agent 基础 & 改造后台任务):**
-    - 优先实现无工具调用的 Agent 流式输出。
-    - 添加工具调用和事件映射。
-    - 单元测试 Agent 和事件映射逻辑。
-2.  **实现第一部分 4 (前端适配):**
+1.  **实现第零部分 (迁移到 LangGraph & 清理):**
+    - **优先设计和实现 LangGraph 的状态、节点和图结构。**
+    - **修改 `ChatService` 以使用新的 LangGraph runnable。**
+    - **删除旧的 `workflow_agent.py`。**
+    - **进行核心功能测试（无 SSE），确保 LangGraph 能正确处理输入、调用工具并产生预期结果。**
+2.  **实现第一部分 1 (后端 LangGraph 流式改造):**
+    - 实现 LangGraph 流式输出 (`stream` 或 `astream_log`) 到 SSE 事件的映射。
+    - 单元测试事件映射逻辑。
+3.  **实现第一部分 3 (前端适配):**
     - 更新前端以处理新的 SSE 事件。
-    - 端到端测试基本的 Agent 流式交互。
-3.  **实现第一部分 3 (后端数据库保存修复):**
-    - 在 Agent 流程基础上，确保结果正确保存。测试。
-4.  **实现第二部分 (编辑/回滚 - 后端):**
+    - 端到端测试基本的 LangGraph 流式交互。
+4.  **实现第一部分 2 (后端数据库保存修复 - 基于 LangGraph):**
+    - 在 LangGraph 流程基础上，确保结果正确保存。测试。
+5.  **实现第二部分 (编辑/回滚 - 后端，基于 LangGraph):**
     - 数据库模型修改。
-    - 实现编辑 API 和新的后台任务。使用 API 调用进行测试。
-5.  **实现第二部分 (编辑/回滚 - 前端):**
+    - 实现编辑 API 和新的后台任务，确保其正确地使用 LangGraph 和 `checkpoint_flow_data`。
+6.  **实现第二部分 (编辑/回滚 - 前端):**
     - 实现前端 UI 和 API 调用。
-6.  **端到端测试:** 测试编辑和回滚功能。
-7.  **实现第三部分 (清理):** 在功能稳定后进行代码清理和重构。
-8.  **文档更新:** 重构完成后，务必更新 `/workspace/database/README.md`, `/workspace/backend/README.md`, 和 `/workspace/frontend/README.md` 文件，以准确反映新的代码结构、API 行为和核心功能。
+7.  **端到端测试:** 测试 LangGraph 驱动的流式交互、数据库保存、编辑和回滚功能。
+8.  **实现第三部分 (清理 - 后 LangGraph):** 在功能稳定后进行代码清理和重构。
+9.  **文档更新:** 重构完成后，务必更新 `/workspace/database/README.md`, `/workspace/backend/README.md`, 和 `/workspace/frontend/README.md` 文件，以准确反映新的代码结构 (特别是 LangGraph 的引入)、API 行为和核心功能。
 
-这个更新后的计划将 Agentic 流式交互作为核心，并在此基础上构建编辑/回滚功能，同时解决了数据库保存的问题。
+## 执行进度报告
+
+**2025-05-07**: 完成了第零部分的所有任务：
+
+1. ✅ 完成了对`backend/langgraphchat/graph/workflow_graph.py`的重构，使其使用最新的 LangGraph API。
+2. ✅ 修复了 LangGraph 0.4.2 兼容性问题，特别是将旧版`ToolExecutor`和`ToolInvocation`更新为新版`ToolNode` API。
+3. ✅ 移除了与旧的`AgentExecutor`相关的代码。
+4. ✅ 将所有导入路径从`backend.langchainchat`更新为`backend.langgraphchat`，确保导入路径的一致性。
+5. ✅ 更新了配置文件和相关 README 文档，以反映新的项目结构。
+
+**2025-05-08**: 完成了第一部分的所有任务：
+
+1. ✅ 重写了`process_and_publish_events`函数，以使用 LangGraph 的流式输出，正确映射各种事件类型。
+2. ✅ 修复了数据库保存问题，使用独立会话保存消息和流程状态，避免冲突。
+3. ✅ 更新了前端处理逻辑，以适应新的 SSE 事件结构。
+4. ✅ 全局替换了`frontend/src/api/chatApi.ts`中的 API 路径，从`/langchainchat/`更新为`/langgraphchat/`。
+
+下一步是实现第二部分中的消息编辑与历史/流程回滚功能。

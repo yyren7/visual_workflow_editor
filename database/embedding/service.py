@@ -16,7 +16,7 @@ from .config import embedding_config
 # from .embedding_result import EmbeddingResult # Removed unused import
 from .lmstudio_client import LMStudioClient
 # Removed import causing circular dependency
-# from backend.langchainchat.embeddings.semantic_search import search_by_vector
+# from backend.langgraph.embeddings.semantic_search import search_by_vector
 
 # 设置logger
 logger = logging.getLogger(__name__)
@@ -291,7 +291,7 @@ class DatabaseEmbeddingService:
         # Moved import inside method to potentially break circular dependency if JsonEmbedding is needed here
         # Although it seems it's only needed for the query() call, let's keep it simple for now.
         from database.models import JsonEmbedding
-        from backend.langchainchat.embeddings.utils import format_search_result # Use the existing formatter
+        from backend.langgraphchat.embeddings.utils import format_search_result # Use the existing formatter
 
         logger.info(f"Performing similarity search for: {query[:50]}... K={k}, Threshold={threshold}")
         try:
@@ -331,7 +331,7 @@ class DatabaseEmbeddingService:
 
             logger.info(f"Database search found {len(top_results_objects)} potential matches above threshold.")
 
-            # 3. Format the results using the utility from langchainchat.embeddings
+            # 3. Format the results using the utility from langgraphchat.embeddings
             formatted_results = format_search_result(top_results_objects, with_score=True)
 
             logger.info(f"Formatted {len(formatted_results)} results for output.")

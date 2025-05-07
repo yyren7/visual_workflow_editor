@@ -24,6 +24,9 @@ import json
 workspace_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
 load_dotenv(dotenv_path=workspace_env_path)
 
+# 确保LOG_LEVEL设置为DEBUG
+os.environ["LOG_LEVEL"] = "DEBUG"
+
 # 根据环境变量决定是否输出调试信息，避免在reload模式下重复输出
 PRINT_DEBUG_INFO = os.environ.get("PRINT_DEBUG_INFO", "1") == "1"
 

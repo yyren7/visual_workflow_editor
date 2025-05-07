@@ -54,7 +54,7 @@ class ToolResult(BaseModel):
 # LangChain 工具定义 (示例)
 # ==========================
 # 这些是给 LangChain Agent 使用的工具定义，
-# 它们会引用 backend/langchainchat/tools/flow_tools.py 中的具体实现函数。
+# 它们会引用 backend/langgraphchat/tools/flow_tools.py 中的具体实现函数。
 
 # 示例：创建节点的工具定义 (需要与 flow_tools.py 中的函数关联)
 # from langchain.tools import StructuredTool

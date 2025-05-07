@@ -73,6 +73,13 @@ database/
 ## 核心组件
 
 - **`models.py`**: 定义了使用 SQLAlchemy ORM 映射的 Python 类，这些类对应数据库中的表结构。是数据库模式的核心定义文件。
+  - 主要实体包括：
+    - `User`: 用户账户信息
+    - `Flow`: 工作流定义，包含流程图结构和状态
+    - `Chat`: 聊天记录，与流程图关联，存储聊天消息历史
+      - `chat_data.messages`: 聊天消息数组，支持 LangGraph 工作流状态保存
+    - `FlowVariable`: 流程图变量定义
+  - 这些模型既定义了表结构，也包含各种业务逻辑方法。
 - **`connection.py`**: 负责建立和管理 PostgreSQL 数据库连接。创建一个数据库引擎 (Engine) 和会话工厂 (Session factory)，供应用的其他部分使用。
 - **`config.py`**: 存储数据库连接字符串（指向 PostgreSQL）、路径或其他配置参数。**请确保这里的配置指向正确的 PostgreSQL 实例。**
 - **`alembic/` 和 `alembic.ini`**: 使用 [Alembic](https://alembic.sqlalchemy.org/en/latest/) 工具管理数据库模式迁移。`alembic/` 目录包含迁移脚本和环境配置，`alembic.ini` 是主配置文件。

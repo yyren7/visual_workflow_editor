@@ -7,7 +7,7 @@ import logging
 import json
 import asyncio # 确保导入 asyncio
 from collections import defaultdict # 导入 defaultdict
-from backend.langchainchat.context import current_flow_id_var # <--- Import context variable
+from backend.langgraphchat.context import current_flow_id_var # <--- Import context variable
 
 from backend.app import schemas
 from database.connection import get_db, get_db_context
@@ -228,12 +228,13 @@ async def add_message(
     # --- 定义在后台处理流并将事件放入队列的任务 --- 
     async def process_and_publish_events(c_id: str, msg_content: str, queue: asyncio.Queue):
         """
-        后台任务：处理新消息，使用 Agent Executor 生成回复，并将事件放入队列。
+        后台任务：处理新消息，使用LangGraph生成回复，并将事件放入队列。
         """
         logger.debug(f"[Chat {c_id}] Background task started.")
         is_error = False
         error_data = {}
         final_reply_accumulator = "" # 用于累积最终回复
+        final_state = None # 用于存储图的最终状态
 
         try:
             # --- 使用上下文管理器获取数据库会话 ---
@@ -248,141 +249,204 @@ async def add_message(
                     logger.error(f"[Chat {c_id}] Background task could not find chat.")
                     await queue.put({"type": "error", "data": {"message": "Chat not found.", "stage": "setup"}})
                     return
+                
+                # 记录用户消息到数据库 (注意：这里的 db_session_bg 是后台任务的 session)
+                # 确保在 Agent 调用前保存用户消息，以便历史记录是最新的
+                logger.debug(f"[Chat {c_id}] Attempting to save user message to DB before agent call.")
+                chat_service_bg.add_message_to_chat(chat_id=c_id, role="user", content=msg_content)
+                logger.debug(f"[Chat {c_id}] User message saved to DB.")
 
                 flow_id = chat.flow_id
-                # --- Set the context variable --- 
-                current_flow_id_var.set(flow_id) # <--- Set context variable here
-                logger.debug(f"[Chat {c_id}] Set current_flow_id context variable to: {flow_id}")
-                # --------------------------------
-
-                flow = flow_service_bg.get_flow_instance(flow_id) # 获取 Flow 实例
+                flow = flow_service_bg.get_flow_instance(flow_id) # 使用 get_flow_instance 获取 ORM 对象
                 if not flow:
-                     logger.error(f"[Chat {c_id}] Background task could not find flow {flow_id}.")
-                     await queue.put({"type": "error", "data": {"message": f"Flow {flow_id} not found.", "stage": "setup"}})
-                     return
+                    logger.error(f"[Chat {c_id}] Background task could not find flow {flow_id}.")
+                    await queue.put({"type": "error", "data": {"message": f"Flow {flow_id} not found.", "stage": "setup"}})
+                    return
+                
+                flow_data = flow.flow_data or {} # flow.flow_data 是流程图的具体结构
+                logger.debug(f"[Chat {c_id}] Flow data for context: {str(flow_data)[:200]}...")
 
-                current_messages = chat.chat_data.get('messages', [])
-                # --- 将原始消息格式转换为 LangChain BaseMessage 对象 ---
-                # 移除旧的、错误的导入
-                # from backend.langchainchat.memory.db_chat_memory import messages_to_langchain # 导入转换函数
-                langchain_history = _format_messages_to_langchain(current_messages) # 使用新的辅助函数
-                # ----------------------------------------------------
-                flow_data = flow.flow_data # 获取流程图数据
+                # --- 获取 LangGraph Runnable ---
+                logger.debug(f"[Chat {c_id}] Getting compiled LangGraph from ChatService.")
+                compiled_graph = chat_service_bg.compiled_workflow_graph # ChatService 现在提供这个属性
+                logger.debug(f"[Chat {c_id}] Successfully got compiled LangGraph.")
 
-                logger.info(f"[Chat {c_id}] Processing message with {len(langchain_history)} history entries.")
-                agent_executor = chat_service_bg.workflow_agent_executor
+                # --- 准备 LangGraph 输入 ---
+                # 从 chat.chat_data 中获取历史消息
+                chat_history_raw = chat.chat_data.get("messages", [])
+                
+                # 格式化历史消息
+                formatted_history = _format_messages_to_langchain(chat_history_raw[:-1]) # 排除当前用户输入，它将作为新的 HumanMessage
 
-                # 构建 Agent 输入字典
-                agent_input = {
-                    "input": msg_content,
-                    "chat_history": langchain_history,
-                    "flow_context": flow_data,
-                    # "flow_id": flow_id # Optional: Keep or remove, tools won't use it directly
+                graph_input = {
+                    "messages": formatted_history + [HumanMessage(content=msg_content)], # 包含当前用户消息作为 HumanMessage
+                    "input": msg_content, # AgentState 也需要 input 字段
+                    "flow_context": flow_data.get("graphContextVars", {}), # 使用 graphContextVars 作为流程上下文
+                    "current_flow_id": flow_id,
                 }
-                logger.info(f"[Chat {c_id}] Prepared agent input: keys={list(agent_input.keys())}")
+                
+                # 简化 f-string 以避免潜在的解析问题
+                messages_count_val = len(graph_input["messages"])
+                input_len_val = len(graph_input["input"])
+                flow_id_val = graph_input["current_flow_id"]
+                logger.debug(f"[Chat {c_id}] Prepared graph input: messages_count={messages_count_val}, input_len={input_len_val}, flow_id={flow_id_val}")
 
-                # 使用 astream_events 处理流式响应，并提供所有必需的输入键
-                logger.debug(f"[Chat {c_id}] Invoking agent_executor.astream_log with input keys: {list(agent_input.keys())}")
+                # --- 调用 LangGraph astream_log ---
+                logger.debug(f"[Chat {c_id}] Invoking compiled_graph.astream_log...")
 
-                # --- 使用 astream_log 处理流式响应 --- (新逻辑)
-                async for log_entry in agent_executor.astream_log(agent_input): # 移除 include_metadata=True
-                    # log_entry 是一个 LogEntry 对象，包含 ops 列表
-                    # 我们需要解析 ops 来理解发生了什么
-                    # logger.debug(f"[Chat {c_id}] Received log entry: {log_entry}") # 调试时取消注释
-
-                    # 遍历 log_entry 中的操作 (ops)
-                    for op in log_entry.ops:
-                        # --- 在这里添加详细日志 ---
-                        logger.debug(f"[Chat {c_id}] Raw log entry op: {op}")
-                        # --------------------------
-                        op_path = op.get("path", "") # 获取操作路径
-
-                        # 1. 检测 LLM Token 输出 (需要根据实际输出调整路径判断)
-                        # 示例路径: '/logs/ChatOpenAI/streamed_output_str/-' 或 '/logs/RunnableSequence/streamed_output_str/-'
-                        # 或者检查 op['op'] == 'add' 且路径包含 'streamed_output_str'
-                        if "streamed_output_str" in op_path and op["op"] == "add":
-                            token = op.get("value", "")
-                            if isinstance(token, str):
-                                # logger.debug(f"[Chat {c_id}] LLM Token: {token}")
-                                await queue.put({"type": "token", "data": token})
-                                # *** 将 token 累积到 final_reply_accumulator ***
-                                final_reply_accumulator += token
-                                # logger.debug(f"[Chat {c_id}] Accumulated reply length: {len(final_reply_accumulator)}") # Optional debug log
-                                # -----------------------------------------------
-                                # TODO: 需要区分思考过程的 token 和最终答案的 token 吗？
-                                # 目前先将所有 token 都发送，并在循环外累积最终答案
-                                # 如果 agent runnable 最后一块是最终答案，可以尝试在这里累积
-                                # (但 astream_log 不保证最后一定是答案的 token)
-                                # *** 临时累积方案：假设最终答案是连续的 token 流 ***
-                                # 需要找到更好的方式判断是否为最终答案的 token
-                                # 例如，检查是否在某个特定的最终步骤下
-                                # if op_path.startswith("/logs/FinalAnswerRunnable"): # 假设的路径
-                                # pass # 仅发送 token，不在此累加 # <--- REMOVED pass
-
-                        # 2. 检测工具调用开始 (需要根据实际输出调整路径判断)
-                        # 示例路径: '/logs/AgentExecutor/tool_calls/-' or '/logs/MyAgent/tool_calls/-'
-                        # 或者检查 op['op'] == 'add' 且路径包含 'tool_calls'
-                        # Langchain AgentExecutor 通常在 /logs/AgentExecutor/iterations/.../tool_invocation 下
-                        # 需要找到可靠的路径来提取 tool_name 和 tool_input
-                        # 这是一个可能的路径，需要根据实际情况调整
-                        if op_path.endswith("/tool_invocation") and op["op"] == "add": # 假设这是工具调用的开始
-                            tool_call_data = op.get("value")
-                            if isinstance(tool_call_data, dict):
-                                 tool_name = tool_call_data.get("tool_name") # 可能需要调整key
-                                 tool_input = tool_call_data.get("tool_input") # 可能需要调整key
-                                 if tool_name and tool_input is not None:
-                                     logger.info(f"[Chat {c_id}] Tool Start: {tool_name} with input: {tool_input}")
-                                     await queue.put({"type": "tool_start", "data": {"name": tool_name, "input": tool_input}})
-                                     # --- 将工具开始信息追加到累加器 ---
-                                     # try:
-                                     #     input_str = json.dumps(tool_input, ensure_ascii=False, indent=2)
-                                     # except TypeError:
-                                     #     input_str = str(tool_input)
-                                     # tool_start_md = f"\\n\\n**[Tool Start: {tool_name}]**\\n*Input:*\\n```json\\n{input_str}\\n```\\n*Status: Running...*\\n\"
-                                     # final_reply_accumulator += tool_start_md
-                                     # ----------------------------------
-                                 else:
-                                     logger.warning(f"[Chat {c_id}] Could not extract tool_name/tool_input from tool_invocation op: {tool_call_data}")
-
-
-                        # 3. 检测工具调用结束/结果 (需要根据实际输出调整路径判断)
-                        # 示例路径: '/logs/AgentExecutor/tool_result' or '/logs/ToolExecutor/final_output'
-                        # Langchain AgentExecutor 通常在 /logs/AgentExecutor/iterations/.../tool_result 下
-                        # 需要找到可靠的路径来提取 tool_name 和 output_summary
-                        if op_path.endswith("/tool_result") and op["op"] == "add":
-                            tool_result_data = op.get("value")
-                            if isinstance(tool_result_data, dict):
-                                tool_name = tool_result_data.get("tool_name") # TODO: 如何可靠获取?
-                                output_raw = tool_result_data.get("tool_output") # 可能需要调整key
-                                if output_raw is not None:
-                                    output_summary = str(output_raw) # 简单转为字符串作为摘要
-                                    tool_name_or_unknown = tool_name or "Unknown Tool"
-                                    logger.info(f"[Chat {c_id}] Tool End: ({tool_name_or_unknown}) with output summary: {output_summary[:100]}...")
-                                    await queue.put({"type": "tool_end", "data": {"name": tool_name_or_unknown, "output_summary": output_summary}})
-                                    # --- 将工具结束信息追加到累加器 ---
-                                    # tool_end_md = f"\\n**[Tool End: {tool_name_or_unknown}]**\\n*Status: Completed*\\n*Output Summary:*\\n```\\n{output_summary}\\n```\\n\\n\"
-                                    # final_reply_accumulator += tool_end_md
-                                    # ----------------------------------
-                                else:
-                                     logger.warning(f"[Chat {c_id}] Could not extract tool_output from tool_result op: {tool_result_data}")
-
-
-                        # 4. 尝试从最终输出块获取完整回复 (需要根据 Agent 实现调整)
-                        # LangChain AgentExecutor 通常将最终输出放在 run['output'] 中
-                        # 在 astream_log 中，可能是在某个特定的 op_path 下，例如 '/final_output' 或根路径的 'replace' 操作
-                        # *** 注意：之前的累积 token 方式可能不准确，应依赖这里的逻辑 ***
-                        if op_path == "/final_output" and op["op"] == "replace": # 这是一个假设的路径
-                           final_output_value = op.get("value")
-                           if isinstance(final_output_value, dict) and "output" in final_output_value:
-                               final_reply_accumulator = final_output_value["output"] # 覆盖累积结果
-                               logger.info(f"[Chat {c_id}] Got final reply from final_output op: {final_reply_accumulator}")
-                               # 停止累积 token? 还是让 token 流继续完成?
-                        # 移除错误地访问 log_entry.state 的逻辑
-                        # elif op_path == "" and op["op"] == "replace" and "final_output" in log_entry.state: # 另一种可能的最终输出信号
-                        #    final_output_state = log_entry.state.get("final_output")
-                        #    if isinstance(final_output_state, dict) and "output" in final_output_state:
-                        #        final_reply_accumulator = final_output_state["output"] # 覆盖累积结果
-                        #        logger.info(f"[Chat {c_id}] Got final reply from root replace op state: {final_reply_accumulator}")
+                async for event in compiled_graph.astream_log(graph_input, include_names=["agent", "tools"]):
+                    logger.debug(f"[Chat {c_id}] Received event from graph: {event}")
+                    
+                    # 简化的事件处理逻辑 - 统一处理字典格式事件
+                    try:
+                        # 确保事件是字典类型
+                        event_dict = event if isinstance(event, dict) else event.__dict__
+                        
+                        # 获取事件类型
+                        event_type = event_dict.get("event")
+                        
+                        if event_type == "on_chat_model_stream":
+                            # 处理流式token
+                            data = event_dict.get("data", {})
+                            chunk = data.get("chunk")
+                            if chunk and hasattr(chunk, 'content') and chunk.content:
+                                token = chunk.content
+                                if isinstance(token, str):
+                                    # 添加更多日志
+                                    logger.debug(f"[Chat {c_id}] Received token: {token[:30]}...")
+                                    
+                                    # 处理可能的完整JSON格式
+                                    if '```json' in token and '"action": "final_answer"' in token and '"action_input":' in token:
+                                        logger.info(f"[Chat {c_id}] 检测到完整JSON格式回复，准备提取")
+                                        try:
+                                            # 尝试提取JSON内容
+                                            import re
+                                            import json
+                                            # 使用更健壮的正则表达式提取JSON部分
+                                            json_match = re.search(r'({.*"action":\s*"final_answer".*})', token, re.DOTALL)
+                                            if json_match:
+                                                json_str = json_match.group(1)
+                                                # 清理可能的额外字符
+                                                json_str = re.sub(r'```json|```', '', json_str).strip()
+                                                # 解析JSON
+                                                try:
+                                                    parsed = json.loads(json_str)
+                                                    if "action_input" in parsed:
+                                                        # 替换整个最终累积的回复
+                                                        extracted_content = parsed.get("action_input", "")
+                                                        logger.info(f"[Chat {c_id}] 成功从JSON提取内容: {extracted_content[:50]}...")
+                                                        # 替换累积的回复
+                                                        final_reply_accumulator = extracted_content
+                                                        # 发送提取的内容作为token
+                                                        await queue.put({"type": "token", "data": extracted_content})
+                                                        # 继续处理下一个事件
+                                                        continue
+                                                except json.JSONDecodeError as je:
+                                                    logger.warning(f"[Chat {c_id}] JSON解析错误: {je}, 将尝试正则提取内容")
+                                                    # 尝试直接用正则表达式提取action_input内容
+                                                    action_input_match = re.search(r'"action_input":\s*"([^"]*)"', json_str)
+                                                    if action_input_match:
+                                                        extracted_content = action_input_match.group(1)
+                                                        logger.info(f"[Chat {c_id}] 通过正则提取内容: {extracted_content[:50]}...")
+                                                        # 替换累积的回复
+                                                        final_reply_accumulator = extracted_content
+                                                        # 发送提取的内容作为token
+                                                        await queue.put({"type": "token", "data": extracted_content})
+                                                        # 继续处理下一个事件
+                                                        continue
+                                        except Exception as e:
+                                            logger.error(f"[Chat {c_id}] 解析JSON失败: {str(e)}", exc_info=True)
+                                    
+                                    # 对于普通token或者提取失败的情况，继续累积
+                                    await queue.put({"type": "token", "data": token})
+                                    final_reply_accumulator += token
+                        
+                        elif event_type == "on_tool_start":
+                            # 处理工具开始事件
+                            data = event_dict.get("data", {})
+                            tool_name = data.get("name")
+                            tool_input_raw = data.get("input")
+                            
+                            # 尝试序列化输入
+                            try:
+                                tool_input_str = json.dumps(tool_input_raw, ensure_ascii=False)
+                            except TypeError:
+                                tool_input_str = str(tool_input_raw)
+                                
+                            if tool_name:
+                                logger.info(f"[Chat {c_id}] Tool Start: {tool_name} with input: {tool_input_str[:100]}...")
+                                await queue.put({"type": "tool_start", "data": {"name": tool_name, "input": tool_input_raw}})
+                        
+                        elif event_type == "on_tool_end":
+                            # 处理工具结束事件
+                            data = event_dict.get("data", {})
+                            tool_name = data.get("name")
+                            output_raw = data.get("output")
+                            
+                            # 确保输出摘要是字符串
+                            output_summary = str(output_raw)
+                            
+                            # 特殊处理工具返回的字典
+                            if isinstance(output_raw, dict) and "message" in output_raw:
+                                output_summary = output_raw["message"]
+                                if "node_data" in output_raw and isinstance(output_raw["node_data"], dict):
+                                    node_label = output_raw['node_data'].get('label') or output_raw['node_data'].get('id', '')
+                                    output_summary += f" (Details: {node_label})"
+                                elif "data" in output_raw:
+                                    if isinstance(output_raw["data"], dict) and "text" in output_raw["data"]:
+                                        text_sample = output_raw['data']['text'][:50]
+                                        output_summary += f" (Generated Text: {text_sample}...)"
+                                    elif isinstance(output_raw["data"], str):
+                                        data_sample = output_raw['data'][:50]
+                                        output_summary += f" (Data: {data_sample}...)"
+                            
+                            if tool_name:
+                                logger.info(f"[Chat {c_id}] Tool End: ({tool_name}) with output summary: {output_summary[:100]}...")
+                                await queue.put({"type": "tool_end", "data": {"name": tool_name, "output_summary": output_summary}})
+                        
+                        # 新增: 处理模型生成结束事件
+                        elif event_type == "on_chat_model_end":
+                            logger.info(f"[Chat {c_id}] 检测到模型回复结束事件")
+                            # 尝试从完整消息中提取内容
+                            try:
+                                data = event_dict.get("data", {})
+                                # 尝试获取最终生成的消息
+                                message = data.get("message")
+                                if message and hasattr(message, "content"):
+                                    message_content = message.content
+                                    logger.info(f"[Chat {c_id}] 从on_chat_model_end获取到完整消息: {message_content[:100]}...")
+                                    
+                                    # 如果消息包含JSON格式，尝试提取
+                                    if '```json' in message_content or '"action": "final_answer"' in message_content:
+                                        import re
+                                        import json
+                                        # 清理可能的markdown代码块
+                                        clean_content = re.sub(r'```json|```', '', message_content).strip()
+                                        # 提取JSON对象
+                                        json_match = re.search(r'({.*"action".*:.*"final_answer".*})', clean_content, re.DOTALL)
+                                        if json_match:
+                                            json_str = json_match.group(1)
+                                            try:
+                                                parsed = json.loads(json_str)
+                                                if "action_input" in parsed:
+                                                    extracted_content = parsed.get("action_input", "")
+                                                    logger.info(f"[Chat {c_id}] 从模型结束事件提取内容: {extracted_content[:50]}...")
+                                                    # 替换累积的回复
+                                                    final_reply_accumulator = extracted_content
+                                            except Exception as je:
+                                                logger.warning(f"[Chat {c_id}] 解析模型结束事件中的JSON失败: {je}")
+                            except Exception as e:
+                                logger.error(f"[Chat {c_id}] 处理模型结束事件失败: {str(e)}", exc_info=True)
+                                
+                        # 检查是否是最终状态
+                        if event_type == "end" and event_dict.get("name") == "__graph__":
+                            data = event_dict.get("data", {})
+                            if isinstance(data.get("output"), dict):
+                                final_state = data["output"]
+                                logger.info(f"[Chat {c_id}] Captured final graph state: {str(final_state)[:200]}...")
+                        
+                    except Exception as event_error:
+                        logger.error(f"[Chat {c_id}] Error processing event: {str(event_error)}", exc_info=True)
 
         except Exception as e:
             is_error = True
@@ -390,90 +454,119 @@ async def add_message(
             logger.error(f"[Chat {c_id}] {error_message}", exc_info=True)
             # 尝试确定错误阶段
             stage = "unknown" # 默认
-            # TODO: 根据异常类型或发生位置判断 stage ('llm', 'tool', 'parsing', 'agent')
-            # 例如: if isinstance(e, LLMError): stage = 'llm'
             error_data = {"message": error_message, "stage": stage}
             try:
                 await queue.put({"type": "error", "data": error_data})
             except asyncio.QueueFull:
                 logger.error(f"[Chat {c_id}] Failed to put error message in full queue.")
             except Exception as qe:
-                 logger.error(f"[Chat {c_id}] Failed to put error message in queue: {qe}")
+                logger.error(f"[Chat {c_id}] Failed to put error message in queue: {qe}")
 
         finally:
             # --- Reset the context variable (important!) ---
             current_flow_id_var.set(None)
             logger.debug(f"[Chat {c_id}] Reset current_flow_id context variable.")
-            # ----------------------------------------------
-            logger.debug(f"[Chat {c_id}] Background task finally block reached. Is error: {is_error}")
-            # --- 数据库保存逻辑 (步骤 3 - 修正结构) ---
+            
+            # --- 数据库保存逻辑 ---
             if not is_error and final_reply_accumulator:
-                try: # <-- TRY block starts here
+                try:
+                    # 检查最终回复中是否包含JSON格式（可能是流式传输未成功解析的情况）
+                    logger.info(f"[Chat {c_id}] 保存前检查最终回复: 长度={len(final_reply_accumulator)}, 前50字符: {final_reply_accumulator[:50]}")
+                    
+                    # 如果回复仍然包含完整的JSON格式，尝试再次提取
+                    if '```json' in final_reply_accumulator and '"action": "final_answer"' in final_reply_accumulator:
+                        logger.info(f"[Chat {c_id}] 最终回复仍包含JSON格式，尝试最后一次提取")
+                        try:
+                            import re
+                            import json
+                            # 提取JSON部分
+                            clean_content = re.sub(r'```json|```', '', final_reply_accumulator).strip()
+                            json_match = re.search(r'({.*"action".*:.*"final_answer".*})', clean_content, re.DOTALL)
+                            if json_match:
+                                json_str = json_match.group(1)
+                                parsed = json.loads(json_str)
+                                if "action_input" in parsed:
+                                    extracted_content = parsed.get("action_input", "")
+                                    if extracted_content:
+                                        logger.info(f"[Chat {c_id}] 保存前成功提取JSON内容: {extracted_content[:50]}...")
+                                        final_reply_accumulator = extracted_content
+                        except Exception as e:
+                            logger.error(f"[Chat {c_id}] 保存前解析JSON失败: {str(e)}", exc_info=True)
+                    
                     # 使用新的独立数据库 Session 进行保存
-                    logger.info(f"[Chat {c_id}] Attempting to save messages using new DB session.")
+                    logger.info(f"[Chat {c_id}] Attempting to save messages using new DB session. 最终回复长度: {len(final_reply_accumulator)}")
                     with get_db_context() as db_session_for_save:
-                       chat_service_for_save = ChatService(db_session_for_save)
+                        chat_service_for_save = ChatService(db_session_for_save)
+                        flow_service_for_save = FlowService(db_session_for_save)
                        
-                       # --- 先保存用户消息 ---
-                       logger.info(f"[Chat {c_id}] Attempting to save user message (length: {len(msg_content)})...")
-                       user_save_success = chat_service_for_save.add_message_to_chat(
-                           chat_id=c_id,
-                           role="user",
-                           content=msg_content
-                       )
-                       if not user_save_success:
+                        # --- 先保存用户消息 ---
+                        logger.info(f"[Chat {c_id}] Attempting to save user message (length: {len(msg_content)})...")
+                        user_save_success = chat_service_for_save.add_message_to_chat(
+                            chat_id=c_id,
+                            role="user",
+                            content=msg_content
+                        )
+                        if not user_save_success:
                             logger.error(f"[Chat {c_id}] Failed to save user message in finally block.")
-                            # Decide whether to proceed with saving assistant message or raise error
-                       else:
+                        else:
                             logger.info(f"[Chat {c_id}] User message saved to DB.")
-                       # -----------------------
-
-                       # TODO: 获取 Agent 执行后最终的 flow_data (如果 Agent 修改了它)
-                       # final_flow_data = agent_executor.get_final_flow_data() # 假设有这样的方法
-
-                       # 再保存助手消息
-                       logger.info(f"[Chat {c_id}] Attempting to save assistant message (length: {len(final_reply_accumulator)})...")
-                       assistant_save_success = chat_service_for_save.add_message_to_chat(
-                           chat_id=c_id,
-                           role="assistant",
-                           content=final_reply_accumulator
-                       )
-                       if not assistant_save_success:
-                           logger.error(f"[Chat {c_id}] Failed to save assistant message in finally block.")
-                       else:
+                       
+                        # 再保存助手消息
+                        logger.info(f"[Chat {c_id}] Attempting to save assistant message (length: {len(final_reply_accumulator)})...")
+                        final_message_content = final_reply_accumulator
+                        assistant_save_success = chat_service_for_save.add_message_to_chat(
+                            chat_id=c_id,
+                            role="assistant",
+                            content=final_message_content
+                        )
+                        if assistant_save_success:
                             logger.info(f"[Chat {c_id}] Assistant message saved to DB.")
-                       # TODO: Add flow update logic if needed
-                except Exception as save_err: # <-- EXCEPT block corresponding to the TRY above
+                        else:
+                            logger.warning(f"[Chat {c_id}] Failed to save assistant message.")
+
+                        # 从最终状态获取 flow_context (如果它被图修改了)
+                        final_flow_context_to_save = None
+                        if final_state and isinstance(final_state, dict) and "flow_context" in final_state:
+                            final_flow_context_candidate = final_state.get("flow_context")
+                            if isinstance(final_flow_context_candidate, dict):
+                                final_flow_context_to_save = final_flow_context_candidate
+                                logger.info(f"[Chat {c_id}] Extracted final_flow_context from graph state for saving: {str(final_flow_context_to_save)[:100]}...")
+                            else:
+                                logger.warning(f"[Chat {c_id}] final_state['flow_context'] is not a dict type: {type(final_flow_context_candidate)}. Will not update flow.")
+
+                        # 如果 flow_context 被修改了，则更新 Flow 对象
+                        if final_flow_context_to_save is not None: 
+                            flow_to_update = flow_service_for_save.get_flow_instance(flow_id)
+                            if flow_to_update:
+                                current_flow_model_data = flow_to_update.flow_data or {}
+                                current_flow_model_data["graphContextVars"] = final_flow_context_to_save
+                                flow_to_update.flow_data = current_flow_model_data
+                                db_session_for_save.add(flow_to_update)
+                                db_session_for_save.commit()
+                                logger.info(f"[Chat {c_id}] Successfully updated Flow {flow_id} with new graphContextVars in finally block.")
+                            else:
+                                logger.error(f"[Chat {c_id}] Could not find Flow {flow_id} in finally block for graphContextVars update.")
+                except Exception as save_err:
                     logger.error(f"[Chat {c_id}] Failed to save messages or flow data in finally block: {save_err}", exc_info=True)
             elif is_error:
-                # 考虑是否要将错误信息保存到聊天记录中？
                 logger.warning(f"[Chat {c_id}] Skipping save due to error during agent execution. Error data: {error_data}")
-                # 可以在这里用新 session 保存一条 system 错误消息
-                # try:
-                #     with get_db_context() as db_session_for_error_save:
-                #         chat_service_for_error_save = ChatService(db_session_for_error_save)
-                #         chat_service_for_error_save.add_message_to_chat(
-                #             chat_id=c_id,
-                #             role="system", # 或者 assistant?
-                #             content=f"Error during processing: {error_data.get('message', 'Unknown error')}"
-                #         )
-                #         logger.info(f"[Chat {c_id}] Saved error message to chat history.")
-                # except Exception as error_save_err:
-                #         logger.error(f"[Chat {c_id}] Failed to save error message to chat history: {error_save_err}", exc_info=True)
             else:
-                 logger.warning(f"[Chat {c_id}] Skipping save because final reply was empty or null.")
-            # --- 结束数据库保存逻辑 ---
-
+                logger.warning(f"[Chat {c_id}] Skipping save because final reply was empty or null.")
+            
             # --- 发送流结束标记 --- 
             try:
                 logger.debug(f"[Chat {c_id}] Putting STREAM_END_SENTINEL into queue.")
                 await queue.put(STREAM_END_SENTINEL)
                 logger.debug(f"[Chat {c_id}] Stream end sentinel sent.")
             except asyncio.QueueFull:
-                 logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in full queue.")
+                logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in full queue.")
             except Exception as qe:
-                 logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
-            # No nested finally needed here for the sentinel sending
+                logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
+            
+            # --- 清理资源 ---
+            logger.info(f"[Chat {c_id}] Background task cleanup completed.")
+            # 注意：我们不在这里从active_chat_queues中移除队列
+            # 因为那应该在sse_event_sender的finally块中完成，当所有事件被发送后
 
     # --- 启动后台任务 --- 
     background_tasks.add_task(process_and_publish_events, chat_id, message.content, event_queue)

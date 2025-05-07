@@ -19,7 +19,7 @@ class SimpleConfig:
     DEBUG = os.getenv("DEBUG", "False") == "True"
 
     # Logging settings
-    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
     LOG_DIR = os.getenv("LOG_DIR", "logs") # Default log directory
     LOG_FILENAME_GENERAL = os.getenv("LOG_FILENAME_GENERAL", "app.log")
     LOG_FILENAME_ERROR = os.getenv("LOG_FILENAME_ERROR", "error.log")
@@ -58,7 +58,7 @@ class SimpleConfig:
     # LangChain配置
     LANGCHAIN_CONFIG = {
         "VECTOR_STORE_TYPE": os.getenv("VECTOR_STORE_TYPE", "chroma"),
-        "VECTOR_STORE_PATH": os.getenv("VECTOR_STORE_PATH", "backend/langchainchat/vector_store"),
+        "VECTOR_STORE_PATH": os.getenv("VECTOR_STORE_PATH", "backend/langgraphchat/vector_store"),
         "EMBEDDING_MODEL": os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002"),
         "MAX_HISTORY_LENGTH": int(os.getenv("MAX_HISTORY_LENGTH", "10")),
         "DEFAULT_CONTEXT_WINDOW": int(os.getenv("DEFAULT_CONTEXT_WINDOW", "1000")),

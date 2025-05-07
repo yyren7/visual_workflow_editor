@@ -32,8 +32,8 @@ from tenacity import (
     wait_exponential,
 )
 
-from backend.langchainchat.config import settings
-from backend.langchainchat.utils.logging import logger
+from backend.langgraphchat.config import settings
+from backend.langgraphchat.utils.logging import logger
 import os
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, ChatOpenAI

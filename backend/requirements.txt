@@ -1,24 +1,25 @@
-pytest==7.0.0
+pytest
 # LangChain依赖
-langchain==0.3.20
-langchain-community==0.3.19
-langchain-core==0.3.52
-langchain-openai==0.3.8
+langchain
+langgraph
+langchain-community
+langchain-core
+langchain-openai
 langchain-deepseek
 openai>=1.0.0  # DeepSeek支持OpenAI SDK格式，但我们使用它来调用DeepSeek API
-bcrypt==4.0.1
-fastapi==0.115.4
-uvicorn==0.22.0
-pydantic==2.7.4
-SQLAlchemy==2.0.15
-psycopg2-binary==2.9.6
-alembic==1.11.1
-python-dotenv==1.0.0
-python-jose==3.3.0
-passlib==1.7.4
-python-multipart==0.0.6
-httpx==0.24.1
-numpy==1.26.2
+bcrypt
+fastapi
+uvicorn
+pydantic
+SQLAlchemy
+psycopg2-binary
+alembic
+python-dotenv
+python-jose
+passlib
+python-multipart
+httpx
+# numpy==1.26.2
 # 不再需要单独的翻译依赖，使用DeepSeek模型进行翻译
 # sentence-transformers>=2.2.0  # 删除，不再需要本地embedding模型
 # torch==2.0.1  # 删除，不再需要torch
@@ -37,7 +38,7 @@ requests>=2.28.0  # HTTP客户端
 pytest-cov>=3.0.0  # 测试覆盖率工具
 aiohttp>=3.8.1  # 异步HTTP客户端
 # langchain_google_genai  # 删除，不再需要Google AI集成
-aiosmtplib==4.0.0  # 异步SMTP客户端
+aiosmtplib
 watchfiles
 pgvector 
 sse-starlette  # 添加 Starlette Server-Sent Events 支持

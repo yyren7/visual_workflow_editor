@@ -17,7 +17,7 @@ def setup_logging(name: str = "langchain_chat") -> logging.Logger:
         配置好的日志记录器
     """
     # Removed incorrect import from inside the function
-    # from langchainchat.config import settings
+    # from langgraphchat.config import settings
     
     # 获取日志级别 using LANGCHAIN_CONFIG
     log_level_str = LANGCHAIN_CONFIG.get("LOG_LEVEL", "INFO")

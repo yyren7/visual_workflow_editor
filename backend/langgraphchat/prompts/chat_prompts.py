@@ -3,7 +3,7 @@ from typing import Optional
 import logging
 
 # 配置日志
-logger = logging.getLogger("langchainchat.prompts")
+logger = logging.getLogger("langgraphchat.prompts")
 
 # 定义常用的节点类型文本 (替代之前的动态获取)
 NODE_TYPES_INFO = """常用节点类型:

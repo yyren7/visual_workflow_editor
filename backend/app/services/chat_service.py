@@ -11,31 +11,23 @@ from fastapi import HTTPException, status
 
 from database.models import Chat, Flow
 
-# 导入 RAG 链/Agent (假设路径和名称)
-# from backend.langchainchat.chains.rag_chain import RAGChain # 或者 Agent
-# 导入 WorkflowChain (如果 chat service 需要直接触发工作流修改)
-# from backend.langchainchat.chains.workflow_chain import WorkflowChain, WorkflowChainOutput
-# 导入构建 RAG/Workflow 链所需的依赖 (这些通常在应用启动时初始化并注入)
-# 移除 ToolExecutor 导入
-# from backend.langchainchat.tools.executor import ToolExecutor
-# from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
-# from database.embedding.service import DatabaseEmbeddingService
-
-# --- RAG 相关导入 ---
-# from backend.langchainchat.chains.rag_chain import create_rag_chain, RAGInput
-from backend.langchainchat.retrievers.embedding_retriever import EmbeddingRetriever
+from backend.langgraphchat.retrievers.embedding_retriever import EmbeddingRetriever
 from database.embedding.service import DatabaseEmbeddingService
 
-# --- 新增：导入 DbChatMemory 和 BaseMessage --- 
-from backend.langchainchat.memory.db_chat_memory import DbChatMemory
+# --- 导入 DbChatMemory 和 BaseMessage --- 
+from backend.langgraphchat.memory.db_chat_memory import DbChatMemory
 from langchain_core.messages import BaseMessage
-# --- 新增：导入新的 Agent Runnable 创建函数 ---
-from backend.langchainchat.agents.workflow_agent import create_workflow_agent_runnable
 from langchain_core.runnables import Runnable # 导入 Runnable 类型提示
 # 根据官方文档，直接从 langchain_deepseek 导入 ChatDeepSeek
 from langchain_deepseek import ChatDeepSeek 
 from langchain_google_genai import ChatGoogleGenerativeAI # 导入 Gemini
-from langchain_core.language_models import BaseChatModel # 导入 BaseChatModel
+from langchain_core.language_models import BaseChatModel
+from langgraph.graph import StateGraph
+
+# --- 从工作流图模块导入编译函数 ---
+from backend.langgraphchat.graph.workflow_graph import compile_workflow_graph
+# --- 工具 ---
+from backend.langgraphchat.tools import flow_tools
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +36,7 @@ class ChatService:
     
     def __init__(self, db: Session):
         self.db = db
-        # 将 Agent Executor 的初始化推迟到第一次需要时
-        self._agent_executor = None # 初始化为 None
-        # 移除 RAG Chain 相关属性
-        # self.rag_chain = None 
+        self._compiled_workflow_graph = None # 用于缓存编译后的 LangGraph
     
     def _get_active_llm(self) -> BaseChatModel:
         """根据环境变量选择并实例化活动 LLM。"""
@@ -60,7 +49,6 @@ class ChatService:
                 logger.error("GOOGLE_API_KEY environment variable not set.")
                 raise ValueError("GOOGLE_API_KEY environment variable not set.")
             try:
-                # 'gemini-pro' 是一个常见的模型，你可能需要根据可用性调整
                 # convert_system_message_to_human=True 对于某些Agent类型使用Gemini时是必要的
                 llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=api_key, convert_system_message_to_human=True)
                 logger.info("Instantiated ChatGoogleGenerativeAI (Gemini).")
@@ -70,12 +58,6 @@ class ChatService:
                 raise ValueError(f"Failed to instantiate Gemini LLM: {e}")
 
         elif provider == "deepseek":
-            # ChatDeepSeek 构造函数通常会自动从环境变量读取 DEEPSEEK_API_KEY
-            # 无需手动传递 api_key 参数，除非你想覆盖环境变量
-            # api_key = os.getenv("DEEPSEEK_API_KEY")
-            # if not api_key:
-            #     logger.error("DEEPSEEK_API_KEY environment variable not set.")
-            #     raise ValueError("DEEPSEEK_API_KEY environment variable not set.")
             try:
                 llm = ChatDeepSeek(model="deepseek-chat") # 假设 'deepseek-chat' 是支持工具调用的模型
                 logger.info("Instantiated ChatDeepSeek.")
@@ -88,28 +70,19 @@ class ChatService:
             raise ValueError(f"Unsupported LLM provider: {provider}. Choose 'deepseek' or 'gemini'.")
 
     @property
-    def workflow_agent_executor(self):
-        """获取或创建 Agent Executor 实例。"""
-        if self._agent_executor is None:
-            logger.info("Workflow Agent Executor not initialized. Creating now...")
+    def compiled_workflow_graph(self) -> StateGraph:
+        """获取或创建编译后的 LangGraph 工作流实例。"""
+        if self._compiled_workflow_graph is None:
+            logger.info("Compiled LangGraph not initialized. Creating now...")
             try:
-                # 1. 获取活动的 LLM 实例
                 active_llm = self._get_active_llm()
-                
-                # 2. 移除 Tool Executor 初始化
-                # if self._tool_executor is None:
-                #      # 使用获取到的 active_llm 初始化 ToolExecutor
-                #      self._tool_executor = ToolExecutor(llm_client=active_llm) 
-                #      logger.info("Initialized ToolExecutor in workflow_agent_executor property.")
-
-                # 3. 创建 Agent Runnable (不再需要传递 tool_executor)
-                self._agent_executor = create_workflow_agent_runnable(llm=active_llm)
-                logger.info("Successfully created Workflow Agent Executor.")
+                # flow_tools 是直接从 backend.langgraphchat.tools 导入的列表
+                self._compiled_workflow_graph = compile_workflow_graph(llm=active_llm, custom_tools=flow_tools)
+                logger.info("Successfully compiled LangGraph workflow.")
             except Exception as e:
-                logger.error(f"Failed to create workflow agent executor: {e}", exc_info=True)
-                # 根据需要决定是否抛出异常或返回 None
-                raise RuntimeError(f"Could not create agent executor: {e}")
-        return self._agent_executor
+                logger.error(f"Failed to compile LangGraph workflow: {e}", exc_info=True)
+                raise RuntimeError(f"Could not compile LangGraph workflow: {e}")
+        return self._compiled_workflow_graph
 
     def create_chat(self, flow_id: str, name: str = "新聊天", chat_data: Dict[str, Any] = None) -> Optional[Chat]:
         """

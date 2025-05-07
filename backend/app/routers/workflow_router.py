@@ -9,7 +9,7 @@ from backend.app.schemas import User
 import os
 import json
 from backend.config import APP_CONFIG
-from backend.langchainchat.utils.translator import translator
+from backend.langgraphchat.utils.translator import translator
 
 router = APIRouter(
     prefix="/workflow",

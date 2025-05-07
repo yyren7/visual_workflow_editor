@@ -69,7 +69,7 @@ visual_workflow_editor/
 ├── .github/workflows/   # GitHub Actions CI/CD配置
 ├── backend/             # Python后端 (FastAPI)
 │   ├── app/             # 应用代码
-│   ├── langchainchat/   # Langchain 聊天相关代码
+│   ├── langgraphchat/   # Langchain 聊天相关代码
 │   ├── config/          # 后端特定配置（如果有）
 │   ├── tests/           # 后端测试
 │   ├── scripts/         # 后端特定脚本（如果有）

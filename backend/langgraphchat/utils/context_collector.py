@@ -14,10 +14,10 @@ from langchain_core.documents import Document
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 
-from backend.langchainchat.config import settings
-from backend.langchainchat.utils.logging import logger
+from backend.langgraphchat.config import settings
+from backend.langgraphchat.utils.logging import logger
 from backend.database.connection import get_db
-from backend.langchainchat.tools.flow_tools import get_active_flow_id
+from backend.langgraphchat.tools.flow_tools import get_active_flow_id
 
 class ContextCollector:
     """

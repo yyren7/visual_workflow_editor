@@ -11,7 +11,7 @@ from .base import get_env_bool, get_env_int, get_env_float, get_log_file_path, L
 LANGCHAIN_CONFIG = {
     "PROJECT_NAME": "Flow Editor - LangChain Module",
     "VECTOR_STORE_TYPE": os.getenv("VECTOR_STORE_TYPE", "chroma"),
-    "VECTOR_STORE_PATH": os.getenv("VECTOR_STORE_PATH", "backend/langchainchat/vector_store"),
+    "VECTOR_STORE_PATH": os.getenv("VECTOR_STORE_PATH", "backend/langgraphchat/vector_store"),
     "EMBEDDING_MODEL": os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002"),
     "MAX_HISTORY_LENGTH": get_env_int("MAX_HISTORY_LENGTH", "10"),
     "DEFAULT_CONTEXT_WINDOW": get_env_int("DEFAULT_CONTEXT_WINDOW", "1000"),
@@ -23,8 +23,8 @@ LANGCHAIN_CONFIG = {
     "ALTERNATIVE_BASE_URL": os.getenv("ALTERNATIVE_BASE_URL", ""),
     "ENABLE_TOOLS": True,
     "PERSIST_SESSIONS": True,
-    "SESSIONS_DB_PATH": os.getenv("SESSIONS_DB_PATH", "backend/langchainchat/sessions"),
-    "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
+    "SESSIONS_DB_PATH": os.getenv("SESSIONS_DB_PATH", "backend/langgraphchat/sessions"),
+    "LOG_LEVEL": os.getenv("LOG_LEVEL", "DEBUG"),
     "LOG_DIR": LOG_DIR
 }
 

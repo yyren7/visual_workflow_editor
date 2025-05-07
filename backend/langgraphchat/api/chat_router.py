@@ -9,11 +9,11 @@ from backend.app.utils import optional_current_user, get_current_user
 from backend.app.schemas import User
 
 # 聊天服务将在后续实现
-from backend.langchainchat.services.chat_service import ChatService
+from backend.langgraphchat.services.chat_service import ChatService
 
 router = APIRouter(
-    prefix="/langchainchat",
-    tags=["langchainchat"],
+    prefix="/langgraphchat",
+    tags=["langgraphchat"],
     responses={404: {"description": "Not found"}}
 )
 

@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from database.models import Chat
 from langchain_core.chat_history import BaseChatMessageHistory
-from backend.langchainchat.memory.conversation_memory import EnhancedConversationMemory
+from backend.langgraphchat.memory.conversation_memory import EnhancedConversationMemory
 from datetime import datetime
 from langchain_core.messages import (
     AIMessage, 

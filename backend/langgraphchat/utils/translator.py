@@ -7,7 +7,7 @@ import logging
 import re
 
 # 导入DeepSeek模型
-from backend.langchainchat.models.llm import get_chat_model
+from backend.langgraphchat.models.llm import get_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate

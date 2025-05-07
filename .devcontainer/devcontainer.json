@@ -19,7 +19,10 @@
         "mtxr.sqltools-driver-sqlite",
         "mhutchie.git-graph",
         "gruntfuggly.todo-tree",
-        "pkief.material-icon-theme"
+        "pkief.material-icon-theme",
+        "ms-azuretools.vscode-docker",
+        "github.vscode-github-actions",
+        "bierner.markdown-mermaid"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
