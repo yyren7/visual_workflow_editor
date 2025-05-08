@@ -1,0 +1,10 @@
+---
+description: use this for backend editing
+globs: 
+alwaysApply: false
+---
+# Your rule content
+参考/workspace/backend/README.md以确认项目结构和重要文件，并且在每次更新结构或文件之后要同步修改md。
+
+- You can @ files here
+- You can use markdown but dont have to

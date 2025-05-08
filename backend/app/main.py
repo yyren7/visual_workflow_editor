@@ -245,7 +245,7 @@ async def validate_api_configuration():
     import logging
     logger = logging.getLogger("backend.app.startup")
     
-    from backend.config import APP_CONFIG, AI_CONFIG
+    from backend.config import APP_CONFIG, AI_CONFIG, DB_CONFIG
     
     # 验证DeepSeek配置
     if AI_CONFIG['USE_DEEPSEEK']:
@@ -281,7 +281,7 @@ async def validate_api_configuration():
             logger.error(f"⚠️ DeepSeek客户端模块 (DeepSeekLLM) 导入或验证失败: {str(e)}") # 新日志
     
     # 验证数据库配置
-    logger.info(f"数据库URL: {APP_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in APP_CONFIG else '未设置'}")
+    logger.info(f"数据库URL: {DB_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in DB_CONFIG and DB_CONFIG['DATABASE_URL'] else '未设置'}")
     
     # 记录调试模式状态
     if APP_CONFIG['DEBUG']:
