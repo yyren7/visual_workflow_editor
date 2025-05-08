@@ -37,7 +37,6 @@ backend/langgraphchat/
 │   └── utils.py                  # 搜索相关的辅助函数 (normalize_json, extract_keywords, format_search_result)。
 │
 ├── graph/                        # LangGraph 图定义
-│   ├── __init__.py               # (通常为空或导出主要图组件)
 │   ├── agent_state.py            # 定义 AgentState (TypedDict)，用于 LangGraph 状态图。
 │   └── workflow_graph.py         # 核心：定义 LangGraph 的 StateGraph (agent_node, tool_node, should_continue, compile_workflow_graph)。
 │
@@ -59,7 +58,7 @@ backend/langgraphchat/
 │   └── chat_prompts.py           # 定义多个 ChatPromptTemplate 实例 (如 STRUCTURED_CHAT_AGENT_PROMPT)。
 │
 ├── services/                     # 服务组件 (langgraphchat 模块内部)
-│   └── __init__.py               # 目前 langgraphchat/services/ 目录为空。核心的 ChatService 位于 backend/app/services/chat_service.py。
+│   └── __init__.py               # langgraphchat/services/ 模块初始化。核心的 ChatService 位于 backend/app/services/chat_service.py。
 │
 ├── tools/                        # LangGraph 工具定义和实现
 │   ├── __init__.py               # 导出 flow_tools (工具列表)。
@@ -67,31 +66,38 @@ backend/langgraphchat/
 │   └── flow_tools.py             # 实现具体的流程图操作工具函数 (如 create_node_tool_func) 和对应的 LangChain StructuredTool 对象。工具通过 current_flow_id_var 获取流程上下文。
 │
 ├── utils/                        # 通用工具函数
-│   ├── __init__.py               # (通常为空或导出主要工具)
+│   ├── __init__.py               # 导出主要工具。
 │   ├── context_collector.py      # 定义 ContextCollector，用于收集系统和流程图上下文信息。
 │   ├── logging.py                # 配置日志记录器 (目前仍有较多 Langchain 相关配置)。
 │   └── translator.py             # 定义 Translator 类，使用 LLM 进行文本翻译。
 │
-├── agents/                       # (目录存在，但目前为空)
-├── callbacks/                    # (目录存在，但目前为空)
-├── document_loaders/             # (目录存在，但目前为空)
-├── output_parsers/               # (目录存在，但目前为空)
+├── agents/                       # Agent 相关 (包含 __init__.py)
+│   └── __init__.py
+├── callbacks/                    # 回调相关 (包含 __init__.py)
+│   └── __init__.py
+├── document_loaders/             # 文档加载器 (包含 __init__.py)
+│   └── __init__.py
+├── output_parsers/               # 输出解析器 (包含 __init__.py)
+│   └── __init__.py
 ├── retrievers/                   # 检索器实现
 │   ├── __init__.py               # (空)
 │   └── embedding_retriever.py    # 定义 EmbeddingRetriever (继承 BaseRetriever)，使用 DatabaseEmbeddingService 进行异步文档检索。
 │
 ├── vectorstore/                  # (目录存在，但目前为空)
-└── sessions/                     # 本地会话存储目录 (如果启用 EnhancedConversationMemory 持久化)
-    └── [session_id]/             # 包含具体会话的 JSON 文件
-        └── ...
+├── sessions/                     # 本地会话存储目录 (如果启用 EnhancedConversationMemory 持久化)
+│   └── [session_id]/             # 包含具体会话的 JSON 文件
+│       └── ...
+└── todo/                         # TODO 和重构计划
+    ├── refractor_mermaid.md      # Mermaid 图相关的重构笔记
+    └── refactoring_plan.md       # 重构计划详情
 ```
 
 ## 文件/模块详解及注意点
 
 ### `__init__.py`
 
-- **作用**: 模块的入口点，通常用于导出公共接口或设置模块级别的属性。
-- **注意**: 目前主要定义 `__version__`。
+- **作用**: 模块的入口点。定义模块版本 `__version__`，并通过文档字符串提供模块核心功能（基于 LangGraph 的聊天，会话管理，上下文收集，工具调用）的概述。
+- **注意**: 包含 `__all__ = []`，提示服务实例等需从具体子模块导入。
 
 ### `context.py`
 
@@ -102,7 +108,7 @@ backend/langgraphchat/
 
 - `chat_router.py`:
   - **作用**: 定义 `/langgraphchat` 前缀下的 FastAPI 路由，如 `/message` (处理聊天请求), `/conversations` (列出对话), `/conversations/{conversation_id}` (删除对话)。
-  - **依赖**: 严重依赖 `backend.langgraphchat.services.chat_service.ChatService` (目前缺失)。如果 `ChatService` 未实现或不可用，这些 API 端点将无法正常工作。
+  - **依赖**: 依赖 `ChatService`。代码中通过 `from backend.langgraphchat.services.chat_service import ChatService` 导入并实例化。 （注意：核心 `ChatService` 如项目其他部分所述位于 `backend/app/services/chat_service.py`，需关注此处的导入路径是否指向预期实现）。
   - **数据模型**: 使用 Pydantic 模型 `ChatRequest` 和 `ChatResponse` (来自 `models/response.py`)。
   - **认证**: 集成了用户认证 (`optional_current_user`, `get_current_user`)。
 
@@ -145,15 +151,15 @@ backend/langgraphchat/
 - `deepseek_client.py`:
   - **作用**: 定义 `DeepSeekLLM` 类，作为与 DeepSeek API (或其他 OpenAI 兼容 API) 交互的 LangChain `BaseChatModel` 封装。
   - **功能**: 处理 API 认证、请求参数、重试、流式响应、同步/异步调用。
-  - **配置**: 从 `backend.langgraphchat.config.settings` 和环境变量加载配置。
+  - **配置**: 从 `backend.config.AI_CONFIG` 和环境变量加载配置。
   - **注意**: API 密钥管理和 Base URL 配置是正确运行的关键。包含一些复杂的配置加载逻辑，包括从 `.env` 文件。
 
 ### `memory/`
 
 - `conversation_memory.py`:
-  - **作用**: 定义 `EnhancedConversationMemory` (继承 `ConversationBufferMemory`)，增加了会话保存到本地 JSON 文件和从文件加载的功能。
-  - **持久化**: 如果 `APP_CONFIG.PERSIST_SESSIONS` 为 `True`，会话将保存在 `APP_CONFIG.SESSIONS_DB_PATH` 指定的目录下。
-  - `create_memory` 是一个工厂函数，方便创建或加载记忆实例。
+  - **作用**: 定义 `EnhancedConversationMemory` (继承 `ConversationBufferMemory`)，增加了基于 `conversation_id` 和可选 `user_id` 的会话管理，包括保存到本地 JSON 文件、从文件加载、列出所有会话 (`list_conversations`) 以及添加系统消息 (`add_system_message`) 的功能。
+  - **持久化**: 如果 `APP_CONFIG.PERSIST_SESSIONS` 为 `True`，会话将保存在 `APP_CONFIG.SESSIONS_DB_PATH` 指定的目录下 (可按 `user_id` 分隔)。
+  - `create_memory` 是一个工厂函数，方便创建或加载记忆实例。配置来源于 `backend.config.APP_CONFIG` 和 `LANGCHAIN_CONFIG`。
 - `db_chat_memory.py`:
   - **作用**: 定义 `DbChatMemory`，旨在将聊天记录存储在数据库中。它实现了 `BaseChatMessageHistory`。
   - **依赖**: 依赖于 `backend.app.services.chat_service.ChatService` (目前缺失) 来进行实际的数据库操作。
@@ -162,8 +168,9 @@ backend/langgraphchat/
 ### `models/`
 
 - `llm.py`:
-  - **作用**: 包含 `get_chat_model()` 函数，这是一个工厂函数，根据配置 (如 `LLM_PROVIDER`) 返回不同类型的聊天模型实例 (如 `DeepSeekChatModel`, `AzureChatOpenAI`, `ChatZhipuAI`)。
-  - **旧代码**: `DeepSeekChatModel` 类的旧定义也在此文件中，但项目似乎倾向于使用 `llms/deepseek_client.py` 中的版本。应注意版本统一性。
+  - **作用**: 包含 `DeepSeekChatModel` 类 (一个独立的 DeepSeek API 封装，配置来自 `backend.langgraphchat.config.settings` 和环境变量) 和 `get_chat_model()` 工厂函数。
+  - `get_chat_model()`: 根据 `backend.langgraphchat.config.settings` (如 `USE_DEEPSEEK`) 返回此文件中的 `DeepSeekChatModel` 实例或 `langchain_openai.ChatOpenAI` 实例。
+  - **注意**: 此模块包含一个与 `llms/deepseek_client.py` 中 `DeepSeekLLM` 功能相似但独立的 DeepSeek 客户端 (`DeepSeekChatModel`)。两者配置来源和部分实现不同，需注意版本和使用场景的统一性。
 - `response.py`: 定义 `ChatResponse` Pydantic 模型，用于 API 的标准聊天响应。
 
 ### `prompts/`
@@ -175,7 +182,7 @@ backend/langgraphchat/
 
 ### `services/` (模块: `backend.langgraphchat.services`)
 
-- `__init__.py`: 当前 `backend/langgraphchat/services/` 目录为空。
+- `__init__.py`: `backend/langgraphchat/services/__init__.py` 文件当前仅包含注释，表明该目录为空或仅有缓存。
 - **核心 `ChatService` 位置**: 项目核心的聊天服务逻辑由位于 `backend/app/services/chat_service.py` 的 `ChatService` 类提供。此类负责：
   - 管理和实例化 LLM (如 DeepSeek, Gemini)。
   - 编译和缓存 LangGraph 工作流 (`compiled_workflow_graph` 属性)，该工作流定义在 `backend.langgraphchat.graph.workflow_graph.py`。
@@ -187,22 +194,29 @@ backend/langgraphchat/
 
 - `definitions.py`: 提供工具参数的 Pydantic 模型和工具类型枚举。包含一些 LangChain 和 DeepSeek 工具定义的**示例结构**，实际工具在 `flow_tools.py` 中实现。
 - `flow_tools.py`:
-  - **核心工具实现**: 包含与流程图交互的实际工具函数 (如 `create_node_tool_func`, `connect_nodes_tool_func`, `get_flow_info_tool_func`, `retrieve_context_func`)。
-  - **LangChain 兼容**: 将这些函数包装成 LangChain `StructuredTool` 对象，并提供了相应的 Pydantic 输入 Schema。
-  - **`flow_tools` 列表**: 最终导出一个 `flow_tools` 列表，供 LangGraph Agent 使用。
+  - **核心工具实现**: 包含两类主要的工具函数：
+    1.  **同步数据库交互工具** (如 `create_node_tool_func`, `connect_nodes_tool_func`, `get_flow_info_tool_func`, `retrieve_context_func`): 这些函数直接与数据库交互（通过 `FlowService`, `FlowVariableService`, `DatabaseEmbeddingService`），执行创建、连接、查询流程图元素等操作。
+    2.  **异步辅助/LLM 调用工具** (如 `generate_node_properties`, `ask_more_info_func`, `create_node_func`, `connect_nodes_func`, `set_properties_func`, `generate_text_func`): 这些异步函数通常接受注入的 LLM 客户端，负责准备数据、调用 LLM 生成内容（如节点属性、问题、文本）或格式化结果，一般不直接执行数据库的最终写操作。
+  - **LangChain 兼容**: 主要是上述的同步数据库交互工具函数被包装成 LangChain `StructuredTool` 对象 (如 `create_node_tool`, `connect_nodes_tool`)，并提供了相应的 Pydantic 输入 Schema。
+  - **`flow_tools` 列表**: 最终导出一个 `flow_tools` 列表，主要包含上述经过 LangChain 包装的同步数据库交互工具，供 LangGraph Agent 使用。
   - **上下文依赖**: 工具函数通过 `current_flow_id_var` 上下文变量获取当前流程图 ID。
-  - **数据库交互**: 依赖 `FlowService` (来自 `backend.app.services.flow_service`) 进行数据库操作。
-  - **异步函数**: 也包含一些异步版本的工具函数 (如 `generate_node_properties_async`)，它们通常接受注入的 LLM 客户端。
-  - **注意**: 确保 `current_flow_id_var` 在调用这些工具前被正确设置。工具的健壮性依赖于下游服务 (如 `FlowService`)。
+  - **数据库交互**: 同步工具函数依赖 `FlowService` (来自 `backend.app.services.flow_service`) 和其他相关服务进行数据库操作。
+  - **异步函数**: 包含多样的异步辅助函数，它们通常接受注入的 LLM 客户端。
+  - **注意**: 确保 `current_flow_id_var` 在调用这些工具前被正确设置。工具的健壮性依赖于下游服务 (如 `FlowService`)。需注意区分同步工具（直接操作 DB，供 Agent）和异步工具（准备数据/LLM 调用）的用途。
 
 ### `utils/`
 
-- `context_collector.py`: `ContextCollector` 类用于收集系统信息和当前活动流程图的详细信息 (通过 `FlowService`)，为 LLM 提供上下文。
+- `__init__.py`: 当前 `backend/langgraphchat/utils/__init__.py` 文件仅包含文档字符串，并未导出任何特定的工具或函数。
+- `context_collector.py`: `ContextCollector` 类用于收集系统信息和当前活动流程图的详细信息，为 LLM 提供上下文。
+  - `collect_system_info()`: 收集操作系统、Python 版本等信息。
+  - `collect_flow_info()`: 通过 `current_flow_id_var.get()` 获取当前活动的流程图 ID (注意：代码中引用的 `get_active_flow_id` 函数在 `flow_tools.py` 中未直接定义，其逻辑体现在工具函数对上下文变量的使用上)，然后使用 `FlowService` (来自 `backend.app.services.flow_service`) 获取流程图详情。
 - `logging.py`:
-  - **作用**: 配置日志系统。
+  - **作用**: 通过 `setup_logging` 函数配置日志系统，包括控制台和文件日志 (基于 `RotatingFileHandler`)。主要配置名为 "langchain_chat" 和 "langchain" 的日志记录器。
   - **Langchain 痕迹**: 当前实现（如记录器名称、配置项）仍然基于 Langchain。在完全迁移到 LangGraph 后，可能需要更新此模块以更好地匹配 LangGraph 的实践。
-  - **依赖**: `backend.config`。
+  - **依赖**: `backend.config` (特别是 `LANGCHAIN_CONFIG` 中的 `LOG_LEVEL`, `LANGCHAIN_LOG_FILE`, `LOG_LLM_CALLS` 和 `LOG_DIR`)。
 - `translator.py`: `Translator` 类使用配置的 LLM (通过 `models.llm.get_chat_model`) 进行文本翻译。
+  - `detect_language()`: 使用启发式方法（或注释掉的 LLM 逻辑）检测文本语言。
+  - `translate()`: 调用 `self.llm.invoke()` 执行翻译。
 
 ### `retrievers/`
 
@@ -210,6 +224,7 @@ backend/langgraphchat/
   - **作用**: 定义 `EmbeddingRetriever` (继承 `BaseRetriever`)。
   - **异步检索**: 主要通过 `_aget_relevant_documents` 方法，使用注入的 `DatabaseEmbeddingService` 实例进行异步相似性搜索。
   - **依赖**: `DatabaseEmbeddingService` (来自 `database.embedding.service`)。
+- `__init__.py`: 存在一个空的 `__init__.py` 文件。
 
 ## 使用方法 (基于当前结构和 LangGraph)
 
