@@ -338,6 +338,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const handleChatEvent: OnChatEventCallback = (event) => {
       console.log("Received SSE Event:", JSON.stringify(event)); // 保持这个日志用于调试
 
+      // If it's a stream_end event, capture the ID *now*, before the setMessages callback is even queued or executed.
+      let capturedStreamEndId: string | null = null;
+      if (event.type === 'stream_end') {
+        capturedStreamEndId = streamingAssistantMsgIdRef.current;
+        console.log(`[ChatInterface stream_end event] Captured streamingAssistantMsgIdRef: ${capturedStreamEndId}`); // Diagnostic log
+      }
+
       setMessages(prevMessages => {
         // const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
         const newMessages = [...prevMessages]; // Create mutable copy
@@ -446,29 +453,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             break;
 
           case 'stream_end':
-            console.log("Stream end event received."); // 保持这个日志
-            // Capture the ID before the async state update
-            const idToMarkAsFinished = streamingAssistantMsgIdRef.current;
-            // Find the message using the captured ID
-            const finishedMsgIndex = newMessages.findIndex(msg => msg.timestamp === idToMarkAsFinished);
+            // 'newMessages' is from the outer 'setMessages' scope: const newMessages = [...prevMessages];
+            // 'capturedStreamEndId' was captured when the 'stream_end' event first arrived.
+            const finishedMsgIndex = newMessages.findIndex(msg => msg.timestamp === capturedStreamEndId);
 
             if (finishedMsgIndex !== -1) {
               newMessages[finishedMsgIndex] = {
                 ...newMessages[finishedMsgIndex],
-                isStreaming: false // Mark the text message as complete
+                isStreaming: false
               };
-            } else {
-                // Handle case where only tool calls might have happened (or ref was somehow lost)
-                // Try to find the last assistant message and mark it as not streaming
-                const lastAssistantMsgIndex = newMessages.findLastIndex(msg => msg.role === 'assistant');
-                if (lastAssistantMsgIndex !== -1 && newMessages[lastAssistantMsgIndex].isStreaming) {
-                     console.warn("Stream end: Could not find message by ref, marking last assistant message as finished.");
-                     newMessages[lastAssistantMsgIndex] = {...newMessages[lastAssistantMsgIndex], isStreaming: false };
-                }
+              console.log(`[ChatInterface stream_end] Marked message with ID '${capturedStreamEndId}' as not streaming.`);
+            } else { // finishedMsgIndex === -1, meaning message with capturedStreamEndId was not found
+              if (capturedStreamEndId) {
+                // The ref had a value, but it wasn't found in the messages array.
+                console.warn(`[ChatInterface stream_end] Message with ref ID '${capturedStreamEndId}' not found. Attempting to mark last streaming assistant message.`);
+              } else {
+                // The ref was already null when the stream_end event was initially processed.
+                console.warn("[ChatInterface stream_end] Streaming message reference was already null when 'stream_end' event was received. Attempting to mark last streaming assistant message.");
+              }
+
+              // Attempt to find and mark the absolutely last assistant message that is still marked as streaming.
+              const lastStreamingAssistantMsgIndex = newMessages.findLastIndex(msg =>
+                msg.role === 'assistant' && msg.isStreaming === true
+              );
+
+              if (lastStreamingAssistantMsgIndex !== -1) {
+                newMessages[lastStreamingAssistantMsgIndex] = { ...newMessages[lastStreamingAssistantMsgIndex], isStreaming: false };
+                console.log(`[ChatInterface stream_end] Marked last streaming assistant message (ID: ${newMessages[lastStreamingAssistantMsgIndex].timestamp}, Index: ${lastStreamingAssistantMsgIndex}) as finished as a fallback.`);
+              } else {
+                console.log("[ChatInterface stream_end] No specific message by ref found, and no other streaming assistant message was found to mark as finished.");
+              }
             }
-            // --- 不在此处清除 Ref 或 设置 isSending --- 
-            // streamingAssistantMsgIdRef.current = null; 
-            break;
+            break; // Break from switch
           case 'error':
             console.error("Received error event:", event.data); // Log the full data object
             const errorData = event.data;

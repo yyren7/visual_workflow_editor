@@ -27,10 +27,13 @@ from .definitions import (
 from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
 from backend.langgraphchat.retrievers.embedding_retriever import EmbeddingRetriever
 
+# Define the path to the XML node definitions
+XML_NODE_DEFINITIONS_PATH = "database/node_database/quick-fcpr/"
+
 # --- 1. 定义同步工具函数 --- 
 def create_node_tool_func(
     node_type: str,
-    node_label: Optional[str] = None, 
+    node_label: Optional[str] = None,
     properties: Optional[Dict[str, Any]] = None,
     position: Optional[Dict[str, float]] = None,
     node_name: Optional[str] = None,
@@ -40,19 +43,9 @@ def create_node_tool_func(
 ) -> Dict[str, Any]:
     """
     Creates a node in the current workflow diagram.
-    
-    Args:
-        node_type: Type of the node.
-        node_label: Label for the node (uses node_type if not provided).
-        properties: Properties for the node.
-        position: Position (x, y) for the node.
-        node_name: Alias for node_label.
-        label: Alias for node_label.
-        type: Alias for node_type.
-        **kwargs: Catch any other arguments.
-        
-    Returns:
-        Node creation result.
+    Node type must correspond to an XML file in the XML_NODE_DEFINITIONS_PATH.
+    Node properties will be dynamically loaded from the XML, with user-provided
+    properties overriding the defaults.
     """
     try:
         # --- Get flow_id from context ---
@@ -64,111 +57,160 @@ def create_node_tool_func(
 
         logger.info("=" * 40)
         logger.info(f"创建节点工具函数被调用 (Flow ID: {target_flow_id})")
-        logger.info(f"节点类型参数: node_type={node_type}, type={type}")
-        logger.info(f"节点标签参数: node_label={node_label}, node_name={node_name}, label={label}")
         
-        # 处理参数别名
+        # Handle parameter aliases for node_type and node_label
+        original_node_type_arg = node_type # Keep original for messages
         if node_type is None and type is not None:
             node_type = type
-            logger.info(f"使用type参数作为节点类型: {node_type}")
-            
-        # 确保我们有节点类型
+            logger.info(f"使用 type 参数作为节点类型: {node_type}")
+        
         if node_type is None:
-            logger.error("缺少必要的node_type参数")
+            logger.error(f"缺少必要的 node_type 参数 (传入的 node_type: {original_node_type_arg}, type: {type})")
             return {
                 "success": False,
-                "message": "创建节点失败: 缺少必要的node_type参数",
-                "error": "缺少node_type参数"
+                "message": "创建节点失败: 缺少必要的 node_type 参数",
+                "error": "缺少 node_type 参数"
             }
-            
-        # 处理标签的不同可能参数名
+
         effective_label = node_label or node_name or label
-            
-        # 如果未提供标签，使用节点类型作为标签
         if effective_label is None:
             effective_label = node_type
-            logger.info(f"未提供标签，使用节点类型作为标签: {effective_label}")
-            
-        logger.info(f"创建节点: 类型={node_type}, 标签={effective_label}")
+            logger.info(f"未提供标签，使用节点类型 '{node_type}' 作为标签: {effective_label}")
         
-        # 合并所有可能是属性的参数
-        all_properties = {}
+        logger.info(f"尝试创建节点: 类型='{node_type}', 标签='{effective_label}'")
+
+        # --- Dynamically load parameters from XML ---
+        xml_file_path = os.path.join(XML_NODE_DEFINITIONS_PATH, f"{node_type}.xml")
+        logger.info(f"查找节点定义XML: {xml_file_path}")
+
+        if not os.path.exists(xml_file_path):
+            logger.error(f"节点类型 '{node_type}' 的定义文件未找到: {xml_file_path}")
+            # List available XML files for better error message
+            available_xml_files = [f.replace('.xml', '') for f in os.listdir(XML_NODE_DEFINITIONS_PATH) if f.endswith('.xml')]
+            error_message = f"节点类型 '{node_type}' 无效. XML 定义文件 '{xml_file_path}' 未找到。"
+            if available_xml_files:
+                error_message += f" 可用的节点类型有: {', '.join(available_xml_files)}."
+            else:
+                error_message += f" 在 '{XML_NODE_DEFINITIONS_PATH}' 目录下没有找到任何XML定义文件."
+            return {
+                "success": False,
+                "message": error_message,
+                "error": "Node definition XML not found"
+            }
+
+        xml_defined_properties = {}
+        try:
+            tree = ET.parse(xml_file_path)
+            root = tree.getroot()
+            # Assuming the parameters are defined as <field name="param_name">default_value</field>
+            # under a <block> element.
+            block_element = root.find(".//block") # Find the first 'block' element, could be more specific if needed
+            if block_element is not None:
+                for field in block_element.findall("field"):
+                    param_name = field.get("name")
+                    if param_name:
+                        # The text content of the field is its default value
+                        default_value = field.text if field.text is not None else "" 
+                        xml_defined_properties[param_name] = default_value
+                logger.info(f"从 '{xml_file_path}' 加载的默认属性: {xml_defined_properties}")
+            else:
+                logger.warning(f"XML 文件 '{xml_file_path}' 中未找到 <block> 元素，无法加载默认属性。")
+
+        except ET.ParseError as e:
+            logger.error(f"解析XML文件 '{xml_file_path}' 失败: {e}")
+            return {
+                "success": False,
+                "message": f"解析节点定义文件 '{xml_file_path}' 失败.",
+                "error": f"XML ParseError: {e}"
+            }
+        # --- End XML loading ---
+
+        # Consolidate all provided properties (from 'properties' dict and **kwargs)
+        provided_properties = {}
         if properties is not None:
-            all_properties.update(properties)
-            logger.info(f"使用提供的属性: {properties}")
-            
-        # 从kwargs中提取可能的属性
-        for key, value in kwargs.items():
-            if key not in ['node_type', 'node_label', 'position', 'node_name', 'label', 'type']:
-                all_properties[key] = value
+            provided_properties.update(properties)
         
-        # 生成唯一ID，遵循前端格式：nodeType-timestamp
+        # Add kwargs that are not the main function parameters, these are considered properties
+        main_func_params = {'node_type', 'node_label', 'properties', 'position', 'node_name', 'label', 'type'}
+        for key, value in kwargs.items():
+            if key not in main_func_params:
+                provided_properties[key] = value
+        
+        logger.info(f"用户提供的属性 (合并 'properties' 和 kwargs): {provided_properties}")
+
+        # Merge XML defined properties with user-provided properties. User properties take precedence.
+        # Start with XML defaults, then update with any user-provided values.
+        final_node_specific_properties = {**xml_defined_properties, **provided_properties}
+        logger.info(f"合并后的节点特定属性 (XML默认 + 用户提供): {final_node_specific_properties}")
+        
+        # Generate unique ID
         from datetime import datetime
         timestamp = int(datetime.now().timestamp() * 1000)
-        node_id = f"{node_type}-{timestamp}"
+        node_id = f"{node_type}-{timestamp}" # Using the validated node_type
         logger.info(f"生成节点ID: {node_id}")
         
-        # 处理默认位置
+        # Handle default position
         if not position:
-            # 生成随机位置
             import random
-            position = {
-                "x": random.randint(100, 500),
-                "y": random.randint(100, 300)
-            }
+            position = {"x": random.randint(100, 500), "y": random.randint(100, 300)}
             logger.info(f"生成随机位置: {position}")
         
-        # 为常用属性提供默认值 - 确保与前端NodeSelector拖放创建的节点格式一致
-        default_properties = {
-            "control_x": "enable",
-            "control_y": "enable",
-            "description": "",
-            "fields": [],
-            "inputs": [],
-            "outputs": [],
-            "point_name_list": [],
-            "pallet_list": [],
-            "camera_list": []
+        # Default base properties (like 'description', 'fields' etc. if not in XML/user-provided)
+        # These are generic and not from the XML typically.
+        # The `final_node_specific_properties` will be part of `nodeProperties` and also spread into `data`
+        generic_default_properties = {
+            "description": final_node_specific_properties.get("description", ""), # Use from specific if present
+            "fields": final_node_specific_properties.get("fields", []),
+            "inputs": final_node_specific_properties.get("inputs", []),
+            "outputs": final_node_specific_properties.get("outputs", []),
+            "point_name_list": final_node_specific_properties.get("point_name_list", []),
+            "pallet_list": final_node_specific_properties.get("pallet_list", []),
+            "camera_list": final_node_specific_properties.get("camera_list", [])
         }
-        
-        # 合并默认属性和用户提供的属性，用户提供的属性优先
-        merged_properties = {**default_properties, **all_properties}
-        logger.info(f"最终节点属性: {merged_properties}")
-            
-        # 创建节点数据，完全符合前端FlowEditor.onDrop方法创建的节点格式
+        # Remove these from final_node_specific_properties if they were just for defaults and not truly 'specific' from XML.
+        # This is tricky. For now, assume all keys from XML are specific.
+        # If `description` was in XML, it stays in `final_node_specific_properties`.
+        # If `description` was NOT in XML, `generic_default_properties` provides a fallback.
+
+        # Construct node data
         node_data = {
             "id": node_id,
-            "type": "generic",  # 使用generic类型，与前端保持一致
+            "type": "generic", # Keep 'generic' as outer type for React Flow, actual type is in data.nodeType
             "position": position,
             "data": {
                 "label": effective_label,
-                "nodeType": node_type,
-                "type": node_type,
-                "description": merged_properties.get("description", ""),
-                "fields": merged_properties.get("fields", []),
-                "inputs": merged_properties.get("inputs", []),
-                "outputs": merged_properties.get("outputs", []),
-                # 添加nodeProperties，与前端格式保持一致
+                "nodeType": node_type, # This is the crucial type from XML
+                "type": node_type, # Redundant but often kept for compatibility
+                
+                # Add generic defaults here, these can be overridden by final_node_specific_properties
+                **generic_default_properties,
+                
+                # Spread all specific properties (XML defaults + user overrides) into 'data'
+                **final_node_specific_properties, 
+
+                # Ensure nodeProperties also contains all specific properties
                 "nodeProperties": {
                     "nodeId": node_id,
                     "nodeType": node_type,
-                    **merged_properties
+                    **final_node_specific_properties # All merged properties here
                 },
-                # 添加所有合并后的属性到顶层
-                **merged_properties
             }
         }
-        logger.info(f"创建节点数据: id={node_id}, type={node_type}, label={effective_label}")
+        
+        # Clean up data fields if they were just from generic_default_properties and not set by specific properties
+        # For example, if 'description' is "" from generic_default_properties and not in final_node_specific_properties
+        # it will be present. This is generally fine.
+        # The main goal is that `final_node_specific_properties` (derived from XML and user input)
+        # are correctly placed in `data` and `data.nodeProperties`.
 
-        # 使用上下文管理器进行数据库操作
+        logger.info(f"创建节点数据: id={node_id}, type(data.nodeType)={node_type}, label={effective_label}")
+        logger.debug(f"完整节点数据: {json.dumps(node_data, indent=2)}") # Log full node data for debugging
+
+        # Database operations
         try:
             logger.info(f"使用流程图ID: {target_flow_id}")
-
-            # 使用上下文管理器获取db会话
             with get_db_context() as db:
                 flow_service = FlowService(db)
-                
-                # 获取当前流程图数据
                 flow_data = flow_service.get_flow(target_flow_id)
                 if not flow_data:
                     logger.error(f"无法获取流程图(ID={target_flow_id})数据")
@@ -178,39 +220,34 @@ def create_node_tool_func(
                         "error": f"无法获取流程图(ID={target_flow_id})数据"
                     }
                 
-                # 确保nodes字段存在
-                if "nodes" not in flow_data:
+                if "nodes" not in flow_data or not isinstance(flow_data.get("nodes"), list):
                     flow_data["nodes"] = []
                     
-                # 添加新节点到节点列表
                 flow_data["nodes"].append(node_data)
                 
-                # 更新流程图数据
-                success = flow_service.update_flow(
+                success_db = flow_service.update_flow(
                     flow_id=target_flow_id,
                     data=flow_data,
-                    name=flow_data.get("name") # Pass name explicitly if it exists in flow_data
+                    name=flow_data.get("name")
                 )
             
-                if not success:
+                if not success_db:
                     logger.error(f"更新流程图失败 for flow {target_flow_id}")
-                    # Return success: False if DB update fails
                     return {
                         "success": False,
                         "message": f"创建节点 '{effective_label}' 成功，但更新数据库失败",
                         "error": "数据库更新失败",
-                        "node_data": node_data # Still return the intended node data for context
+                        "node_data": node_data
                     }
                 
-                logger.info(f"节点创建并保存成功: {node_id}") # Updated log message
+                logger.info(f"节点创建并保存成功: {node_id}")
                 logger.info("=" * 40)
                 return {
                     "success": True,
-                    "message": f"成功创建并保存节点: {effective_label} (类型: {node_type})", # Updated message
+                    "message": f"成功创建并保存节点: {effective_label} (类型: {node_type})",
                     "node_data": node_data
                 }
         except Exception as e:
-            # This exception is for the API call block (getting flow, updating flow)
             logger.error(f"数据库操作失败: {str(e)}")
             import traceback
             logger.error(f"错误详情: {traceback.format_exc()}")
@@ -222,14 +259,13 @@ def create_node_tool_func(
             }
         
     except Exception as e:
-        # This is for general errors before DB operations
-        logger.error(f"创建节点准备阶段出错: {str(e)}")
+        logger.error(f"创建节点准备阶段或XML处理出错: {str(e)}")
         import traceback
         logger.error(f"错误详情: {traceback.format_exc()}")
         logger.info("=" * 40)
         return {
             "success": False,
-            "message": f"创建节点准备阶段失败: {str(e)}",
+            "message": f"创建节点失败: {str(e)}", # Simplified top-level error message
             "error": str(e)
         }
 

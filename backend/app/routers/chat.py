@@ -229,242 +229,185 @@ async def add_message(
     async def process_and_publish_events(c_id: str, msg_content: str, queue: asyncio.Queue):
         """
         后台任务：处理新消息，使用LangGraph生成回复，并将事件放入队列。
+        现在使用 astream_events。
         """
-        logger.debug(f"[Chat {c_id}] Background task started.")
+        logger.debug(f"[Chat {c_id}] Background task started (using astream_events).")
         is_error = False
         error_data = {}
-        final_reply_accumulator = "" # 用于累积最终回复
-        final_state = None # 用于存储图的最终状态
+        final_reply_accumulator = "" # Used to build the full reply for DB storage
+        # sent_ai_content_this_turn is less critical here as tokens should be incremental
+        final_state = None
 
         try:
-            # --- 使用上下文管理器获取数据库会话 ---
+            # --- Set current_flow_id_var for this task's context ---
+            # This ensures that tools or other components called by LangGraph
+            # can access the correct flow_id if they rely on this context variable.
+            # The flow_id is retrieved after fetching the chat object.
+            
             with get_db_context() as db_session_bg:
                 logger.debug(f"[Chat {c_id}] Acquired DB session for background task.")
                 chat_service_bg = ChatService(db_session_bg)
-                flow_service_bg = FlowService(db_session_bg) # 在同一会话中创建 FlowService
+                flow_service_bg = FlowService(db_session_bg)
 
-                # --- 获取聊天和流程数据 ---
                 chat = chat_service_bg.get_chat(c_id)
                 if not chat:
                     logger.error(f"[Chat {c_id}] Background task could not find chat.")
                     await queue.put({"type": "error", "data": {"message": "Chat not found.", "stage": "setup"}})
                     return
                 
-                # 记录用户消息到数据库 (注意：这里的 db_session_bg 是后台任务的 session)
-                # 确保在 Agent 调用前保存用户消息，以便历史记录是最新的
                 logger.debug(f"[Chat {c_id}] Attempting to save user message to DB before agent call.")
                 chat_service_bg.add_message_to_chat(chat_id=c_id, role="user", content=msg_content)
                 logger.debug(f"[Chat {c_id}] User message saved to DB.")
 
                 flow_id = chat.flow_id
-                flow = flow_service_bg.get_flow_instance(flow_id) # 使用 get_flow_instance 获取 ORM 对象
+                # Set the context variable AFTER retrieving flow_id
+                token_cv = current_flow_id_var.set(flow_id) 
+                logger.debug(f"[Chat {c_id}] Set current_flow_id_var to {flow_id}")
+
+
+                flow = flow_service_bg.get_flow_instance(flow_id)
                 if not flow:
                     logger.error(f"[Chat {c_id}] Background task could not find flow {flow_id}.")
                     await queue.put({"type": "error", "data": {"message": f"Flow {flow_id} not found.", "stage": "setup"}})
+                    current_flow_id_var.reset(token_cv) # Reset context var on early exit
                     return
                 
-                flow_data = flow.flow_data or {} # flow.flow_data 是流程图的具体结构
+                flow_data = flow.flow_data or {}
                 logger.debug(f"[Chat {c_id}] Flow data for context: {str(flow_data)[:200]}...")
 
-                # --- 获取 LangGraph Runnable ---
                 logger.debug(f"[Chat {c_id}] Getting compiled LangGraph from ChatService.")
-                compiled_graph = chat_service_bg.compiled_workflow_graph # ChatService 现在提供这个属性
+                compiled_graph = chat_service_bg.compiled_workflow_graph
                 logger.debug(f"[Chat {c_id}] Successfully got compiled LangGraph.")
 
-                # --- 准备 LangGraph 输入 ---
-                # 从 chat.chat_data 中获取历史消息
                 chat_history_raw = chat.chat_data.get("messages", [])
-                
-                # 格式化历史消息
-                formatted_history = _format_messages_to_langchain(chat_history_raw[:-1]) # 排除当前用户输入，它将作为新的 HumanMessage
+                formatted_history = _format_messages_to_langchain(chat_history_raw[:-1])
 
                 graph_input = {
-                    "messages": formatted_history + [HumanMessage(content=msg_content)], # 包含当前用户消息作为 HumanMessage
-                    "input": msg_content, # AgentState 也需要 input 字段
-                    "flow_context": flow_data.get("graphContextVars", {}), # 使用 graphContextVars 作为流程上下文
+                    "messages": formatted_history + [HumanMessage(content=msg_content)],
+                    "input": msg_content,
+                    "flow_context": flow_data.get("graphContextVars", {}),
                     "current_flow_id": flow_id,
                 }
                 
-                # 简化 f-string 以避免潜在的解析问题
                 messages_count_val = len(graph_input["messages"])
                 input_len_val = len(graph_input["input"])
                 flow_id_val = graph_input["current_flow_id"]
                 logger.debug(f"[Chat {c_id}] Prepared graph input: messages_count={messages_count_val}, input_len={input_len_val}, flow_id={flow_id_val}")
 
-                # --- 调用 LangGraph astream_log ---
-                logger.debug(f"[Chat {c_id}] Invoking compiled_graph.astream_log...")
+                logger.debug(f"[Chat {c_id}] Invoking compiled_graph.astream_events (version='v2')...")
+                
+                # Define a set of relevant names if you want to filter events by source node/chain
+                # For example: include_names=["agent", "ChatDeepSeek"] # Adjust as per your graph node names
+                # If None, all events will be processed.
+                event_include_names = None # Or specify: ["agent", "your_llm_node_name_in_graph"]
 
-                async for event in compiled_graph.astream_log(graph_input, include_names=["agent", "tools"]):
-                    logger.critical(f"[Chat {c_id}] RAW EVENT OBJECT TYPE: {type(event).__name__}")
-                    # logger.critical(f"[Chat {c_id}] RAW EVENT OBJECT DIR: {dir(event)}") # Potentially verbose
+                async for event in compiled_graph.astream_events(graph_input, version="v2", include_names=event_include_names, include_tags=None):
+                    event_name = event.get("event")
+                    event_data = event.get("data", {})
+                    run_name = event.get("name", "unknown_run") # Name of the runnable that emitted the event
 
-                    processed_op_in_event = False # Flag to see if any op in event.ops was processed
+                    logger.info(f"[Chat {c_id}] Received event: '{event_name}' from '{run_name}', Data keys: {list(event_data.keys())}")
 
-                    if hasattr(event, 'ops') and isinstance(event.ops, list):
-                        logger.debug(f"[Chat {c_id}] Event has 'ops' attribute (list of {len(event.ops)} operations). Iterating...")
-                        for op_item_idx, op_item in enumerate(event.ops):
-                            if not isinstance(op_item, dict):
-                                logger.warning(f"[Chat {c_id}] op_item {op_item_idx} is not a dict, skipping: {op_item}")
-                                continue
+                    if event_name == "on_chat_model_stream":
+                        chunk = event_data.get("chunk")
+                        if chunk and isinstance(chunk, AIMessageChunk) and chunk.content:
+                            token = chunk.content
+                            logger.debug(f"[Chat {c_id}] LLM Token from '{run_name}': '{token}'")
+                            await queue.put({"type": "token", "data": token})
+                            final_reply_accumulator += token 
+                        elif chunk:
+                            logger.debug(f"[Chat {c_id}] Received on_chat_model_stream chunk from '{run_name}' but no content or not AIMessageChunk. Chunk: {chunk}")
 
-                            op_from_ops = op_item.get('op')
-                            path_from_ops = op_item.get('path')
-                            value_from_ops = op_item.get('value')
-                            logger.debug(f"[Chat {c_id}] Op item {op_item_idx} --- Op: {op_from_ops}, Path: {path_from_ops}, ValueType: {type(value_from_ops).__name__}")
+                    elif event_name == "on_llm_end": # Usually follows on_chat_model_stream if LLM streamed
+                        output = event_data.get("output")
+                        if output and isinstance(output, AIMessage) and output.content:
+                            logger.info(f"[Chat {c_id}] LLM End from '{run_name}'. Full output (for verification): '{output.content[:100]}...'")
+                            # final_reply_accumulator should ideally match output.content by now if streaming was complete
+                            if final_reply_accumulator != output.content and not final_reply_accumulator.endswith(output.content): # Basic check
+                                logger.warning(f"[Chat {c_id}] Discrepancy between accumulated stream and on_llm_end output from '{run_name}'. Accum: '{final_reply_accumulator[:100]}...', Output: '{output.content[:100]}...'")
+                                # Optionally, overwrite accumulator if on_llm_end is considered more authoritative for the full message
+                                # final_reply_accumulator = output.content 
+                        elif output:
+                             logger.debug(f"[Chat {c_id}] Received on_llm_end from '{run_name}' but no content or not AIMessage. Output: {output}")
 
-                            if op_from_ops in ['add', 'replace']:
-                                processed_op_in_event = True # Mark that we are processing an op
-                                target_paths = ("/logs/agent/final_output", "/logs/agent/streamed_output/", "/streamed_output/", "/final_output")
-                                if path_from_ops and path_from_ops.startswith(target_paths):
-                                    logger.debug(f"[Chat {c_id}] Path matched from ops: {path_from_ops}. ValueType: {type(value_from_ops).__name__}")
-                                    patch_value = value_from_ops # Use the value from the current op_item
 
-                                    if isinstance(patch_value, dict) and "messages" in patch_value and isinstance(patch_value.get("messages"), list):
-                                        logger.debug(f"[Chat {c_id}] Op value has 'messages' list.")
-                                        for i, msg_item in enumerate(patch_value["messages"]):
-                                            logger.debug(f"[Chat {c_id}] Checking message item {i} in op_value['messages'], type: {type(msg_item).__name__}")
-                                            if isinstance(msg_item, AIMessage) and hasattr(msg_item, 'content') and msg_item.content:
-                                                logger.info(f"[Chat {c_id}] Extracted AIMessage from ops (path: {path_from_ops}, direct): {msg_item.content[:100]}...")
-                                                final_reply_accumulator = msg_item.content
-                                                await queue.put({"type": "token", "data": final_reply_accumulator})
-                                    elif isinstance(patch_value, dict) and "agent" in patch_value and isinstance(patch_value.get("agent"), dict) and "messages" in patch_value["agent"] and isinstance(patch_value["agent"].get("messages"), list):
-                                        logger.debug(f"[Chat {c_id}] Op value has 'agent' with 'messages' list.")
-                                        agent_messages = patch_value["agent"]["messages"]
-                                        for i, msg_item in enumerate(agent_messages):
-                                            logger.debug(f"[Chat {c_id}] Checking message item {i} in op_value['agent']['messages'], type: {type(msg_item).__name__}")
-                                            if isinstance(msg_item, AIMessage) and hasattr(msg_item, 'content') and msg_item.content:
-                                                logger.info(f"[Chat {c_id}] Extracted AIMessage from ops (path: {path_from_ops}, nested): {msg_item.content[:100]}...")
-                                                final_reply_accumulator = msg_item.content
-                                                await queue.put({"type": "token", "data": final_reply_accumulator})
-                                    else:
-                                        logger.debug(f"[Chat {c_id}] Path {path_from_ops} matched from ops, but value structure for messages not recognized.")
-                                else:
-                                     logger.debug(f"[Chat {c_id}] Path {path_from_ops} from ops did NOT match target paths for AIMessage extraction.")
-                            # else: logger.debug(f"[Chat {c_id}] Op type {op_from_ops} is not add/replace or path is None.")
-                    # Standard LangChain events (if event was not a RunLogPatch with ops or ops processing didn't set accumulator)
-                    # These usually have event.event and event.data if event itself has these attrs and is not a dict
-                    elif hasattr(event, 'event') and hasattr(event, 'data'):
-                        event_type_from_attr = event.event
-                        data_from_attr = event.data # This is event.data directly
-                        logger.debug(f"[Chat {c_id}] Processing as Standard Event --- Type: {event_type_from_attr}")
-                        processed_op_in_event = True # Mark that we are processing this event type
-
-                        if event_type_from_attr == "on_chat_model_stream":
-                            # Ensure data_from_attr is a dictionary for these standard events for .get() usage
-                            chunk_data = data_from_attr if isinstance(data_from_attr, dict) else {}
-                            chunk = chunk_data.get("chunk")
-                            if chunk and hasattr(chunk, 'content') and chunk.content:
-                                token = chunk.content
-                                if isinstance(token, str):
-                                    # ... (rest of on_chat_model_stream logic, using token and final_reply_accumulator) ...
-                                    logger.debug(f"[Chat {c_id}] Stream token: '{token[:50]}...'. Current accumulator: '{final_reply_accumulator[:30]}...'")
-                                    is_json_action = '"action": "final_answer"' in token
-                                    if not final_reply_accumulator or is_json_action:
-                                        if is_json_action:
-                                            logger.info(f"[Chat {c_id}] JSON action in stream, attempting parse to override accumulator.")
-                                            try:
-                                                import re; import json
-                                                json_match = re.search(r'({.*"action":\s*"final_answer".*})', token, re.DOTALL)
-                                                if json_match:
-                                                    json_str = json_match.group(1); json_str = re.sub(r'```json|```', '', json_str).strip()
-                                                    parsed = json.loads(json_str)
-                                                    if "action_input" in parsed:
-                                                        final_reply_accumulator = parsed.get("action_input", "")
-                                                        logger.info(f"[Chat {c_id}] Accumulator OVERRIDDEN by JSON in stream: {final_reply_accumulator[:50]}...")
-                                            except Exception as e_json:
-                                                logger.error(f"[Chat {c_id}] Error parsing JSON from stream for override: {e_json}", exc_info=True)
-                                                if not final_reply_accumulator: # Fallback: if parse fails and accumulator was empty, append the raw token.
-                                                    final_reply_accumulator += token 
-                                        else: 
-                                            if not final_reply_accumulator : 
-                                                final_reply_accumulator += token
-                                    await queue.put({"type": "token", "data": token})
-
-                        elif event_type_from_attr == "on_chat_model_end":
-                            message_data = data_from_attr if isinstance(data_from_attr, dict) else {}
-                            message = message_data.get("message")
-                            if isinstance(message, AIMessage) and hasattr(message, 'content') and message.content:
-                                logger.info(f"[Chat {c_id}] AIMessage from on_chat_model_end: {message.content[:100]}...")
-                                final_reply_accumulator = message.content 
+                    elif event_name == "on_tool_start":
+                        tool_name = event_data.get("name") # Name of the tool
+                        tool_input = event_data.get("input") # Tool input
+                        logger.info(f"[Chat {c_id}] Tool Start: '{tool_name}' from '{run_name}' with input: {str(tool_input)[:100]}...")
+                        await queue.put({"type": "tool_start", "data": {"name": tool_name, "input": tool_input}})
                         
-                        elif event_type_from_attr == "on_tool_start":
-                            tool_data = data_from_attr if isinstance(data_from_attr, dict) else {}
-                            tool_name = tool_data.get("name")
-                            tool_input_raw = tool_data.get("input")
-                            # ... (tool start logic) ...
-                            try:
-                                tool_input_str = json.dumps(tool_input_raw, ensure_ascii=False)
-                            except TypeError:
-                                tool_input_str = str(tool_input_raw)
-                            if tool_name:
-                                logger.info(f"[Chat {c_id}] Tool Start: {tool_name} with input: {tool_input_str[:100]}...")
-                                await queue.put({"type": "tool_start", "data": {"name": tool_name, "input": tool_input_raw}})
-                        
-                        elif event_type_from_attr == "on_tool_end":
-                            tool_data = data_from_attr if isinstance(data_from_attr, dict) else {}
-                            tool_name = tool_data.get("name")
-                            output_raw = tool_data.get("output")
-                            # ... (tool end logic) ...
-                            output_summary = str(output_raw)
-                            if isinstance(output_raw, dict) and "message" in output_raw:
-                                output_summary = output_raw["message"]
-                                # ... (message formatting)
-                            if tool_name:
-                                logger.info(f"[Chat {c_id}] Tool End: ({tool_name}) with output summary: {output_summary[:100]}...")
-                                await queue.put({"type": "tool_end", "data": {"name": tool_name, "output_summary": output_summary}})
-                        
-                        # Potentially other standard event types like on_chain_end, on_retriever_end etc.
-                        elif hasattr(event, 'name') and event.name == "__graph__" and event_type_from_attr == "on_chain_end":
-                            final_output_data = data_from_attr if isinstance(data_from_attr, dict) else {}
-                            output_final_graph = final_output_data.get("output")
-                            if isinstance(output_final_graph, dict):
-                                final_state = output_final_graph
-                                logger.info(f"[Chat {c_id}] Captured final graph state from on_chain_end: {str(final_state)[:200]}...")
-                                if not final_reply_accumulator and "messages" in final_state and isinstance(final_state["messages"], list):
+                    elif event_name == "on_tool_end":
+                        tool_name = event_data.get("name") # Name of the tool
+                        tool_output = event_data.get("output") # Tool output
+                        # Summarize output for SSE if it's too verbose
+                        output_summary = str(tool_output)
+                        if len(output_summary) > 200: # Example threshold
+                            output_summary = output_summary[:200] + "..."
+                        logger.info(f"[Chat {c_id}] Tool End: '{tool_name}' from '{run_name}' with output: {output_summary}")
+                        await queue.put({"type": "tool_end", "data": {"name": tool_name, "output_summary": output_summary, "full_output": tool_output}}) # Send summary and full output
+
+                    elif event_name == "on_chain_end": # This might signify the end of a sub-chain or the graph
+                        # The 'name' field of the event will tell you which chain ended.
+                        # If event.get("name") == "__graph__" (or your top-level graph name), it could be the overall end.
+                        outputs_from_chain = event_data.get("output", {})
+                        logger.info(f"[Chat {c_id}] Chain End: '{run_name}'. Output keys: {list(outputs_from_chain.keys()) if isinstance(outputs_from_chain, dict) else 'Not a dict'}")
+                        if run_name == compiled_graph.name or run_name == "__graph__": # Check if it's the main graph ending
+                            final_state = outputs_from_chain # The output of the graph is its final state
+                            logger.info(f"[Chat {c_id}] Graph run '{run_name}' ended. Final state (output): {str(final_state)[:200]}...")
+                            # final_reply_accumulator should have been built by on_chat_model_stream by now.
+                            # If not, or if the graph's final output AIMessage is preferred:
+                            if isinstance(final_state, dict) and "messages" in final_state and isinstance(final_state["messages"], list):
                                     for msg_state in reversed(final_state["messages"]):
                                         if isinstance(msg_state, AIMessage) and hasattr(msg_state, 'content') and msg_state.content:
-                                            logger.info(f"[Chat {c_id}] AIMessage from final graph state (fallback): {msg_state.content[:100]}...")
-                                            final_reply_accumulator = msg_state.content
-                                            break
-                    else: # If not a RunLogPatch with ops, and not a standard event with event/data attributes
-                        if not processed_op_in_event: # Only log if no op inside event.ops was processed either
-                            logger.warning(f"[Chat {c_id}] Unrecognized event structure. TYPE: {type(event).__name__}, has_ops: {hasattr(event, 'ops')}, has_event_attr: {hasattr(event, 'event')}. Event obj: {str(event)[:300]}...")
+                                            if not final_reply_accumulator: # If streaming yielded nothing
+                                                logger.info(f"[Chat {c_id}] Using AIMessage from final graph state as fallback: {msg_state.content[:100]}...")
+                                                final_reply_accumulator = msg_state.content
+                                                # Stream this fallback content to the client
+                                                await queue.put({"type": "token", "data": msg_state.content})
+                                                stream_sent_any_token = True # Mark that we sent something
+                                            elif final_reply_accumulator != msg_state.content:
+                                                logger.warning(f"[Chat {c_id}] Final accumulated reply ('{final_reply_accumulator[:100]}...') differs from final graph state AIMessage ('{msg_state.content[:100]}...'). Preferring accumulated.")
+                                            # After processing the first relevant AIMessage from the end of the state, we can break.
+                                            break # Line 368 - Belongs to the outer if (line 362)
+                    
+                    elif event_name == "on_chain_error" or event_name == "on_llm_error" or event_name == "on_tool_error":
+                        error_content = str(event_data.get("error", "Unknown error"))
+                        logger.error(f"[Chat {c_id}] Error event '{event_name}' from '{run_name}': {error_content}")
+                        is_error = True
+                        stage = f"error_in_{run_name}"
+                        # Try to get a more specific message from the error object if it's an exception
+                        error_obj = event_data.get("error")
+                        specific_error_message = str(error_obj) if error_obj else "Details not available"
+                        
+                        error_data = {"message": f"Error in {run_name}: {specific_error_message}", "stage": stage, "details": str(error_obj)}
+                        await queue.put({"type": "error", "data": error_data})
+                        # Potentially break or decide how to proceed after an error
 
-                    # End of the primary try for event processing
-                    # except Exception as event_error: # This was moved one level up in original code
-                    #    logger.error(f"[Chat {c_id}] Error processing individual event/op_item: {str(event_error)}", exc_info=True)
-            
-            # This was the original location of the broad exception handler for the whole async for loop
-            # It has been moved inside the loop to handle errors per event/op_item if necessary,
-            # but a general one here might still be useful if the iterator itself fails.
-            # For now, individual event processing errors are logged inside the loop.
 
-        except Exception as e: # This catches errors in the async for loop setup or unhandled errors within an iteration
+                    # Add handling for other event types if needed (e.g., on_retriever_start/end)
+
+        except Exception as e:
             is_error = True
-            error_message = f"Error processing chat message: {str(e)}"
+            error_message = f"Error during LangGraph astream_events processing: {str(e)}"
             logger.error(f"[Chat {c_id}] {error_message}", exc_info=True)
-            # 尝试确定错误阶段
-            stage = "unknown" # 默认
-            error_data = {"message": error_message, "stage": stage}
+            error_data = {"message": error_message, "stage": "graph_execution"}
             try:
                 await queue.put({"type": "error", "data": error_data})
             except asyncio.QueueFull:
-                logger.error(f"[Chat {c_id}] Failed to put error message in full queue.")
+                logger.error(f"[Chat {c_id}] Failed to put error message in full queue after main exception.")
             except Exception as qe:
-                logger.error(f"[Chat {c_id}] Failed to put error message in queue: {qe}")
+                logger.error(f"[Chat {c_id}] Failed to put error message in queue after main exception: {qe}")
 
         finally:
-            # --- Reset the context variable (important!) ---
-            current_flow_id_var.set(None)
-            logger.debug(f"[Chat {c_id}] Reset current_flow_id context variable.")
-            
-            # --- 保存AI回复到数据库 ---
-            if not is_error and final_reply_accumulator: # 只有在没有错误且回复非空时才保存
+            if 'token_cv' in locals() and token_cv is not None: # Ensure token_cv was set
+                current_flow_id_var.reset(token_cv)
+                logger.debug(f"[Chat {c_id}] Reset current_flow_id context variable in finally block.")
+            else:
+                logger.debug(f"[Chat {c_id}] current_flow_id_var might not have been set, skipping reset in finally.")
+
+            if not is_error and final_reply_accumulator:
                 try:
-                    # 重新获取数据库会话，因为之前的会话可能已关闭
-                    # 注意：如果在同一个 try/finally 块的早期部分 db_session_bg 仍然有效且未关闭，
-                    # 并且没有发生可能使其失效的异常，理论上可以直接使用 chat_service_bg。
-                    # 但为了更安全，尤其是在复杂的异步和异常处理中，使用新的上下文获取会话更稳妥。
                     with get_db_context() as db_session_final:
                         chat_service_final = ChatService(db_session_final)
                         logger.info(f"[Chat {c_id}] Saving AI assistant reply to DB: {final_reply_accumulator[:100]}...")
@@ -478,10 +421,9 @@ async def add_message(
                     logger.error(f"[Chat {c_id}] Failed to save AI reply to DB: {save_err}", exc_info=True)
             elif is_error:
                 logger.warning(f"[Chat {c_id}] Skipping AI reply save due to an error during processing. Error: {error_data}")
-            else: # final_reply_accumulator is empty or null
+            else:
                 logger.warning(f"[Chat {c_id}] Skipping save because final reply was empty or null. Accumulator content: '{final_reply_accumulator}'")
             
-            # --- 发送流结束标记 --- 
             try:
                 logger.debug(f"[Chat {c_id}] Putting STREAM_END_SENTINEL into queue.")
                 await queue.put(STREAM_END_SENTINEL)
@@ -491,10 +433,7 @@ async def add_message(
             except Exception as qe:
                 logger.error(f"[Chat {c_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
             
-            # --- 清理资源 ---
-            logger.info(f"[Chat {c_id}] Background task cleanup completed.")
-            # 注意：我们不在这里从active_chat_queues中移除队列
-            # 因为那应该在sse_event_sender的finally块中完成，当所有事件被发送后
+            logger.info(f"[Chat {c_id}] Background task (using astream_events) cleanup completed.")
 
     # --- 启动后台任务 --- 
     background_tasks.add_task(process_and_publish_events, chat_id, message.content, event_queue)

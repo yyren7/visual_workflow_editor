@@ -1,5 +1,3 @@
-# mermaid
-
 graph TD
 A(start) --> B(user_input_node);
 B --> C{agent_planner_node};

@@ -1,166 +1,129 @@
-# 重构计划：迁移到 LangGraph、实现 Agentic 流式 SSE、数据库保存、编辑/回滚功能
+# LangGraph 工具与 Prompt 重构计划
 
-本文档概述了重构聊天功能的计划。**首要目标是将当前的 LangChain Agent 实现迁移到 LangGraph 架构，以更好地管理复杂的状态和流程。** 随后，我们将实现 Agentic 交互（流式思考、工具使用）、解决数据库保存问题，并实现消息编辑和历史/流程回滚功能。
+本文档旨在记录对 LangGraph 工具实现和 Prompt 动态填充的分析、建议及后续修改计划，以提升系统的可维护性、LLM 交互的准确性以及实现更优的流式输出效果。
 
-## 核心概念：LangGraph 与 Agentic 流式交互
+## 一、工具定义与使用 (`flow_tools.py` & `workflow_graph.py`)
 
-**LangGraph 迁移**：我们将利用 LangGraph 来构建一个有状态的图，该图表示 Agent 的决策流程。这能更清晰地管理 Agent 的内部状态、工具调用之间的转换以及循环逻辑。
+### 当前实现分析 (`flow_tools.py`)
 
-**Agentic 流式交互**：目标是让后端 LangGraph Agent 的 "思考 -> 行动决策 -> 行动 -> 观察" 循环通过 SSE 流实时反馈给前端，提供更透明、动态的用户体验。我们将利用 LangGraph 的流式输出能力（如 `stream` 或 `astream_log` 方法，具体取决于 LangGraph 如何集成 LangChain 的日志/事件系统）来实现这一点。
+1.  **定义方式**: 主要使用 `StructuredTool.from_function()` 结合 Pydantic schema 来定义同步工具。工具被收集到 `flow_tools` 列表中导出。
+2.  **异步工具**: 存在一些 `async def` 工具函数，它们接受 `llm_client` 参数，但目前未被包装成 `Tool` 对象并加入 `flow_tools`，因此 Agent 可能无法直接调用。
+3.  **上下文传递**: 同步工具通过 `current_flow_id_var.get()` 获取 `flow_id`。
+4.  **返回值**: 工具通常返回包含 `success`, `message`, `error` 等键的字典。
 
-## 第零部分：迁移到 LangGraph 并清理
+### 当前实现分析 (`workflow_graph.py`)
 
-**目标：** 将现有的 `WorkflowAgent` 实现重构为 LangGraph，并移除因迁移而变得冗余的 LangChain Agent 组件。
+1.  **工具集成**: `flow_tools` 被正确导入，并在 `compile_workflow_graph` 中通过 `llm.bind_tools(tools)` 绑定到 LLM，这是标准的做法。
+2.  **Prompt 工具信息填充**: `compile_workflow_graph` 中使用 `render_text_description(tools)` 和工具名称列表来填充 `STRUCTURED_CHAT_AGENT_PROMPT` 中的 `{tools}` 和 `{tool_names}`，确保 LLM 了解可用工具。
+3.  **Agent 节点 (`agent_node`)**:
+    - 调用 `llm_with_tools.ainvoke()`。
+    - 之前包含一段解析 `{"action": "final_answer", ...}` JSON 的逻辑。在 Prompt 修改为让 LLM 直接输出纯文本后，此段逻辑对于直接回答已不适用。
+4.  **工具节点 (`tool_node`)**: 使用 `ToolNode(tools).ainvoke()`，这是执行工具调用的标准方法。
+5.  **图结构**: `agent` -> `tools` / `END` -> `agent` 的 ReAct 循环结构是合理的。
 
-**1. 后端：设计 LangGraph 状态与图结构 (`backend/langgraphchat/graph/` - 新目录)** - ✅
+### 结合 Context7 最佳实践的建议
 
-- **定义状态 (State):** 创建一个 Pydantic 模型或 TypedDict 来表示 LangGraph 的状态。此状态应至少包含：
-  - `input`: 用户当前输入。
-  - `chat_history`: 对话历史。
-  - `flow_context`: 当前流程图的上下文信息。
-  - `intermediate_steps` (或类似名称): 用于存储工具调用和结果的列表，供 Agent 内部循环使用。
-  - `current_flow_id`: 当前操作的流程图 ID。
-  - (可选) `agent_outcome`: 用于存储 Agent 的最终决策 (是调用工具还是回复用户)。
-- **设计图节点 (Nodes):**
-  - **Agent 节点**: 负责调用 LLM 进行思考和决策（是调用工具还是直接回复）。输入为当前状态，输出为 AgentAction 或 AgentFinish (或 LangGraph 中的等效概念)。
-  - **工具执行节点**: 负责执行 Agent 决策的工具。输入为 AgentAction，输出为工具的观察结果 (Observation)。可以为每个工具创建一个节点，或者一个通用的工具执行节点。
-- **设计图边 (Edges):**
-  - **条件边**: 根据 Agent 节点的输出（调用工具还是结束）来决定下一个节点。
-  - 如果是工具调用，则路由到相应的工具执行节点。
-  - 如果是结束/直接回复，则路由到结束节点。
-  - **普通边**: 从工具执行节点返回到 Agent 节点，以便 Agent 可以处理工具的观察结果并继续。
-- **创建 LangGraph 实例**: 在新文件（例如 `backend/langgraphchat/graph/workflow_graph.py`）中，使用定义的状态、节点和边来构建 `StateGraph`。
+1.  **工具定义 (`flow_tools.py`)**:
 
-**2. 后端：实现 LangGraph 节点逻辑 (`backend/langgraphchat/graph/workflow_graph.py`)** - ✅
+    - **采纳 `@tool` 装饰器**: 对于函数签名清晰、docstring 详细的工具，建议逐步迁移到使用 `from langchain_core.tools import tool` 提供的 `@tool` 装饰器。这能使代码更简洁，并自动从类型注解和 docstring 推断 schema 及描述。
+      - **优先级**: 中。可以逐步进行，不影响现有功能。
+    - **强化 Docstrings**: 确保所有工具（无论是 `@tool` 还是 `StructuredTool`）的 docstring 清晰、准确，对 LLM 友好，明确指出工具功能、何时使用及参数含义。
+      - **优先级**: 高。直接影响 LLM 的工具选择能力。
+    - **暴露异步工具**: 如果 `flow_tools.py` 中的 `async def` 工具函数需要被 Agent 调用，应将它们也包装成 `Tool` 对象（`@tool` 天然支持异步函数）并添加到 `flow_tools` 列表中。
+      - **优先级**: 中。根据功能需求决定。
+    - **(可选) `RunnableConfig` 传递上下文**: 研究是否可以将 `flow_id` 等运行时上下文通过 `RunnableConfig` 的 `configurable` 字段传递给工具，以替代或补充 `contextvars`，使依赖更明确。
+      - **优先级**: 低。当前 `contextvars` 方式可用。
 
-- **Agent 节点函数**:
-  - 接收当前 LangGraph 状态。
-  - 使用 `STRUCTURED_CHAT_AGENT_PROMPT` (可能需要微调以适应 LangGraph 的输入/输出)、LLM (从 `ChatService._get_active_llm()` 获取) 和工具描述来调用 LLM。
-  - 解析 LLM 的输出，判断是工具调用 (`AgentAction`) 还是最终回复 (`AgentFinish`)。
-  - 更新 LangGraph 状态（例如，存储 `agent_outcome`）。
-- **工具执行节点函数(群组)**:
-  - 接收当前 LangGraph 状态 (其中应包含 `AgentAction`)。
-  - 根据 `AgentAction` 中的工具名称和输入，执行相应的工具函数 (从 `backend/langgraphchat/tools/flow_tools.py` 调用)。
-  - 将工具的输出 (Observation) 添加到状态的 `intermediate_steps` 中。
-  - 更新 LangGraph 状态。
+2.  **Agent 节点逻辑 (`workflow_graph.py`)**:  
+    进行中！！！ - **移除/修改 `final_answer` JSON 解析**: 在 `agent_node` 中，移除或严格限定之前用于解析 `{"action": "final_answer", "action_input": "..."}` 的逻辑。既然 Prompt 已更新为让 LLM 在直接回答时输出纯文本，`ai_response.content` 就应该是这个纯文本。`AIMessage` 对象应直接返回。 - **优先级**: 高。确保与新的 Prompt 行为一致，并为流式输出纯文本做准备。
 
-**3. 后端：编译 LangGraph 并提供接口 (`backend/langgraphchat/graph/workflow_graph.py`, `backend/app/services/chat_service.py`)** - ✅
+## 二、Prompt 动态填充 (`chat_prompts.py` & `dynamic_prompt_utils.py`)
 
-- **编译图**: 调用 `graph.compile()` 生成可执行的 LangGraph runnable。
-- **修改 `ChatService`**:
-  - 移除旧的 `_agent_executor` 属性和 `create_workflow_agent_runnable` 方法。
-  - 添加新的属性或方法来获取/创建已编译的 LangGraph runnable。例如 `self.workflow_graph = compile_workflow_graph()`。
-  - `generate_response_stream` (或其他响应生成方法) 现在将调用 LangGraph runnable 的 `stream` 或 `astream_log` (或 `ainvoke` 等，取决于如何处理流)。
+### 当前实现分析
 
-**4. 后端：清理冗余文件** - ✅
+1.  已创建 `backend/langgraphchat/prompts/dynamic_prompt_utils.py` 文件，包含 `get_dynamic_node_types_info()` 函数。
+2.  该函数遍历 `/workspace/database/node_database/quickfcpr/` 目录，解析 XML 文件，提取 `<block type="...">` 和 `<field name="...">` 作为节点类型和标签。
+3.  `backend/langgraphchat/prompts/chat_prompts.py` 在模块加载时调用此函数，动态填充 `NODE_TYPES_INFO` 变量。
+4.  `BASE_SYSTEM_PROMPT`, `WORKFLOW_GENERATION_TEMPLATE`, `TOOL_CALLING_TEMPLATE` 等使用这个动态的 `NODE_TYPES_INFO`。
 
-- **删除 `backend/langgraphchat/agents/workflow_agent.py`**: 因为其逻辑已被新的 LangGraph 实现取代。
-- **审查 `backend/langgraphchat/prompts/chat_prompts.py`**: `STRUCTURED_CHAT_AGENT_PROMPT` 仍会使用，但其他与旧 Agent 相关的特定 Prompt (如果有) 可能需要移除或调整。
-- **审查 `ChatService`**: 移除所有仅与旧 `AgentExecutor` 相关的逻辑。 - ✅
-- **全局替换**: 将 `backend.langchainchat` 文件夹名全局替换为 `backend.langgraphchat`，以确保导入路径的一致性。 - ✅
-- **修复 LangGraph 兼容性**: 更新`workflow_graph.py`中的导入语句，使用最新的`langgraph.prebuilt.ToolNode`API 替代旧的`ToolExecutor`和`ToolInvocation`，以兼容 LangGraph 0.4.2 版本。- ✅
+### 建议与后续
 
-**5. 测试 LangGraph 核心功能** - (尚未执行)
+1.  **XML 解析健壮性 (`dynamic_prompt_utils.py`)**:
 
-- **单元测试**: 测试各个 LangGraph 节点（Agent 决策、工具执行）的逻辑。
-- **集成测试**: 测试完整的 LangGraph 执行流程（不含 SSE，仅关注输入输出和状态转换），确保它能正确调用工具并最终产生回复。验证 `DbChatMemory` 和 `current_flow_id_var` (如果工具仍然直接使用它，或者其值被正确传入 LangGraph 状态) 是否按预期工作。
+    - 当前的 XML 解析逻辑基于对 `block` 和 `field` 标签的简单查找。如果 `/workspace/database/node_database/quickfcpr/` 目录下的 XML 文件结构有更多变种或特定需求（例如，从特定属性而非 `field` 提取描述，或处理更复杂的嵌套结构），需要相应增强解析逻辑。
+    - 错误处理目前会跳过一些简单的解析错误，对于更复杂的 XML，可能需要更细致的错误报告和跳过机制。
+    - **优先级**: 中。根据实际 XML 文件的复杂度和多样性调整。
 
-## 第一部分：实现 Agentic 流式 SSE 和后端基础 (基于 LangGraph)
+2.  **`NODE_TYPES_INFO` 的更新时机 (`chat_prompts.py`)**:
 
-**目标：** 建立后端 LangGraph Agent 执行和流式事件推送的基础，并修复数据库保存问题。
+    - 目前是在模块加载时执行一次。如果节点定义文件会非常频繁地实时变动，并且要求 LLM 总是使用绝对最新的定义，则需要将 `get_dynamic_node_types_info()` 的调用移到更动态的执行点（例如，`ChatService` 中每次处理请求或编译图时）。对于多数情况，启动时加载一次是可接受的。
+    - **优先级**: 低。根据实际需求评估。
 
-**1. 后端：改造后台任务以使用 LangGraph (`backend/app/routers/chat.py`)** - ✅
+3.  **Prompt 中信息的使用**:
+    - 确保所有需要了解可用节点类型的 Prompt （不仅仅是 `BASE_SYSTEM_PROMPT`）都正确地使用了动态生成的 `NODE_TYPES_INFO`。
+    - 对于 `STRUCTURED_CHAT_AGENT_PROMPT`，目前它主要依赖 `{tools}` 占位符获取工具描述。如果工具描述本身没有充分包含节点类型信息，或者希望 LLM 对可用节点类型有一个更概览性的了解，可以考虑将其系统提示修改为也包含 `NODE_TYPES_INFO` 的内容。
+      ```python
+      # 在 STRUCTURED_CHAT_AGENT_PROMPT 系统消息中添加类似内容：
+      # """...
+      # 可用工具：
+      # {tools}
+      #
+      # 作为参考，以下是目前系统中主要可用的节点类型：
+      # {node_types_info_placeholder}
+      # (具体操作仍需依赖工具描述)
+      # ..."""
+      # 然后在 compile_workflow_graph 中填充 node_types_info_placeholder=NODE_TYPES_INFO
+      ```
+    - **优先级**: 中。评估现有工具描述是否足够。
 
-- **操作 (`process_and_publish_events`):**
-  - **获取 LangGraph Runnable:** 从 `ChatService` 获取已编译的 `workflow_graph`。
-  - **准备 LangGraph 输入:** 构造传递给 LangGraph 的初始状态字典，应包含 `input` (用户消息), `chat_history` (格式化后的 `current_messages`), `flow_context` (从 `flow_data` 提取), `current_flow_id`。
-  - **调用 `stream` 或 `astream_log`:** 使用 `workflow_graph.stream(graph_input, ...)` 或 `workflow_graph.astream_log(graph_input, ...)`。
-  - **实现事件映射:** 在 `async for event in workflow_graph.stream(...)` (或 `astream_log`) 循环中：
-    - **解析 `event`:** 分析 LangGraph 返回的事件/日志结构。LangGraph 的流式输出通常会包含每个节点执行前后的状态、节点的输入输出等。
-    - **映射到 SSE 事件:**
-      - **LLM Token (思考/回复):** 当事件表明是 Agent 节点正在输出 LLM 的 token 时，提取 token `chunk`, `await queue.put({"type": "token", "data": chunk})`。
-      - **工具调用开始:** 当事件表明 Agent 节点决定调用工具，并且图即将转换到工具执行节点时，提取工具名称和输入参数, `await queue.put({"type": "tool_start", "data": {"name": ..., "input": ...}})`。
-      - **工具调用结束:** 当事件表明工具执行节点已完成，并返回结果时，提取工具名称和结果摘要, `await queue.put({"type": "tool_end", "data": {"name": ..., "output_summary": ...}})`。
-      - **错误:** 捕获 LangGraph 执行过程中的错误，并放入队列 `await queue.put({"type": "error", ...})`。
-      - **详细说明：** 错误事件 (`"type": "error"`) 的 `data` 字段应至少包含错误消息 (`message`), 错误发生的阶段 (`stage`, 如 'llm', 'tool', 'graph_node'), 如果适用，还应包含工具名称或节点名称 (`tool_name`/`node_name`)。
-      - **累积最终回复:** 在循环中，维护一个变量 (`final_reply_accumulator`), 将所有最终回复阶段的 LLM token 拼接起来。
-  - **测试:** 验证 LangGraph 的基本流程（无工具调用）能够流式输出到前端。验证工具调用流程是否能正确触发 `tool_start` 和 `tool_end` 事件。
+## 三、实现细粒度流式输出 (主要涉及 `chat.py`)
 
-**2. 后端：修复数据库保存 (`backend/app/routers/chat.py`)** - ✅
+### 当前状态 (切换到 `astream_events` 后)
 
-- 使用**新的独立数据库 Session** (`with get_db_context() as db_session_for_save:`) 来保存最终结果。
-  - 使用此新 Session 初始化 `ChatService` (`chat_service_for_save = ChatService(db_session_for_save)`).
-  - 从 `final_reply_accumulator` 获取最终回复内容。
-  - 从 LangGraph 执行的最终状态中提取最终的 `flow_data` (如果图的执行修改了流程图状态并将其保存在最终状态中)。
-  - 调用 `chat_service_for_save.add_message_to_chat(...)` 保存助手回复。
-  - 如果 `final_flow_data` 存在，使用新 Session 更新 `Flow`。
-  - **测试:** 确认在 LangGraph 流程结束后，助手回复和潜在的流程更新能可靠地保存到数据库。
+1.  `process_and_publish_events` 已修改为使用 `compiled_graph.astream_events(..., version="v2")`。
+2.  代码尝试处理 `on_chat_model_stream`, `on_tool_start`, `on_tool_end`, `on_chain_end`, 以及各种错误事件。
+3.  **主要问题**: 后端日志显示，即使 `DeepSeekLLM._astream` 中设置了 `stream=True` 并调用了 `on_llm_new_token` 回调，`astream_events` 的循环中也**未实际接收到 `on_chat_model_stream` 事件**。实际的 HTTP 调用日志也显示对 DeepSeek API 的调用表现为非流式。
 
-**3. 前端：适配新的 SSE 事件 (`frontend/src/api/chatApi.ts`, `frontend/src/components/ChatInterface.tsx`)** - (与原始计划相同，主要是适配 LangGraph 可能产生的事件结构和时序) - **API (`chatApi.ts`):** 定义新的 SSE 事件类型接口。 - **UI (`ChatInterface.tsx`):** 修改 `handleChatEvent` 来处理 `tool_start`, `tool_end`, `token`, `error` 事件。 - **测试:** 验证前端能够正确接收并渲染新的 `tool_start`, `tool_end` 事件，并流畅地展示思考、工具执行、最终回复的整个过程。
+### 后续计划与调查方向
 
-## 第二部分：实现消息编辑与历史/流程回滚 (依赖第一部分完成)
+1.  **验证底层 API 调用的流式行为**:
 
-**目标：** 允许用户编辑消息，触发后续历史和流程的回滚，并基于 LangGraph 重新运行。
+    - **核心任务**: 必须确认对 DeepSeek API (`https://api.deepseek.com/v1/chat/completions`) 的调用是否真正以流式进行。
+    - **方法**:
+      - 仔细检查 `DeepSeekLLM._astream` 中传递给 `self.async_client.chat.completions.create()` 的所有参数，确保 `stream=True` 无误且没有其他参数覆盖或阻止流式行为。
+      - 创建一个最小化的、不依赖 LangGraph 的 Python 脚本，直接使用 `AsyncOpenAI` 客户端（配置为 DeepSeek 的 `api_key` 和 `base_url`）调用 `chat.completions.create(..., stream=True)`，并迭代其返回的异步迭代器，打印每个 `chunk`。观察其行为和 `httpx` 日志。这能隔离问题是否出在 API/SDK 本身。
+      - 检查是否有网络代理、防火墙或 DeepSeek API 方面的特定限制（如账户、模型限制）阻止了 SSE 或流式响应。
+    - **优先级**: 最高。这是实现真正流式输出的前提。
 
-**1. 后端：数据库模型 (`database/models.py`)** - (与原始计划相同) 在 `Chat.chat_data.messages` 中的**助手消息**里添加 `flow_snapshot: Optional[Dict]` 字段。
+2.  **LLM 输出 JSON 的影响**:
 
-**2. 后端：`ChatService` (`backend/app/services/chat_service.py`)** - (与原始计划相同) 修改 `add_message_to_chat`：添加 `flow_snapshot` 参数。
+    - **问题**: 后端日志中 `提取JSON中的action_input作为实际回复` 表明 LLM 被引导输出 JSON。这与细粒度流式输出自然语言文本的目标冲突。
+    - **我们已修改 `STRUCTURED_CHAT_AGENT_PROMPT`**，指示 LLM 在直接回答时输出纯文本。
+    - **验证**: 测试新的 Prompt 是否有效。观察 LLM 是否真的开始对直接问题回复纯文本。如果仍然输出 `{"action": "final_answer", ...}` JSON，则需要进一步强化 Prompt 或检查 `agent_node` 中是否有其他逻辑仍在促使其生成 JSON。
+    - **优先级**: 高。
 
-**3. 后端：新的编辑 API 端点 (`backend/app/routers/chat.py`)** - (与原始计划相同) 创建 `PUT /chats/{chat_id}/messages/{message_timestamp}`。 - **逻辑调整**: - 触发编辑后台任务时，传递 `checkpoint_flow_data`，这将作为 LangGraph 初始状态的一部分。
+3.  **`astream_events` 事件的精确捕获**:
 
-**4. 后端：新的编辑后台任务 (`backend/app/routers/chat.py`)** - **操作：** 创建 `async def process_edited_message_and_publish(c_id, edited_msg_content, truncated_history, checkpoint_flow_data, queue)`。 - **逻辑：** - **准备 LangGraph 输入:** - **恢复流程状态:** (关键步骤) `checkpoint_flow_data` 将用于初始化 LangGraph 状态中的 `flow_context` 部分。 - 使用 `edited_msg_content` 作为新的 `input`，`truncated_history` 作为 `chat_history`，并将恢复后的 `flow_context` (从 `checkpoint_flow_data` 构建) 和 `current_flow_id` 传递给 LangGraph 的初始状态。 - **运行 LangGraph:** 调用 `workflow_graph.stream(...)` 或 `astream_log(...)`。 - **处理事件流:** 与 `process_and_publish_events` 类似。 - **保存结果 (finally 块):** - 保存最终的助手回复，**附带当前流程状态（从 LangGraph 最终状态中获取）作为新的 `flow_snapshot`**。
+    - 如果步骤 1 确认 API 可以流式，并且步骤 2 确认 LLM 可以输出纯文本，但 `chat.py` 中仍然没有收到 `on_chat_model_stream` 事件，则需要更深入地调试 `astream_events`。
+    - **方法**:
+      - 在 `process_and_publish_events` 的 `astream_events` 循环中，无条件打印出**所有**接收到的 `event` 的完整内容（`event_name`, `event_data`, `run_name`, `tags` 等），以查看是否有我们期望的 token 信息被包装在其他类型的事件中，或者事件名称与 `on_chat_model_stream` 不同。
+      - 查阅 LangGraph 关于 `astream_events` (v2) 的最新文档，确认事件的确切名称和结构，特别是与通过 `CallbackManager` 的 `on_llm_new_token` 触发的事件相关的部分。
+    - **优先级**: 中高 (依赖于前两点的结果)。
 
-**5. 前端：编辑 UI (`frontend/src/components/ChatInterface.tsx`)** - (与原始计划相同)
+4.  **调整 `process_and_publish_events` 的事件处理**:
+    - 一旦能够从 `astream_events` 中稳定地获取到细粒度的 token 事件 (例如，确认了正确的事件名和数据路径如 `event['data']['chunk'].content`)，就需要确保 `final_reply_accumulator` 正确累加这些 token，并将每个 token 实时放入 SSE 队列。
+    - 确保对工具调用、错误、链结束等其他重要事件的处理仍然稳健。
+    - **优先级**: 中 (依赖于前几点的进展)。
 
-**6. 前端：API (`frontend/src/api/chatApi.ts`)** - (与原始计划相同)
+## 四、代码整洁与可维护性
 
-## 第三部分：代码清理与重构 (后 LangGraph 迁移)
+1.  **统一 LLM 客户端**:
 
-**目标：** 提高可维护性，移除因引入 LangGraph 而产生的其他冗余或过时代码。
+    - `langgraphchat/llms/deepseek_client.py` 中的 `DeepSeekLLM` 和 `langgraphchat/models/llm.py` 中的 `DeepSeekChatModel` 功能上有重叠。根据 `langgraphchat/README.md`，前者是重构后的版本。应确保整个项目统一使用 `deepseek_client.py` 中的 `DeepSeekLLM`，并逐步移除旧的实现。`get_chat_model` 函数应只返回推荐的客户端实例。
+    - **优先级**: 中。
 
-- 审查并确保 `ChatService`、工具函数等与 LangGraph 的集成是清晰和高效的。
-- 完善错误处理和日志记录，特别关注 LangGraph 执行过程中的错误。
-- 更新或添加必要的单元测试和集成测试，覆盖 LangGraph 的各种路径和状态。
+2.  **README 更新**:
+    - 在所有这些重构完成后，相应更新 `/workspace/backend/README.md`, `/workspace/database/README.md`, `/workspace/frontend/README.md`, `/workspace/backend/langgraphchat/README.md`，以反映最新的项目结构、工具实现、Prompt 策略和流式处理机制。
+    - **优先级**: 完成主要功能修改后执行。
 
-## 执行顺序与测试策略
-
-1.  **实现第零部分 (迁移到 LangGraph & 清理):**
-    - **优先设计和实现 LangGraph 的状态、节点和图结构。**
-    - **修改 `ChatService` 以使用新的 LangGraph runnable。**
-    - **删除旧的 `workflow_agent.py`。**
-    - **进行核心功能测试（无 SSE），确保 LangGraph 能正确处理输入、调用工具并产生预期结果。**
-2.  **实现第一部分 1 (后端 LangGraph 流式改造):**
-    - 实现 LangGraph 流式输出 (`stream` 或 `astream_log`) 到 SSE 事件的映射。
-    - 单元测试事件映射逻辑。
-3.  **实现第一部分 3 (前端适配):**
-    - 更新前端以处理新的 SSE 事件。
-    - 端到端测试基本的 LangGraph 流式交互。
-4.  **实现第一部分 2 (后端数据库保存修复 - 基于 LangGraph):**
-    - 在 LangGraph 流程基础上，确保结果正确保存。测试。
-5.  **实现第二部分 (编辑/回滚 - 后端，基于 LangGraph):**
-    - 数据库模型修改。
-    - 实现编辑 API 和新的后台任务，确保其正确地使用 LangGraph 和 `checkpoint_flow_data`。
-6.  **实现第二部分 (编辑/回滚 - 前端):**
-    - 实现前端 UI 和 API 调用。
-7.  **端到端测试:** 测试 LangGraph 驱动的流式交互、数据库保存、编辑和回滚功能。
-8.  **实现第三部分 (清理 - 后 LangGraph):** 在功能稳定后进行代码清理和重构。
-9.  **文档更新:** 重构完成后，务必更新 `/workspace/database/README.md`, `/workspace/backend/README.md`, 和 `/workspace/frontend/README.md` 文件，以准确反映新的代码结构 (特别是 LangGraph 的引入)、API 行为和核心功能。
-
-## 执行进度报告
-
-**2025-05-07**: 完成了第零部分的所有任务：
-
-1. ✅ 完成了对`backend/langgraphchat/graph/workflow_graph.py`的重构，使其使用最新的 LangGraph API。
-2. ✅ 修复了 LangGraph 0.4.2 兼容性问题，特别是将旧版`ToolExecutor`和`ToolInvocation`更新为新版`ToolNode` API。
-3. ✅ 移除了与旧的`AgentExecutor`相关的代码。
-4. ✅ 将所有导入路径从`backend.langchainchat`更新为`backend.langgraphchat`，确保导入路径的一致性。
-5. ✅ 更新了配置文件和相关 README 文档，以反映新的项目结构。
-
-**2025-05-08**: 完成了第一部分的所有任务：
-
-1. ✅ 重写了`process_and_publish_events`函数，以使用 LangGraph 的流式输出，正确映射各种事件类型。
-2. ✅ 修复了数据库保存问题，使用独立会话保存消息和流程状态，避免冲突。
-3. ✅ 更新了前端处理逻辑，以适应新的 SSE 事件结构。
-4. ✅ 全局替换了`frontend/src/api/chatApi.ts`中的 API 路径，从`/langchainchat/`更新为`/langgraphchat/`。
-
-下一步是实现第二部分中的消息编辑与历史/流程回滚功能。
+通过执行以上计划，我们期望能够实现更健壮、更易于维护的工具系统，并最终达成后端向前端进行真正细粒度流式输出的目标。

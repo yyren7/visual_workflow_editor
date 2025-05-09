@@ -8,7 +8,7 @@
 2.  **上下文感知对话**: 能够收集系统信息、用户信息和当前流程图上下文，为 LLM 提供更丰富的对话背景。
 3.  **会话管理**:
     - 支持将会话历史保存到本地 JSON 文件 (通过 `EnhancedConversationMemory`)。
-    - 提供了基于数据库的聊天记录管理框架 (`DbChatMemory`)，但其依赖的 `ChatService` 目前在项目中缺失。
+    - 提供了基于数据库的聊天记录管理框架 (`DbChatMemory`)，其依赖的 `ChatService` 位于 `/workspace/backend/app/services/chat_service.py`。
 4.  **工具集成**: 提供了与流程图创建、修改、查询相关的工具，这些工具被设计为可以被 LangGraph Agent 调用。
 5.  **可配置 LLM**: 支持通过配置使用不同的 LLM (如 DeepSeek, Azure OpenAI, ZhipuAI)，并管理 API 密钥和模型参数。
 6.  **模块化设计**: 各组件如 LLM 封装、记忆管理、提示工程、工具定义、图定义等分离到不同模块。
@@ -16,7 +16,7 @@
 
 ## 目录结构
 
-```
+```text
 backend/langgraphchat/
 ├── __init__.py                   # 模块初始化，定义版本号。
 ├── context.py                    # 定义 ContextVar (current_flow_id_var) 用于传递当前流程图 ID。
@@ -162,7 +162,7 @@ backend/langgraphchat/
   - `create_memory` 是一个工厂函数，方便创建或加载记忆实例。配置来源于 `backend.config.APP_CONFIG` 和 `LANGCHAIN_CONFIG`。
 - `db_chat_memory.py`:
   - **作用**: 定义 `DbChatMemory`，旨在将聊天记录存储在数据库中。它实现了 `BaseChatMessageHistory`。
-  - **依赖**: 依赖于 `backend.app.services.chat_service.ChatService` (目前缺失) 来进行实际的数据库操作。
+  - **依赖**: 依赖于位于 `/workspace/backend/app/services/chat_service.py` 的 `ChatService` 来进行实际的数据库操作。
   - **注意**: 该组件目前可能无法完全工作，直到其依赖的 `ChatService` 被实现。
 
 ### `models/`
@@ -280,7 +280,7 @@ from backend.langgraphchat.context import current_flow_id_var
 
 ## 主要依赖和缺失部分
 
-- **`ChatService` (`backend/app/services/chat_service.py`)**: **已找到并部分实现**。此类是核心，负责 LLM 管理、LangGraph 工作流的编译与调用、以及聊天记录的数据库操作。重构计划应围绕此类进行扩展，以支持流式处理和更复杂的 Agent 交互。
+- **`ChatService` (`/workspace/backend/app/services/chat_service.py`)**: **已在 `/workspace/backend/app/services/chat_service.py` 中实现**。此类是核心，负责 LLM 管理、LangGraph 工作流的编译与调用、以及聊天记录的数据库操作。重构计划应围绕此类进行扩展，以支持流式处理和更复杂的 Agent 交互。
   - **待增强功能**: 需要实现更完善的 LangGraph 调用逻辑 (特别是流式处理 `astream_events`)、SSE 事件封装、以及与编辑/回滚功能相关的状态管理。
   - **LLM 提供商统一**: `ChatService._get_active_llm()` 与 `models/llm.py::get_chat_model()` 在支持的 LLM 上有差异，建议统一。
 - **`FlowService` (`backend.app.services.flow_service`)**: 外部依赖，被 `ContextCollector` 和 `flow_tools` 用于获取和修改流程图数据。其可用性和正确性至关重要。

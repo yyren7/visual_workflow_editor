@@ -81,7 +81,6 @@ sys.path.append(parent_dir)
 # 导入数据库模型和引擎，确保表结构会被创建
 from database.connection import Base, get_db_context
 from database.models import User, Flow, FlowVariable, VersionInfo
-from backend.config import APP_CONFIG
 
 # 将版本信息保存到数据库的函数
 def save_version_to_db(version_data):

@@ -9,7 +9,6 @@ import uuid
 import json
 import os
 from typing import Dict, List, Any, Optional, Union, Tuple, AsyncGenerator, Iterator, AsyncIterator # Add Iterator, AsyncIterator
-from datetime import datetime
 
 # Use AsyncOpenAI for async operations
 from openai import OpenAI, AsyncOpenAI, APIConnectionError, APITimeoutError, OpenAIError, RateLimitError
@@ -435,9 +434,3 @@ class DeepSeekLLM(BaseChatModel):
                 break
 
         raise last_error or RuntimeError(f"Failed to get async stream from DeepSeek after {self.max_retries+1} attempts.")
-
-    # --- Remove old custom methods --- 
-    # async def chat_completion(...) -> REMOVED
-    # async def stream_chat_completion(...) -> REMOVED
-    # async def structured_output(...) -> REMOVED
-    # async def function_calling(...) -> REMOVED

@@ -186,9 +186,11 @@ export const useReactFlowManager = ({
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      console.log('[useReactFlowManager] onConnect - connection object:', JSON.parse(JSON.stringify(connection)));
       // Dispatch an action to add the edge (potentially via addEdge helper)
       // Assuming flowSlice handles the logic of actually adding the edge
        const newEdge = { ...connection, id: uuidv4() }; // Ensure edge has an ID if needed by slice
+       console.log('[useReactFlowManager] onConnect - newEdge object:', JSON.parse(JSON.stringify(newEdge)));
        dispatch(setFlowEdges(addEdge(newEdge, edges))); // Use React Flow's addEdge helper with current edges
        // OR: If you have a dedicated addEdge action:
        // dispatch(addFlowEdge(connection));

@@ -2,26 +2,29 @@ from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTempla
 from typing import Optional
 import logging
 
+# 从新文件中导入函数
+from .dynamic_prompt_utils import get_dynamic_node_types_info
+
 # 配置日志
 logger = logging.getLogger("langgraphchat.prompts")
 
-# 定义常用的节点类型文本 (替代之前的动态获取)
-NODE_TYPES_INFO = """常用节点类型:
-- start: 流程的开始
-- end: 流程的结束
-- process: 处理步骤或操作
-- decision: 判断条件，通常有多个输出分支
-- input: 用户输入或数据输入
-- output: 系统输出或结果展示
-- database: 数据存储或检索
-- api: 调用外部接口"""
+# 调用函数获取动态的节点类型信息
+# 注意：这里会在模块加载时执行一次。如果节点类型文件经常变化且需要实时更新，
+# 可能需要将此调用移到更动态的地方（例如，在每次构建 LangGraph 实例或处理请求时）。
+# 但对于通常不频繁更改的节点定义，模块加载时获取一次通常是可以接受的。
+try:
+    NODE_TYPES_INFO = get_dynamic_node_types_info()
+    logger.info(f"动态节点类型信息加载成功。内容预览: {NODE_TYPES_INFO[:200]}...") # 添加日志预览
+except Exception as e:
+    logger.error(f"加载动态节点类型信息失败: {e}", exc_info=True)
+    NODE_TYPES_INFO = "警告：无法动态加载节点类型信息，将使用默认或回退信息。请检查 /workspace/database/node_database/quickfcpr/ 目录及相关文件。"
 
 # 基础系统提示
 BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用户设计和创建工作流流程图。
 
 作为流程图助手，你应该:
 1. 提供专业、简洁的流程图设计建议
-2. 帮助解释不同节点类型的用途
+2. 帮助解释不同节点类型的用途 (基于以下提供的已知类型)
 3. 提出合理的流程优化建议
 4. 协助用户解决流程图设计中遇到的问题
 5. 只回答与流程图和工作流相关的问题
@@ -54,8 +57,8 @@ WORKFLOW_GENERATION_TEMPLATE = ChatPromptTemplate.from_messages([
 {{
   "nodes": [
     {{
-      "id": "唯一ID，如node1, node2...",
-      "type": "节点类型，如process, decision, start, end等",
+      "id": "唯一ID",
+      "type": "节点类型",
       "label": "节点标签/名称",
       "properties": {{
         "描述": "节点详细信息"
@@ -78,12 +81,11 @@ WORKFLOW_GENERATION_TEMPLATE = ChatPromptTemplate.from_messages([
 {NODE_TYPES_INFO}
 
 注意事项:
-1. 必须包含一个start节点和至少一个end节点
-2. 所有节点必须通过connections连接成一个完整流程
-3. 决策节点(decision)应该有多个输出连接，表示不同的决策路径
-4. 节点ID必须唯一，建议使用node1, node2等格式
-5. 节点位置应该合理排布，避免重叠，从上到下或从左到右布局
-6. 给节点添加合适的位置坐标，确保布局合理
+1. 所有节点必须通过connections连接成一个完整流程
+2. 决策节点(decision)应该有多个输出连接，表示不同的决策路径
+3. 节点ID必须使用唯一的uuid
+4. 节点位置应该合理排布，避免重叠，从上到下或从左到右布局
+5. 给节点添加合适的位置坐标，确保布局合理
 
 请只返回JSON格式的结果，不要添加任何其他解释文本。"""),
     HumanMessagePromptTemplate.from_template("""
@@ -100,7 +102,7 @@ PROMPT_EXPANSION_TEMPLATE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template("""你是一个专业的流程图设计助手。我需要你将用户的简单描述扩展为详细的、专业的步骤序列。
 
 请先分析用户描述的复杂性:
-1. 如果用户请求简单明确（如"创建一个开始节点"、"生成一个process节点"等），请直接提供简洁的1-2个步骤，不要过度复杂化。
+1. 如果用户请求简单明确（如"创建一个move节点"、"生成一个move节点"等），请直接提供简洁的1-2个步骤，不要过度复杂化。
 2. 如果用户请求具有一定复杂性，再展开为更详细的步骤。
 
 对于明确的简单请求，不要生成"缺少信息"部分，除非真的无法执行请求。
@@ -203,35 +205,24 @@ STRUCTURED_CHAT_AGENT_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      """你是工作流图表 AI 助手，专注于帮助用户使用 Blockly 风格的块来设计、修改和优化机器人控制流程图。
 
-     重要规则：对于和流程图设计、修改、优化无关的用户输入，请忽略无关内容，并简单重申你的主要职责是协助进行机器人流程图的设计。只有和任务相关的输入才进行针对性的回复或使用工具。
+     重要规则：
+     1. 对于和流程图设计、修改、优化无关的用户输入，请忽略无关内容，并简单重申你的主要职责是协助进行机器人流程图的设计。
+     2. 只有和任务相关的输入才进行针对性的回复或使用工具。
+     3. 请始终用中文回答。
 
      可用工具：
-
      {tools}
 
-     请使用以下格式来使用工具：
-
+     当你需要使用工具时，你必须遵循以下JSON格式，并且只输出这个JSON对象，不要有任何其他文字或解释：
      ```json
      {{
-       "action": $TOOL_NAME,
+       "action": "$TOOL_NAME",
        "action_input": $INPUT
      }}
      ```
+     其中 `$TOOL_NAME` 必须是以下之一: {tool_names}，$INPUT 应该是一个符合该工具输入 schema 的 JSON 对象。
 
-     如果你使用工具，$INPUT 应该是一个符合该工具 schema 的 JSON 对象。
-
-     $TOOL_NAME 必须是以下之一：{tool_names}
-
-     当你需要回复用户，或者你不需要使用工具时，你必须使用以下格式：
-
-     ```json
-     {{
-       "action": "final_answer",
-       "action_input": "你的回复内容"
-     }}
-     ```
-
-     请记住始终使用提供的确切工具名称。请用中文回答。
+     当你不需要使用工具，并且可以直接回答用户时，请直接以纯文本形式给出你的回复。不要使用任何JSON格式包装你的直接回复。
 
      当前工作流上下文：
      {flow_context}
@@ -239,6 +230,6 @@ STRUCTURED_CHAT_AGENT_PROMPT = ChatPromptTemplate.from_messages([
     ),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad")
+    MessagesPlaceholder(variable_name="agent_scratchpad") # agent_scratchpad 用于存放 Agent 思考过程和工具调用结果
 ])
 # --- 结束新增 --- 
