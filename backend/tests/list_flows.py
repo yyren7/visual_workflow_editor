@@ -14,7 +14,7 @@ for flow in flows:
     print(f'ID: {flow_id}, 名称: {name}, 节点数: {len(nodes)}')
     
     # 检查是否有最新创建的节点
-    latest_node_id = 'moveL-1743056232559'
+    latest_node_id = 'loop-1743664177011'
     found = False
     for node in nodes:
         if node.get('id') == latest_node_id:

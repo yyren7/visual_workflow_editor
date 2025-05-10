@@ -11,8 +11,8 @@ import os
 # TEST_CHAT_ID = os.getenv("TEST_CHAT_ID", "your_existing_chat_id")
 
 BASE_URL = "http://localhost:8000/api/v1"  # 确保这与您的 FastAPI 应用前缀匹配
-AUTH_TOKEN = "YOUR_AUTH_TOKEN_HERE"  # 替换为有效的 JWT token
-TEST_CHAT_ID = "YOUR_TEST_CHAT_ID_HERE" # 替换为有效的 chat_id
+AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJleHAiOjE3NDY4Njg0Njh9.LGez3CuM92Ra3izrioElN0lkdotLT9Kwczw8hmSIbIE"  # 替换为有效的 JWT token
+TEST_CHAT_ID = "62b623d2-9cc6-4349-8c46-d1ead4ccffe8" # 替换为有效的 chat_id
 
 # 确保您的后端服务正在运行，并且上述 CHAT_ID 是有效的且与 AUTH_TOKEN 对应的用户相关联。
 

@@ -27,6 +27,7 @@ class AgentState(TypedDict):
                   新的消息会被追加到这个列表。
         flow_context: 当前流程图的上下文信息，可以是任意结构。
         current_flow_id: 当前操作的流程图 ID。
+        input_processed: 一个布尔标志，指示 state.input 是否已被处理并合并到 messages 中。默认为 False。
         # agent_outcome 字段可以移除，因为最终的 Agent 回复也会是 messages 列表中的一个 AIMessage。
         # 工具调用信息将直接存在于 AIMessage 的 tool_calls 属性中。
     """
