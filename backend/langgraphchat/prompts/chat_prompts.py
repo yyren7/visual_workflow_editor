@@ -8,17 +8,6 @@ from .dynamic_prompt_utils import get_dynamic_node_types_info
 # 配置日志
 logger = logging.getLogger("langgraphchat.prompts")
 
-# 调用函数获取动态的节点类型信息
-# 注意：这里会在模块加载时执行一次。如果节点类型文件经常变化且需要实时更新，
-# 可能需要将此调用移到更动态的地方（例如，在每次构建 LangGraph 实例或处理请求时）。
-# 但对于通常不频繁更改的节点定义，模块加载时获取一次通常是可以接受的。
-try:
-    NODE_TYPES_INFO = get_dynamic_node_types_info()
-    logger.info(f"动态节点类型信息加载成功。内容预览: {NODE_TYPES_INFO[:200]}...") # 添加日志预览
-except Exception as e:
-    logger.error(f"加载动态节点类型信息失败: {e}", exc_info=True)
-    NODE_TYPES_INFO = "警告：无法动态加载节点类型信息，将使用默认或回退信息。请检查 /workspace/database/node_database/quickfcpr/ 目录及相关文件。"
-
 # 基础系统提示
 BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用户设计和创建工作流流程图。
 
@@ -28,8 +17,6 @@ BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用�
 3. 提出合理的流程优化建议
 4. 协助用户解决流程图设计中遇到的问题
 5. 只回答与流程图和工作流相关的问题
-
-{NODE_TYPES_INFO}
 
 请始终保持专业和有帮助的态度。"""
 
@@ -77,8 +64,6 @@ WORKFLOW_GENERATION_TEMPLATE = ChatPromptTemplate.from_messages([
     }}
   ]
 }}
-
-{NODE_TYPES_INFO}
 
 注意事项:
 1. 所有节点必须通过connections连接成一个完整流程
@@ -137,8 +122,6 @@ TOOL_CALLING_TEMPLATE = ChatPromptTemplate.from_messages([
 3. update_node - 更新节点属性
 4. delete_node - 删除节点
 5. get_flow_info - 获取当前流程图信息
-
-{NODE_TYPES_INFO}
 
 使用工具时应遵循以下原则:
 1. 根据用户需求选择最合适的工具
@@ -213,16 +196,15 @@ STRUCTURED_CHAT_AGENT_PROMPT = ChatPromptTemplate.from_messages([
      可用工具：
      {tools}
 
-     当你需要使用工具时，你必须遵循以下JSON格式，并且只输出这个JSON对象，不要有任何其他文字或解释：
-     ```json
-     {{
-       "action": "$TOOL_NAME",
-       "action_input": $INPUT
-     }}
-     ```
-     其中 `$TOOL_NAME` 必须是以下之一: {tool_names}，$INPUT 应该是一个符合该工具输入 schema 的 JSON 对象。
+     {NODE_TYPES_INFO}
 
-     当你不需要使用工具，并且可以直接回答用户时，请直接以纯文本形式给出你的回复。不要使用任何JSON格式包装你的直接回复。
+     重要说明：
+     - 当用户输入"创建一个X节点"时，X 应作为 node_type 参数传递给 create_node 工具。
+     - node_type 是必填项，必须从用户输入中提取，并在上方节点类型列表（即xml文件名）中找到最符合的类型填入。
+     - 如果用户输入的类型与节点类型列表不完全一致，选择最相近的一个。
+     - 工具参数必须完整、准确。
+
+     当您决定使用上述任何工具时，请确保您的意图清晰，并提供该工具所需的所有参数。工具的名称必须是以下之一: {tool_names}。框架将处理实际的工具调用。
 
      当前工作流上下文：
      {flow_context}

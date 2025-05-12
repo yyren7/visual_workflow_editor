@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 # Blockly XML 命名空间，根据您的日志，一些文件使用了这个
 BLOCKLY_NAMESPACE = "{https://developers.google.com/blockly/xml}"
 
-def get_dynamic_node_types_info(quickfcpr_dir: str = "/workspace/database/node_database/quickfcpr/") -> str:
+def get_dynamic_node_types_info(quickfcpr_dir: str = "/workspace/database/node_database/quick-fcpr/") -> str:
     """
     遍历指定目录下的XML文件，提取Blockly节点类型及其标签，
     并格式化为供Prompt使用的字符串。
