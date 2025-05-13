@@ -1,0 +1,306 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="D6U$]#o_;j,x(n|?ylyD" editable="false" x="30" y="-10" data-blockNo="1">
+    <mutation timeout="600000"></mutation>
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="connect_external_io" id="@@x-kMo{?|;/E9PIPrxz" data-blockNo="2">
+        <mutation timeout="60000"></mutation>
+        <field name="devive_name">DIO000</field>
+        <field name="external_maker">contec</field>
+        <field name="io_no">1</field>
+        <next>
+          <block type="set_external_io_output" id="KM}$+:Q@P61[Av$nZ]Zg" data-blockNo="2">
+            <mutation timeout="60000"></mutation>
+            <field name="io_no">1</field>
+            <field name="output_pin_name">12</field>
+            <field name="out_state">off</field>
+            <next>
+              <block type="set_external_io_output" id="6k.n$65Ry,is%(oa?eKa" data-blockNo="3">
+                <mutation timeout="60000"></mutation>
+                <field name="io_no">1</field>
+                <field name="output_pin_name">13</field>
+                <field name="out_state">on</field>
+                <next>
+                  <block type="set_external_io_output" id="3Vn.?+VV)o9bP2R]VqeU" data-blockNo="4">
+                    <mutation timeout="60000"></mutation>
+                    <field name="io_no">1</field>
+                    <field name="output_pin_name">14</field>
+                    <field name="out_state">off</field>
+                    <next>
+                      <block type="wait_ready" id="]iV/U**4S:pxxXOq_Qx3" data-blockNo="1">
+                        <mutation timeout="60000"></mutation>
+                        <next>
+                          <block type="set_motor" id="fm7J$NnwMq^5o`e%Ov(y" data-blockNo="1">
+                            <mutation timeout="60000"></mutation>
+                            <field name="state_list">on</field>
+                            <next>
+                              <block type="wait_run" id="1Z|FH+kuq}2r;K$q)NPE" data-blockNo="1">
+                                <mutation timeout="60000"></mutation>
+                                <next>
+                                  <block type="set_external_io_output" id="I{ghDpi|zmFIn[/{{/-O" data-blockNo="5">
+                                    <mutation timeout="60000"></mutation>
+                                    <field name="io_no">1</field>
+                                    <field name="output_pin_name">13</field>
+                                    <field name="out_state">off</field>
+                                    <next>
+                                      <block type="set_external_io_output" id="^x=9F|Za_eZ*;r!aencB" data-blockNo="6">
+                                        <mutation timeout="60000"></mutation>
+                                        <field name="io_no">1</field>
+                                        <field name="output_pin_name">14</field>
+                                        <field name="out_state">on</field>
+                                        <next>
+                                          <block type="loop" id="JYMup$*i_y?g7N-GUI?G" data-blockNo="1">
+                                            <statement name="DO">
+                                              <block type="moveL" id="e/VXC5|nH#t{_deZ-rCS" data-blockNo="1">
+                                                <mutation timeout="60000"></mutation>
+                                                <field name="point_name_list">P1</field>
+                                                <field name="control_x">enable</field>
+                                                <field name="control_y">enable</field>
+                                                <field name="control_z">enable</field>
+                                                <field name="control_rz">enable</field>
+                                                <field name="control_ry">enable</field>
+                                                <field name="control_rx">enable</field>
+                                                <field name="pallet_list">none</field>
+                                                <field name="camera_list">none</field>
+                                                <next>
+                                                  <block type="set_output" id="(VgS`f3U^vU;#_]Ommr3" data-blockNo="1">
+                                                    <mutation timeout="60000"></mutation>
+                                                    <field name="output_pin_name">0</field>
+                                                    <field name="out_state">on</field>
+                                                    <next>
+                                                      <block type="moveP" id="ovBIvz#%Unz2gBuwTBFH" data-blockNo="1">
+                                                        <mutation timeout="60000"></mutation>
+                                                        <field name="point_name_list">P2</field>
+                                                        <field name="control_x">enable</field>
+                                                        <field name="control_y">enable</field>
+                                                        <field name="control_z">enable</field>
+                                                        <field name="control_rz">enable</field>
+                                                        <field name="control_ry">enable</field>
+                                                        <field name="control_rx">enable</field>
+                                                        <field name="pallet_list">none</field>
+                                                        <field name="camera_list">none</field>
+                                                        <next>
+                                                          <block type="set_output" id="$o8vfFWaA?6=AY1@BG`c" data-blockNo="2">
+                                                            <mutation timeout="60000"></mutation>
+                                                            <field name="output_pin_name">0</field>
+                                                            <field name="out_state">on</field>
+                                                            <next>
+                                                              <block type="moveL" id="JJ@NB!`kK[nu~x`EOoc@" data-blockNo="2">
+                                                                <mutation timeout="60000"></mutation>
+                                                                <field name="point_name_list">P3</field>
+                                                                <field name="control_x">enable</field>
+                                                                <field name="control_y">enable</field>
+                                                                <field name="control_z">enable</field>
+                                                                <field name="control_rz">enable</field>
+                                                                <field name="control_ry">enable</field>
+                                                                <field name="control_rx">enable</field>
+                                                                <field name="pallet_list">none</field>
+                                                                <field name="camera_list">none</field>
+                                                                <next>
+                                                                  <block type="set_output" id="[GQvSq?[246+1-Zy#3VQ" data-blockNo="3">
+                                                                    <mutation timeout="60000"></mutation>
+                                                                    <field name="output_pin_name">0</field>
+                                                                    <field name="out_state">on</field>
+                                                                    <next>
+                                                                      <block type="set_output" id="#G3;^X|{HGQ.aLS*A6Ko" data-blockNo="4">
+                                                                        <mutation timeout="60000"></mutation>
+                                                                        <field name="output_pin_name">0</field>
+                                                                        <field name="out_state">on</field>
+                                                                        <next>
+                                                                          <block type="return" id="fL`Rgv#jyahwER_g5$J$" data-blockNo="1">
+                                                                            <mutation timeout="60000"></mutation>
+                                                                          </block>
+                                                                        </next>
+                                                                      </block>
+                                                                    </next>
+                                                                  </block>
+                                                                </next>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </statement>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+  <block type="start_thread" id="MCu6Q6XmK0mN]LSZxMII" x="690" y="-10" data-blockNo="1">
+    <value name="condition">
+      <block type="logic_boolean" id="Xg*0PasD3p/Oy@^7-=rT" data-blockNo="1">
+        <field name="BOOL">TRUE</field>
+      </block>
+    </value>
+    <statement name="DO">
+      <block type="connect_external_io" id="*l$Bt*LXp|9wPKRQ))L1" data-blockNo="1">
+        <mutation timeout="60000"></mutation>
+        <field name="devive_name">DIO000</field>
+        <field name="external_maker">contec</field>
+        <field name="io_no">1</field>
+        <next>
+          <block type="set_external_io_output" id=".w4X/vgiu`J~Jp-YN=Zn" data-blockNo="1">
+            <mutation timeout="60000"></mutation>
+            <field name="io_no">1</field>
+            <field name="output_pin_name">11</field>
+            <field name="out_state">on</field>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="create_event" id="H6!^W06OHh@e:33qiJZ]" x="10" y="630" data-blockNo="1">
+    <statement name="EVENT">
+      <block type="stop_robot_upon" id="dI(bh3nS=Fai%jm?S+)t" data-blockNo="1">
+        <mutation timeout="60000"></mutation>
+        <field name="trigger_condition">steady</field>
+        <value name="condition">
+          <block type="logic_negate" id="ldI~2!}m5R_K4oT0uW2G" data-blockNo="1">
+            <value name="BOOL">
+              <block type="logic_operation" id="2Ki8O-XuBCq(UWF^uR_V" data-blockNo="1">
+                <field name="OP">AND</field>
+                <value name="A">
+                  <block type="logic_operation" id="nqq,6DMc%^XKa2gd253D" data-blockNo="1">
+                    <field name="OP">AND</field>
+                    <value name="A">
+                      <block type="external_io" id="81oDC1?4=mfT#15`H-^L" data-blockNo="1">
+                        <field name="io_no">1</field>
+                        <field name="input_pin_name">11</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="external_io" id=",FIE0.wRpG%[aQAJ]sc)" data-blockNo="1">
+                        <field name="io_no">1</field>
+                        <field name="input_pin_name">12</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="logic_operation" id="LqAid}EIW9g-%U{+7f?M" data-blockNo="1">
+                    <field name="OP">AND</field>
+                    <value name="A">
+                      <block type="external_io" id="ZrZT=v2,yw8f=sZW~wQ4" data-blockNo="1">
+                        <field name="io_no">1</field>
+                        <field name="input_pin_name">13</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="external_io" id="j;1p3Z*7qw0@1GlX?)V@" data-blockNo="1">
+                        <field name="io_no">1</field>
+                        <field name="input_pin_name">14</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </value>
+          </block>
+        </value>
+        <next>
+          <block type="raise_error_upon" id="rsQ?U,GZZtRQW;BU-:!!" data-blockNo="1">
+            <mutation timeout="60000"></mutation>
+            <field name="error_message">errorMessage</field>
+            <field name="trigger_condition">rising</field>
+            <value name="condition">
+              <block type="external_io" id="A~NAMk1/R~~?DanSl6+i" data-blockNo="1">
+                <field name="io_no">1</field>
+                <field name="input_pin_name">0</field>
+              </block>
+            </value>
+            <next>
+              <block type="set_external_io_output_upon" id="m|JeWvTYl.5wR7-2jOI9" data-blockNo="1">
+                <mutation timeout="60000"></mutation>
+                <field name="io_no">1</field>
+                <field name="output_pin_name">12</field>
+                <field name="out_state">500msec</field>
+                <field name="trigger_condition">steady</field>
+                <value name="condition">
+                  <block type="logic_custom_flag" id="9(@/Y+7(NQEGoUzC=jpv" data-blockNo="1">
+                    <field name="name">F483</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="set_external_io_output_upon" id="*_|~GaI2NfvFT},)+/C+" data-blockNo="2">
+                    <mutation timeout="60000"></mutation>
+                    <field name="io_no">1</field>
+                    <field name="output_pin_name">13</field>
+                    <field name="out_state">on</field>
+                    <field name="trigger_condition">rising</field>
+                    <value name="condition">
+                      <block type="logic_custom_flag" id="16V0p/=,#0]x]aY7O@E+" data-blockNo="1">
+                        <field name="name">F482</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="set_external_io_output_upon" id="!6,w`e83w9V@rE(IgbcR" data-blockNo="3">
+                        <mutation timeout="60000"></mutation>
+                        <field name="io_no">1</field>
+                        <field name="output_pin_name">13</field>
+                        <field name="out_state">off</field>
+                        <field name="trigger_condition">falling</field>
+                        <value name="condition">
+                          <block type="logic_custom_flag" id="SH{b?LKBH^D@keRQENLi" data-blockNo="1">
+                            <field name="name">F482</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="set_external_io_output_upon" id="?-[d{#%(kK`]HWUf8b?]" data-blockNo="4">
+                            <mutation timeout="60000"></mutation>
+                            <field name="io_no">1</field>
+                            <field name="output_pin_name">14</field>
+                            <field name="out_state">on</field>
+                            <field name="trigger_condition">rising</field>
+                            <value name="condition">
+                              <block type="logic_custom_flag" id="=xlx_T[tCUQYX#k6~wPd" data-blockNo="1">
+                                <field name="name">F481</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="set_external_io_output_upon" id="Kr(s=g;q#39:M`.;?MAL" data-blockNo="5">
+                                <mutation timeout="60000"></mutation>
+                                <field name="io_no">1</field>
+                                <field name="output_pin_name">14</field>
+                                <field name="out_state">off</field>
+                                <field name="trigger_condition">falling</field>
+                                <value name="condition">
+                                  <block type="logic_custom_flag" id=")=|@PULhuVDh2b2(gxG`" data-blockNo="1">
+                                    <field name="name">F481</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

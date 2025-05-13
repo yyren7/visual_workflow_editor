@@ -1,0 +1,153 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="D6U$]#o_;j,x(n|?ylyD" editable="false" x="-170" y="-110" data-blockNo="1">
+    <mutation timeout="600000"></mutation>
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="set_motor" id="ngRpm(+*uK945Pg(1l:8" data-blockNo="1">
+        <mutation timeout="60000"></mutation>
+        <field name="state_list">on</field>
+        <next>
+          <block type="loop" id="x+b^92,WZV.#^_Hn]!px" data-blockNo="1">
+            <statement name="DO">
+              <block type="wait_input" id=")MOrOcn~+XGc,tGdr+[t" data-blockNo="1">
+                <mutation timeout="60000"></mutation>
+                <field name="input_pin_name">10</field>
+                <field name="input_state">on</field>
+                <next>
+                  <block type="set_output" id="wzyikQYQ$x#Y(},leet^" data-blockNo="1">
+                    <mutation timeout="60000"></mutation>
+                    <field name="output_pin_name">2</field>
+                    <field name="out_state">on</field>
+                    <next>
+                      <block type="wait_timer" id="C$7[$v0yyo9W?V7@Rey*" data-blockNo="1">
+                        <mutation timeout="60000"></mutation>
+                        <field name="name">N484</field>
+                        <next>
+                          <block type="wait_input" id="S[kLT{dl@Em=DOJ]x=pK" data-blockNo="3">
+                            <mutation timeout="60000"></mutation>
+                            <field name="input_pin_name">3</field>
+                            <field name="input_state">off</field>
+                            <next>
+                              <block type="set_output" id="_n^Iy?E3DQQn??ahdl:=" data-blockNo="2">
+                                <mutation timeout="60000"></mutation>
+                                <field name="output_pin_name">2</field>
+                                <field name="out_state">off</field>
+                                <next>
+                                  <block type="wait_input" id="!AJng3LLu91BMlNs7%#?" data-blockNo="4">
+                                    <mutation timeout="60000"></mutation>
+                                    <field name="input_pin_name">2</field>
+                                    <field name="input_state">on</field>
+                                    <next>
+                                      <block type="moveL" id="{~0PWq3%-@P}7G|F2jAA" data-blockNo="1">
+                                        <mutation timeout="60000"></mutation>
+                                        <field name="point_name_list">P1</field>
+                                        <field name="control_x">enable</field>
+                                        <field name="control_y">enable</field>
+                                        <field name="control_z">enable</field>
+                                        <field name="control_rz">enable</field>
+                                        <field name="control_ry">enable</field>
+                                        <field name="control_rx">enable</field>
+                                        <field name="pallet_list">none</field>
+                                        <field name="camera_list">none</field>
+                                        <next>
+                                          <block type="moveP" id="+Wiv%Q5f=PMnhb^4SzGm" data-blockNo="1">
+                                            <mutation timeout="60000"></mutation>
+                                            <field name="point_name_list">P2</field>
+                                            <field name="control_x">enable</field>
+                                            <field name="control_y">enable</field>
+                                            <field name="control_z">enable</field>
+                                            <field name="control_rz">enable</field>
+                                            <field name="control_ry">enable</field>
+                                            <field name="control_rx">enable</field>
+                                            <field name="pallet_list">none</field>
+                                            <field name="camera_list">none</field>
+                                            <next>
+                                              <block type="moveL" id="{)etaWs)]NoxCGV,:|Ob" data-blockNo="2">
+                                                <mutation timeout="60000"></mutation>
+                                                <field name="point_name_list">P3</field>
+                                                <field name="control_x">enable</field>
+                                                <field name="control_y">enable</field>
+                                                <field name="control_z">enable</field>
+                                                <field name="control_rz">enable</field>
+                                                <field name="control_ry">enable</field>
+                                                <field name="control_rx">enable</field>
+                                                <field name="pallet_list">none</field>
+                                                <field name="camera_list">none</field>
+                                                <next>
+                                                  <block type="moveL" id="Lt}[F0,eBBVE8u~UB$v5" data-blockNo="3">
+                                                    <mutation timeout="60000"></mutation>
+                                                    <field name="point_name_list">P4</field>
+                                                    <field name="control_x">enable</field>
+                                                    <field name="control_y">enable</field>
+                                                    <field name="control_z">enable</field>
+                                                    <field name="control_rz">enable</field>
+                                                    <field name="control_ry">enable</field>
+                                                    <field name="control_rx">enable</field>
+                                                    <field name="pallet_list">none</field>
+                                                    <field name="camera_list">none</field>
+                                                    <next>
+                                                      <block type="moveL" id="RJ~1TaY}VbB`Qo9;66Z]" data-blockNo="4">
+                                                        <mutation timeout="60000"></mutation>
+                                                        <field name="point_name_list">P5</field>
+                                                        <field name="control_x">enable</field>
+                                                        <field name="control_y">enable</field>
+                                                        <field name="control_z">enable</field>
+                                                        <field name="control_rz">enable</field>
+                                                        <field name="control_ry">enable</field>
+                                                        <field name="control_rx">enable</field>
+                                                        <field name="pallet_list">none</field>
+                                                        <field name="camera_list">none</field>
+                                                        <next>
+                                                          <block type="moveL" id="B*7OQIo@RoLv7l~?Mie0" data-blockNo="5">
+                                                            <mutation timeout="60000"></mutation>
+                                                            <field name="point_name_list">P6</field>
+                                                            <field name="control_x">enable</field>
+                                                            <field name="control_y">enable</field>
+                                                            <field name="control_z">enable</field>
+                                                            <field name="control_rz">enable</field>
+                                                            <field name="control_ry">enable</field>
+                                                            <field name="control_rx">enable</field>
+                                                            <field name="pallet_list">none</field>
+                                                            <field name="camera_list">none</field>
+                                                            <next>
+                                                              <block type="wait_input" id="}rxn0VjT*uY#[enbIZFK" data-blockNo="2">
+                                                                <mutation timeout="60000"></mutation>
+                                                                <field name="input_pin_name">11</field>
+                                                                <field name="input_state">on</field>
+                                                                <next>
+                                                                  <block type="return" id="2X/ath)9n0C(D6{VV1@[" data-blockNo="1">
+                                                                    <mutation timeout="60000"></mutation>
+                                                                  </block>
+                                                                </next>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </statement>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

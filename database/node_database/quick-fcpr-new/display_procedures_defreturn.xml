@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<block type="display_procedures_defreturn">
+  <field name="NAME" type="text" valid="any">functionName</field>
+  <statement name="DO" type="statement">  
+    <!-- 这里可以嵌套其他块 -->
+  </statement>
+  <meta>
+    <description>定义一个带返回值的自定义函数块</description>
+    <variable>
+      <name>NAME</name>
+      <type>text</type>
+      <valid>任意字符串</valid>
+      <example>myFunction</example>
+    </variable>
+    <input>
+      <name>DO</name>
+      <type>statement</type>
+      <valid>可嵌套任意语句块</valid>
+    </input>
+  </meta>
+</block> 

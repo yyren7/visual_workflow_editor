@@ -1,0 +1,1034 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="start_thread" id="pq?O1KIxDF)cD`Y?-6f1" x="950" y="-270" data-blockNo="1">
+    <value name="condition">
+      <block type="logic_boolean" id="?52qC;FG??~Pi(Xy%adi" data-blockNo="1">
+        <field name="BOOL">TRUE</field>
+      </block>
+    </value>
+    <statement name="DO">
+      <block type="connect_external_io" id="5#L{(h2l!1uSfhAi*lJ4" data-blockNo="1">
+        <mutation timeout="60000"></mutation>
+        <field name="devive_name">DIO000</field>
+        <field name="external_maker">contec</field>
+        <field name="io_no">1</field>
+      </block>
+    </statement>
+  </block>
+  <block type="select_robot" id="D6U$]#o_;j,x(n|?ylyD" editable="false" x="-130" y="-110" data-blockNo="1">
+    <mutation timeout="600000"></mutation>
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="set_motor" id="ngRpm(+*uK945Pg(1l:8" data-blockNo="1">
+        <mutation timeout="60000"></mutation>
+        <field name="state_list">on</field>
+        <next>
+          <block type="loop" id="x+b^92,WZV.#^_Hn]!px" data-blockNo="1">
+            <statement name="DO">
+              <block type="moveP" id="Fuw8mB)+GBA:-%*Tc=@u" data-blockNo="1">
+                <mutation timeout="60000"></mutation>
+                <field name="point_name_list">P1</field>
+                <field name="control_x">enable</field>
+                <field name="control_y">enable</field>
+                <field name="control_z">enable</field>
+                <field name="control_rz">enable</field>
+                <field name="control_ry">enable</field>
+                <field name="control_rx">enable</field>
+                <field name="pallet_list">none</field>
+                <field name="camera_list">none</field>
+                <next>
+                  <block type="moveP" id=",2yH^ICxw|iVz)N%XM%7" data-blockNo="6">
+                    <mutation timeout="60000000"></mutation>
+                    <field name="point_name_list">P21</field>
+                    <field name="control_x">enable</field>
+                    <field name="control_y">enable</field>
+                    <field name="control_z">enable</field>
+                    <field name="control_rz">enable</field>
+                    <field name="control_ry">enable</field>
+                    <field name="control_rx">enable</field>
+                    <field name="pallet_list">none</field>
+                    <field name="camera_list">none</field>
+                    <next>
+                      <block type="moveP" id=":N%r^Sx(H}TGn7)H$@N{" data-blockNo="15">
+                        <mutation timeout="60000000"></mutation>
+                        <field name="point_name_list">P22</field>
+                        <field name="control_x">enable</field>
+                        <field name="control_y">enable</field>
+                        <field name="control_z">enable</field>
+                        <field name="control_rz">enable</field>
+                        <field name="control_ry">enable</field>
+                        <field name="control_rx">enable</field>
+                        <field name="pallet_list">none</field>
+                        <field name="camera_list">none</field>
+                        <next>
+                          <block type="procedures_callnoreturn" id="UGHu(Y@|2=E67^AK;blk" data-blockNo="8">
+                            <mutation name="Open_BRG&amp;PLT_Crump"></mutation>
+                            <next>
+                              <block type="moveP" id="~YPJ(06ieyn-)g0=IdOj" data-blockNo="16">
+                                <mutation timeout="60000000"></mutation>
+                                <field name="point_name_list">P23</field>
+                                <field name="control_x">enable</field>
+                                <field name="control_y">enable</field>
+                                <field name="control_z">enable</field>
+                                <field name="control_rz">enable</field>
+                                <field name="control_ry">enable</field>
+                                <field name="control_rx">enable</field>
+                                <field name="pallet_list">none</field>
+                                <field name="camera_list">none</field>
+                                <next>
+                                  <block type="wait_timer" id="T;6y!`?!_(5{G]k*:?|S" data-blockNo="5">
+                                    <mutation timeout="60000"></mutation>
+                                    <field name="name">N483</field>
+                                    <next>
+                                      <block type="procedures_callnoreturn" id="*m^;f!`L5{$Z|qORpmtf" data-blockNo="9">
+                                        <mutation name="Close_BRG&amp;PLT_Crump"></mutation>
+                                        <next>
+                                          <block type="moveP" id="}j/qbAW_%b57,6Zo|~Pz" data-blockNo="20">
+                                            <mutation timeout="60000000"></mutation>
+                                            <field name="point_name_list">P22</field>
+                                            <field name="control_x">enable</field>
+                                            <field name="control_y">enable</field>
+                                            <field name="control_z">enable</field>
+                                            <field name="control_rz">enable</field>
+                                            <field name="control_ry">enable</field>
+                                            <field name="control_rx">enable</field>
+                                            <field name="pallet_list">none</field>
+                                            <field name="camera_list">none</field>
+                                            <next>
+                                              <block type="moveP" id="Ari[F]q,?%alYGOE`Ysf" data-blockNo="21">
+                                                <mutation timeout="60000000"></mutation>
+                                                <field name="point_name_list">P21</field>
+                                                <field name="control_x">enable</field>
+                                                <field name="control_y">enable</field>
+                                                <field name="control_z">enable</field>
+                                                <field name="control_rz">enable</field>
+                                                <field name="control_ry">enable</field>
+                                                <field name="control_rx">enable</field>
+                                                <field name="pallet_list">none</field>
+                                                <field name="camera_list">none</field>
+                                                <next>
+                                                  <block type="moveP" id="|4wMd5Xxkik$y:wt]rD0" data-blockNo="17">
+                                                    <mutation timeout="60000"></mutation>
+                                                    <field name="point_name_list">P1</field>
+                                                    <field name="control_x">enable</field>
+                                                    <field name="control_y">enable</field>
+                                                    <field name="control_z">enable</field>
+                                                    <field name="control_rz">enable</field>
+                                                    <field name="control_ry">enable</field>
+                                                    <field name="control_rx">enable</field>
+                                                    <field name="pallet_list">none</field>
+                                                    <field name="camera_list">none</field>
+                                                    <next>
+                                                      <block type="moveP" id="Z)s0a+%k36Y!kcaY$MaG" data-blockNo="2">
+                                                        <mutation timeout="60000"></mutation>
+                                                        <field name="point_name_list">P31</field>
+                                                        <field name="control_x">enable</field>
+                                                        <field name="control_y">enable</field>
+                                                        <field name="control_z">enable</field>
+                                                        <field name="control_rz">enable</field>
+                                                        <field name="control_ry">enable</field>
+                                                        <field name="control_rx">enable</field>
+                                                        <field name="pallet_list">none</field>
+                                                        <field name="camera_list">none</field>
+                                                        <next>
+                                                          <block type="moveP" id="`jMh[%@.*[bGt#%SkxG?" data-blockNo="3">
+                                                            <mutation timeout="60000000"></mutation>
+                                                            <field name="point_name_list">P32</field>
+                                                            <field name="control_x">enable</field>
+                                                            <field name="control_y">enable</field>
+                                                            <field name="control_z">enable</field>
+                                                            <field name="control_rz">enable</field>
+                                                            <field name="control_ry">enable</field>
+                                                            <field name="control_rx">enable</field>
+                                                            <field name="pallet_list">none</field>
+                                                            <field name="camera_list">none</field>
+                                                            <next>
+                                                              <block type="procedures_callnoreturn" id="[SOKxNOt*=%$i^ppK-CG" data-blockNo="1">
+                                                                <mutation name="Open_BH_Crump"></mutation>
+                                                                <next>
+                                                                  <block type="moveP" id="9`Vy3whL)|%~^?|*v9YN" data-blockNo="4">
+                                                                    <mutation timeout="60000000"></mutation>
+                                                                    <field name="point_name_list">P33</field>
+                                                                    <field name="control_x">enable</field>
+                                                                    <field name="control_y">enable</field>
+                                                                    <field name="control_z">enable</field>
+                                                                    <field name="control_rz">enable</field>
+                                                                    <field name="control_ry">enable</field>
+                                                                    <field name="control_rx">enable</field>
+                                                                    <field name="pallet_list">none</field>
+                                                                    <field name="camera_list">none</field>
+                                                                    <next>
+                                                                      <block type="wait_timer" id="C8(F$dc:keuf/b(4C~!(" data-blockNo="1">
+                                                                        <mutation timeout="60000"></mutation>
+                                                                        <field name="name">N483</field>
+                                                                        <next>
+                                                                          <block type="procedures_callnoreturn" id="FOYjh4RYiVby41Y4uG;~" data-blockNo="2">
+                                                                            <mutation name="Close_BH_Crump"></mutation>
+                                                                            <next>
+                                                                              <block type="moveP" id="$F=K/_x8e67-Ix/B$A-6" data-blockNo="5">
+                                                                                <mutation timeout="60000000"></mutation>
+                                                                                <field name="point_name_list">P32</field>
+                                                                                <field name="control_x">enable</field>
+                                                                                <field name="control_y">enable</field>
+                                                                                <field name="control_z">enable</field>
+                                                                                <field name="control_rz">enable</field>
+                                                                                <field name="control_ry">enable</field>
+                                                                                <field name="control_rx">enable</field>
+                                                                                <field name="pallet_list">none</field>
+                                                                                <field name="camera_list">none</field>
+                                                                                <next>
+                                                                                  <block type="moveP" id="$,5`tkZJB4+gO!@j,RnQ" data-blockNo="18">
+                                                                                    <mutation timeout="60000"></mutation>
+                                                                                    <field name="point_name_list">P31</field>
+                                                                                    <field name="control_x">enable</field>
+                                                                                    <field name="control_y">enable</field>
+                                                                                    <field name="control_z">enable</field>
+                                                                                    <field name="control_rz">enable</field>
+                                                                                    <field name="control_ry">enable</field>
+                                                                                    <field name="control_rx">enable</field>
+                                                                                    <field name="pallet_list">none</field>
+                                                                                    <field name="camera_list">none</field>
+                                                                                    <next>
+                                                                                      <block type="moveP" id="eAXq[sd+6k]`U@o/=F^@" data-blockNo="14">
+                                                                                        <mutation timeout="60000"></mutation>
+                                                                                        <field name="point_name_list">P1</field>
+                                                                                        <field name="control_x">enable</field>
+                                                                                        <field name="control_y">enable</field>
+                                                                                        <field name="control_z">enable</field>
+                                                                                        <field name="control_rz">enable</field>
+                                                                                        <field name="control_ry">enable</field>
+                                                                                        <field name="control_rx">enable</field>
+                                                                                        <field name="pallet_list">none</field>
+                                                                                        <field name="camera_list">none</field>
+                                                                                        <next>
+                                                                                          <block type="moveP" id="2F-[6N]a2E%4Md[JwrpB" data-blockNo="7">
+                                                                                            <mutation timeout="60000"></mutation>
+                                                                                            <field name="point_name_list">P11</field>
+                                                                                            <field name="control_x">enable</field>
+                                                                                            <field name="control_y">enable</field>
+                                                                                            <field name="control_z">enable</field>
+                                                                                            <field name="control_rz">enable</field>
+                                                                                            <field name="control_ry">enable</field>
+                                                                                            <field name="control_rx">enable</field>
+                                                                                            <field name="pallet_list">none</field>
+                                                                                            <field name="camera_list">none</field>
+                                                                                            <next>
+                                                                                              <block type="moveP" id="p{aN~w3?BT6_29D~-zaR" data-blockNo="8">
+                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                <field name="point_name_list">P14</field>
+                                                                                                <field name="control_x">enable</field>
+                                                                                                <field name="control_y">enable</field>
+                                                                                                <field name="control_z">enable</field>
+                                                                                                <field name="control_rz">enable</field>
+                                                                                                <field name="control_ry">enable</field>
+                                                                                                <field name="control_rx">enable</field>
+                                                                                                <field name="pallet_list">none</field>
+                                                                                                <field name="camera_list">none</field>
+                                                                                                <next>
+                                                                                                  <block type="moveP" id="1}SR4a2C~KNQ*oa-zXS/" data-blockNo="9">
+                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                    <field name="point_name_list">P15</field>
+                                                                                                    <field name="control_x">enable</field>
+                                                                                                    <field name="control_y">enable</field>
+                                                                                                    <field name="control_z">enable</field>
+                                                                                                    <field name="control_rz">enable</field>
+                                                                                                    <field name="control_ry">enable</field>
+                                                                                                    <field name="control_rx">enable</field>
+                                                                                                    <field name="pallet_list">none</field>
+                                                                                                    <field name="camera_list">none</field>
+                                                                                                    <next>
+                                                                                                      <block type="procedures_callnoreturn" id="U4zwapSQwOn}T7cJuYnA" data-blockNo="3">
+                                                                                                        <mutation name="Open_BH_Crump"></mutation>
+                                                                                                        <next>
+                                                                                                          <block type="wait_timer" id="c,#XP`oPjHxM/==JX*kK" data-blockNo="4">
+                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                            <field name="name">N483</field>
+                                                                                                            <next>
+                                                                                                              <block type="moveP" id="?AcK!_[}gjYeR/9rb%d7" data-blockNo="19">
+                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                <field name="point_name_list">P14</field>
+                                                                                                                <field name="control_x">enable</field>
+                                                                                                                <field name="control_y">enable</field>
+                                                                                                                <field name="control_z">enable</field>
+                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                <field name="camera_list">none</field>
+                                                                                                                <next>
+                                                                                                                  <block type="moveP" id="F-;evPHBoWFcRd~[s-o-" data-blockNo="10">
+                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                    <field name="point_name_list">P13</field>
+                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                    <next>
+                                                                                                                      <block type="moveP" id=")9a(7]y_~$V6D?V-Q`Et" data-blockNo="11">
+                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                        <field name="point_name_list">P16</field>
+                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                        <next>
+                                                                                                                          <block type="moveP" id=";L!TX1O2Uj8ij,!Bx*%=" data-blockNo="12">
+                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                            <field name="point_name_list">P17</field>
+                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                            <next>
+                                                                                                                              <block type="procedures_callnoreturn" id="8oG*R}l}{I4G8?gl11`i" data-blockNo="10">
+                                                                                                                                <mutation name="Open_BRG&amp;PLT_Crump"></mutation>
+                                                                                                                                <next>
+                                                                                                                                  <block type="wait_timer" id="poY!]F!~7hZLa|dms=^1" data-blockNo="14">
+                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                    <field name="name">N483</field>
+                                                                                                                                    <next>
+                                                                                                                                      <block type="moveP" id="I6L*ZoClH;PPlW%d4JF2" data-blockNo="13">
+                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                        <field name="point_name_list">P16</field>
+                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                        <next>
+                                                                                                                                          <block type="moveP" id="}`:|{Nb~Dh{Nd7.D?bQ_" data-blockNo="22">
+                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                            <field name="point_name_list">P12</field>
+                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                            <next>
+                                                                                                                                              <block type="moveP" id="Hf({kAVpqMmwxhP2fTfy" data-blockNo="23">
+                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                <field name="point_name_list">P11</field>
+                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                <next>
+                                                                                                                                                  <block type="wait_timer" id="Htc.~dmwuActWU)Hd=ao" data-blockNo="6">
+                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                    <field name="name">N483</field>
+                                                                                                                                                    <next>
+                                                                                                                                                      <block type="moveP" id="b-oqrMGat1)+2+Ma]OS@" data-blockNo="24">
+                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                        <field name="point_name_list">P14</field>
+                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                        <next>
+                                                                                                                                                          <block type="moveP" id="9Y#i.!Isz}JM~FEZ6urD" data-blockNo="25">
+                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                            <field name="point_name_list">P15</field>
+                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                            <next>
+                                                                                                                                                              <block type="procedures_callnoreturn" id="Hl%!a|d/0x)JfnnbQ6ZG" data-blockNo="4">
+                                                                                                                                                                <mutation name="Close_BH_Crump"></mutation>
+                                                                                                                                                                <next>
+                                                                                                                                                                  <block type="wait_timer" id="|/SNeNOjO~(^idEl:.BS" data-blockNo="11">
+                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                    <field name="name">N483</field>
+                                                                                                                                                                    <next>
+                                                                                                                                                                      <block type="moveP" id="JkUz1-P@~dU!nIf)+XfH" data-blockNo="26">
+                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                        <field name="point_name_list">P14</field>
+                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                        <next>
+                                                                                                                                                                          <block type="moveP" id="nzQNo)7kw!xyW1KgIAbw" data-blockNo="27">
+                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                            <field name="point_name_list">P11</field>
+                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                            <next>
+                                                                                                                                                                              <block type="moveP" id="_+VXDY,BROZ$u:l*N{%G" data-blockNo="28">
+                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                <field name="point_name_list">P1</field>
+                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                <next>
+                                                                                                                                                                                  <block type="moveP" id="]E!]nxX:@G.!YG]DU+6|" data-blockNo="29">
+                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                    <field name="point_name_list">P41</field>
+                                                                                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                                                                                    <next>
+                                                                                                                                                                                      <block type="moveP" id="S`_{t-Z%ii-3:L9E@TUV" data-blockNo="30">
+                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                        <field name="point_name_list">P42</field>
+                                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                                        <next>
+                                                                                                                                                                                          <block type="moveP" id="DbFn_|f4SCz3_|MG`Kl]" data-blockNo="31">
+                                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                                            <field name="point_name_list">P43</field>
+                                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                                            <next>
+                                                                                                                                                                                              <block type="procedures_callnoreturn" id="Ic1PsIHqa=je8SVi}Dj=" data-blockNo="5">
+                                                                                                                                                                                                <mutation name="Open_BH_Crump"></mutation>
+                                                                                                                                                                                                <next>
+                                                                                                                                                                                                  <block type="wait_timer" id="*zDTfq_G$am8`K#z2bsu" data-blockNo="7">
+                                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                    <field name="name">N483</field>
+                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                      <block type="moveP" id="5oj_.Xy)/atu%1R/(~t$" data-blockNo="32">
+                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                        <field name="point_name_list">P42</field>
+                                                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                          <block type="moveP" id="R#bskPM^Jabkf8H)^M:[" data-blockNo="33">
+                                                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                            <field name="point_name_list">P41</field>
+                                                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                              <block type="moveP" id="Ct0+l]@N_?.6Bdb^pyRd" data-blockNo="34">
+                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                <field name="point_name_list">P34</field>
+                                                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                  <block type="moveP" id="HuHHh.g=yj=AChGfc?Sk" data-blockNo="35">
+                                                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                    <field name="point_name_list">P35</field>
+                                                                                                                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                      <block type="moveP" id=",*hCh,G$cq!F0ys_K4+M" data-blockNo="36">
+                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                        <field name="point_name_list">P36</field>
+                                                                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                                          <block type="procedures_callnoreturn" id="F*~,}Be|w{4t.%+y*1C_" data-blockNo="13">
+                                                                                                                                                                                                                            <mutation name="Close_BRG&amp;PLT_Crump"></mutation>
+                                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                                              <block type="wait_timer" id="r@r@4EhQ0f_xB1p|y`c*" data-blockNo="9">
+                                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                <field name="name">N483</field>
+                                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                                  <block type="moveP" id="_!C?@|Cv=.*4Y4-CIkjy" data-blockNo="37">
+                                                                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                    <field name="point_name_list">P35</field>
+                                                                                                                                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                                      <block type="moveP" id="wY099b-`gihCZ7esA=D!" data-blockNo="38">
+                                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                        <field name="point_name_list">P34</field>
+                                                                                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                                                          <block type="moveP" id="VPr;ECbwY0RmN@,B$5tA" data-blockNo="39">
+                                                                                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                            <field name="point_name_list">P37</field>
+                                                                                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                                                              <block type="moveP" id="Y*8*K^VNIyQb?hzDV)N`" data-blockNo="40">
+                                                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                <field name="point_name_list">P38</field>
+                                                                                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                                                  <block type="procedures_callnoreturn" id="5w]?;3!j]!Q/pWv#@A{j" data-blockNo="14">
+                                                                                                                                                                                                                                                    <mutation name="Open_BRG&amp;PLT_Crump"></mutation>
+                                                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                                                      <block type="wait_timer" id="(n9+QUAs~#_FZQw@0*,2" data-blockNo="10">
+                                                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                        <field name="name">N483</field>
+                                                                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                                                                          <block type="moveP" id="{jB42JY)xs|GEs.)3s#4" data-blockNo="41">
+                                                                                                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                            <field name="point_name_list">P37</field>
+                                                                                                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                                                                              <block type="moveP" id="z$C~y~i[+@i}jFe0a]xJ" data-blockNo="42">
+                                                                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                <field name="point_name_list">P34</field>
+                                                                                                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                                                                  <block type="moveP" id=".i^p|q77*d=5ge5|Ld=w" data-blockNo="43">
+                                                                                                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                    <field name="point_name_list">P34</field>
+                                                                                                                                                                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                                                                      <block type="moveP" id="A?03^M;-lNCelp$XKSIR" data-blockNo="44">
+                                                                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                        <field name="point_name_list">P41</field>
+                                                                                                                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                                                                                          <block type="moveP" id="M?;/{Qk20A`,rZJ;;O,t" data-blockNo="45">
+                                                                                                                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                            <field name="point_name_list">P42</field>
+                                                                                                                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                                                                                              <block type="moveP" id="KCl4d=)piyhbxtnJz7@F" data-blockNo="46">
+                                                                                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                <field name="point_name_list">P43</field>
+                                                                                                                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                                                                                  <block type="procedures_callnoreturn" id="7L9lP8#l5P.t]kUb(yh[" data-blockNo="6">
+                                                                                                                                                                                                                                                                                    <mutation name="Close_BH_Crump"></mutation>
+                                                                                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                                                                                      <block type="wait_timer" id="06r4nfFf|WCDU/hy/8BT" data-blockNo="8">
+                                                                                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                        <field name="name">N483</field>
+                                                                                                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                                                                                                          <block type="moveP" id="BD;e05q}Ov/C.:,To(K." data-blockNo="47">
+                                                                                                                                                                                                                                                                                            <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                            <field name="point_name_list">P42</field>
+                                                                                                                                                                                                                                                                                            <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                            <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                            <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                            <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                            <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                            <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                            <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                            <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                                                                                                              <block type="moveP" id="7oT/75[x=jqDLMV#w$d#" data-blockNo="48">
+                                                                                                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                                <field name="point_name_list">P41</field>
+                                                                                                                                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                                                                                                  <block type="moveP" id="Nu!4a3cij*@=M|(TCEwQ" data-blockNo="49">
+                                                                                                                                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                                    <field name="point_name_list">P39</field>
+                                                                                                                                                                                                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                                                                                                      <block type="moveP" id="`O#@Fo8hVkpgnfr79#?4" data-blockNo="50">
+                                                                                                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                                        <field name="point_name_list">P40</field>
+                                                                                                                                                                                                                                                                                                        <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                                        <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                                        <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                                        <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                                        <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                                        <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                                        <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                                        <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                                        <next>
+                                                                                                                                                                                                                                                                                                          <block type="procedures_callnoreturn" id="rp@3LI%3S#wr]whCDVIE" data-blockNo="7">
+                                                                                                                                                                                                                                                                                                            <mutation name="Open_BH_Crump"></mutation>
+                                                                                                                                                                                                                                                                                                            <next>
+                                                                                                                                                                                                                                                                                                              <block type="moveP" id="`9whTG@mol7EG^eWCtwT" data-blockNo="51">
+                                                                                                                                                                                                                                                                                                                <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                                                <field name="point_name_list">P39</field>
+                                                                                                                                                                                                                                                                                                                <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                                                <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                                                <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                                                <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                                                <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                                                <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                                                <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                                                <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                                                <next>
+                                                                                                                                                                                                                                                                                                                  <block type="moveP" id="P9b:7gqG;~V$-Z}b4|y`" data-blockNo="52">
+                                                                                                                                                                                                                                                                                                                    <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                                                    <field name="point_name_list">P1</field>
+                                                                                                                                                                                                                                                                                                                    <field name="control_x">enable</field>
+                                                                                                                                                                                                                                                                                                                    <field name="control_y">enable</field>
+                                                                                                                                                                                                                                                                                                                    <field name="control_z">enable</field>
+                                                                                                                                                                                                                                                                                                                    <field name="control_rz">enable</field>
+                                                                                                                                                                                                                                                                                                                    <field name="control_ry">enable</field>
+                                                                                                                                                                                                                                                                                                                    <field name="control_rx">enable</field>
+                                                                                                                                                                                                                                                                                                                    <field name="pallet_list">none</field>
+                                                                                                                                                                                                                                                                                                                    <field name="camera_list">none</field>
+                                                                                                                                                                                                                                                                                                                    <next>
+                                                                                                                                                                                                                                                                                                                      <block type="return" id="2X/ath)9n0C(D6{VV1@[" data-blockNo="1">
+                                                                                                                                                                                                                                                                                                                        <mutation timeout="60000"></mutation>
+                                                                                                                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                                </next>
+                                                                                                                                                                                                              </block>
+                                                                                                                                                                                                            </next>
+                                                                                                                                                                                                          </block>
+                                                                                                                                                                                                        </next>
+                                                                                                                                                                                                      </block>
+                                                                                                                                                                                                    </next>
+                                                                                                                                                                                                  </block>
+                                                                                                                                                                                                </next>
+                                                                                                                                                                                              </block>
+                                                                                                                                                                                            </next>
+                                                                                                                                                                                          </block>
+                                                                                                                                                                                        </next>
+                                                                                                                                                                                      </block>
+                                                                                                                                                                                    </next>
+                                                                                                                                                                                  </block>
+                                                                                                                                                                                </next>
+                                                                                                                                                                              </block>
+                                                                                                                                                                            </next>
+                                                                                                                                                                          </block>
+                                                                                                                                                                        </next>
+                                                                                                                                                                      </block>
+                                                                                                                                                                    </next>
+                                                                                                                                                                  </block>
+                                                                                                                                                                </next>
+                                                                                                                                                              </block>
+                                                                                                                                                            </next>
+                                                                                                                                                          </block>
+                                                                                                                                                        </next>
+                                                                                                                                                      </block>
+                                                                                                                                                    </next>
+                                                                                                                                                  </block>
+                                                                                                                                                </next>
+                                                                                                                                              </block>
+                                                                                                                                            </next>
+                                                                                                                                          </block>
+                                                                                                                                        </next>
+                                                                                                                                      </block>
+                                                                                                                                    </next>
+                                                                                                                                  </block>
+                                                                                                                                </next>
+                                                                                                                              </block>
+                                                                                                                            </next>
+                                                                                                                          </block>
+                                                                                                                        </next>
+                                                                                                                      </block>
+                                                                                                                    </next>
+                                                                                                                  </block>
+                                                                                                                </next>
+                                                                                                              </block>
+                                                                                                            </next>
+                                                                                                          </block>
+                                                                                                        </next>
+                                                                                                      </block>
+                                                                                                    </next>
+                                                                                                  </block>
+                                                                                                </next>
+                                                                                              </block>
+                                                                                            </next>
+                                                                                          </block>
+                                                                                        </next>
+                                                                                      </block>
+                                                                                    </next>
+                                                                                  </block>
+                                                                                </next>
+                                                                              </block>
+                                                                            </next>
+                                                                          </block>
+                                                                        </next>
+                                                                      </block>
+                                                                    </next>
+                                                                  </block>
+                                                                </next>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </statement>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+  <block type="create_event" id="X{`Ud{~yN0Os|SIj#@;J" x="950" y="-130" data-blockNo="1">
+    <statement name="EVENT">
+      <block type="set_external_io_output_upon" id="IVEXumhcOV6E$0Vc,%$A" data-blockNo="1">
+        <mutation timeout="60000"></mutation>
+        <field name="io_no">1</field>
+        <field name="output_pin_name">14</field>
+        <field name="out_state">500msec</field>
+        <field name="trigger_condition">steady</field>
+        <value name="condition">
+          <block type="logic_custom_flag" id="e*7mrXUA2.-yKgC.t.1c" data-blockNo="1">
+            <field name="name">F481</field>
+          </block>
+        </value>
+        <next>
+          <block type="set_external_io_output_upon" id="Q]VBh!:!BfI_vFp_m5jT" data-blockNo="2">
+            <mutation timeout="60000"></mutation>
+            <field name="io_no">1</field>
+            <field name="output_pin_name">14</field>
+            <field name="out_state">off</field>
+            <field name="trigger_condition">falling</field>
+            <value name="condition">
+              <block type="logic_custom_flag" id="64Pv)2*R-;Ox~IT2UaZG" data-blockNo="1">
+                <field name="name">F481</field>
+              </block>
+            </value>
+            <next>
+              <block type="set_external_io_output_upon" id="6zX#.p-eW+R%=IAJaP@b" data-blockNo="3">
+                <mutation timeout="60000"></mutation>
+                <field name="io_no">1</field>
+                <field name="output_pin_name">12</field>
+                <field name="out_state">on</field>
+                <field name="trigger_condition">rising</field>
+                <value name="condition">
+                  <block type="logic_custom_flag" id="%QuZX:)K1-w69C*BT`ag" data-blockNo="1">
+                    <field name="name">F483</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="set_external_io_output_upon" id="an*G~PeDKDM|ZeP|KX1S" data-blockNo="4">
+                    <mutation timeout="60000"></mutation>
+                    <field name="io_no">1</field>
+                    <field name="output_pin_name">12</field>
+                    <field name="out_state">off</field>
+                    <field name="trigger_condition">falling</field>
+                    <value name="condition">
+                      <block type="logic_custom_flag" id="qn}!X2YF`)zQ~Swh2ynv" data-blockNo="1">
+                        <field name="name">F483</field>
+                      </block>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_defnoreturn" id="iPd-7$RSaQv!N};D/l5I" x="950" y="190" data-blockNo="1">
+    <field name="NAME">Open_BH_Crump</field>
+    <statement name="STACK">
+      <block type="wait_timer" id="+6]%NgxiX#VC)aRm|hvn" data-blockNo="3">
+        <mutation timeout="60000"></mutation>
+        <field name="name">N482</field>
+        <next>
+          <block type="set_output" id="{~Ky-,SwbW$s[t,tPx.g" data-blockNo="1">
+            <mutation timeout="60000"></mutation>
+            <field name="output_pin_name">1</field>
+            <field name="out_state">on</field>
+            <next>
+              <block type="wait_input" id="P,T]ydU/`vmVRXHX`h2A" data-blockNo="3">
+                <mutation timeout="60000"></mutation>
+                <field name="input_pin_name">0</field>
+                <field name="input_state">on</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_defnoreturn" id="zKEOxm?POaH50o[sLS:Q" x="950" y="390" data-blockNo="2">
+    <field name="NAME">Close_BH_Crump</field>
+    <statement name="STACK">
+      <block type="wait_timer" id="DkU^0=yTs17W.$[I|meX" data-blockNo="2">
+        <mutation timeout="60000"></mutation>
+        <field name="name">N482</field>
+        <next>
+          <block type="set_output" id=".RY:j3BWY4PDyEkt~:P," data-blockNo="2">
+            <mutation timeout="60000"></mutation>
+            <field name="output_pin_name">1</field>
+            <field name="out_state">off</field>
+            <next>
+              <block type="wait_input" id="pyl90xYJik?l?r!;|QAR" data-blockNo="2">
+                <mutation timeout="60000"></mutation>
+                <field name="input_pin_name">1</field>
+                <field name="input_state">on</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_defnoreturn" id="cZc{w-$Y6Z5,=^UG1o/M" x="1030" y="610" data-blockNo="3">
+    <field name="NAME">Open_BRG&amp;PLT_Crump</field>
+    <statement name="STACK">
+      <block type="wait_timer" id="!1n|;]GgalOgUeZ=+fVN" data-blockNo="12">
+        <mutation timeout="60000"></mutation>
+        <field name="name">N482</field>
+        <next>
+          <block type="set_output" id="O/xp*9_RBp?!Go2T@uNZ" data-blockNo="3">
+            <mutation timeout="60000"></mutation>
+            <field name="output_pin_name">2</field>
+            <field name="out_state">on</field>
+            <next>
+              <block type="wait_input" id="Kh4G^X%OePdx#28@8PZ%" data-blockNo="1">
+                <mutation timeout="60000"></mutation>
+                <field name="input_pin_name">2</field>
+                <field name="input_state">on</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_defnoreturn" id="z3xF#vz1/X%=*9X=XIY(" x="1070" y="810" data-blockNo="4">
+    <field name="NAME">Close_BRG&amp;PLT_Crump</field>
+    <statement name="STACK">
+      <block type="wait_timer" id="ssulib)|ven79CL-(i,@" data-blockNo="13">
+        <mutation timeout="60000"></mutation>
+        <field name="name">N482</field>
+        <next>
+          <block type="set_output" id="*.h,uAR}[|v.}.O*J#@)" data-blockNo="4">
+            <mutation timeout="60000"></mutation>
+            <field name="output_pin_name">2</field>
+            <field name="out_state">off</field>
+            <next>
+              <block type="wait_input" id="]Cz_2$8*wVw]o+tn=oXl" data-blockNo="4">
+                <mutation timeout="60000"></mutation>
+                <field name="input_pin_name">3</field>
+                <field name="input_state">on</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

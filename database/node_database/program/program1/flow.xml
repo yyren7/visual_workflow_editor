@@ -1,0 +1,138 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="O_@Ca5~3:ipsLu*2aSZs" editable="false" x="70" y="30" data-blockNo="1">
+    <mutation timeout="30000"></mutation>
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="wait_ready" id="]UUXgVI~m}uUAT+mCM?#" data-blockNo="1">
+        <mutation timeout="30000"></mutation>
+        <next>
+          <block type="set_motor" id=".nN./vESk:znhe6)IS/H" data-blockNo="1">
+            <mutation timeout="30000"></mutation>
+            <field name="state_list">on</field>
+            <next>
+              <block type="wait_run" id="[/ZMBMJQiD2aY|isZ~B9" data-blockNo="1">
+                <mutation timeout="30000"></mutation>
+                <next>
+                  <block type="controls_if" id="rHg3yw`,KdTwQaOkj!6O" data-blockNo="1">
+                    <mutation elseif="1"></mutation>
+                    <value name="IF0">
+                      <block type="logic_compare" id="UhbK!r{@Jx9j}rE!i5Rn" data-blockNo="1">
+                        <field name="OP">GTE</field>
+                        <value name="A">
+                          <block type="robot_position" id="YH5HH2_9I)M_YB}wuRdN" data-blockNo="1">
+                            <field name="axis">x</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="LGNEqW~{+bUQR`-UD::n" data-blockNo="1">
+                            <field name="NUM">0</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <statement name="DO0">
+                      <block type="moveP" id="g2K{PqVkobkB0z%m;?e." data-blockNo="1">
+                        <mutation timeout="30000"></mutation>
+                        <field name="point_name_list">P1</field>
+                        <field name="control_x">enable</field>
+                        <field name="control_y">enable</field>
+                        <field name="control_z">enable</field>
+                        <field name="control_rz">enable</field>
+                        <field name="control_ry">enable</field>
+                        <field name="control_rx">enable</field>
+                        <field name="pallet_list">none</field>
+                        <field name="camera_list">none</field>
+                      </block>
+                    </statement>
+                    <value name="IF1">
+                      <block type="logic_compare" id="[m0H)r^XGsftrYgR+pzF" data-blockNo="1">
+                        <field name="OP">LT</field>
+                        <value name="A">
+                          <block type="robot_position" id="nbrCSi-B|z?sAyF-Y{u;" data-blockNo="1">
+                            <field name="axis">x</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="PjmxPp#|1myO3$jtZh~c" data-blockNo="1">
+                            <field name="NUM">0</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <statement name="DO1">
+                      <block type="moveP" id=";SM|a:u@Fq5n;U1ENZ~z" data-blockNo="2">
+                        <mutation timeout="30000"></mutation>
+                        <field name="point_name_list">P2</field>
+                        <field name="control_x">enable</field>
+                        <field name="control_y">enable</field>
+                        <field name="control_z">enable</field>
+                        <field name="control_rz">enable</field>
+                        <field name="control_ry">enable</field>
+                        <field name="control_rx">enable</field>
+                        <field name="pallet_list">none</field>
+                        <field name="camera_list">none</field>
+                      </block>
+                    </statement>
+                    <next>
+                      <block type="wait_block" id="N$yUhNMOCzRhs5-pHOYa" data-blockNo="1">
+                        <mutation timeout="30000"></mutation>
+                        <value name="condition">
+                          <block type="logic_operation" id="bm(P3@Nw`a+9SvP_9IiR" data-blockNo="1">
+                            <field name="OP">OR</field>
+                            <value name="A">
+                              <block type="logic_block" id="N@32%udw8A,8fYhGvY6-" data-blockNo="1">
+                                <mutation timeout="30000"></mutation>
+                                <field name="block_type">moveP</field>
+                                <field name="block_no">1</field>
+                                <field name="block_status">stop</field>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="logic_block" id="e}T)gAA}Cc1*I^.G/=#n" data-blockNo="1">
+                                <mutation timeout="30000"></mutation>
+                                <field name="block_type">moveP</field>
+                                <field name="block_no">2</field>
+                                <field name="block_status">stop</field>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="moveP" id="C2e.rZb}XVZzw3{L7qIf" data-blockNo="3">
+                            <mutation timeout="30000"></mutation>
+                            <field name="point_name_list">P3</field>
+                            <field name="control_x">enable</field>
+                            <field name="control_y">enable</field>
+                            <field name="control_z">enable</field>
+                            <field name="control_rz">enable</field>
+                            <field name="control_ry">enable</field>
+                            <field name="control_rx">enable</field>
+                            <field name="pallet_list">none</field>
+                            <field name="camera_list">none</field>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+  <block type="create_event" id="q3lL:IL5}m]=jPwgW?3@" x="550" y="30" data-blockNo="1">
+    <statement name="EVENT">
+      <block type="stop_robot_upon" id="a!Q2Q4.cNV8a6cwW6Elh" data-blockNo="1">
+        <mutation timeout="30000"></mutation>
+        <field name="trigger_condition">steady</field>
+        <value name="condition">
+          <block type="robot_io" id="{=/UT-144eARu5jt{Nxm" data-blockNo="1">
+            <field name="input_pin_name">0</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>

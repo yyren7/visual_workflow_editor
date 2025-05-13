@@ -184,3 +184,14 @@ if __name__ == '__main__':
     # Important: To run this test, you need to have DEEPSEEK_API_KEY set in your environment.
     # Example: DEEPSEEK_API_KEY="your_api_key" python -m unittest backend.tests.test_workflow_graph_real_deepseek
     unittest.main() 
+
+
+'''
+1，生成一份quick-fcpr文件夹里xml文件名的名单，
+作为node_list占位符保存在prompt文件里，
+在planner的prompt里使用这个占位符来正确识别我们调用工具时应该传递的节点参数。
+系统 prompt 里要明确告诉 LLM 调用工具需要哪些参数、参数名、类型（比如node_type 必须是 XML 里列出的类型）、
+并对于缺省值都给默认值 。在 prompt 或工具描述里给出参数示例，帮助 LLM 生成正确格式。
+2，在工具 schema 里用 AliasChoices 支持多种参数名，兼容 LLM 可能的不同输出。工具 schema 用 Field(strict=True)，
+必须是quick-fcpr文件夹里真实存在的xml文件，并且传入参数必须是这个xml每个参数格子允许的值，
+校验失败时返回详细错误信息便于 LLM修正。'''

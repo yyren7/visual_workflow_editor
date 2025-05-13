@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<block type="set_speed">
+  <field name="speed">100</field>
+</block> 

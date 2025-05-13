@@ -1,0 +1,77 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="nY26H#_nw(RBMA$K1jsZ" editable="false" x="110" y="30" data-blockNo="1">
+    <mutation timeout="-1"></mutation>
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="set_motor" id="b6g@,c}3RjAUC%E2$XcP" data-blockNo="1">
+        <mutation timeout="-1"></mutation>
+        <field name="state_list">on</field>
+        <next>
+          <block type="loop" id="]rUB-kDEzPGeS@q*RGw$" data-blockNo="1">
+            <statement name="DO">
+              <block type="moveP" id="Q8n#@/XCrYjT%P)iE-J7" data-blockNo="1">
+                <mutation timeout="-1"></mutation>
+                <field name="point_name_list">P2</field>
+                <field name="control_x">enable</field>
+                <field name="control_y">enable</field>
+                <field name="control_z">enable</field>
+                <field name="control_rz">enable</field>
+                <field name="control_ry">enable</field>
+                <field name="control_rx">enable</field>
+                <field name="pallet_list">none</field>
+                <field name="camera_list">none</field>
+                <next>
+                  <block type="moveP" id="Qfa^hPzTaeV=fsnXwW~i" data-blockNo="2">
+                    <mutation timeout="-1"></mutation>
+                    <field name="point_name_list">P3</field>
+                    <field name="control_x">enable</field>
+                    <field name="control_y">enable</field>
+                    <field name="control_z">enable</field>
+                    <field name="control_rz">enable</field>
+                    <field name="control_ry">enable</field>
+                    <field name="control_rx">enable</field>
+                    <field name="pallet_list">none</field>
+                    <field name="camera_list">none</field>
+                    <next>
+                      <block type="wait_block" id="!Zw.)_[_Tt@RSfg#h@!g" data-blockNo="1">
+                        <mutation timeout="-1"></mutation>
+                        <value name="condition">
+                          <block type="logic_operation" id=".5U+w(;Vq2Ld1N^|[#!s" data-blockNo="1">
+                            <field name="OP">AND</field>
+                            <value name="A">
+                              <block type="logic_negate" id="jjm|+=4#s6U7j^;,##3N" data-blockNo="1">
+                                <value name="BOOL">
+                                  <block type="robot_io" id="7ZH7kA]pAm|JeYkq+7{;" data-blockNo="1">
+                                    <field name="input_pin_name">0</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="logic_negate" id="HMOS!bWp@s|4O][-!HpU" data-blockNo="1">
+                                <value name="BOOL">
+                                  <block type="robot_io" id="*huSf~;D^+EXzM~XLf2*" data-blockNo="1">
+                                    <field name="input_pin_name">1</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="return" id="03+]1u1JpTp7bDM|vNgG" data-blockNo="1">
+                            <mutation timeout="-1"></mutation>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </statement>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

@@ -71,6 +71,70 @@ def get_dynamic_node_types_info(quickfcpr_dir: str = "/workspace/database/node_d
     
     return "当前可用的主要节点类型包括 (具体参数和行为请以实际节点定义为准):\n" + "\n".join(node_types)
 
+def get_node_params_from_xml(xml_path: str) -> dict:
+    """
+    解析单个XML节点文件，提取所有参数名、类型和默认值。
+    返回格式：
+    {
+        'node_type': str,
+        'params': [
+            {'name': str, 'type': str, 'default': Any}
+        ]
+    }
+    """
+    result = {'node_type': None, 'params': []}
+    try:
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        block_element = None
+        if root.tag == f"{BLOCKLY_NAMESPACE}xml" or root.tag == "xml":
+            block_element = root.find(f"{BLOCKLY_NAMESPACE}block")
+            if block_element is None:
+                block_element = root.find("block")
+        elif root.tag == f"{BLOCKLY_NAMESPACE}block" or root.tag == "block":
+            block_element = root
+        if block_element is not None:
+            node_type = block_element.get("type")
+            result['node_type'] = node_type
+            # 解析所有 <field> 参数
+            for field in block_element.findall(f".//{BLOCKLY_NAMESPACE}field") + block_element.findall(f".//field"):
+                param_name = field.get("name")
+                param_type = "str"  # Blockly field一般为字符串，可扩展
+                default_value = field.text if field.text is not None else ""
+                if param_name:
+                    result['params'].append({
+                        'name': param_name,
+                        'type': param_type,
+                        'default': default_value
+                    })
+            # 解析 <value> 参数（如有）
+            for value in block_element.findall(f".//{BLOCKLY_NAMESPACE}value") + block_element.findall(f".//value"):
+                param_name = value.get("name")
+                param_type = "block"  # 可能是嵌套block
+                default_value = None
+                if param_name:
+                    result['params'].append({
+                        'name': param_name,
+                        'type': param_type,
+                        'default': default_value
+                    })
+            # 解析 <statement> 参数（如有）
+            for statement in block_element.findall(f".//{BLOCKLY_NAMESPACE}statement") + block_element.findall(f".//statement"):
+                param_name = statement.get("name")
+                param_type = "statement"  # 语句块
+                default_value = None
+                if param_name:
+                    result['params'].append({
+                        'name': param_name,
+                        'type': param_type,
+                        'default': default_value
+                    })
+        else:
+            result['error'] = '未找到block元素'
+    except Exception as e:
+        result['error'] = str(e)
+    return result
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     # This path is relative to where this script would be if it's in backend/langgraphchat/prompts/
@@ -79,9 +143,15 @@ if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Assuming this script is in backend/langgraphchat/prompts, 
     # go up three levels for backend/, then down to database/node_database/quickfcpr/
-    default_test_path = os.path.abspath(os.path.join(script_dir, "..", "..", "..", "database", "node_database", "quickfcpr"))
+    default_test_path = os.path.abspath(os.path.join(script_dir, "..", "..", "..", "database", "node_database", "quick-fcpr"))
     
     info_string = get_dynamic_node_types_info(default_test_path)
     
     print("\n--- 动态生成的节点类型信息 ---")
-    print(info_string) 
+    print(info_string)
+
+    # 新增：演示解析单个xml节点文件参数
+    print("\n--- 单节点参数解析演示 (if.xml) ---")
+    if_xml_path = os.path.join(default_test_path, "if.xml")
+    params_info = get_node_params_from_xml(if_xml_path)
+    print(params_info) 
