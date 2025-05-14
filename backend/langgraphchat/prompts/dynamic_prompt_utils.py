@@ -73,7 +73,7 @@ def get_dynamic_node_types_info(quickfcpr_dir: str = "/workspace/database/node_d
 
 def get_node_params_from_xml(xml_path: str) -> dict:
     """
-    解析单个XML节点文件，提取所有参数名、类型和默认值。
+    解析单个XML节点文件，提取所有参数名、类型、范围和默认值。
     返回格式：
     {
         'node_type': str,

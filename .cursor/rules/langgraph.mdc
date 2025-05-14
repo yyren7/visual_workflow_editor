@@ -4,7 +4,7 @@ globs:
 alwaysApply: false
 ---
 # Your rule content
-参考/workspace/backend/langgraphchat/README.md以确认项目结构和重要文件，并且在每次更新结构或文件之后要同步修改md。
+将/workspace/backend/langgraphchat/README.md根据真实情况更新同步后才能参考以确认项目结构和重要文件，并且在每次更新结构或文件之后要同步修改md。
 
 - You can @ files here
 - You can use markdown but dont have to

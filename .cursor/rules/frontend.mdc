@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 
 # Your rule content
-参考/workspace/frontend/README.md以确认项目结构和重要文件，并且在每次更新结构或文件之后要同步修改md。
+将/workspace/frontend/README.md根据真实情况刷新同步后才能参考以确认项目结构和重要文件，并且在每次更新结构或文件之后要同步修改md。
 对于所有前端代码，不允许硬编码任何使用者可见字段，全部使用i18n，在/workspace/frontend/src/i18n.ts文件里用三语对应。
 
 - You can @ files here

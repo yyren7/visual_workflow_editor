@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
-  <block type="loop">
-    <statement name="DO">
-    </statement>
+  <block type="set_motor">
+    <field name="motorStatus">ON</field> <!-- default_jp 值 -->
   </block>
 </xml> 

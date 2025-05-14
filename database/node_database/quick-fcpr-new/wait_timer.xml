@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="wait_timer" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="60000"></mutation>
+    <!-- timeout (タイムアウト): 块操作本身的超时时间 (单位: 微秒 μs)。quickfcpr.md中未明确此块有此种timeout，但flow.xml示例中存在。 -->
+    <!-- quickfcpr.md 中描述的 'タイムアウト' 是指等待的最大时长，由用户通过界面设置，而非通过タイマ変数名。 -->
+    <!-- 此处暂按 flow.xml 示例的 mutation timeout 格式。-->
+    <!-- 示例: 60000 -->
+    <field name="name">
+      <!-- name (タイマ変数名): 存储等待时间的数值型变量的名称。该变量的值单位为毫秒(ms)。 -->
+      <!-- 有效范围: N0 ~ N499 (其值应为0 ~ 300000ms) -->
+      <!-- 初期値: N0 -->
+      <!-- 示例: N483 -->
+    </field>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

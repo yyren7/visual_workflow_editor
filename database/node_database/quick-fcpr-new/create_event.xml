@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="create_event" id="GENERATED_ID" data-blockNo="1">
+    <statement name="EVENT">
+      <!-- 此处嵌套定义事件触发时执行的块 (例如 set_external_io_output_upon, stop_robot_upon) -->
+      <!-- quickfcpr.md 描述: 创建事件并执行指定的事件处理。 -->
+    </statement>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

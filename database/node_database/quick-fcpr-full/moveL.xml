@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="moveL">
+    <field name="pointName">P1</field> <!-- default_jp 值，提取 P1 -->
+    <field name="X">X</field>
+    <field name="Y">Y</field>
+    <field name="Z">Z</field>
+    <field name="Rz">Rz</field>
+    <field name="Ry">Ry</field>
+    <field name="Rx">Rx</field>
+    <field name="pallet No.">no pallet</field>
+    <field name="camera No.">no camera</field>
+  </block>
+</xml> 

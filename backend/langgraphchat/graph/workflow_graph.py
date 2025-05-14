@@ -16,12 +16,14 @@ from typing import List
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage, AIMessageChunk
+from langchain_core.prompts import SystemMessagePromptTemplate
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool, render_text_description
 from langchain_core.runnables import RunnableConfig
 
 from .agent_state import AgentState
 from ..prompts.chat_prompts import STRUCTURED_CHAT_AGENT_PROMPT # For system prompt content
+from ..prompts.dynamic_prompt_utils import get_dynamic_node_types_info
 from ..tools import flow_tools # This should be the List[BaseTool]
 from ..context import current_flow_id_var # Context variable for flow_id
 import logging # Ensure logging is imported
@@ -33,6 +35,15 @@ from functools import partial
 # 导入工具，LLM, ChatService 等将在此处添加
 # from ...app.services.chat_service import ChatService # 路径可能需要调整
 # from ..tools.flow_tools import ... # 具体的工具或工具列表
+
+# 获取日志记录器
+logger = logging.getLogger(__name__)
+
+# --- 导入节点和条件逻辑实现 --- (这部分应该在 logger 定义之后)
+from .nodes.input_handler import input_handler_node
+from .nodes.planner import planner_node
+from .nodes.tool_executor import tool_node
+from .conditions import should_continue
 
 # TODO: 定义 Agent 节点函数
 # async def agent_node(state: AgentState):
@@ -93,7 +104,7 @@ async def input_handler_node(state: AgentState) -> dict:
     它通过检查 'input_processed' 标志位和比较最后一条消息来实现。
     返回的字典仅包含需要通过 operator.add 更新到状态的字段（通常是 'messages' 和 'input_processed'）。
     """
-    logger = logging.getLogger(__name__)
+    logger.info(f"Input handler: Processing new input: '{state.get('input')}'")
     current_messages_from_state = list(state.get("messages", []))
     input_str = state.get("input")
     input_already_processed = state.get("input_processed", False)
@@ -152,7 +163,8 @@ async def planner_node(state: AgentState, llm: BaseChatModel, tools: List[BaseTo
     它从 state['messages'] 获取完整的对话历史，并在调用 LLM 前预置格式化后的系统提示。
     返回包含新生成的 AIMessage 的字典，用于更新状态。
     """
-    logger = logging.getLogger(__name__)
+    logger.info(f"Planner: Invoking LLM with streaming. History length: {len(state.get('messages', []))}")
+
     llm_with_tools = llm.bind_tools(tools)
     
     # 动态格式化系统提示，填入当前的 flow_context
@@ -359,7 +371,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 1. 获取基础模板字符串
     # 假设 STRUCTURED_CHAT_AGENT_PROMPT 的第一个消息是系统提示模板
     if not (STRUCTURED_CHAT_AGENT_PROMPT.messages and
-            isinstance(STRUCTURED_CHAT_AGENT_PROMPT.messages[0], SystemMessage) and
+            isinstance(STRUCTURED_CHAT_AGENT_PROMPT.messages[0], SystemMessagePromptTemplate) and
             hasattr(STRUCTURED_CHAT_AGENT_PROMPT.messages[0].prompt, 'template')):
         logger.error("System prompt template structure is not as expected. Using a fallback.")
         raw_system_template = "You are a helpful assistant. Use the available tools if necessary. Context: {flow_context}"
@@ -436,18 +448,3 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 编译图
     logger.info("Workflow graph compilation complete.")
     return workflow.compile()
-
-# Example of how it might be used (not part of the library code itself):
-# if __name__ == "__main__":
-#     from backend.app.services.chat_service import ChatService 
-#     # This is an example, ChatService needs a DB session.
-#     # db_session = ... get a db session ...
-#     # chat_service = ChatService(db=db_session)
-#     # active_llm = chat_service._get_active_llm()
-#     # compiled_workflow = compile_workflow_graph(active_llm, flow_tools)
-#     
-#     # To run:
-#     # inputs = {"messages": [HumanMessage(content="Create a start node")], "current_flow_id": "some_flow_id", "flow_context": {"details": "..."}}
-#     # async for event in compiled_workflow.astream(inputs):
-#     #     print(event)
-#     #     print("----") 

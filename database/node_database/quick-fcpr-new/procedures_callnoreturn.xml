@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="procedures_callnoreturn" id="GENERATED_ID" data-blockNo="1">
+    <mutation name="PROCEDURE_NAME">
+      <!-- name (プロシージャ名): 要调用的已定义过程（函数）的名称。 -->
+      <!-- 有效范围: 已通过 procedures_defnoreturn 定义的过程名称。 -->
+      <!-- 初期値: 无 (必须选择一个已定义的过程) -->
+      <!-- 示例: Open_BRG&PLT_Crump -->
+      <!-- 如果被调用的过程有参数，<mutation> 标签内可能还会有 <arg> 子标签，但这需要根据Blockly标准和实际生成情况确定。 -->
+      <!-- 模板中仅包含 name 属性。 -->
+    </mutation>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

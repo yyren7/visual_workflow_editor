@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="connect_external_io" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="-1"></mutation>
+    <!-- timeout属性存在于flow.xml示例中，具体含义需参照Contec文档或实际行为，-1可能表示无限等待或默认超时 -->
+    <field name="devive_name">
+      <!-- devive_name (デバイス名): 操作的目标设备名称。 -->
+      <!-- 有效范围: DIO000 ~ DIO005 (在 "ContecDeviceUtility" 中设置的 "Device Name") -->
+      <!-- 初期値: DIO000 -->
+      <!-- 示例: DIO000 -->
+    </field>
+    <field name="external_maker">
+      <!-- external_maker (メーカー): 目标IO单元的制造商。 -->
+      <!-- 有效范围: contec -->
+      <!-- 初期値: contec -->
+      <!-- 示例: contec -->
+    </field>
+    <field name="io_no">
+      <!-- io_no (IO 番号): 操作的目标IO编号。 -->
+      <!-- 有效范围: 1 ~ 10 -->
+      <!-- 初期値: 1 -->
+      <!-- 示例: 1 -->
+    </field>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

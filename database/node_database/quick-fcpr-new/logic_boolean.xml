@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_boolean" id="GENERATED_ID" data-blockNo="1">
+    <field name="BOOL">
+      <!-- BOOL (論理値): 布尔值，真或假。 -->
+      <!-- 有效范围: TRUE (真), FALSE (伪) -->
+      <!-- 初期値: TRUE -->
+      <!-- 示例: TRUE -->
+    </field>
+    <!-- 该块通常不直接连接到下一个块，而是作为其他块的输入值 -->
+  </block>
+</xml> 

@@ -5,6 +5,11 @@ from ..agent_state import AgentState # Adjusted relative import for AgentState
 
 logger = logging.getLogger(__name__)
 
+# --- 临时诊断代码 --- 
+print(f"DEBUG: Inside input_handler.py, __name__ is: {__name__}")
+print(f"DEBUG: Inside input_handler.py, logger.name is: {logger.name}")
+# --- 结束临时诊断代码 ---
+
 async def input_handler_node(state: AgentState) -> dict:
     """
     处理 state['input'] 字段，将其转换为 HumanMessage 并有条件地添加到 messages 列表中。

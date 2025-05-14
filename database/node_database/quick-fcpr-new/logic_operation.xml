@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_operation" id="GENERATED_ID" data-blockNo="1">
+    <field name="OP">
+      <!-- OP (演算子): 逻辑运算符。 -->
+      <!-- 有效范围: AND (逻辑与), OR (逻辑或) -->
+      <!-- 初期値: AND -->
+      <!-- 示例: AND -->
+    </field>
+    <value name="A">
+      <!-- A (条件1): 逻辑运算的第一个条件，连接一个逻辑块。 -->
+      <!-- 有效范围: 逻辑值输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="logic_compare">...</block> -->
+    </value>
+    <value name="B">
+      <!-- B (条件2): 逻辑运算的第二个条件，连接一个逻辑块。 -->
+      <!-- 有效范围: 逻辑值输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="logic_compare">...</block> -->
+    </value>
+    <!-- 该块通常不直接连接到下一个块，而是作为其他块的输入值 -->
+  </block>
+</xml> 

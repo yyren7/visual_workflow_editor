@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="logic_compare" id="GENERATED_ID" data-blockNo="1">
+    <field name="OP">
+      <!-- OP (演算子): 比较运算符。 -->
+      <!-- 有效范围: EQ (等于), NEQ (不等于), LT (小于), LTE (小于等于), GT (大于), GTE (大于等于) -->
+      <!-- 初期値: EQ -->
+      <!-- 示例: EQ -->
+    </field>
+    <value name="A">
+      <!-- A (比較元): 比较的左侧值，连接一个输出数值或逻辑值的块。 -->
+      <!-- 有效范围: 数值、布尔值或可比较类型的输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="external_io">...</block> -->
+    </value>
+    <value name="B">
+      <!-- B (比較先): 比较的右侧值，连接一个输出数值或逻辑值的块。 -->
+      <!-- 有效范围: 数值、布尔值或可比较类型的输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="logic_boolean">...</block> -->
+    </value>
+    <!-- 该块通常不直接连接到下一个块，而是作为其他块的输入值 -->
+  </block>
+</xml> 

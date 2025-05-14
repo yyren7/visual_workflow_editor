@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_external_io_output_during" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="-1"></mutation>
+    <!-- timeout属性存在于flow.xml示例中，具体含义需参照文档或实际行为，-1可能表示无限等待或默认超时 -->
+    <field name="io_no">
+      <!-- io_no (IO番号): IO模块的编号。 -->
+      <!-- 有效范围: 1 ~ 10 -->
+      <!-- 初期値: 1 -->
+      <!-- 示例: 1 -->
+    </field>
+    <field name="output_pin_name">
+      <!-- output_pin_name (出力ポート名): 输出端口的名称或编号。 -->
+      <!-- 有效范围: 参照各IO模块的规格 (例如 0 ~ 15) -->
+      <!-- 初期値: 0 -->
+      <!-- 示例: 3 -->
+    </field>
+    <field name="out_state">
+      <!-- out_state (出力状態): 设置的输出状态。 -->
+      <!-- 有效范围: on (输出ON), off (输出OFF) -->
+      <!-- 初期値: on -->
+      <!-- 示例: on -->
+    </field>
+    <field name="name">
+      <!-- name (タイマ変数名): 指定输出持续时间的数值变量名称。该变量的值单位为毫秒(ms)。 -->
+      <!-- 有效范围: N0 ~ N499 (其值应为0~300000ms) -->
+      <!-- 初期値: N0 -->
+      <!-- 示例: N483 -->
+    </field>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

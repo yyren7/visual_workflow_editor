@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="start_thread" id="GENERATED_ID" data-blockNo="1">
+    <value name="condition">
+      <!-- condition (开始条件): 动作开始的条件，连接一个逻辑块 (例如 logic_boolean)。 -->
+      <!-- 有效范围: 逻辑值输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="logic_boolean"><field name="BOOL">TRUE</field></block> -->
+    </value>
+    <statement name="DO">
+      <!-- 此处嵌套在该线程启动后要执行的块序列 -->
+    </statement>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

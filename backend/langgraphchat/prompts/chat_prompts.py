@@ -13,7 +13,7 @@ BASE_SYSTEM_PROMPT = f"""你是一个专业的流程图设计助手，帮助用�
 
 作为流程图助手，你应该:
 1. 提供专业、简洁的流程图设计建议
-2. 帮助解释不同节点类型的用途 (基于以下提供的已知类型)
+2. 帮助解释不同节点类型的用途 (基于提供的已知类型)
 3. 提出合理的流程优化建议
 4. 协助用户解决流程图设计中遇到的问题
 5. 只回答与流程图和工作流相关的问题
@@ -36,51 +36,6 @@ ENHANCED_CHAT_PROMPT_TEMPLATE = ChatPromptTemplate.from_messages([
 """)
 ])
 
-# 工作流生成提示模板
-WORKFLOW_GENERATION_TEMPLATE = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template(f"""你是一个专业的流程图生成专家。请根据用户输入，直接生成一个完整的流程图，包括所有必要的节点和节点之间的连接关系。
-
-输出应该符合以下JSON结构:
-{{
-  "nodes": [
-    {{
-      "id": "唯一ID",
-      "type": "节点类型",
-      "label": "节点标签/名称",
-      "properties": {{
-        "描述": "节点详细信息"
-      }},
-      "position": {{
-        "x": 节点X坐标(整数),
-        "y": 节点Y坐标(整数)
-      }}
-    }}
-  ],
-  "connections": [
-    {{
-      "source": "源节点ID",
-      "target": "目标节点ID",
-      "label": "连接标签/说明"
-    }}
-  ]
-}}
-
-注意事项:
-1. 所有节点必须通过connections连接成一个完整流程
-2. 决策节点(decision)应该有多个输出连接，表示不同的决策路径
-3. 节点ID必须使用唯一的uuid
-4. 节点位置应该合理排布，避免重叠，从上到下或从左到右布局
-5. 给节点添加合适的位置坐标，确保布局合理
-
-请只返回JSON格式的结果，不要添加任何其他解释文本。"""),
-    HumanMessagePromptTemplate.from_template("""
-{context}
-
-用户输入: {input}
-
-请生成对应的完整流程图，包含所有节点和连接:
-""")
-])
 
 # 提示扩展模板
 PROMPT_EXPANSION_TEMPLATE = ChatPromptTemplate.from_messages([

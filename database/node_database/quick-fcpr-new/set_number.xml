@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_number" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="60000"></mutation>
+    <!-- timeout (タイムアウト): 动作超时时间 (单位: 微秒 μs)。 quickfcpr.md中未明确此块有timeout，但flow.xml示例中存在。-->
+    <!-- 有效范围: 0 ~ 300000000 (0 表示无限等待) -->
+    <!-- 初期値: 60000 (0.06秒) -->
+    <!-- 示例: 60000 -->
+    <field name="name">
+      <!-- name (変数名): 要设置值的数值型变量的名称。 -->
+      <!-- 有效范围: N0 ~ N499 -->
+      <!-- 初期値: N0 -->
+      <!-- 示例: N5 -->
+    </field>
+    <value name="right_hand_side">
+      <!-- right_hand_side (代入値): 要赋给变量的值，连接一个输出数值的块。 -->
+      <!-- 有效范围: 数值输出块 (例如 math_number, math_custom_number) -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="math_number"><field name="NUM">2</field></block> -->
+    </value>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

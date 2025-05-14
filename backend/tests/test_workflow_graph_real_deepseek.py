@@ -33,7 +33,7 @@ async def run_workflow_and_extract_planner_state(compiled_workflow, initial_stat
         tags = event.get("tags", [])
         data = event.get("data")
 
-        logger.info(f"    Event: {event_type}, Name: {name}, Tags: {tags}")
+        logger.info(f"Event: {event_type}, Name: {name}, Tags: {tags}")
 
         if event_type == "on_chat_model_stream" and isinstance(data.get("chunk"), AIMessageChunk):
             chunk = data["chunk"]
@@ -108,8 +108,8 @@ class TestWorkflowGraphWithRealDeepSeek(unittest.IsolatedAsyncioTestCase):
         initial_state = AgentState(
             input=user_input,
             messages=[HumanMessage(content=user_input, id="real_human_1")],
-            flow_context={"current_flow_id": "test_flow_deepseek_real_tools_1"}, # Example context
-            current_flow_id="test_flow_deepseek_real_tools_1",
+            flow_context={""}, # Example context
+            current_flow_id="test_1",
             input_processed=False # Critical for input_handler_node
         )
         
