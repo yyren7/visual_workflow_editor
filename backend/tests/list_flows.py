@@ -22,7 +22,3 @@ for flow in flows:
             print(f'  找到节点 {latest_node_id} 在流程 {flow_id} 中')
             print(f'  节点详情: {node}')
             break
-    
-    # 打印最后一个节点的ID
-    if nodes:
-        print(f'  最后一个节点ID: {nodes[-1].get("id")}') 

@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="select_robot" id="GENERATED_ID" data-blockNo="1">
-    <field name="robotName">
-      <!-- robotName (ロボット名): 指定操作的机器人名称。 -->
-      <!-- 有效范围: 预定义的机器人列表 (例如 fairino_FR, Dobot MG400 等) -->
-      <!-- 示例: fairino_FR -->
-    </field>
+    <field name="robotName">fairino_FR<!-- robotName (ロボット名): 指定操作的机器人名称。 --><!-- 有效范围: 预定义的机器人列表 (例如 fairino_FR, Dobot MG400 等) --><!-- 示例: fairino_FR --></field>
     <!-- <next> ... </next> -->
   </block>
 </xml> 

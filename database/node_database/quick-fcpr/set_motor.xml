@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="set_motor" id="GENERATED_ID" data-blockNo="1">
-    <field name="state_list">
-      <!-- state_list (motorStatus - サーボモータ操作): 伺服马达电源的操作状态。 -->
-      <!-- 有效范围: on (电源启动), off (电源停止) -->
-      <!-- 初期値: ON -->
-      <!-- 示例: on -->
-    </field>
+    <field name="state_list">on<!-- state_list (motorStatus - サーボモータ操作): 伺服马达电源的操作状态。 --><!-- 有效范围: on (电源启动), off (电源停止) --><!-- 初期値: ON --><!-- 示例: on --></field>
     <!-- <next> ... </next> -->
   </block>
 </xml> 

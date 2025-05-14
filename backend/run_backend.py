@@ -16,10 +16,6 @@ import re
 import subprocess
 import json
 
-# Ensure the DATABASE_URL is set, default to a relative path within the backend folder
-# if "DATABASE_URL" not in os.environ:
-# os.environ["DATABASE_URL"] = "sqlite:///database/flow_editor.db"
-
 # 显式加载项目根目录的.env文件，确保所有环境变量统一配置
 workspace_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
 load_dotenv(dotenv_path=workspace_env_path)

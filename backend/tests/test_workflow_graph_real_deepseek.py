@@ -108,8 +108,8 @@ class TestWorkflowGraphWithRealDeepSeek(unittest.IsolatedAsyncioTestCase):
         initial_state = AgentState(
             input=user_input,
             messages=[HumanMessage(content=user_input, id="real_human_1")],
-            flow_context={""}, # Example context
-            current_flow_id="test_1",
+            flow_context={"current_flow_id": "b86dbc31-26fe-45bd-9c3a-7c807cc59d53"}, # Example context
+            current_flow_id="b86dbc31-26fe-45bd-9c3a-7c807cc59d53",
             input_processed=False # Critical for input_handler_node
         )
         

@@ -53,7 +53,7 @@ class NodeTemplateService:
         if template_dir is None:
             # 使用绝对路径
             BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-            template_dir = os.path.join(BASE_DIR, "database/node_database")
+            template_dir = os.path.join(BASE_DIR, "database/node_database/quick-fcpr")
             print(f"使用自动计算的模板目录路径: {template_dir}")
             
         self.template_dir = template_dir
