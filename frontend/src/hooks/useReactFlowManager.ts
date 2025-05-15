@@ -25,10 +25,12 @@ import {
     setNodes as setFlowNodes,
     setEdges as setFlowEdges,
     updateNodeData as updateFlowNodeData,
-    addNode as addFlowNode, // Assuming an addNode action exists or will be added
-    addEdge as addFlowEdge, // Assuming an addEdge action exists or will be added
+    addNode as addFlowNode, // Assuming an action exists or will be added
+    addEdge as addFlowEdge, // Assuming an action exists or will be added
     selectNodes,
     selectEdges,
+    selectNode as selectNodeAction,      // Import new action
+    deselectAllNodes as deselectAllNodesAction // Import new action
 } from '../store/slices/flowSlice';
 
 // --- 辅助函数：比较节点数组，忽略 selected 属性 ---
@@ -143,27 +145,18 @@ export const useReactFlowManager = ({
   // --- Handlers using Redux ---
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      // Filter out changes we want to ignore completely for Redux state updates
-      const isOnlySelectionOrDimensionChange = changes.every(
-        change => change.type === 'select' || change.type === 'dimensions'
+      const isJustDragging = changes.every(
+        (change) => change.type === 'position' && typeof change.dragging === 'boolean' && change.dragging
       );
 
-      if (isOnlySelectionOrDimensionChange) {
-        console.log("useReactFlowManager: Only selection/dimension changes detected, skipping dispatch.");
-        return; // Exit early, no need to apply or dispatch
+      if (!isJustDragging) {
+        console.log("useReactFlowManager: Applying node changes (non-drag or drag-end) and dispatching to Redux:", changes);
       }
-
-      // If we are here, there are substantive changes (position, remove, add, etc.)
-      // We will always apply these changes and dispatch them to Redux.
-      // The debounced save in FlowEditor will handle consolidating saves after drags.
-      console.log("useReactFlowManager: Substantive node changes detected, applying and dispatching.");
-
-      // Apply changes using the helper
+      
       const nextNodes = applyNodeChanges(changes, nodes);
-      // Dispatch the result to Redux
       dispatch(setFlowNodes(nextNodes));
     },
-    [dispatch, nodes] // Dependency: dispatch and the current nodes state
+    [dispatch, nodes]
   );
 
   const onEdgesChange = useCallback(
@@ -204,13 +197,16 @@ export const useReactFlowManager = ({
   }, []); // No dispatch needed here
 
   const onNodeClick: NodeMouseHandler = useCallback((event, node) => {
-    setSelectedNode(node);
-    console.log('Node clicked (useReactFlowManager):', node);
-  }, []); // Keep local selection management
+    setSelectedNode(node); // Keep for local state if needed by properties panel etc.
+    dispatch(selectNodeAction(node.id)); // Dispatch Redux action to update store
+    console.log('Node clicked (useReactFlowManager), dispatched selectNode:', node.id);
+  }, [dispatch]); // Add dispatch to dependencies
 
   const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
-  }, []); // Keep local selection management
+    setSelectedNode(null); // Keep for local state if needed
+    dispatch(deselectAllNodesAction()); // Dispatch Redux action to update store
+    console.log('Pane clicked (useReactFlowManager), dispatched deselectAllNodes');
+  }, [dispatch]); // Add dispatch to dependencies
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

@@ -119,3 +119,42 @@
     </next>
   </block>
 </xml>
+<!--
+这个XML文件描述了一个机器人（型号为 fairino_FR）的自动化操作流程。
+具体来说，这个流程包含以下步骤：
+
+1.  **选择机器人**:
+    *   首先，通过 `<block type="select_robot">` 指定了操作的机器人型号为 `fairino_FR`。
+
+2.  **启动电机**:
+    *   接着，使用 `<block type="motor_onoff">` 将机器人的电机设置为"on"状态 (`<field name="onoff">on</field>`)，即启动电机。
+
+3.  **初始移动**:
+    *   机器人首先通过 `<block type="moveL">` 移动到点 `P1` (`<field name="point_name_list">P1</field>`)。
+        在这次移动中，只有 Z 轴向的控制是启用的 (`<field name="control_z">enable</field>`)，
+        其他轴向（X, Y, RX, RY, RZ）的控制是禁用的 (`<field name="control_x">disable</field>`, `<field name="control_y">disable</field>`, `<field name="control_rz">disable</field>`, `<field name="control_ry">disable</field>`, `<field name="control_rx">disable</field>`)。
+        这可能是一次升降操作。
+    *   然后，机器人再次移动到点 `P1`。
+        但这次，X、Y 轴以及旋转轴 RX、RY、RZ 的控制是启用的 (`<field name="control_x">enable</field>`, `<field name="control_y">enable</field>`, `<field name="control_rz">enable</field>`, `<field name="control_ry">enable</field>`, `<field name="control_rx">enable</field>`)，
+        而 Z 轴的控制是禁用的 (`<field name="control_z">disable</field>`)。
+        这可能是在调整机器人在某个平面上的姿态。
+
+4.  **循环操作**:
+    *   接下来，机器人进入一个循环，由 `<block type="loop">` 定义。
+    *   在循环内部 (`<statement name="DO">`)，机器人按顺序执行一系列的 `moveL` (线性移动) 操作：
+        *   移动到点 `P2`
+        *   移动到点 `P3`
+        *   移动到点 `P2`
+        *   移动到点 `P4`
+        *   移动到点 `P5`
+        *   移动到点 `P4`
+    *   在循环中的所有这些 `moveL` 操作中，X、Y、Z 三个平移轴以及 RX、RY、RZ 三个旋转轴的控制都处于启用状态 (`<field name="control_x">enable</field>` 到 `<field name="control_rx">enable</field>`)，
+        意味着机器人会在六个自由度上进行精确控制的移动。
+
+5.  **返回**:
+    *   循环的最后一步是一个 `<block type="return">` 指令，这表示当前循环迭代结束，并进入下一轮循环的开头。
+
+总结来说，这个文件定义了一个机器人程序，该程序首先进行初始化设置和定位，然后进入一个循环，在多个预设点之间进行一系列复杂的六轴联动线性移动。
+其中 `control_x` 到 `control_rx` 字段定义了在每次移动中哪些轴是受控的。
+`pallet_list` 和 `camera_list` 字段的值均为 `none`，表示在此流程中没有使用托盘或相机功能。
+-->

@@ -87,10 +87,15 @@ export const saveFlow = createAsyncThunk<SaveFlowPayload, void, { state: RootSta
 
         console.log(`Redux: Attempting to save flow ${currentFlowId}...`);
         try {
-            // Prepare data for the API
+            // Prepare data for the API, ensuring 'selected' state is not persisted
+            const nodesToSave = nodes.map(({ selected, ...nodeRest }) => nodeRest);
+            // Edges generally don't have a selected state that needs stripping, 
+            // but if they did, you'd map them similarly.
+            // const edgesToSave = edges.map(({ selected, ...edgeRest }) => edgeRest);
+
             const updateData = {
                 name: flowName,
-                flow_data: { nodes, edges }
+                flow_data: { nodes: nodesToSave, edges /* Use original edges or edgesToSave if needed */ }
             };
             await updateFlow(currentFlowId, updateData);
             const saveTime = new Date().toISOString();
@@ -169,6 +174,21 @@ const flowSlice = createSlice({
     setFlowName: (state: FlowState, action: PayloadAction<string>) => {
         state.flowName = action.payload;
         // TODO: Trigger auto-save for name change?
+    },
+    // Reducer to handle single node selection
+    selectNode: (state: FlowState, action: PayloadAction<string>) => {
+      const selectedNodeId = action.payload;
+      state.nodes = state.nodes.map(node => ({
+        ...node,
+        selected: node.id === selectedNodeId,
+      }));
+    },
+    // Reducer to deselect all nodes
+    deselectAllNodes: (state: FlowState) => {
+      state.nodes = state.nodes.map(node => ({
+        ...node,
+        selected: false,
+      }));
     }
     // Add other reducers as needed (e.g., addNode, addEdge, deleteNode)
   },
@@ -231,7 +251,9 @@ export const {
     addNode,
     addEdge,
     updateNodeData,
-    setFlowName
+    setFlowName,
+    selectNode,      // Export new action
+    deselectAllNodes // Export new action
 } = flowSlice.actions;
 
 // Selectors

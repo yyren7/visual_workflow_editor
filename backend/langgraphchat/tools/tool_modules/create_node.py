@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 import os
@@ -9,103 +9,60 @@ from backend.app.services.flow_service import FlowService
 from backend.langgraphchat.context import current_flow_id_var
 from backend.langgraphchat.utils.logging import logger
 import uuid
-import asyncio
-from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
 from backend.langgraphchat.adapters.xml_processing_adapter import process_node_data_and_save_to_db
 
 XML_NODE_DEFINITIONS_PATH = "database/node_database/quick-fcpr/"
 XML_SAVE_PATH = "/workspace/database/flow_database/result/"
 
-async def generate_node_properties_llm(
-    node_type: str, 
-    node_label: str,
-    llm_client: DeepSeekLLM
-) -> Tuple[Dict[str, Any], bool]:
-    """
-    Generates recommended node properties based on node type and label using LLM.
-    """
-    try:
-        prompt = f"""Please generate a suitable JSON object of properties for the following flowchart node:
-        
-Node Type: {node_type}
-Node Label: {node_label}
+# 仅注册带前缀的 Blockly 命名空间，以期望 ElementTree 在输出时使用它
+ET.register_namespace("blockly", "https://developers.google.com/blockly/xml")
+# ET.register_namespace("", "https://developers.google.com/blockly/xml") # 移除这个，因为它主要配合 default_namespace
 
-Please generate a properties object. Property names should reflect common characteristics of this type of node, and property values should be placeholders or example values.
-Return only the JSON object itself, without any other text. For example: {{"property_name": "value"}}
-"""
-        
-        properties_schema = {
-            "type": "object",
-            "properties": {}, # Allow any properties
-            "additionalProperties": True,
-            "description": "Key-value pairs for node properties"
-        }
-        
-        result, success = await llm_client.structured_output(
-            prompt=prompt,
-            system_prompt="You are an expert in flowchart node properties, adept at recommending suitable attributes for various node types. Please output properties in JSON object format.",
-            schema=properties_schema
-        )
-        
-        if not success or not isinstance(result, dict):
-            logger.error(f"LLM failed to generate node properties or returned incorrect format for {node_type} - {node_label}. Result: {result}")
-            return {}, False # Return False for success to indicate LLM failure
-            
-        logger.info(f"LLM generated properties for {node_type} - {node_label}: {result}")
-        return result, True
-        
-    except Exception as e:
-        logger.error(f"Error during LLM property generation for {node_type} - {node_label}: {str(e)}")
-        return {}, False
+class ExecuteCreateNodeSchema(BaseModel):
+    node_id: str = Field(description="The pre-generated ID for the node.")
+    node_type: str = Field(description="The type of the node (must match an XML definition file name).")
+    label: str = Field(description="The display label for the node.")
+    properties: Dict[str, Any] = Field(description="A dictionary of all properties for the node, pre-processed by the agent.")
+    position: Optional[Dict[str, float]] = Field(None, description="Position (x, y) for the node on the canvas.")
+    # Removed use_llm_for_properties, llm_client
+    # Removed node_label, type_alias as these should be resolved by the agent into 'label' and 'node_type'
 
-def create_node_tool_func(
+def execute_create_node_func(
+    node_id: str,
     node_type: str,
-    node_label: Optional[str] = None,
-    properties: Optional[Dict[str, Any]] = None,
+    label: str,
+    properties: Dict[str, Any],
     position: Optional[Dict[str, float]] = None,
-    use_llm_for_properties: bool = False,
-    llm_client: Optional[DeepSeekLLM] = None,
-    node_name: Optional[str] = None,
-    label: Optional[str] = None,
-    type_alias: Optional[str] = None,
-    **kwargs
+    # **kwargs # Removing kwargs for now, agent should provide all in 'properties'
 ) -> Dict[str, Any]:
     """
-    Creates a node: 
-    1. Determines properties (user-provided, LLM-generated, or XML defaults).
-    2. Loads an XML template based on node_type.
-    3. Modifies and fills the XML template with the determined properties.
-    4. Saves the generated XML to a file named <flow_id>.xml.
-    5. Calls an adapter to process this node data and save it to the database.
+    Executes the creation of a node using pre-processed data:
+    1. Loads an XML template based on node_type.
+    2. Modifies and fills the XML template with the provided properties.
+    3. Saves the generated XML to a file named <flow_id>.xml.
+    4. Calls an adapter to process this node data and save it to the database using the provided node_id, label, properties, and position.
     """
     try:
         target_flow_id = current_flow_id_var.get()
         if not target_flow_id:
-            logger.error("Create node failed: Cannot get current flow_id from context.")
+            logger.error("Execute create node failed: Cannot get current flow_id from context.")
             return {"success": False, "message": "Cannot get current flow ID.", "error": "Context error: Missing flow_id"}
 
         logger.info("=" * 40)
-        logger.info(f"Create Node Tool called (Flow ID: {target_flow_id})")
+        logger.info(f"Execute Create Node Tool called (Flow ID: {target_flow_id})")
+        logger.info(f"Attempting to create node: ID='{node_id}', Type='{node_type}', Label='{label}'")
+        logger.debug(f"Received properties: {properties}")
+        logger.debug(f"Received position: {position}")
 
-        actual_node_type = node_type or type_alias
-        if not actual_node_type:
-            logger.error(f"Missing required node_type parameter. Provided: node_type={node_type}, type_alias={type_alias}")
-            return {"success": False, "message": "Create node failed: Missing node_type parameter.", "error": "Missing node_type"}
+        xml_defined_properties = {} # To store defaults from XML
 
-        effective_label = node_label or node_name or label or actual_node_type
-        logger.info(f"Attempting to create node: Type='{actual_node_type}', Label='{effective_label}'")
-
-        xml_defined_properties = {}
-        user_provided_properties = {}
-        llm_generated_properties = {}
-
-        xml_template_file_path = os.path.join(XML_NODE_DEFINITIONS_PATH, f"{actual_node_type}.xml")
+        xml_template_file_path = os.path.join(XML_NODE_DEFINITIONS_PATH, f"{node_type}.xml")
         logger.info(f"Looking for node definition XML: {xml_template_file_path}")
 
         if not os.path.exists(xml_template_file_path):
-            logger.error(f"Node type '{actual_node_type}' definition file not found: {xml_template_file_path}")
+            logger.error(f"Node type '{node_type}' definition file not found: {xml_template_file_path}")
             available_xml_files = [f.replace('.xml', '') for f in os.listdir(XML_NODE_DEFINITIONS_PATH) if f.endswith('.xml')]
-            error_message = f"Node type '{actual_node_type}' is invalid. XML definition file '{xml_template_file_path}' not found."
+            error_message = f"Node type '{node_type}' is invalid. XML definition file '{xml_template_file_path}' not found."
             if available_xml_files: error_message += f" Available node types: {', '.join(available_xml_files)}."
             else: error_message += f" No XML definition files found in '{XML_NODE_DEFINITIONS_PATH}'."
             return {"success": False, "message": error_message, "error": "Node definition XML not found"}
@@ -113,9 +70,10 @@ def create_node_tool_func(
         try:
             tree = ET.parse(xml_template_file_path)
             root = tree.getroot()
-            block_element = root.find(".//block")
+            namespaces = {'blockly': 'https://developers.google.com/blockly/xml'}
+            block_element = root.find(".//blockly:block", namespaces)
             if block_element is not None:
-                for field in block_element.findall("field"):
+                for field in block_element.findall("blockly:field", namespaces):
                     param_name = field.get("name")
                     if param_name:
                         xml_defined_properties[param_name] = field.text if field.text is not None else ""
@@ -126,38 +84,16 @@ def create_node_tool_func(
             logger.error(f"Failed to parse XML template file '{xml_template_file_path}': {e}")
             return {"success": False, "message": f"Failed to parse node definition file '{xml_template_file_path}'.", "error": f"XML ParseError: {e}"}
 
-        if properties:
-            user_provided_properties.update(properties)
-        
-        known_params = {'node_type', 'node_label', 'properties', 'position', 'use_llm_for_properties', 'llm_client', 'node_name', 'label', 'type_alias'}
-        for key, value in kwargs.items():
-            if key not in known_params:
-                user_provided_properties[key] = value
-        logger.info(f"User-provided properties (incl. kwargs): {user_provided_properties}")
-
+        # Start with XML defaults, then update with provided properties from agent/caller
         final_node_specific_properties = xml_defined_properties.copy()
-
-        if use_llm_for_properties and llm_client:
-            logger.info(f"Attempting to generate properties using LLM for node type '{actual_node_type}'.")
-            try:
-                llm_props, llm_success = asyncio.run(generate_node_properties_llm(actual_node_type, effective_label, llm_client))
-                if llm_success:
-                    llm_generated_properties = llm_props
-                    logger.info(f"LLM generated properties: {llm_generated_properties}")
-                    final_node_specific_properties.update(llm_generated_properties)
-                else:
-                    logger.warning("LLM property generation failed or returned no data. Using XML defaults and user-provided properties.")
-            except Exception as e: 
-                logger.error(f"Exception during LLM property generation: {e}")
-                logger.warning("Proceeding without LLM-generated properties due to error.")
+        if properties: # Properties from agent/caller
+            final_node_specific_properties.update(properties)
         
-        if user_provided_properties:
-            final_node_specific_properties.update(user_provided_properties)
-        
-        logger.info(f"Final merged node-specific properties: {final_node_specific_properties}")
+        logger.info(f"Final merged node-specific properties for XML: {final_node_specific_properties}")
 
         if block_element is not None:
-            for field in block_element.findall("field"):
+            namespaces = {'blockly': 'https://developers.google.com/blockly/xml'}
+            for field in block_element.findall("blockly:field", namespaces):
                 param_name = field.get("name")
                 if param_name in final_node_specific_properties:
                     field.text = str(final_node_specific_properties[param_name])
@@ -166,39 +102,47 @@ def create_node_tool_func(
             logger.warning("No <block> element in XML to populate; if properties were expected here, they weren't written to XML fields.")
 
         os.makedirs(XML_SAVE_PATH, exist_ok=True)
-        output_xml_filename = f"{target_flow_id}.xml"
+        output_xml_filename = f"{target_flow_id}.xml" # Consider if filename needs to be more unique if multiple nodes are created for one flow
         output_xml_full_path = os.path.join(XML_SAVE_PATH, output_xml_filename)
         
         try:
-            tree.write(output_xml_full_path, encoding='utf-8', xml_declaration=True)
+            tree.write(output_xml_full_path, 
+                       encoding='utf-8', 
+                       xml_declaration=True)
             logger.info(f"Modified XML saved to: {output_xml_full_path}")
         except Exception as e:
             logger.error(f"Failed to save modified XML to '{output_xml_full_path}': {e}")
             return {"success": False, "message": f"Failed to save generated XML file.", "error": str(e)}
 
-        node_id = f"node_{str(uuid.uuid4())[:8]}" 
-        logger.info(f"Generated Node ID: {node_id}")
+        # Use the provided node_id from agent
+        logger.info(f"Using provided Node ID: {node_id}")
 
         if not position:
             import random
             position = {"x": random.randint(100, 800), "y": random.randint(100, 600)}
-            logger.info(f"Generated random position: {position}")
+            logger.info(f"Generated random position as none was provided: {position}")
 
+        # The properties sent to the adapter should be the complete set used for the node,
+        # which might be more than what's in the XML fields (e.g. custom data not in XML schema).
+        # 'final_node_specific_properties' here is what was used to populate XML.
+        # If the agent is intended to provide a richer set of properties beyond XML,
+        # the 'properties' input to this function should be that richer set.
+        # For now, assuming final_node_specific_properties is what we want to save.
         adapter_result = process_node_data_and_save_to_db(
             flow_id=target_flow_id,
-            node_id=node_id,
-            node_type_from_tool=actual_node_type,
-            node_label=effective_label,
+            node_id=node_id, # Use the ID from agent
+            node_type_from_tool=node_type,
+            node_label=label, # Use label from agent
             position=position,
-            all_node_properties=final_node_specific_properties
+            all_node_properties=final_node_specific_properties # These are merged XML defaults + agent/caller provided
         )
 
         if adapter_result.get("success"):
-            logger.info(f"Node '{effective_label}' (ID: {node_id}) creation process successful. XML saved, DB updated by adapter.")
+            logger.info(f"Node '{label}' (ID: {node_id}) creation executed successfully. XML saved, DB updated by adapter.")
             logger.info("=" * 40)
             return {
                 "success": True,
-                "message": f"Successfully created node '{effective_label}' (Type: {actual_node_type}). XML saved, data sent to DB.",
+                "message": f"Successfully executed creation of node '{label}' (Type: {node_type}). XML saved, data sent to DB.",
                 "xml_file_path": output_xml_full_path,
                 "node_data_db_response": adapter_result 
             }
@@ -206,28 +150,21 @@ def create_node_tool_func(
             logger.error(f"Adapter failed to process/save node data for node {node_id}. Message: {adapter_result.get('message')}")
             return {
                 "success": False,
-                "message": f"Node '{effective_label}' XML saved, but failed to save data to DB via adapter. Adapter msg: {adapter_result.get('message')}",
+                "message": f"Node '{label}' XML saved, but failed to save data to DB via adapter. Adapter msg: {adapter_result.get('message')}",
                 "xml_file_path": output_xml_full_path, 
                 "error": f"Adapter Error: {adapter_result.get('message')}"
             }
 
     except Exception as e:
-        logger.error(f"Unhandled exception in create_node_tool_func: {str(e)}")
+        logger.error(f"Unhandled exception in execute_create_node_func: {str(e)}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         return {"success": False, "message": f"An unexpected error occurred: {str(e)}", "error": "Internal tool error"}
 
-class CreateNodeSchema(BaseModel):
-    node_type: str = Field(description="The type of the node to create (must match an XML definition file name).")
-    node_label: Optional[str] = Field(None, description="Label for the node. Uses node_type or a generated name if not provided.")
-    properties: Optional[Dict[str, Any]] = Field(None, description="Specific properties for the node, overriding XML defaults and LLM suggestions.")
-    position: Optional[Dict[str, float]] = Field(None, description="Position (x, y) for the node on the canvas.")
-    use_llm_for_properties: bool = Field(False, description="Set to true to use LLM to suggest properties if 'properties' field is not provided.")
-    type_alias: Optional[str] = Field(None, alias="type", description="Alias for node_type.")
-
-create_node_structured_tool = StructuredTool.from_function(
-    func=create_node_tool_func,
-    name="create_node",
-    description="Creates a new node in the workflow diagram. Specify node_type. Optionally provide label, properties, position, and whether to use LLM for property suggestions.",
-    args_schema=CreateNodeSchema
+# Renamed from create_node_structured_tool to reflect its role
+create_node_execution_tool = StructuredTool.from_function(
+    func=execute_create_node_func,
+    name="execute_create_node", # Changed name to reflect execution
+    description="Executes the creation of a new node in the workflow diagram using pre-processed data (ID, type, label, properties, position) and saves it.",
+    args_schema=ExecuteCreateNodeSchema
 ) 

@@ -452,88 +452,75 @@ async def get_chat_events(chat_id: str):
 
     # 查找对应的队列
     if chat_id not in active_chat_queues:
-        logger.warning(f"请求 chat {chat_id} 的事件流，但队列不存在")
-        # 可以选择返回 404 或等待一小段时间？返回 404 更清晰
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No active event stream found for chat {chat_id}. Process might not have started or has finished.")
+        logger.warning(f"请求 chat {chat_id} 的事件流，但队列不存在或已清理")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No active event stream found for chat {chat_id}. Process might not have started, has finished, or an error occurred.")
 
     event_queue = active_chat_queues[chat_id]
     logger.info(f"找到 chat {chat_id} 的事件队列，准备发送 SSE 事件")
 
     async def sse_event_sender():
-        """
-        异步生成器，从队列中获取事件并格式化为 SSE。
-        """
         logger.debug(f"Starting SSE event sender for chat {chat_id}")
         is_first_event = True
         try:
             while True:
                 event_data = await event_queue.get()
                 
-                # 检查是否是结束标记
                 if event_data is STREAM_END_SENTINEL:
                     logger.info(f"收到 chat {chat_id} 的流结束标记，发送 stream_end 事件并关闭 SSE 连接")
-                    # 先发送 stream_end 事件
                     yield {
                         "event": STREAM_END_SENTINEL.get("type", "stream_end"),
                         "data": json.dumps(STREAM_END_SENTINEL.get("data", {}))
                     }
-                    event_queue.task_done() # 标记处理完成
-                    break # 然后结束循环
+                    event_queue.task_done()
+                    break 
 
-                # 确保 event_data 是字典，包含 'type' 和 'data'
                 if isinstance(event_data, dict) and "type" in event_data and "data" in event_data:
                     event_type = event_data.get("type", "message")
                     data_payload = event_data.get("data", {})
                     
-                    # 根据数据类型决定是否需要 json.dumps
                     if isinstance(data_payload, str): 
-                        # 对于 token 等简单字符串，直接发送
                         formatted_data = data_payload
                     else:
-                        # 对于字典等复杂类型，进行 json.dumps
                         try:
                             formatted_data = json.dumps(data_payload)
                         except TypeError:
                             logger.error(f"序列化事件数据为 JSON 失败 (type: {event_type}, chat: {chat_id})", exc_info=True)
-                            # 发送一个错误事件替代
                             event_type = "error"
                             formatted_data = json.dumps({"message": f"Failed to serialize event data for type {event_type}", "stage": "sse_formatting"})
-
-                    if is_first_event:
-                        logger.info(f"已发送第一个 SSE 事件 (type: {event_type}) 到 chat {chat_id} 的监听者")
-                        is_first_event = False
-                        
-                    # logger.debug(f"Sending SSE event: type={event_type}, data={formatted_data}") # 调试时取消注释
+                    
+                    logger.debug(f"SSE Sender for {chat_id}: Sending event type '{event_type}'")
                     yield {
                         "event": event_type,
-                        "data": formatted_data # 发送已格式化的数据
+                        "data": formatted_data
                     }
                 else:
-                    logger.warning(f"Invalid event data format received for chat {chat_id}: {event_data}")
-
+                    logger.warning(f"从队列中获取的事件格式不正确 (chat: {chat_id}): {event_data}")
+                    yield {
+                        "event": "error",
+                        "data": json.dumps({"message": "Received malformed event from queue.", "stage": "sse_formatting"})
+                    }
                 event_queue.task_done()
-
         except asyncio.CancelledError:
-            logger.info(f"SSE 事件发送器 for chat {chat_id} 被取消")
-            # 可以在这里进行清理工作，但通常由 finally 处理
+            logger.info(f"SSE event sender for chat {chat_id} was cancelled (client likely disconnected).")
+            raise
         except Exception as e:
-            logger.error(f"SSE 事件发送器 for chat {chat_id} 发生错误: {e}", exc_info=True)
+            logger.error(f"SSE event sender for chat {chat_id} 遇到未处理的错误: {e}", exc_info=True)
+            try:
+                yield {
+                    "event": "error",
+                    "data": json.dumps({"message": f"SSE sender encountered a critical error: {str(e)}", "stage": "sse_sending_critical"})
+                }
+            except Exception as send_err:
+                logger.error(f"在SSE发送器中为 {chat_id} 发送最终错误事件失败: {send_err}")
         finally:
-            logger.info(f"SSE 事件发送器完成或终止 for chat {chat_id}")
-            # 从 active_chat_queues 中移除队列，避免内存泄漏
+            logger.info(f"SSE event sender for chat {chat_id} is cleaning up.")
             if chat_id in active_chat_queues:
-                # 确保队列为空，防止未处理的任务
-                # while not event_queue.empty():
-                #     try:
-                #         event_queue.get_nowait()
-                #         event_queue.task_done()
-                #     except asyncio.QueueEmpty:
-                #         break
-                #     except Exception as eqe:
-                #         logger.warning(f"Error emptying queue during finally block for chat {chat_id}: {eqe}")
-                del active_chat_queues[chat_id]
-                logger.info(f"已移除 chat {chat_id} 的事件队列")
-
+                removed_queue = active_chat_queues.pop(chat_id, None)
+                if removed_queue:
+                    logger.info(f"已成功从 active_chat_queues 中移除 chat {chat_id} 的队列。")
+            else:
+                logger.warning(f"在 SSE 清理阶段，chat {chat_id} 的队列已不在 active_chat_queues 中，可能已被其他地方清理。")
+            
     return EventSourceResponse(sse_event_sender())
 
 

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<blockly:xml xmlns:blockly="https://developers.google.com/blockly/xml">
+  <blockly:block type="moveL" id="GENERATED_ID" data-blockNo="1">
+    <blockly:field name="point_name_list">P3</blockly:field>
+    <blockly:field name="control_x">enable</blockly:field>
+    <blockly:field name="control_y">enable</blockly:field>
+    <blockly:field name="control_z">enable</blockly:field>
+    <blockly:field name="control_rz">enable</blockly:field>
+    <blockly:field name="control_ry">enable</blockly:field>
+    <blockly:field name="control_rx">enable</blockly:field>
+    <blockly:field name="pallet_list">none</blockly:field>
+    <blockly:field name="camera_list">none</blockly:field>
+    
+  </blockly:block>
+</blockly:xml>

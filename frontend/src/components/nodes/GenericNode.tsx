@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Card, CardContent, Typography, Box, Tooltip } from '@mui/material';
 
@@ -53,6 +53,22 @@ export interface GenericNodeData {
  */
 const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNodeData>) => {
   // console.log('GenericNode data:', data); // Remove this debug log
+
+  const standardExcludedKeys = useMemo(() => [
+    'label', 
+    'description', 
+    'fields', 
+    'inputs', 
+    'outputs', 
+    'type', // application-specific type from GenericNodeData
+    'nodeType', // often a more specific type or duplicate
+    'nodeProperties' // complex object, handled by properties panel
+  ], []);
+
+  const fieldNamesFromDataFields = useMemo(() => {
+    return data.fields ? data.fields.map(f => f.name) : [];
+  }, [data.fields]);
+
   // 处理字段值的显示转换
   const formatFieldValue = useCallback((value: any, type?: string) => {
     if (value === undefined || value === null) return 'none';
@@ -243,7 +259,8 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
             <Box sx={{ 
               mt: 1,
               maxHeight: selected ? '200px' : '0px',
-              overflow: 'hidden',
+              overflowY: 'auto',
+              overflowX: 'hidden',
               transition: 'all 0.3s ease',
               opacity: selected ? 1 : 0
             }}>
@@ -264,6 +281,43 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
                   <span>{formatFieldValue(field.value, field.type)}</span>
                 </Typography>
               ))}
+            </Box>
+          )}
+          {selected && (
+            Object.entries(data)
+              .filter(([key, value]) => 
+                !standardExcludedKeys.includes(key) &&
+                !fieldNamesFromDataFields.includes(key) &&
+                (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+              ).length > 0 
+          ) && (
+            <Box sx={{ 
+                mt: (data.fields && data.fields.length > 0) ? 0.5 : 1,
+                maxHeight: selected ? '150px' : '0px',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                transition: 'all 0.3s ease',
+                opacity: selected ? 1 : 0,
+                pt: (data.fields && data.fields.length > 0) ? 0.5 : 0,
+              }}>
+              {Object.entries(data)
+                .filter(([key, value]) => 
+                  !standardExcludedKeys.includes(key) &&
+                  !fieldNamesFromDataFields.includes(key) &&
+                  (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+                )
+                .map(([key, value]) => (
+                  <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}>
+                    <Typography variant="caption" sx={{ color: selected ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.6)', mr: 1, fontSize: selected ? '0.7rem' : '0.65rem', textTransform: 'capitalize' }}>
+                      {key.replace(/_/g, ' ')}:
+                    </Typography>
+                    <Tooltip title={String(value)} placement="top-end">
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: selected ? '#fff' : '#ddd', fontSize: selected ? '0.7rem' : '0.65rem', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '60%' }}>
+                        {formatFieldValue(value, typeof value === 'boolean' ? 'boolean' : undefined)}
+                      </Typography>
+                    </Tooltip>
+                  </Box>
+                ))}
             </Box>
           )}
           {selected && data.type && (

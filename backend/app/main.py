@@ -9,6 +9,13 @@ from pathlib import Path
 import logging.handlers
 import time # 导入 time
 
+# --- 新增：启用 LangChain 的详细日志 ---
+import langchain
+langchain.debug = True
+logger = logging.getLogger(__name__) # 获取一个logger实例，确保在这之前定义了langchain.debug
+logger.info("LangChain debug mode enabled.") # 记录一下我们启用了它
+# --- 结束新增 ---
+
 # 添加项目根目录到Python路径
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
@@ -20,21 +27,9 @@ from backend.config.base import LOG_DIR
 log_dir = Path(LOG_DIR) # 使用配置中的 LOG_DIR
 log_dir.mkdir(parents=True, exist_ok=True)
 
-# 配置详细日志
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        # 控制台输出
-        logging.StreamHandler(),
-        # 文件输出
-        logging.handlers.RotatingFileHandler(
-            log_dir / "app.log", # 使用 log_dir 变量
-            maxBytes=1*1024*1024,  # 修改为 1MB
-            backupCount=1,         # 修改为 1 个备份
-            encoding='utf-8'
-        )
-    ]
+# 为 app.main logger 创建格式化器
+app_main_formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
 # 创建单独的DeepSeek日志记录器
@@ -48,6 +43,7 @@ deepseek_file_handler = logging.handlers.RotatingFileHandler(
 )
 deepseek_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 deepseek_logger.addHandler(deepseek_file_handler)
+# deepseek_logger.propagate = False # 可选：如果 deepseek 日志不应传播到根
 
 # 工作流处理日志记录器
 workflow_logger = logging.getLogger("backend.workflow")
@@ -60,9 +56,29 @@ workflow_file_handler = logging.handlers.RotatingFileHandler(
 )
 workflow_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 workflow_logger.addHandler(workflow_file_handler)
+# workflow_logger.propagate = False # 可选：如果 workflow 日志不应传播到根
 
-logger = logging.getLogger(__name__)
-logger.info("日志系统已配置，将记录到 %s", log_dir) # 使用 log_dir 变量
+logger = logging.getLogger(__name__) # 此处的 __name__ 通常是 "app.main"
+logger.setLevel(logging.DEBUG) # 为 app.main logger 设置级别
+
+# 为 app.main logger 添加控制台处理器
+app_main_console_handler = logging.StreamHandler()
+app_main_console_handler.setFormatter(app_main_formatter)
+logger.addHandler(app_main_console_handler)
+
+# 为 app.main logger 添加文件处理器 (app.log)
+app_main_file_handler = logging.handlers.RotatingFileHandler(
+    log_dir / "app.log",
+    maxBytes=1*1024*1024,
+    backupCount=1,
+    encoding='utf-8'
+)
+app_main_file_handler.setFormatter(app_main_formatter)
+logger.addHandler(app_main_file_handler)
+
+logger.propagate = False # 防止 app.main 日志被根记录器（如果将来配置了）重复处理
+
+logger.info("日志系统已配置 (app.main)，将记录到 %s 和控制台", log_dir) # 使用 log_dir 变量
 
 # 检查是否使用最小模式
 MINIMAL_MODE = os.environ.get("SKIP_COMPLEX_ROUTERS", "0") == "1"

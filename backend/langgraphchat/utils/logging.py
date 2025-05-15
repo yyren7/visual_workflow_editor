@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 # Import specific config objects and base variables needed
 from backend.config import LANGCHAIN_CONFIG, LOG_DIR
 
-def setup_logging(name: str = "langchain_chat") -> logging.Logger:
+def setup_logging(name: str = "backend.langgraphchat") -> logging.Logger:
     """
     配置LangChain模块的日志记录器
     

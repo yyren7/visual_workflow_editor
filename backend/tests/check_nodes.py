@@ -1,7 +1,7 @@
 from database.connection import get_db
 from backend.app.services.flow_service import FlowService
 
-flow_id = '30a17510-07bf-4371-aa18-6583ad908aa4'
+flow_id = 'ed10ef28-ad53-41c0-860f-f359e3ea9640'
 flow_service = FlowService(next(get_db()))
 flow = flow_service.get_flow(flow_id)
 nodes = flow.get('nodes', [])
