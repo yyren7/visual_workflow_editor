@@ -167,10 +167,19 @@ def validate_single_block_xml(xml_content_string: str) -> tuple[bool, list[str]]
                     errors.append(f"Block type '{block_type}' is missing required field: '{req_field_name}'.")
         
         allowed_block_children_local_names = {"field", "mutation"}
+        if block_type == "loop":
+            allowed_block_children_local_names.add("statement")
+
         for child in block_element:
             child_local_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
             if child_local_name not in allowed_block_children_local_names:
                  errors.append(f"Block type '{block_type}' has unexpected child <{child_local_name}>. Full tag: {child.tag}")
+            elif block_type == "loop" and child_local_name == "statement":
+                if child.get("name") != "DO":
+                    errors.append(f"Loop block's <statement> child must have name='DO'. Found name='{child.get('name')}'. Full tag: {child.tag}")
+                # Check if the statement has any children other than a 'next' element or other 'block' elements.
+                # This part might be too specific if we don't know the exact allowed structure within a loop's statement.
+                # For now, we just validate the name attribute.
 
     except ValueError as e:
         errors.append(str(e))
