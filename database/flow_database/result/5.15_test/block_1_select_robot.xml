@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="block_uuid_1" data-blockNo="1">
+    <field name="robotName">Dobot MG400</field>
+  </block>
+</xml> 

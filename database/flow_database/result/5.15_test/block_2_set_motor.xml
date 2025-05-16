@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="set_motor" id="block_uuid_2" data-blockNo="1">
+    <field name="state_list">on</field>
+  </block>
+</xml> 

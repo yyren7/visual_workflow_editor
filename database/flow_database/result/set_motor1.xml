@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<blockly:xml xmlns:blockly="https://developers.google.com/blockly/xml">
+      <blockly:block type="set_motor" id="GENERATED_ID" data-blockNo="1">
+        <blockly:field name="state_list">on</blockly:field>
+    
+  </blockly:block>
+</blockly:xml>

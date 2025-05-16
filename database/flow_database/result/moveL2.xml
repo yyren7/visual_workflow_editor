@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <blockly:xml xmlns:blockly="https://developers.google.com/blockly/xml">
   <blockly:block type="moveL" id="GENERATED_ID" data-blockNo="2">
-    <blockly:field name="point_name_list">P3</blockly:field>
+    <blockly:field name="point_name_list">P2</blockly:field>
     <blockly:field name="control_x">enable</blockly:field>
     <blockly:field name="control_y">enable</blockly:field>
     <blockly:field name="control_z">enable</blockly:field>
