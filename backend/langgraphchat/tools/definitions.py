@@ -85,7 +85,7 @@ NODE_CREATION_TOOL_DEFINITION = {
     "function": {
         "name": "create_node",
         "description": "创建一个流程图节点",
-        "parameters": NodeParams.schema()
+        "parameters": NodeParams.model_json_schema()
     }
 }
 
@@ -94,7 +94,7 @@ CONNECTION_CREATION_TOOL_DEFINITION = {
     "function": {
         "name": "connect_nodes",
         "description": "连接两个流程图节点",
-        "parameters": ConnectionParams.schema()
+        "parameters": ConnectionParams.model_json_schema()
     }
 }
 
@@ -103,7 +103,7 @@ PROPERTY_SETTING_TOOL_DEFINITION = {
     "function": {
         "name": "set_properties",
         "description": "设置节点或连接的属性",
-        "parameters": PropertyParams.schema()
+        "parameters": PropertyParams.model_json_schema()
     }
 }
 
@@ -112,7 +112,7 @@ ASK_MORE_INFO_TOOL_DEFINITION = {
      "function": {
          "name": "ask_more_info",
          "description": "当信息不足时，向用户询问更多问题",
-         "parameters": QuestionsParams.schema()
+         "parameters": QuestionsParams.model_json_schema()
      }
 }
 
@@ -121,7 +121,7 @@ TEXT_GENERATION_TOOL_DEFINITION = {
      "function": {
          "name": "generate_text",
          "description": "根据提示生成文本内容",
-         "parameters": TextGenerationParams.schema()
+         "parameters": TextGenerationParams.model_json_schema()
      }
 }
 

@@ -54,6 +54,12 @@ async def planner_node(state: AgentState, llm: BaseChatModel, tools: List[BaseTo
         final_response_metadata = getattr(accumulated_ai_message_chunk, 'response_metadata', None)
         final_usage_metadata = getattr(accumulated_ai_message_chunk, 'usage_metadata', None)
 
+        # TODO: (Pydantic V2 & Langchain Best Practices Refactor)
+        #  Langchain 的 AIMessageChunk 累加操作符 (+=) 通常会自动将 tool_call_chunks
+        #  聚合并填充到最终 AIMessage 的 tool_calls 属性中。以下手动重建逻辑
+        #  是为了增强对某些 LLM 流式输出不完整情况的兼容性。
+        #  可以考虑测试直接使用 accumulated_ai_message_chunk.tool_calls 是否足够，
+        #  如果足够，则可以简化或移除此手动重建部分。
         if not final_tool_calls and accumulated_ai_message_chunk.tool_call_chunks:
             logger.info("Planner: Reconstructing tool_calls from tool_call_chunks.")
             reconstructed_tool_calls = []

@@ -33,7 +33,8 @@ async def input_handler_node(state: AgentState) -> dict:
 
         if should_add_new_message:
             newly_added_message_for_operator_add = new_human_message
-            logger.info(f"Input handler: Prepared new HumanMessage for appending: {new_human_message.content}")
+            updated_state_dict["user_request_for_router"] = new_human_message.content
+            logger.info(f"Input handler: Prepared new HumanMessage for appending and set user_request_for_router: {new_human_message.content}")
         else:
             logger.info("Input handler: Input string matches last HumanMessage; not preparing for append.")
 

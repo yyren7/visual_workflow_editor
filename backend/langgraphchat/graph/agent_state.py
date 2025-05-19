@@ -2,6 +2,9 @@ from typing import List, TypedDict, Optional, Any, Annotated
 from langchain_core.messages import BaseMessage
 import operator
 
+# from .conditions import RouteDecision # RouteDecision is now in conditions.py
+from .types import RouteDecision # RouteDecision is now in types.py
+
 # 为了与 LangGraph 兼容，并让我们可以添加任意数量的键，
 # 我们将基础状态类定义为 TypedDict，然后使用它来注解 StateGraph。
 # TypedDict 的一个好处是，我们可以为每个键定义一个类型，
@@ -30,8 +33,15 @@ class AgentState(TypedDict):
         input_processed: 一个布尔标志，指示 state.input 是否已被处理并合并到 messages 中。默认为 False。
         # agent_outcome 字段可以移除，因为最终的 Agent 回复也会是 messages 列表中的一个 AIMessage。
         # 工具调用信息将直接存在于 AIMessage 的 tool_calls 属性中。
+
+        # 新增字段，用于存储 task_router 节点的决策结果
+        task_route_decision: Optional[RouteDecision]
+        user_request_for_router: Optional[str] # 新增：专门用于task_router处理的用户请求内容
     """
     input: str
     messages: Annotated[List[BaseMessage], operator.add]
     flow_context: Any
-    current_flow_id: str 
+    current_flow_id: str
+    input_processed: bool
+    task_route_decision: Optional[RouteDecision]
+    user_request_for_router: Optional[str] # 新增 

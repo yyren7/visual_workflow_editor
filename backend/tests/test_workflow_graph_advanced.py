@@ -1,13 +1,22 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Type, Any, Dict, List
+from typing import Type, Any, Dict, List, Tuple
 
-from langchain_core.messages import AIMessage, HumanMessage, ToolCall, ToolMessage, AIMessageChunk
+from langchain_core.messages import AIMessage, HumanMessage, ToolCall, ToolMessage, BaseMessage
 from langchain_core.tools import BaseTool
+from langchain_deepseek import ChatDeepSeek # <--- 确保导入 DeepSeek LLM
+# from langchain_openai import ChatOpenAI # Example if you were using OpenAI
+
 from pydantic import BaseModel, Field
 
 from backend.langgraphchat.graph.agent_state import AgentState
 from backend.langgraphchat.graph.workflow_graph import compile_workflow_graph
+from backend.langgraphchat.graph.types import RouteDecision # For type hinting if needed
+
+# --- Configuration for Real LLM (DeepSeek) ---
+# 请确保您已设置必要的环境变量，例如 DEEPSEEK_API_KEY
+# 您可能还需要指定模型名称
+# EXAMPLE_DEEPSEEK_MODEL_NAME = "deepseek-chat" # 或其他兼容的模型
 
 # Define a very simple schema for the mock tool to avoid RecursionError
 class SimpleMockToolSchema(BaseModel):
@@ -20,7 +29,7 @@ class MockToolArgsSchema1(BaseModel):
 class MockToolArgsSchema2(BaseModel):
     item_id: str = Field(description="ID of the item to process")
 
-# Custom Mock Tool class inheriting from BaseTool
+# Custom Mock Tool class inheriting from BaseTool (remains useful for planner tool testing)
 class MockToolForTest(BaseTool):
     name: str
     description: str
@@ -41,34 +50,62 @@ class MockToolForTest(BaseTool):
     def _run(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("This mock tool is async only.")
 
-class TestWorkflowGraphAdvanced(unittest.IsolatedAsyncioTestCase):
+class TestWorkflowGraphWithRealLLM(unittest.IsolatedAsyncioTestCase):
 
-    async def _run_workflow_and_print_events(self, compiled_workflow, initial_state: AgentState, test_name: str) -> Dict:
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        try:
+            # 与 chat_service.py 中初始化 DeepSeek 的方式保持一致
+            # 确保 DEEPSEEK_API_KEY 环境变量已设置
+            cls.llm = ChatDeepSeek(
+                model="deepseek-chat", # 使用与 chat_service.py 一致或您希望测试的模型
+                temperature=0,        # 测试时建议低 temperature
+            )
+            print("\n" + "="*30 + " INFO " + "="*30)
+            print(f"Successfully initialized DeepSeek LLM (model: {cls.llm.model_name}) consistent with ChatService.")
+            print("Ensure DEEPSEEK_API_KEY environment variable is set.")
+            print("="*79 + "\n")
+        except Exception as e:
+            cls.llm = None 
+            print("\n" + "="*30 + " ERROR " + "="*30)
+            print(f"Failed to initialize DeepSeek LLM (model: deepseek-chat) as in ChatService: {e}")
+            print("Please ensure 'langchain_deepseek' is installed and DEEPSEEK_API_KEY environment variable is set.")
+            print("Tests requiring the LLM will be skipped.")
+            print("="*100 + "\n")
+
+    def setUp(self):
+        super().setUp()
+        if self.llm is None:
+            self.skipTest("Real LLM not configured or failed to initialize in setUpClass.")
+
+    async def _run_workflow_and_collect_events(
+        self, compiled_workflow, initial_state: AgentState, test_name: str
+    ) -> Tuple[List[Tuple[str, str, Dict]], AgentState]:
         print(f"\n--- Test Workflow Start: {test_name} ---")
         print(f"Initial State Input: {initial_state.get('input')}")
         print(f"Initial State Messages: {initial_state.get('messages')}")
-        print(f"Initial State Flow Context: {initial_state.get('flow_context')}")
-        print(f"Initial State Input Processed: {initial_state.get('input_processed')}")
         
-        final_state_output_from_event = None # This will be the direct content of 'planner' node state
+        events_history: List[Tuple[str, str, Dict]] = [] # (event_type, node_name, data)
+        final_graph_output = None
         
         event_stream = compiled_workflow.astream_events(initial_state, version="v2")
         
         print("\n  Workflow Events:")
         async for event in event_stream:
             event_type = event["event"]
-            name = event.get("name")
-            tags = event.get("tags", [])
-            data = event.get("data")
+            name = event.get("name") # Node name or chain name
+            # tags = event.get("tags", [])
+            data = event.get("data", {})
 
-            print(f"    Event: {event_type}, Name: {name}, Tags: {tags}")
+            events_history.append((event_type, name, data))
+            print(f"    Event: {event_type}, Name: {name}") #, Tags: {tags}")
 
-            if event_type == "on_chat_model_stream":
+            if event_type == "on_chat_model_stream" and data.get("chunk"):
                 chunk = data.get("chunk")
-                if isinstance(chunk, AIMessageChunk):
-                    if chunk.content:
+                if hasattr(chunk, 'content') and chunk.content:
                         print(f"      LLM Stream Content: \"{chunk.content}\"")
-                    if chunk.tool_call_chunks:
+                if hasattr(chunk, 'tool_call_chunks') and chunk.tool_call_chunks:
                         print(f"      LLM Stream Tool Call Chunks: {chunk.tool_call_chunks}")
             elif event_type == "on_tool_start":
                  print(f"      Tool Start ({name}): Input = {data.get('input')}")
@@ -78,258 +115,304 @@ class TestWorkflowGraphAdvanced(unittest.IsolatedAsyncioTestCase):
             if event_type == "update_state":
                 updated_keys = list(data.keys())
                 print(f"      State Updated by '{name}': Keys updated = {updated_keys}")
-                if "messages" in data: # Log messages if updated by any node
-                    print(f"        Messages after update by '{name}': {data['messages']}")
+                # if "messages" in data:
+                #     print(f"        Messages after update by '{name}': {data['messages']}")
+                # if "task_route_decision" in data:
+                #      print(f"        Task Route Decision: {data['task_route_decision']}")
 
 
             if event_type == "on_chain_end" and name == "LangGraph":
-                print(f"      EVENT DATA for on_chain_end (LangGraph): {data}")
-                if data and 'output' in data:
-                    raw_final_state_list_or_dict = data['output']
-                    print(f"      Captured raw_final_state_list_or_dict from on_chain_end (LangGraph) data['output']: {raw_final_state_list_or_dict}")
-                    
-                    processed_planner_state = None
-                    if isinstance(raw_final_state_list_or_dict, list):
-                        for item in reversed(raw_final_state_list_or_dict):
-                            if isinstance(item, dict) and 'planner' in item and isinstance(item['planner'], dict):
-                                processed_planner_state = item['planner']
-                                print(f"        Extracted 'planner' state from list: {processed_planner_state}")
-                                break
-                        if not processed_planner_state:
-                             print("        No 'planner' state found in the list of final outputs, or 'planner' value is not a dict.")
-                    elif isinstance(raw_final_state_list_or_dict, dict):
-                        # If the output is a single dict, it might be {'planner': actual_state} or just actual_state
-                        if 'planner' in raw_final_state_list_or_dict and isinstance(raw_final_state_list_or_dict['planner'], dict):
-                            processed_planner_state = raw_final_state_list_or_dict['planner']
-                            print(f"        Extracted 'planner' state from dict: {processed_planner_state}")
-                        # It could also be that the graph directly returns the final state dict (e.g. if only one node at the end)
-                        # In our case, the 'planner' node itself returns a dict like {'messages': [...], 'input': None, ...}
-                        # So, if raw_final_state_list_or_dict *is* that dict, we use it.
-                        # Let's assume for now the structure from list traversal is the primary path.
-                        # If not found via list or direct {'planner':...}, then maybe raw_final_state_list_or_dict *is* the planner state.
-                        # This part might need refinement based on actual LangGraph output variety.
-                        # For now, we prioritize extracting from a list or a dict with a 'planner' key.
-                        # If the output is directly the planner's state dict (e.g. from a simpler graph):
-                        elif 'messages' in raw_final_state_list_or_dict : # Heuristic: if it has 'messages', it might be the planner state itself
-                            processed_planner_state = raw_final_state_list_or_dict
-                            print(f"        Raw final state is a dict, and looks like planner state itself: {processed_planner_state}")
-
-                    final_state_output_from_event = processed_planner_state
-        
-        # Print messages from the extracted planner state
-        if final_state_output_from_event and isinstance(final_state_output_from_event, dict) and 'messages' in final_state_output_from_event:
-            print(f"\nFinal State Output Messages (from extracted planner state): {final_state_output_from_event.get('messages')}")
-        else:
-            print(f"\nFinal State Output Messages: N/A (Planner state not found, not a dict, or no messages key)")
+                print(f"      LangGraph Ended. Output: {data.get('output')}")
+                final_graph_output = data.get('output')
 
         print(f"--- Test Workflow End: {test_name} ---\n")
-        # The assertion is now on final_state_output_from_event, which should be the planner's dict state
-        self.assertIsNotNone(final_state_output_from_event, "Final planner state output (after processing list/dict) should not be None")
-        self.assertIsInstance(final_state_output_from_event, dict, "Final planner state should be a dictionary.")
-        return final_state_output_from_event
+        
+        # The final output of the graph is a list of state dicts, one for each final node.
+        # If the graph ends at an END state, this list might represent the state just before END.
+        # We need to find the most recent complete state.
+        final_state_dict = {}
+        if isinstance(final_graph_output, list) and final_graph_output:
+            # The list contains dicts like {'node_name': state_after_node}
+            # We want the full accumulated state.
+            # The Graph's final output in v2 astream_events with `output_keys=None` (default)
+            # is the full state of the graph when it finishes.
+            # Let's find the last full state snapshot from "update_state" from "LangGraph" itself
+            # or use the direct output if it's a dict.
+            
+            # Try to get the final state from the 'on_chain_end' event for LangGraph
+            for evt_type, evt_name, evt_data in reversed(events_history):
+                if evt_type == "on_chain_end" and evt_name == "LangGraph" and isinstance(evt_data.get("output"), dict):
+                    final_state_dict = evt_data["output"]
+                    print(f"  Extracted final state from LangGraph on_chain_end event: Keys {list(final_state_dict.keys())}")
+                    break
+            if not final_state_dict and isinstance(final_graph_output, dict) : # Should be the case
+                 final_state_dict = final_graph_output
+                 print(f"  Using direct final_graph_output as final state: Keys {list(final_state_dict.keys())}")
+            elif not final_state_dict:
+                 print("  WARNING: Could not determine the final full state dictionary.")
 
+        return events_history, AgentState(**final_state_dict) if final_state_dict else AgentState(input="", messages=[], flow_context={}, current_flow_id="")
 
-    async def test_simple_conversation_no_tool_calls(self):
-        test_name = "test_simple_conversation_no_tool_calls"
-        print(f"\nRunning {test_name}...")
-        mock_llm = MagicMock()
-        final_response_content = "Hello! This is a simple response from the LLM."
-        mock_llm_with_tools = MagicMock()
-        async def mock_astream_simple_gen(*args, **kwargs):
-            print(f"    Mock LLM ({test_name}): Received input for astream: args={args}, kwargs={kwargs}")
-            yield AIMessageChunk(content="Hello! ", id="chunk_s_1")
-            yield AIMessageChunk(content="This is a simple response ", id="chunk_s_1")
-            yield AIMessageChunk(content="from the LLM.", id="chunk_s_1")
-        mock_llm_with_tools.astream = MagicMock(return_value=mock_astream_simple_gen())
-        mock_llm.bind_tools.return_value = mock_llm_with_tools
-        mock_tools = []
-        compiled_workflow = compile_workflow_graph(llm=mock_llm, custom_tools=mock_tools)
-        user_input = "Hi there, can you say hello without tools?"
+    def _get_last_ai_message_content(self, state: AgentState) -> str:
+        messages = state.get("messages", [])
+        for msg in reversed(messages):
+            if isinstance(msg, AIMessage):
+                return str(msg.content)
+        return ""
+
+    def _assert_node_visited(self, events_history: List[Tuple[str, str, Dict]], node_name: str, min_times: int = 1):
+        count = 0
+        for event_type, name, _ in events_history:
+            # We count 'on_chain_start' or 'on_node_start' (if LangServe adds it) for the node
+            # More reliably, count when a node updates the state.
+            if event_type == "update_state" and name == node_name:
+                count += 1
+        self.assertGreaterEqual(count, min_times, f"Node '{node_name}' should have been visited at least {min_times} time(s). Found {count} visits via state updates.")
+        print(f"  Assertion Check: Node '{node_name}' visited {count} time(s) (via state update).")
+
+    def _get_task_router_decision(self, events_history: List[Tuple[str, str, Dict]]) -> List[RouteDecision]:
+        decisions = []
+        for event_type, name, data in events_history:
+            if event_type == "update_state" and name == "task_router":
+                if "task_route_decision" in data and isinstance(data["task_route_decision"], RouteDecision):
+                    decisions.append(data["task_route_decision"])
+        return decisions
+
+    async def test_route_to_ask_info_and_return(self):
+        test_name = "test_route_to_ask_info_and_return"
+        
+        compiled_workflow = compile_workflow_graph(llm=self.llm, custom_tools=[])
+        user_input = "你能做什么？" # Input likely to go to ask_info
         initial_state = AgentState(
             input=user_input,
-            messages=[HumanMessage(content=user_input, id="human_msg_simple_1")],
+            messages=[HumanMessage(content=user_input)],
             flow_context={},
-            current_flow_id="test_flow_simple_1",
-            input_processed=False
+            current_flow_id="test_flow_ask_info_1",
+            input_processed=False # input_handler will process this
         )
         
-        planner_final_state = await self._run_workflow_and_print_events(compiled_workflow, initial_state, test_name)
+        events_history, final_state = await self._run_workflow_and_collect_events(compiled_workflow, initial_state, test_name)
         
-        final_messages = None
-        if planner_final_state and isinstance(planner_final_state, dict) and 'messages' in planner_final_state:
-            final_messages = planner_final_state['messages']
-        
-        self.assertIsNotNone(final_messages, "Final messages should not be None after extraction from planner state")
-        self.assertEqual(len(final_messages), 2)
-        self.assertIsInstance(final_messages[0], HumanMessage)
-        self.assertEqual(final_messages[0].content, user_input)
-        self.assertIsInstance(final_messages[1], AIMessage)
-        self.assertEqual(final_messages[1].content, final_response_content)
-        self.assertFalse(hasattr(final_messages[1], 'tool_calls') and final_messages[1].tool_calls)
-        mock_llm_with_tools.astream.assert_called_once()
+        self._assert_node_visited(events_history, "input_handler")
+        self._assert_node_visited(events_history, "task_router", min_times=1) # At least once, maybe more if it loops
+        self._assert_node_visited(events_history, "ask_info")
 
-    async def test_single_tool_call_with_args(self):
-        test_name = "test_single_tool_call_with_args"
-        print(f"\nRunning {test_name}...")
-        mock_llm = MagicMock()
+        router_decisions = self._get_task_router_decision(events_history)
+        self.assertTrue(any(d.next_node == "ask_info" for d in router_decisions), "Task router should have decided to go to ask_info at some point.")
+        
+        # The ask_info_node should add an AIMessage
+        self.assertTrue(isinstance(final_state.get("messages", [])[-1], AIMessage), "Last message should be an AIMessage from ask_info (or subsequent task_router).")
+        print(f"  Final messages: {final_state.get('messages')}")
+        # We expect the flow to be at task_router again after ask_info
+        # This can be checked by seeing if 'task_router' was the last state-updating node, or by its output.
+        # For simplicity, let's check if task_router was visited at least twice if ask_info was visited.
+        if any(event[1] == "ask_info" and event[0] == "update_state" for event in events_history):
+             self._assert_node_visited(events_history, "task_router", min_times=2)
+
+
+    async def test_route_to_teaching_and_return(self):
+        test_name = "test_route_to_teaching_and_return"
+        compiled_workflow = compile_workflow_graph(llm=self.llm, custom_tools=[])
+        user_input = "记住这个点位 P100。" # Input likely to go to teaching
+        initial_state = AgentState(
+            input=user_input,
+            messages=[HumanMessage(content=user_input)],
+            current_flow_id="test_flow_teaching_1"
+        )
+        
+        events_history, final_state = await self._run_workflow_and_collect_events(compiled_workflow, initial_state, test_name)
+        
+        self._assert_node_visited(events_history, "input_handler")
+        self._assert_node_visited(events_history, "task_router", min_times=1)
+        self._assert_node_visited(events_history, "teaching")
+
+        router_decisions = self._get_task_router_decision(events_history)
+        self.assertTrue(any(d.next_node == "teaching" for d in router_decisions), "Task router should have decided to go to teaching.")
+        
+        self.assertTrue(isinstance(final_state.get("messages", [])[-1], AIMessage), "Last message should be an AIMessage.")
+        if any(event[1] == "teaching" and event[0] == "update_state" for event in events_history):
+             self._assert_node_visited(events_history, "task_router", min_times=2)
+
+    async def test_route_to_planner_no_tools_and_return(self):
+        test_name = "test_route_to_planner_no_tools_and_return"
+        compiled_workflow = compile_workflow_graph(llm=self.llm, custom_tools=[]) # No tools provided to planner
+        user_input = "帮我规划一个简单的流程图。" # Input for planner
+        initial_state = AgentState(
+            input=user_input,
+            messages=[HumanMessage(content=user_input)],
+            current_flow_id="test_flow_planner_no_tool_1"
+        )
+        
+        events_history, final_state = await self._run_workflow_and_collect_events(compiled_workflow, initial_state, test_name)
+        
+        self._assert_node_visited(events_history, "input_handler")
+        self._assert_node_visited(events_history, "task_router", min_times=1)
+        self._assert_node_visited(events_history, "planner")
+
+        router_decisions = self._get_task_router_decision(events_history)
+        self.assertTrue(any(d.next_node == "planner" for d in router_decisions), "Task router should have decided to go to planner.")
+        
+        # Planner should produce an AIMessage, and since no tools, should_continue routes to task_router
+        self.assertTrue(isinstance(final_state.get("messages", [])[-1], AIMessage), "Last message should be an AIMessage.")
+        # Check that 'tools' node was NOT visited
+        self.assertFalse(any(name == "tools" and event_type == "update_state" for event_type, name, _ in events_history), "Tools node should not have been visited.")
+
+        if any(event[1] == "planner" and event[0] == "update_state" for event in events_history):
+             self._assert_node_visited(events_history, "task_router", min_times=2)
+
+
+    async def test_route_to_planner_with_mock_tool_and_return(self):
+        test_name = "test_route_to_planner_with_mock_tool_and_return"
+        
         tool_name_to_call = "query_processor_tool"
-        tool_call_id = "tool_call_query_proc_123"
-        tool_args = {"query": "search for advanced cats", "count": 3}
-        
-        ai_chunk_with_tool_call = AIMessageChunk(
-            content=f"Okay, I will use the {tool_name_to_call} for your advanced request.",
-            tool_calls=[ToolCall(name=tool_name_to_call, args=tool_args, id=tool_call_id)],
-            id="ai_chunk_tool_call_single_1"
-        )
-        
-        mock_tool_output_content = f"Processed query '{tool_args['query']}' {tool_args['count']} times. Result: Found many advanced cats."
-        stringified_mock_tool_output = str(mock_tool_output_content)
-
-        final_response_content_after_tool = f"The advanced tool said: {mock_tool_output_content}. What next?"
-        ai_chunk_final_answer = AIMessageChunk(content=final_response_content_after_tool, id="ai_chunk_final_single_1")
-
-        mock_llm_with_tools = MagicMock()
-        async def mock_astream_tool_gen_1(*args, **kwargs):
-            print(f"    Mock LLM ({test_name} - Phase 1): Received input for astream: args={args}, kwargs={kwargs}")
-            yield ai_chunk_with_tool_call
-        async def mock_astream_tool_gen_2(*args, **kwargs):
-            print(f"    Mock LLM ({test_name} - Phase 2): Received input for astream: args={args}, kwargs={kwargs}")
-            yield AIMessageChunk(content="The advanced tool said: ", id="final_single_chunk_part1")
-            yield AIMessageChunk(content=mock_tool_output_content, id="final_single_chunk_part1")
-            yield AIMessageChunk(content=". What next?", id="final_single_chunk_part1")
-
-        mock_llm_with_tools.astream = MagicMock(side_effect=[
-            mock_astream_tool_gen_1(),
-            mock_astream_tool_gen_2()
-        ])
-        mock_llm.bind_tools.return_value = mock_llm_with_tools
+        tool_args = {"query": "search for cats", "count": 1} # LLM might not pick these exact args
+        mock_tool_output_content = f"Processed query. Result: Found cats."
 
         mock_tool_instance = MockToolForTest(
             name=tool_name_to_call,
-            description="A mock tool that processes queries with a count.",
-            output_value=stringified_mock_tool_output,
+            description="A mock tool that processes queries.", # LLM will see this description
+            output_value=str(mock_tool_output_content),
             args_schema_override=MockToolArgsSchema1
         )
-        mock_tools = [mock_tool_instance]
+        compiled_workflow = compile_workflow_graph(llm=self.llm, custom_tools=[mock_tool_instance])
 
-        compiled_workflow = compile_workflow_graph(llm=mock_llm, custom_tools=mock_tools)
-        user_input = "Use your advanced query tool for cats, three times."
+        # This input needs to strongly suggest to the DeepSeek LLM to use the 'query_processor_tool'
+        user_input = f"请使用 {tool_name_to_call} 工具来查找关于猫的信息。"
         initial_state = AgentState(
             input=user_input,
-            messages=[HumanMessage(content=user_input, id="human_msg_single_args_1")],
-            flow_context={"user_preference": "likes_advanced_cats"},
-            current_flow_id="test_flow_single_tool_args_advanced_1",
-            input_processed=False
+            messages=[HumanMessage(content=user_input)],
+            current_flow_id="test_flow_planner_with_tool_1"
         )
-
-        planner_final_state = await self._run_workflow_and_print_events(compiled_workflow, initial_state, test_name)
         
-        final_messages = None
-        if planner_final_state and isinstance(planner_final_state, dict) and 'messages' in planner_final_state:
-            final_messages = planner_final_state['messages']
-
-        self.assertIsNotNone(final_messages, "Final messages should not be None after extraction from planner state")
-        self.assertEqual(len(final_messages), 4)
+        events_history, final_state = await self._run_workflow_and_collect_events(compiled_workflow, initial_state, test_name)
         
-        self.assertEqual(final_messages[1].tool_calls[0]['args'], tool_args)
-        self.assertEqual(final_messages[2].content, stringified_mock_tool_output)
-        self.assertEqual(final_messages[3].content, final_response_content_after_tool)
+        self._assert_node_visited(events_history, "input_handler")
+        self._assert_node_visited(events_history, "task_router", min_times=1) # task_router -> planner
+        self._assert_node_visited(events_history, "planner", min_times=1)     # planner -> tools (hopefully) -> planner
         
-        self.assertEqual(mock_llm_with_tools.astream.call_count, 2)
-        mock_tool_instance._arun_async_mock.assert_called_once_with(**tool_args)
+        router_decisions = self._get_task_router_decision(events_history)
+        self.assertTrue(any(d.next_node == "planner" for d in router_decisions), "Task router should have initially decided to go to planner.")
 
-    async def test_two_sequential_tool_calls(self):
-        test_name = "test_two_sequential_tool_calls"
-        print(f"\nRunning {test_name}...")
-        mock_llm = MagicMock()
-
-        tool_A_name = "item_fetch_tool_v2"
-        tool_A_call_id = "tool_call_A_v2_001"
-        tool_A_args = {"item_id": "item789"}
-        tool_A_output_content = "Fetched item789: <detailed_item_data_v2>"
-        stringified_tool_A_output = str(tool_A_output_content)
-
-        tool_B_name = "item_process_tool_v2"
-        tool_B_call_id = "tool_call_B_v2_002"
-        tool_B_args = {"item_id": "item789"}
-        tool_B_output_content = "Processed item789 v2 successfully with extra steps."
-        stringified_tool_B_output = str(tool_B_output_content)
-        
-        ai_chunk_call_tool_A = AIMessageChunk(
-            content="Okay, first I need to fetch the v2 item.",
-            tool_calls=[ToolCall(name=tool_A_name, args=tool_A_args, id=tool_A_call_id)],
-            id="ai_chunk_A_v2_1"
+        # Check if the tool was actually called
+        tool_called = any(
+            event_type == "on_tool_end" and name == tool_name_to_call 
+            for event_type, name, _ in events_history
         )
-        ai_chunk_call_tool_B = AIMessageChunk(
-            content="V2 Item fetched. Now I will process it using the v2 method.",
-            tool_calls=[ToolCall(name=tool_B_name, args=tool_B_args, id=tool_B_call_id)],
-            id="ai_chunk_B_v2_1"
-        )
-        final_answer_content = f"After v2 fetching and v2 processing: {tool_B_output_content} All done."
         
-        mock_llm_with_tools = MagicMock()
-        async def stream_phase1_seq(*args, **kwargs):
-            print(f"    Mock LLM ({test_name} - Phase 1): Received input for astream: args={args}, kwargs={kwargs}")
-            yield ai_chunk_call_tool_A
-        async def stream_phase2_seq(*args, **kwargs):
-            print(f"    Mock LLM ({test_name} - Phase 2): Received input for astream: args={args}, kwargs={kwargs}")
-            yield ai_chunk_call_tool_B
-        async def stream_phase3_seq(*args, **kwargs):
-            print(f"    Mock LLM ({test_name} - Phase 3): Received input for astream: args={args}, kwargs={kwargs}")
-            yield AIMessageChunk(content="After v2 fetching and v2 processing: ",id="final_seq_chunk_part1")
-            yield AIMessageChunk(content=tool_B_output_content, id="final_seq_chunk_part1")
-            yield AIMessageChunk(content=" All done.", id="final_seq_chunk_part1")
-        
-        mock_llm_with_tools.astream = MagicMock(side_effect=[
-            stream_phase1_seq(), stream_phase2_seq(), stream_phase3_seq()
-        ])
-        mock_llm.bind_tools.return_value = mock_llm_with_tools
+        if tool_called:
+            print(f"  Assertion Check: Tool '{tool_name_to_call}' was called by the LLM.")
+            self._assert_node_visited(events_history, "tools")
+            self._assert_node_visited(events_history, "planner", min_times=2) # Planner is visited again after tools
 
-        mock_tool_A_instance = MockToolForTest(
-            name=tool_A_name, description="Fetches an item (v2).",
-            output_value=stringified_tool_A_output, args_schema_override=MockToolArgsSchema2
+            # Check for ToolMessage in history
+            self.assertTrue(
+                any(isinstance(msg, ToolMessage) and msg.tool_call_id for msg in final_state.get("messages", [])),
+                "A ToolMessage should be present if the tool was called."
+            )
+        else:
+            print(f"  WARNING: Tool '{tool_name_to_call}' was NOT called by the LLM. The input prompt might need adjustment for DeepSeek, or LLM decided not to use it.")
+            # If tool not called, planner still runs once.
+            # And flow should still go back to task_router
+            self._assert_node_visited(events_history, "planner", min_times=1)
+
+
+        self.assertTrue(isinstance(final_state.get("messages", [])[-1], AIMessage), "Last message should be an AIMessage.")
+        if any(event[1] == "planner" and event[0] == "update_state" for event in events_history): # If planner was ever run
+             self._assert_node_visited(events_history, "task_router", min_times=2) # Should always return to task_router
+
+
+    async def test_route_to_end_session(self):
+        test_name = "test_route_to_end_session"
+        compiled_workflow = compile_workflow_graph(llm=self.llm, custom_tools=[])
+        user_input = "结束对话吧，谢谢。" # Input to trigger end_session
+        initial_state = AgentState(
+            input=user_input,
+            messages=[HumanMessage(content=user_input)],
+            current_flow_id="test_flow_end_session_1"
         )
-        mock_tool_B_instance = MockToolForTest(
-            name=tool_B_name, description="Processes an item (v2).",
-            output_value=stringified_tool_B_output, args_schema_override=MockToolArgsSchema2
-        )
-        mock_tools_list = [mock_tool_A_instance, mock_tool_B_instance]
-
-        compiled_workflow = compile_workflow_graph(llm=mock_llm, custom_tools=mock_tools_list)
-        user_input_seq = "Fetch and process item789 using v2 methods."
-        initial_state_seq = AgentState(
-            input=user_input_seq,
-            messages=[HumanMessage(content=user_input_seq, id="human_msg_seq_v2_1")],
-            flow_context={}, 
-            current_flow_id="test_flow_seq_tools_v2_1",
-            input_processed=False
-        )
-
-        planner_final_state = await self._run_workflow_and_print_events(compiled_workflow, initial_state_seq, test_name)
-
-        final_messages = None
-        if planner_final_state and isinstance(planner_final_state, dict) and 'messages' in planner_final_state:
-            final_messages = planner_final_state['messages']
-            
-        self.assertIsNotNone(final_messages, "Final messages should not be None after extraction from planner state")
-        self.assertEqual(len(final_messages), 6)
         
-        self.assertEqual(final_messages[1].tool_calls[0]['name'], tool_A_name)
-        self.assertEqual(final_messages[1].tool_calls[0]['args'], tool_A_args)
-        self.assertEqual(final_messages[2].content, stringified_tool_A_output)
-
-        self.assertEqual(final_messages[3].tool_calls[0]['name'], tool_B_name)
-        self.assertEqual(final_messages[3].tool_calls[0]['args'], tool_B_args)
-        self.assertEqual(final_messages[4].content, stringified_tool_B_output)
+        events_history, final_state = await self._run_workflow_and_collect_events(compiled_workflow, initial_state, test_name)
         
-        self.assertEqual(final_messages[5].content, final_answer_content)
+        self._assert_node_visited(events_history, "input_handler")
+        # task_router should be visited once before ending
+        self._assert_node_visited(events_history, "task_router")
 
-        self.assertEqual(mock_llm_with_tools.astream.call_count, 3)
-        mock_tool_A_instance._arun_async_mock.assert_called_once_with(**tool_A_args)
-        mock_tool_B_instance._arun_async_mock.assert_called_once_with(**tool_B_args)
+        router_decisions = self._get_task_router_decision(events_history)
+        self.assertTrue(any(d.next_node == "end_session" for d in router_decisions), 
+                        f"Task router should have decided to 'end_session'. Decisions: {router_decisions}")
+        
+        # Check if the graph actually ended. The 'final_graph_output' from 'on_chain_end' for 'LangGraph'
+        # should reflect the state *before* hitting the conceptual END node.
+        # The absence of further "update_state" events for nodes other than LangGraph itself after
+        # the end_session decision is a good indicator.
+
+        # Verify that no other nodes (planner, teaching, ask_info) were visited after task_router's decision to end
+        end_decision_made = False
+        for event_type, name, data in events_history:
+            if name == "task_router" and event_type == "update_state":
+                if data.get("task_route_decision") and data["task_route_decision"].next_node == "end_session":
+                    end_decision_made = True
+                    print("  INFO: 'end_session' decision confirmed by task_router state update.")
+                    continue 
+            if end_decision_made:
+                self.assertNotIn(name, ["planner", "teaching", "ask_info", "tools"], 
+                                 f"Node {name} was visited after 'end_session' decision.")
+        
+        self.assertTrue(end_decision_made, "The 'end_session' decision point was not clearly identified in task_router's state updates.")
+        # The last message might be the user's "end" message, or if task_router adds one, that.
+        # Let's ensure the message list is not empty.
+        self.assertTrue(final_state.get("messages"), "Message list should not be empty at the end.")
+
+
+    async def test_multi_turn_conversation_flow(self):
+        test_name = "test_multi_turn_conversation_flow"
+        compiled_workflow = compile_workflow_graph(llm=self.llm, custom_tools=[])
+
+        # Turn 1: Ask info
+        user_input_1 = "你是谁？"
+        initial_state_1 = AgentState(input=user_input_1, messages=[HumanMessage(content=user_input_1)], current_flow_id="multi_turn_1")
+        events_1, state_1 = await self._run_workflow_and_collect_events(compiled_workflow, initial_state_1, f"{test_name}_turn1_ask_info")
+        
+        self._assert_node_visited(events_1, "task_router")
+        self.assertTrue(any(d.next_node == "ask_info" for d in self._get_task_router_decision(events_1)))
+        last_msg_1_content = self._get_last_ai_message_content(state_1)
+        self.assertGreater(len(last_msg_1_content), 0, "LLM should have responded in ask_info node for turn 1")
+        print(f"  Turn 1 AI Response: {last_msg_1_content}")
+
+        # Turn 2: Plan something (based on a new input, using history from state_1)
+        user_input_2 = "帮我设计一个包含三个步骤的简单食谱。"
+        current_messages_turn_2 = list(state_1.get("messages", [])) # Get history from turn 1
+        current_messages_turn_2.append(HumanMessage(content=user_input_2))
+        initial_state_2 = AgentState(
+            input=user_input_2, # Current input for input_handler
+            messages=current_messages_turn_2, # Full history for context
+            flow_context=state_1.get("flow_context",{}),
+            current_flow_id="multi_turn_1", # same flow
+            input_processed=False # Let input_handler process user_input_2
+        )
+        events_2, state_2 = await self._run_workflow_and_collect_events(compiled_workflow, initial_state_2, f"{test_name}_turn2_planner")
+        
+        # In events_2, task_router should decide "planner"
+        self.assertTrue(any(d.next_node == "planner" for d in self._get_task_router_decision(events_2)),
+                        f"Router decisions in Turn 2: {self._get_task_router_decision(events_2)}")
+        self._assert_node_visited(events_2, "planner")
+        last_msg_2_content = self._get_last_ai_message_content(state_2)
+        self.assertGreater(len(last_msg_2_content), 0, "LLM (planner) should have responded for turn 2")
+        print(f"  Turn 2 AI Response: {last_msg_2_content}")
+
+        # Turn 3: End conversation
+        user_input_3 = "好的，谢谢你，结束吧。"
+        current_messages_turn_3 = list(state_2.get("messages", []))
+        current_messages_turn_3.append(HumanMessage(content=user_input_3))
+        initial_state_3 = AgentState(
+            input=user_input_3, messages=current_messages_turn_3, 
+            current_flow_id="multi_turn_1", input_processed=False
+        )
+        events_3, state_3 = await self._run_workflow_and_collect_events(compiled_workflow, initial_state_3, f"{test_name}_turn3_end")
+        
+        self.assertTrue(any(d.next_node == "end_session" for d in self._get_task_router_decision(events_3)))
+        print(f"  Turn 3 AI Response (likely none or user's own last message): {self._get_last_ai_message_content(state_3)}")
+
 
 if __name__ == '__main__':
-    # This allows running tests directly from the file
-    # You might need to adjust PYTHONPATH or run with `python -m unittest discover backend.tests`
-    # or `python -m unittest backend.tests.test_workflow_graph_advanced`
     unittest.main() 
