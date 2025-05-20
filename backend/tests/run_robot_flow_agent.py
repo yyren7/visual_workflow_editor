@@ -45,7 +45,7 @@ async def main():
     robot_flow_app = create_robot_flow_graph(llm=llm)
 
     # Initial user request that might require clarification
-    initial_user_input = "让机器人以 点231231 的顺序循环。" 
+    initial_user_input = "让dk以点231的顺序运动，然后按照点456的顺序循环运动。" 
     # initial_user_input = "机器人: mg400\n工作流程：\n1. 打开夹爪.\n2. 移动到 P10 点 (快速模式).\n3. 关闭夹爪.\n4. 移动到 P20 点 (慢速精定位模式)." # For testing direct processing
 
     current_state: RobotFlowAgentState = {

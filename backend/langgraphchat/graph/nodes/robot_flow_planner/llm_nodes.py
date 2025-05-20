@@ -13,7 +13,7 @@ from .prompt_loader import get_filled_prompt
 logger = logging.getLogger(__name__)
 
 # Define known robot models for normalization
-KNOWN_ROBOT_MODELS = ["dobot_mg400", "dobot_cr5", "ur5e", "aubo_i5", "cool_robot_v1"]
+KNOWN_ROBOT_MODELS = ["dobot_mg400", "dobot_cr5", "hitbot", "RoboDK"]
 
 
 async def invoke_llm_for_text_output( # Renamed for clarity, as it's now primarily for text
@@ -154,34 +154,163 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             state["clarification_question"] = None
             state["dialog_state"] = "processing_enriched_input"
             state["messages"] = current_messages + [AIMessage(content="User approved the enriched plan.")]
-            # Fall through to C: (Check if ready for next step) or return, graph will re-evaluate
             return state
-        else: # "no" or other feedback
-            logger.info("User rejected or wants to modify the enriched plan.")
-            # Simple reset: treat feedback as new raw input, keep robot model
-            state["raw_user_request"] = user_input # The feedback becomes the new request
-            state["user_input"] = user_input       # Also update user_input for the next cycle
-            state["dialog_state"] = "initial"      # Restart enrichment with new input
-            state["proposed_enriched_text"] = None
-            state["enriched_structured_text"] = None
-            state["clarification_question"] = None
-            state["messages"] = current_messages + [AIMessage(content=f"User provided feedback on the plan: '{user_input}'. Restarting enrichment.")]
-            # This will loop back to robot model check (which should pass) and then re-enrich.
-            # Need to ensure that user_input for enrichment is now the feedback.
-            # The 'user_input = state["raw_user_request"]' line in section A would re-fetch this.
-            return state
+        else: # "no" or other feedback - This is where we integrate the new revision logic
+            logger.info("User rejected or wants to modify the enriched plan. Attempting revision.")
+            
+            previous_proposal = state.get("proposed_enriched_text")
+            user_feedback = user_input 
+
+            if not previous_proposal:
+                # This case should ideally not happen if we always have a proposal before asking for confirmation.
+                # But as a fallback, treat it as a new request.
+                logger.warning("User provided feedback, but no previous proposal found in state. Treating feedback as new raw_user_request.")
+                state["raw_user_request"] = user_feedback
+                state["user_input"] = user_feedback
+                state["dialog_state"] = "initial" 
+                state["proposed_enriched_text"] = None
+                state["enriched_structured_text"] = None
+                state["clarification_question"] = None
+                state["messages"] = current_messages + [AIMessage(content=f"User provided feedback: '{user_feedback}'. No previous plan to revise, restarting enrichment.")]
+                return state
+
+            # Use the new prompt for revising the enrichment
+            revision_placeholder_values = {
+                **config, 
+                "robot_model": robot_model, 
+                "previous_proposal": previous_proposal,
+                "user_feedback": user_feedback
+            }
+            
+            # The user_message_content for the revision prompt might be minimal or just repeat the feedback,
+            # as the core information is in the system prompt template.
+            # Let's provide a clear context in user_message_content as well.
+            revision_user_message_content = (
+                f"Robot Model: {robot_model}\n"
+                f"Previous Proposed Workflow:\n{previous_proposal}\n\n"
+                f"User's Feedback/Modifications:\n{user_feedback}\n\n"
+                "Please generate an updated and complete workflow text based on this feedback."
+            )
+
+            llm_revise_response = await invoke_llm_for_text_output(
+                llm,
+                system_prompt_content=get_filled_prompt("flow_step0_revise_enriched_input.md", revision_placeholder_values),
+                user_message_content=revision_user_message_content, # Provide context for revision
+                message_history=current_messages # Pass current message history
+            )
+
+            if "error" in llm_revise_response or not llm_revise_response.get("text_output"):
+                error_msg = f"Revision of enriched input failed. LLM Error: {llm_revise_response.get('error', 'No output')}"
+                logger.error(error_msg)
+                # Fallback: ask user to rephrase or treat as new input?
+                # For now, let's inform and ask for re-clarification of the modification.
+                state["clarification_question"] = (
+                    f"尝试根据您的反馈 '{user_feedback}' 修改流程时遇到问题：{error_msg}. "
+                    "您能否更清晰地说明您的修改意见，或者重新描述您的请求？"
+                )
+                state["dialog_state"] = "awaiting_enrichment_confirmation" # Stay in this state, user needs to respond to this new Q
+                state["messages"] = current_messages + [AIMessage(content=f"Error during revision: {error_msg}. Asking for clearer feedback.")]
+                return state
+
+            revised_text_proposal = llm_revise_response["text_output"].strip()
+
+            if revised_text_proposal == "用户反馈不够清晰，无法完成修改，请提供更具体的修改意见。":
+                logger.info("LLM indicated user feedback for revision is not clear enough.")
+                state["clarification_question"] = revised_text_proposal # LLM's message to user
+                state["dialog_state"] = "awaiting_enrichment_confirmation" 
+                state["messages"] = current_messages + [AIMessage(content=f"LLM needs clearer feedback for revision: {revised_text_proposal}")]
+                return state
+            else:
+                logger.info(f"Successfully revised enriched input based on user feedback. New proposed text:\n{revised_text_proposal}")
+                state["proposed_enriched_text"] = revised_text_proposal # Update with the revised proposal
+                
+                # Ask for confirmation again, this time for the revised plan
+                confirmation_question = (
+                    f"根据您的反馈 '{user_feedback}'，我对流程进行了修改。更新后的流程如下:\n\n"
+                    f"```text\n{revised_text_proposal}\n```\n\n"
+                    f"您是否同意按此更新后的流程继续？ (请输入 'yes' 或 'no'，或者提供进一步的修改意见)"
+                )
+                state["clarification_question"] = confirmation_question
+                state["dialog_state"] = "awaiting_enrichment_confirmation" # Stay to confirm the revision
+                state["messages"] = current_messages + [AIMessage(content=confirmation_question)]
+                return state
 
 
     # C. Initial entry, or after robot model is known/confirmed, or after enrichment rejection (now re-evaluating)
     if not robot_model: # If still no robot model (e.g. initial entry and no model provided)
-        logger.info("Robot model is unknown. Requesting clarification.")
-        if not state.get("raw_user_request"): state["raw_user_request"] = user_input
+        # Attempt to extract/guess model from initial input if dialog_state is 'initial'
+        if dialog_state == "initial":
+            logger.info(f"Robot model not in state. Attempting to identify from initial user input via LLM: '{user_input}'")
+            
+            identification_prompt_system = (
+                f"You are an assistant helping to identify robot model mentions in user requests. "
+                f"The user might mention a robot model directly or indirectly. "
+                f"Here is a list of known official robot model names for context: {', '.join(KNOWN_ROBOT_MODELS)}. "
+                f"Your task is to analyze the user\'s request and extract the specific phrase or term that refers to a robot model. "
+                f"If no part of the request seems to mention a robot model, respond with the exact string 'NO_MENTION'."
+            )
+            identification_prompt_user = f"User\'s request: '{user_input}'"
 
-        clarification_msg_content = f"请问您使用的是什么型号的机器人？例如：{', '.join(KNOWN_ROBOT_MODELS)}"
-        state["clarification_question"] = clarification_msg_content
-        state["dialog_state"] = "awaiting_robot_model"
-        state["messages"] = current_messages + [AIMessage(content=clarification_msg_content)]
-        return state
+            identification_response = await invoke_llm_for_text_output(
+                llm,
+                system_prompt_content=identification_prompt_system,
+                user_message_content=identification_prompt_user
+            )
+
+            potential_model_mention = None
+            if "error" not in identification_response and identification_response.get("text_output"):
+                extracted_phrase = identification_response["text_output"].strip()
+                if extracted_phrase.upper() != "NO_MENTION":
+                    potential_model_mention = extracted_phrase
+                    logger.info(f"LLM identified potential model phrase: '{potential_model_mention}' from initial input.")
+                else:
+                    logger.info("LLM indicated no robot model mention in initial input (responded NO_MENTION).")
+            else:
+                logger.warning(f"LLM call for model identification failed or produced no output. Error: {identification_response.get('error')}, Output: {identification_response.get('text_output')}")
+
+            if potential_model_mention:
+                logger.info(f"Attempting normalization for LLM-identified phrase: '{potential_model_mention}'.")
+                # Use existing normalization logic
+                normalize_prompt = (
+                    f"User provided robot model phrase: '{potential_model_mention}'. " # Changed from "User provided robot model" for clarity
+                    f"Known official models are: {', '.join(KNOWN_ROBOT_MODELS)}. "
+                    "Respond with the closest matching official model name from the list. "
+                    "If no close match (e.g., input is nonsensical or completely unrelated to these models), respond with 'unknown_model'. "
+                    "Only output the official model name or 'unknown_model'."
+                )
+                norm_response = await invoke_llm_for_text_output(
+                    llm,
+                    system_prompt_content="You are a robot model normalization assistant.", # This system prompt remains suitable
+                    user_message_content=normalize_prompt
+                )
+
+                if "error" not in norm_response and norm_response.get("text_output"):
+                    normalized_model = norm_response["text_output"].strip()
+                    logger.info(f"LLM normalized '{potential_model_mention}' to '{normalized_model}'")
+                    if normalized_model.lower() != "unknown_model" and normalized_model in KNOWN_ROBOT_MODELS:
+                        state["robot_model"] = normalized_model
+                        robot_model = normalized_model # Update for current scope
+                        logger.info(f"Robot model '{robot_model}' identified and normalized from initial input via LLM.")
+                        ai_detection_message = AIMessage(content=f"Identified robot model '{robot_model}' from your initial request.")
+                        current_messages = current_messages + [ai_detection_message] # Update local current_messages
+                        state["messages"] = current_messages # Update state
+                    else:
+                        logger.info(f"Could not normalize LLM-identified phrase '{potential_model_mention}' (normalized to '{normalized_model}') to a known model.")
+                else:
+                    logger.warning(f"Normalization call failed for LLM-identified phrase '{potential_model_mention}'. Error: {norm_response.get('error')}, Output: {norm_response.get('text_output')}")
+            # else: # Covered by previous log messages if potential_model_mention is None
+            #    logger.info("No robot model mention identified by LLM in initial input, or identification failed.")
+
+        # If robot_model is STILL None after the attempt, then ask the user.
+        if not robot_model: # This condition is checked again
+            logger.info("Robot model remains unknown after LLM-based initial check. Requesting clarification from user.")
+            if not state.get("raw_user_request"): state["raw_user_request"] = user_input
+
+            clarification_msg_content = f"请问您使用的是什么型号的机器人？例如：{', '.join(KNOWN_ROBOT_MODELS)}"
+            state["clarification_question"] = clarification_msg_content
+            state["dialog_state"] = "awaiting_robot_model"
+            state["messages"] = current_messages + [AIMessage(content=clarification_msg_content)]
+            return state
 
     # If we have robot_model and dialog_state is "initial" (meaning ready to enrich)
     if robot_model and dialog_state == "initial":

@@ -43,3 +43,6 @@ watchfiles
 pgvector 
 sse-starlette  # 添加 Starlette Server-Sent Events 支持
 langchain-google-genai # 添加 Google GenAI 支持 
+IPython # Added for visualization and interactive debugging
+playwright # Added for LangGraph visualization
+pygraphviz # Added for LangGraph visualization 

@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 # Placeholder for loading initial config (placeholder values from flow_placeholders.md)
 # This could come from a file, environment variables, or direct input.
 DEFAULT_CONFIG = {
-    "GENERAL_INSTRUCTION_INTRO": "As an AI assistant for robot flows, you will follow structured steps to generate XML files.",
-    "ROBOT_NAME_EXAMPLE": "dobot_mg400_sim",
-    "POINT_NAME_EXAMPLE_1": "P101",
-    "POINT_NAME_EXAMPLE_2": "P102",
-    "POINT_NAME_EXAMPLE_3": "P103",
-    "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr", # Actual path for node XML templates
-    "OUTPUT_DIR_PATH": "/workspace/robot_flow_output", # Default output path, can be overridden
-    "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml", # Example structure
+    "GENERAL_INSTRUCTION_INTRO": "作为机器人流程文件创建智能体，根据上下文和用户的最新自然语言输入，你需要执行以下多步骤流程来生成机器人控制的 XML 文件：",
+    "ROBOT_NAME_EXAMPLE": "dobot_mg400",
+    "POINT_NAME_EXAMPLE_1": "P3",
+    "POINT_NAME_EXAMPLE_2": "P1",
+    "POINT_NAME_EXAMPLE_3": "P2",
+    "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr",
+    "OUTPUT_DIR_PATH": "/workspace/database/flow_database/result/example_run/",
+    "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml",
     "BLOCK_ID_PREFIX_EXAMPLE": "block_uuid",
     "RELATION_FILE_NAME_ACTUAL": "relation.xml",
     "FINAL_FLOW_FILE_NAME_ACTUAL": "flow.xml"
@@ -50,7 +50,7 @@ def initialize_state_node(state: RobotFlowAgentState) -> RobotFlowAgentState:
     state.setdefault("enriched_structured_text", None)
     # Always set dialog_state to initial on first entry to this node if not resuming a dialog.
     # If resuming, user_input and dialog_state would be set by the calling script.
-    if state.get("dialog_state") not in ["awaiting_robot_model"]:
+    if state.get("dialog_state") is None:
         state["dialog_state"] = "initial"
 
     # Standard fields
