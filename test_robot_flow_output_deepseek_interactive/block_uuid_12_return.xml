@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="return" id="block_uuid_12" data-blockNo="12">
+    <!-- 该块通常没有自己的 'field' 参数 -->
+    <!-- 用于从 loop 块的 statement 中返回循环开始 -->
+  </block>
+</xml>

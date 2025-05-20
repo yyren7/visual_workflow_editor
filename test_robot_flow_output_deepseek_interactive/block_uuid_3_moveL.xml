@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="moveL" id="block_uuid_3" data-blockNo="3">
+    <field name="point_name_list">P0</field>
+    <field name="control_x">disable</field>
+    <field name="control_y">disable</field>
+    <field name="control_z">enable</field>
+    <field name="control_rz">disable</field>
+    <field name="control_ry">disable</field>
+    <field name="control_rx">disable</field>
+    <field name="pallet_list">none</field>
+    <field name="camera_list">none</field>
+  </block>
+</xml>

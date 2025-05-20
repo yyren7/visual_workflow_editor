@@ -1,46 +1,55 @@
 from typing import TypedDict, List, Dict, Any, Optional, Literal
-
+from pydantic import BaseModel, Field
 from langchain_core.messages import BaseMessage
 
 
-class RobotFlowAgentState(TypedDict):
-    """
-    Represents the state of the robot flow generation agent.
-    It accumulates information as the agent progresses through the defined flow.
-    """
-    # Core conversation and input
-    messages: List[BaseMessage]  # History of messages
-    user_input: str  # Original user natural language input
+class GeneratedXmlFile(BaseModel):
+    block_id: str = Field(description="The unique ID used in the generated XML <block id='xxx'>.")
+    type: str = Field(description="The type of the operation/block.")
+    source_description: str = Field(description="The natural language description of the step from parsing.")
+    status: Literal["success", "failure"] = Field(description="Status of the XML generation for this block.")
+    file_path: Optional[str] = Field(None, description="Full path to the generated .xml file if successful.")
+    xml_content: Optional[str] = Field(None, description="The generated XML content. Primarily for debugging or intermediate use.")
+    error_message: Optional[str] = Field(None, description="Error message if generation failed.")
 
-    # New fields for clarification and enrichment
-    raw_user_request: Optional[str] # Stores the initial core request if clarification is needed
-    robot_model: Optional[str]
-    dialog_state: Literal["initial", "awaiting_robot_model", "awaiting_enrichment_confirmation", "processing_enriched_input", "input_understood"]
-    clarification_question: Optional[str] # If agent needs to ask something
-    proposed_enriched_text: Optional[str] # Stores the LLM-enriched text before user confirmation
-    enriched_structured_text: Optional[str] # The output of the new preprocessing step
-
-    # Configuration from placeholders.md, loaded at the beginning
-    config: Dict[str, str] # Stores values like output_dir_path, node_template_dir_path etc.
+class RobotFlowAgentState(BaseModel):
+    """
+    Represents the state of the Robot Flow Agent.
+    """
+    messages: List[BaseMessage] = Field(default_factory=list, description="The history of messages in the conversation.")
     
-    # Step 1: Understand Input - Output
-    # List of dictionaries, each representing a parsed operation/step from user input
-    # Example: [{"type": "moveL", "params": {"point": "P1", "axis_control": "Z enable"}, "id_suggestion": "moveL_P1_Z_on"}, ...]
-    parsed_flow_steps: Optional[List[Dict[str, Any]]] 
+    user_input: Optional[str] = Field(None, description="The latest input from the user.")
+    raw_user_request: Optional[str] = Field(None, description="The initial, un-enriched user request for the current flow.")
+    robot_model: Optional[str] = Field(None, description="The confirmed robot model to be used.")
+    active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be raw_user_request or a revised plan).")
 
-    # Step 2: Generate Independent Node XMLs - Output
-    # List of dictionaries, each representing a generated individual XML node file
-    # Example: [{"id": "block_uuid_1", "file_path": "/path/to/block_uuid_1.xml", "content": "<xml>...</xml>"}, ...]
-    generated_node_xmls: Optional[List[Dict[str, str]]]
+    dialog_state: str = Field("initial", description="The current state of the dialog with the user, e.g., 'initial', 'awaiting_robot_model', 'awaiting_enrichment_confirmation', 'processing_enriched_input', 'input_understood', 'individual_xmls_generated', 'relation_xml_generated', 'flow_completed', 'error'.")
+    
+    clarification_question: Optional[str] = Field(None, description="A question posed to the user for clarification.")
+    proposed_enriched_text: Optional[str] = Field(None, description="The LLM-enriched version of the user's request, pending user confirmation.")
+    enriched_structured_text: Optional[str] = Field(None, description="The confirmed, enriched text that will be parsed.")
+    
+    config: Dict[str, Any] = Field(default_factory=dict, description="Configuration values, potentially loaded from a file or environment, like API keys, paths, etc.")
+    
+    # Outputs from Step 1 (understand_input_node)
+    parsed_flow_steps: Optional[List[Dict[str, Any]]] = Field(None, description="The structured representation of the flow steps, parsed from the enriched input text. Each item is a dict matching ParsedStep.")
+    parsed_robot_name: Optional[str] = Field(None, description="Robot name as parsed directly from the enriched text in Step 1.")
 
-    # Step 3: Generate Node Relation Structure File - Output
-    relation_xml_content: Optional[str]  # Content of the relation.xml file
-    relation_xml_path: Optional[str] # Path to the generated relation.xml file
+    # --- Outputs from Step 2 (generate_individual_xmls_node) ---
+    generated_node_xmls: Optional[List[GeneratedXmlFile]] = Field(None, description="Information about each generated individual XML node file.")
+    # --- End of Step 2 outputs ---
 
-    # Step 4: Generate Final Flow File - Output
-    final_flow_xml_path: Optional[str]  # Path to the final generated flow.xml
+    # Outputs from Step 3 (generate_relation_xml_node)
+    relation_xml_content: Optional[str] = Field(None, description="The content of the generated relation.xml file.")
+    relation_xml_path: Optional[str] = Field(None, description="Path to the saved relation.xml file.")
 
-    # Utility fields
-    current_step_description: Optional[str] # For logging and debugging, describes current high-level step
-    error_message: Optional[str]  # To store any error messages during the flow
-    is_error: bool # Flag to indicate if an error occurred 
+    # Outputs from Step 4 (generate_final_flow_xml_node)
+    final_flow_xml_content: Optional[str] = Field(None, description="The content of the merged final flow XML.")
+    final_flow_xml_path: Optional[str] = Field(None, description="Path to the saved final flow.xml file.")
+    
+    current_step_description: Optional[str] = Field(None, description="A human-readable description of the current processing step.")
+    error_message: Optional[str] = Field(None, description="A message describing an error if one occurred.")
+    is_error: bool = Field(False, description="Flag indicating if the agent is in an error state.")
+
+    class Config:
+        arbitrary_types_allowed = True 

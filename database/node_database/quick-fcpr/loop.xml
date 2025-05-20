@@ -2,9 +2,7 @@
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="loop" id="GENERATED_ID" data-blockNo="1">
     <statement name="DO">
-      <!-- 此处嵌套循环执行的块 -->
-      <!-- 例如: -->
-      <!-- <block type="moveL" ...> <next> <block type="return" ...> </block> </next> </block> -->
+      <!-- 子块将通过关系定义连接，此处应为空 -->
     </statement>
     <!-- <next> ... </next>  (通常loop后紧跟statement内的return, 或者loop是末端) -->
   </block>
