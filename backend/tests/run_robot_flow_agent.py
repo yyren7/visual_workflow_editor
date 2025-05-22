@@ -11,7 +11,9 @@ from dotenv import load_dotenv # Import dotenv
 load_dotenv() # Load environment variables from .env file at the start
 
 # Import DeepSeek LLM client
-from langchain_deepseek import ChatDeepSeek 
+from langchain_deepseek import ChatDeepSeek
+# Import Google Gemini LLM client
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from backend.langgraphchat.graph.nodes.robot_flow_planner.graph_builder import create_robot_flow_graph 
 from backend.langgraphchat.graph.nodes.robot_flow_planner.state import RobotFlowAgentState # Import the state model
@@ -32,27 +34,60 @@ def save_to_md(filepath: str, content: str, title: Optional[str] = None):
         logging.error(f"Failed to save to {filepath}: {e}")
 
 async def main():
-    # Configure DeepSeek LLM using environment variables loaded from .env
-    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-    deepseek_base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com") # Default if not in .env
-    deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") # Default if not in .env
+    # Determine active LLM provider
+    active_llm_provider = os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower() # Default to deepseek
+    llm = None
+    if active_llm_provider == "gemini":
+        google_api_key = os.getenv("GOOGLE_API_KEY")
+        gemini_model_name = os.getenv("GEMINI_MODEL", "gemini-pro") # Default Gemini model
 
-    if not deepseek_api_key:
-        logging.error("CRITICAL: DEEPSEEK_API_KEY not found in environment variables (expected from .env file or set manually).")
-        logging.error("Exiting application. LLM calls will fail without a valid API key.")
+        if not google_api_key:
+            logging.error("CRITICAL: GOOGLE_API_KEY not found in environment variables for Gemini.")
+            logging.error("Exiting application. LLM calls will fail without a valid API key.")
+            return
+        try:
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.5-pro-preview-05-06",
+                google_api_key=google_api_key,
+                temperature=0,
+                # convert_system_message_to_human=True # Depending on Langchain version and specific needs
+            )
+            logging.info(f"Successfully instantiated ChatGoogleGenerativeAI with model '{gemini_model_name}'.")
+        except Exception as e:
+            logging.error(f"Failed to instantiate ChatGoogleGenerativeAI: {e}", exc_info=True)
+            logging.error("Please ensure 'langchain-google-genai' is installed and GOOGLE_API_KEY is correctly set.")
+            return
+
+    elif active_llm_provider == "deepseek":
+        # Configure DeepSeek LLM using environment variables loaded from .env
+        deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
+        deepseek_base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com") # Default if not in .env
+        deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") # Default if not in .env
+
+        if not deepseek_api_key:
+            logging.error("CRITICAL: DEEPSEEK_API_KEY not found in environment variables (expected from .env file or set manually).")
+            logging.error("Exiting application. LLM calls will fail without a valid API key.")
+            return
+
+        try:
+            llm = ChatDeepSeek(
+                model=deepseek_model,
+                api_key=deepseek_api_key,
+                base_url=deepseek_base_url, # Pass base_url if your .env has it
+                temperature=0
+            )
+            logging.info(f"Successfully instantiated ChatDeepSeek with model '{deepseek_model}' and base URL '{deepseek_base_url}'.")
+        except Exception as e:
+            logging.error(f"Failed to instantiate ChatDeepSeek: {e}", exc_info=True)
+            logging.error("Please ensure 'langchain-deepseek' is installed and DEEPSEEK_API_KEY (and optionally DEEPSEEK_BASE_URL, DEEPSEEK_MODEL) are correctly set in .env.")
+            return
+    else:
+        logging.error(f"CRITICAL: Unsupported ACTIVE_LLM_PROVIDER: '{active_llm_provider}'. Supported values are 'gemini' or 'deepseek'.")
+        logging.error("Exiting application.")
         return
-
-    try:
-        llm = ChatDeepSeek(
-            model=deepseek_model, 
-            api_key=deepseek_api_key,
-            base_url=deepseek_base_url, # Pass base_url if your .env has it
-            temperature=0
-        )
-        logging.info(f"Successfully instantiated ChatDeepSeek with model '{deepseek_model}' and base URL '{deepseek_base_url}'.")
-    except Exception as e:
-        logging.error(f"Failed to instantiate ChatDeepSeek: {e}", exc_info=True)
-        logging.error("Please ensure 'langchain-deepseek' is installed and DEEPSEEK_API_KEY (and optionally DEEPSEEK_BASE_URL, DEEPSEEK_MODEL) are correctly set in .env.")
+    
+    if llm is None: # Should not happen if logic above is correct, but as a safeguard
+        logging.error("CRITICAL: LLM could not be initialized. Please check provider configuration and API keys.")
         return
 
     # Create the graph
@@ -71,7 +106,8 @@ async def main():
         # For now, we'll proceed but log saving might fail
 
     # Initial user request that might require clarification
-    initial_user_input = "让dk以点231的顺序运动，然后按照点456的顺序循环运动。" 
+    initial_user_input = "mg400に点2、3、1の順で運動させ、その後、点4、5、6の順で循環運動させてください。"
+    initial_user_input_zh = "让mg400以点231的顺序运动，然后按照点456的顺序循环运动。" 
     # initial_user_input = "机器人: mg400\n工作流程：\n1. 打开夹爪.\n2. 移动到 P10 点 (快速模式).\n3. 关闭夹爪.\n4. 移动到 P20 点 (慢速精定位模式)." # For testing direct processing
 
     # Initialize current_state as a RobotFlowAgentState Pydantic model instance

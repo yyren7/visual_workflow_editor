@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 # Placeholder for loading initial config (placeholder values from flow_placeholders.md)
 # This could come from a file, environment variables, or direct input.
 DEFAULT_CONFIG = {
-    "GENERAL_INSTRUCTION_INTRO": "作为机器人流程文件创建智能体，根据上下文和用户的最新自然语言输入，你需要执行以下多步骤流程来生成机器人控制的 XML 文件：",
+    "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
+    # "作为机器人流程文件创建智能体，根据上下文和用户的最新自然语言输入，你需要执行以下多步骤流程来生成机器人控制的 XML 文件："
     "ROBOT_NAME_EXAMPLE": "dobot_mg400",
     "POINT_NAME_EXAMPLE_1": "P3",
     "POINT_NAME_EXAMPLE_2": "P1",

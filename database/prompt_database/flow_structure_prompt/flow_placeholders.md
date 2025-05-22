@@ -1,6 +1,6 @@
 # 机器人流程生成 - 占位符定义
 
-本文档定义了在机器人流程生成步骤的 Markdown 模板 (`flow_step1_*.md` 到 `flow_step4_*.md`) 中使用的占位符及其示例值。
+本文档定义了在机器人流程生成步骤的 Markdown 模板 (`flow_step0_*.md` 到 `flow_step4_*.md`) 中使用的占位符及其示例值。
 
 - `{{GENERAL_INSTRUCTION_INTRO}}`: 智能体通用指令介绍文本。
 

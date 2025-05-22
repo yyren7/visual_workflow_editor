@@ -16,8 +16,72 @@ from .prompt_loader import get_filled_prompt
 
 logger = logging.getLogger(__name__)
 
+# English language strings for user interaction and system messages.
+# Templates use {variable_name} for placeholders.
+USER_INTERACTION_TEXTS = {
+    "GENERAL_FEEDBACK_GUIDANCE": "Sorry, I couldn't fully understand your feedback. I can only support 'agree', 'change robot', or 'modify plan'. Please rephrase your request.",
+    "ERROR_INTENT_VALIDATION_FAILED": "Sorry, I couldn't accurately parse your feedback intent. I can only support 'agree', 'change robot', or 'modify plan'. Please rephrase your request.",
+    "INFO_AFFIRM_PLAN_CONFIRMED": "Based on your feedback, the current plan has been confirmed.",
+    "INFO_ROBOT_MODEL_CHANGED_TEMPLATE": "Okay, the robot model has been changed to {suggested_model}. I will replan using the new robot based on the current latest plan (or your original request).",
+    "PROMPT_ROBOT_MODEL_UNCLEAR_TEMPLATE": "You suggested changing the robot, but the model '{suggested_model}' is unclear or not in the known list ({known_models_str}). Can you provide an exact model name? Or should we continue revising the plan with the original robot '{robot_model}'?",
+    "INFO_TREATING_FEEDBACK_AS_NEW_REQUEST_TEMPLATE": "Since no previous plan was found, I will treat your feedback '{user_feedback_for_revision}' as a new request.",
+    "ERROR_REVISE_PLAN_LLM_FAILED_MESSAGE_TEMPLATE": "Encountered an issue when trying to modify the plan based on your feedback '{user_feedback_for_revision}': The LLM failed to generate a valid revision. Error: {error_details}",
+    "PROMPT_CLARIFY_REVISION_FEEDBACK_AFTER_ERROR": "Could you clarify your modification suggestions or rephrase your request?",
+    "LLM_OUTPUT_FEEDBACK_UNCLEAR_FOR_REVISION": "User feedback is not clear enough to complete the modification. Please provide more specific modification suggestions.",
+    "LOG_LLM_SAID_FEEDBACK_UNCLEAR_TEMPLATE": "LLM indicated your feedback is not clear enough for modification: {llm_direct_unclear_feedback}",
+    "PROMPT_CONFIRM_REVISED_PLAN_TEMPLATE": (
+        "Based on your feedback '{user_feedback_for_revision}', I have revised the plan. The updated plan is as follows:\\n\\n"
+        "```text\\n{revised_text_proposal}\\n```\\n\\n"
+        "Do you agree to proceed with this updated plan? (Please enter 'yes' or 'no', or provide further modification suggestions)"
+    ),
+    "PROMPT_ASK_ROBOT_MODEL_TEMPLATE": "What robot model are you using? For example: {known_models_str}",
+    "PROMPT_ASK_FOR_TASK_AFTER_MODEL_CONFIRMATION_TEMPLATE": "Robot model confirmed as {robot_model}. Please tell me the specific task or plan you want to execute.",
+    "PROMPT_INPUT_NEEDS_CLARIFICATION_FROM_LLM": "I couldn't fully understand your request or it needs more details for enrichment. Could you please rephrase or add more information?",
+    "PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE": (
+        "Based on your robot model '{robot_model}' and request '{current_raw_user_request}', the initial plan I generated is as follows:\\n\\n"
+        "```text\\n{enriched_text_proposal}\\n```\\n\\n"
+        "Do you agree to proceed with this plan? (Please enter 'yes' or 'no', or provide modification suggestions)"
+    ),
+    "PROMPT_ROBOT_MODEL_NOT_RECOGNIZED_TEMPLATE": (
+        "Sorry, I couldn't recognize '{user_input}' or normalize it to a known model. "
+        "Known models: {known_models_str}. Please provide a valid robot model name."
+    )
+}
+
+# Chinese language strings (original version of USER_INTERACTION_TEXTS)
+# Templates use {variable_name} for placeholders.
+USER_INTERACTION_TEXTS_ZH = {
+    "GENERAL_FEEDBACK_GUIDANCE": "抱歉，我未能完全理解您的反馈。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。",
+    "ERROR_INTENT_VALIDATION_FAILED": "抱歉，我未能准确解析您的反馈意图。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。",
+    "INFO_AFFIRM_PLAN_CONFIRMED": "已根据您的反馈确认为同意当前计划。",
+    "INFO_ROBOT_MODEL_CHANGED_TEMPLATE": "好的，机器人型号已更改为 {suggested_model}。我将基于当前最新计划（或您的原始请求）使用新机器人重新规划。",
+    "PROMPT_ROBOT_MODEL_UNCLEAR_TEMPLATE": "您建议更换机器人，但型号 '{suggested_model}' 不太明确或不在已知列表 ({known_models_str}) 中。您能提供一个准确的型号吗？或者我们继续使用原机器人 '{robot_model}' 进行计划修订？",
+    "INFO_TREATING_FEEDBACK_AS_NEW_REQUEST_TEMPLATE": "由于未找到之前的计划，我将您的反馈 '{user_feedback_for_revision}' 作为新的请求来处理。",
+    "ERROR_REVISE_PLAN_LLM_FAILED_MESSAGE_TEMPLATE": "尝试根据您的反馈 '{user_feedback_for_revision}' 修改流程时遇到问题：LLM未能生成有效修订。错误: {error_details}",
+    "PROMPT_CLARIFY_REVISION_FEEDBACK_AFTER_ERROR": "您能否更清晰地说明您的修改意见，或者重新描述您的请求？",
+    "LLM_OUTPUT_FEEDBACK_UNCLEAR_FOR_REVISION": "用户反馈不够清晰，无法完成修改，请提供更具体的修改意见。",
+    "LOG_LLM_SAID_FEEDBACK_UNCLEAR_TEMPLATE": "LLM认为您的反馈不够清晰无法修改：{llm_direct_unclear_feedback}",
+    "PROMPT_CONFIRM_REVISED_PLAN_TEMPLATE": (
+        "根据您的反馈 '{user_feedback_for_revision}'，我对流程进行了修改。更新后的流程如下:\\n\\n"
+        "```text\\n{revised_text_proposal}\\n```\\n\\n"
+        "您是否同意按此更新后的流程继续？ (请输入 'yes' 或 'no'，或者提供进一步的修改意见)"
+    ),
+    "PROMPT_ASK_ROBOT_MODEL_TEMPLATE": "请问您使用的是什么型号的机器人？例如：{known_models_str}",
+    "PROMPT_ASK_FOR_TASK_AFTER_MODEL_CONFIRMATION_TEMPLATE": "机器人型号已确认为 {robot_model}。请告诉我您想执行的具体任务或流程。",
+    "PROMPT_INPUT_NEEDS_CLARIFICATION_FROM_LLM": "I couldn't fully understand your request or it needs more details for enrichment. Could you please rephrase or add more information?",
+    "PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE": (
+        "根据您的机器人型号 '{robot_model}' 和请求 '{current_raw_user_request}', 我生成的初步流程如下:\\n\\n"
+        "```text\\n{enriched_text_proposal}\\n```\\n\\n"
+        "您是否同意按此流程继续？ (请输入 'yes' 或 'no'，或者提供修改意见)"
+    ),
+    "PROMPT_ROBOT_MODEL_NOT_RECOGNIZED_TEMPLATE": (
+        "Sorry, I couldn't recognize '{user_input}' or normalize it to a known model. "
+        "Known models: {known_models_str}. Please provide a valid robot model name."
+    )
+}
+
 # Define known robot models for normalization
-KNOWN_ROBOT_MODELS = ["dobot_mg400", "dobot_cr5", "hitbot", "RoboDK"]
+KNOWN_ROBOT_MODELS = ["dobot_mg400", "fairino_FR", "hitbot_Z_ARM", "iai_3axis_tabletop", "robodk"]
 
 # Pydantic model for intent classification output
 class UserFeedbackIntent(BaseModel):
@@ -163,7 +227,10 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
 
 
         if normalized_model.lower() == "unknown_model" or normalized_model not in KNOWN_ROBOT_MODELS:
-            clarification_msg_content = f"Sorry, I couldn't recognize '{user_input}' or normalize it to a known model. Known models: {', '.join(KNOWN_ROBOT_MODELS)}. Please provide a valid robot model name."
+            clarification_msg_content = USER_INTERACTION_TEXTS["PROMPT_ROBOT_MODEL_NOT_RECOGNIZED_TEMPLATE"].format(
+                user_input=user_input,
+                known_models_str=", ".join(KNOWN_ROBOT_MODELS)
+            )
             state.clarification_question = clarification_msg_content
             state.dialog_state = "awaiting_robot_model" # Ask again
             state.messages = current_messages + [AIMessage(content=clarification_msg_content)]
@@ -221,7 +288,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             if "error" in intent_classification_response_dict or not intent_classification_response_dict:
                 logger.error(f"Intent classification LLM call failed: {intent_classification_response_dict.get('error', 'No response')}")
                 # Fallback: treat as unclear and ask user to clarify with specific guidance
-                state.clarification_question = "抱歉，我未能完全理解您的反馈。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。"
+                state.clarification_question = USER_INTERACTION_TEXTS["GENERAL_FEEDBACK_GUIDANCE"]
                 state.dialog_state = "awaiting_enrichment_confirmation" # Stay to re-confirm
                 state.messages = current_messages + [AIMessage(content=state.clarification_question)]
                 return state
@@ -231,7 +298,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             except Exception as e:
                 logger.error(f"Failed to validate intent classification response: {e}. Response was: {intent_classification_response_dict}")
                 # Fallback: treat as unclear and ask user to clarify with specific guidance
-                state.clarification_question = "抱歉，我未能准确解析您的反馈意图。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。"
+                state.clarification_question = USER_INTERACTION_TEXTS["ERROR_INTENT_VALIDATION_FAILED"]
                 state.dialog_state = "awaiting_enrichment_confirmation" # Stay to re-confirm
                 state.messages = current_messages + [AIMessage(content=state.clarification_question)]
                 return state
@@ -244,7 +311,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                 state.proposed_enriched_text = None
                 state.clarification_question = None
                 state.dialog_state = "processing_enriched_input"
-                state.messages = current_messages + [AIMessage(content="已根据您的反馈确认为同意当前计划。")]
+                state.messages = current_messages + [AIMessage(content=USER_INTERACTION_TEXTS["INFO_AFFIRM_PLAN_CONFIRMED"])]
                 return state
 
             elif classified_intent.intent == "change_robot":
@@ -258,10 +325,14 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                     state.clarification_question = None
                     # active_plan_basis remains, to be used by the 'initial' state logic
                     logger.info(f"Robot model changed to '{suggested_model}'. Restarting enrichment using active plan basis: '{state.active_plan_basis}' or raw request if basis is null.")
-                    state.messages = current_messages + [AIMessage(content=f"好的，机器人型号已更改为 {suggested_model}。我将基于当前最新计划（或您的原始请求）使用新机器人重新规划。")]
+                    state.messages = current_messages + [AIMessage(content=USER_INTERACTION_TEXTS["INFO_ROBOT_MODEL_CHANGED_TEMPLATE"].format(suggested_model=suggested_model))]
                     return state
                 else:
-                    clarification_msg = f"您建议更换机器人，但型号 '{suggested_model}' 不太明确或不在已知列表 ({', '.join(KNOWN_ROBOT_MODELS)}) 中。您能提供一个准确的型号吗？或者我们继续使用原机器人 '{robot_model}' 进行计划修订？"
+                    clarification_msg = USER_INTERACTION_TEXTS["PROMPT_ROBOT_MODEL_UNCLEAR_TEMPLATE"].format(
+                        suggested_model=suggested_model,
+                        known_models_str=", ".join(KNOWN_ROBOT_MODELS),
+                        robot_model=robot_model
+                    )
                     state.clarification_question = clarification_msg
                     state.dialog_state = "awaiting_enrichment_confirmation" # Ask for model again or confirm revision
                     state.messages = current_messages + [AIMessage(content=clarification_msg)]
@@ -285,7 +356,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                         state.proposed_enriched_text = None
                         state.enriched_structured_text = None
                         state.clarification_question = None
-                        state.messages = current_messages + [AIMessage(content=f"由于未找到之前的计划，我将您的反馈 '{user_feedback_for_revision}' 作为新的请求来处理。")]
+                        state.messages = current_messages + [AIMessage(content=USER_INTERACTION_TEXTS["INFO_TREATING_FEEDBACK_AS_NEW_REQUEST_TEMPLATE"].format(user_feedback_for_revision=user_feedback_for_revision))]
                         return state
                     else:
                         logger.info("Using active_plan_basis as the previous_proposal for revision.")
@@ -312,11 +383,15 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                 )
 
                 if "error" in llm_revise_response or not llm_revise_response.get("text_output"):
-                    error_msg = f"尝试根据您的反馈 '{user_feedback_for_revision}' 修改流程时遇到问题：LLM未能生成有效修订。错误: {llm_revise_response.get('error', '无输出')}"
-                    logger.error(error_msg)
+                    error_msg_detail = llm_revise_response.get('error', '无输出') # Assuming '无输出' is "no output"
+                    error_msg_formatted = USER_INTERACTION_TEXTS["ERROR_REVISE_PLAN_LLM_FAILED_MESSAGE_TEMPLATE"].format(
+                        user_feedback_for_revision=user_feedback_for_revision,
+                        error_details=error_msg_detail
+                    )
+                    logger.error(error_msg_formatted) # Log the formatted error
                     state.clarification_question = (
-                        f"{error_msg} "
-                        "您能否更清晰地说明您的修改意见，或者重新描述您的请求？"
+                        f"{error_msg_formatted} "
+                        f"{USER_INTERACTION_TEXTS['PROMPT_CLARIFY_REVISION_FEEDBACK_AFTER_ERROR']}"
                     )
                     state.dialog_state = "awaiting_enrichment_confirmation" 
                     state.messages = current_messages + [AIMessage(content=state.clarification_question)]
@@ -324,20 +399,19 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
 
                 revised_text_proposal = llm_revise_response["text_output"].strip()
 
-                if revised_text_proposal == "用户反馈不够清晰，无法完成修改，请提供更具体的修改意见。": # Check for specific LLM refusal
+                if revised_text_proposal == USER_INTERACTION_TEXTS["LLM_OUTPUT_FEEDBACK_UNCLEAR_FOR_REVISION"]: # Check for specific LLM refusal
                     logger.info("LLM indicated user feedback for revision is not clear enough.")
                     state.clarification_question = revised_text_proposal 
                     state.dialog_state = "awaiting_enrichment_confirmation" 
-                    state.messages = current_messages + [AIMessage(content=f"LLM认为您的反馈不够清晰无法修改：{revised_text_proposal}")]
+                    state.messages = current_messages + [AIMessage(content=USER_INTERACTION_TEXTS["LOG_LLM_SAID_FEEDBACK_UNCLEAR_TEMPLATE"].format(llm_direct_unclear_feedback=revised_text_proposal))]
                     return state
                 else:
-                    logger.info(f"Successfully revised enriched input based on feedback '{user_feedback_for_revision}'. New proposed text:\n{revised_text_proposal}")
+                    logger.info(f"Successfully revised enriched input based on feedback '{user_feedback_for_revision}'. New proposed text:\\n{revised_text_proposal}")
                     state.proposed_enriched_text = revised_text_proposal
                     state.active_plan_basis = revised_text_proposal # UPDATE active_plan_basis with the new revision
-                    confirmation_question = (
-                        f"根据您的反馈 '{user_feedback_for_revision}'，我对流程进行了修改。更新后的流程如下:\n\n"
-                        f"```text\n{revised_text_proposal}\n```\n\n"
-                        f"您是否同意按此更新后的流程继续？ (请输入 'yes' 或 'no'，或者提供进一步的修改意见)"
+                    confirmation_question = USER_INTERACTION_TEXTS["PROMPT_CONFIRM_REVISED_PLAN_TEMPLATE"].format(
+                        user_feedback_for_revision=user_feedback_for_revision,
+                        revised_text_proposal=revised_text_proposal
                     )
                     state.clarification_question = confirmation_question
                     state.dialog_state = "awaiting_enrichment_confirmation"
@@ -346,7 +420,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             
             elif classified_intent.intent == "unclear":
                 logger.info("User feedback classified as 'unclear'. Asking for clarification with specific guidance.")
-                state.clarification_question = "您的回复不明确，我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。"
+                state.clarification_question = USER_INTERACTION_TEXTS["GENERAL_FEEDBACK_GUIDANCE"]
                 state.dialog_state = "awaiting_enrichment_confirmation" # Stay to re-confirm
                 state.messages = current_messages + [AIMessage(content=state.clarification_question)]
                 return state
@@ -354,7 +428,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             else: # Should not happen if Pydantic model and prompt are aligned
                 logger.error(f"Unknown intent classified: {classified_intent.intent}. Defaulting to unclear.")
                 # Treat unknown as unclear and ask for clarification with specific guidance
-                state.clarification_question = "抱歉，处理您的反馈时遇到未知情况。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。"
+                state.clarification_question = USER_INTERACTION_TEXTS["GENERAL_FEEDBACK_GUIDANCE"] # Using general one, or can use specific ERROR_UNKNOWN_INTENT_TYPE
                 state.dialog_state = "awaiting_enrichment_confirmation"
                 state.messages = current_messages + [AIMessage(content=state.clarification_question)]
                 return state
@@ -433,7 +507,9 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                 state.active_plan_basis = state.raw_user_request
                 logger.info(f"Initialized active_plan_basis from raw_user_request as model is being queried: {state.active_plan_basis}")
 
-            clarification_msg_content = f"请问您使用的是什么型号的机器人？例如：{', '.join(KNOWN_ROBOT_MODELS)}"
+            clarification_msg_content = USER_INTERACTION_TEXTS["PROMPT_ASK_ROBOT_MODEL_TEMPLATE"].format(
+                known_models_str=", ".join(KNOWN_ROBOT_MODELS)
+            )
             state.clarification_question = clarification_msg_content
             state.dialog_state = "awaiting_robot_model"
             state.messages = current_messages + [AIMessage(content=clarification_msg_content)]
@@ -458,7 +534,9 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
         # This could happen if user only provided a robot model and no actual request yet.
         if not base_text_for_enrichment.strip():
             logger.warning("No content in active_plan_basis or raw_user_request to enrich. Asking user for a task.")
-            clarification_msg_content = "机器人型号已确认为 {robot_model}。请告诉我您想执行的具体任务或流程。"
+            clarification_msg_content = USER_INTERACTION_TEXTS["PROMPT_ASK_FOR_TASK_AFTER_MODEL_CONFIRMATION_TEMPLATE"].format(
+                robot_model=robot_model
+            )
             state.clarification_question = clarification_msg_content
             state.dialog_state = "awaiting_enrichment_confirmation" # Or a new state like "awaiting_initial_task"
             state.messages = current_messages + [AIMessage(content=clarification_msg_content)]
@@ -495,20 +573,20 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
 
         if not enriched_text_proposal or enriched_text_proposal == "NEEDS_CLARIFICATION":
             logger.warning(f"LLM indicated input needs clarification or enrichment failed for: {current_raw_user_request}")
-            clarification_msg_content = "I couldn't fully understand your request or it needs more details for enrichment. Could you please rephrase or add more information?"
+            clarification_msg_content = USER_INTERACTION_TEXTS["PROMPT_INPUT_NEEDS_CLARIFICATION_FROM_LLM"]
             state.clarification_question = clarification_msg_content
             state.raw_user_request = "" 
             state.dialog_state = "initial"
             state.messages = current_messages + [AIMessage(content=clarification_msg_content)]
             return state
         else:
-            logger.info(f"Step 0 Succeeded. Proposed enriched input text:\n{enriched_text_proposal}")
+            logger.info(f"Step 0: Enrichment proposal generated. User confirmation will be requested.") # MODIFIED log message
             state.proposed_enriched_text = enriched_text_proposal
             state.active_plan_basis = enriched_text_proposal # UPDATE active_plan_basis with the newly enriched plan
-            confirmation_question = (
-                f"根据您的机器人型号 '{robot_model}' 和请求 '{current_raw_user_request}', 我生成的初步流程如下:\n\n"
-                f"```text\n{enriched_text_proposal}\n```\n\n"
-                f"您是否同意按此流程继续？ (请输入 'yes' 或 'no'，或者提供修改意见)"
+            confirmation_question = USER_INTERACTION_TEXTS["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(
+                robot_model=robot_model,
+                current_raw_user_request=current_raw_user_request,
+                enriched_text_proposal=enriched_text_proposal
             )
             state.clarification_question = confirmation_question
             state.dialog_state = "awaiting_enrichment_confirmation"
@@ -530,14 +608,14 @@ class ParsedStep(BaseModel):
     id_suggestion: str = Field(description="A suggested unique ID for this operation block, e.g., 'movel_P1_Z_on'.")
     type: str = Field(description="The type of operation, e.g., 'select_robot', 'set_motor', 'moveL', 'loop', 'return'.")
     description: str = Field(description="A brief natural language description of this specific step.")
-    parameters: Dict[str, Any] = Field(description="A dictionary of parameters for this operation, e.g., {'robotName': 'dobot_mg400'} or {'point_name_list': 'P1', 'control_z': 'enable'.}")
+    # parameters: Dict[str, Any] = Field(description="A dictionary of parameters for this operation, e.g., {'robotName': 'dobot_mg400'} or {'point_name_list': 'P1', 'control_z': 'enable'.}")
     sub_steps: Optional[List["ParsedStep"]] = Field(None, description="For control flow blocks like 'loop', this contains the nested sequence of operations.")
 
 ParsedStep.update_forward_refs()
 
 class UnderstandInputSchema(BaseModel):
-    robot_name: Optional[str] = Field(None, description="The name or model of the robot as explicitly stated in the parsed text, e.g., 'dobot_mg400'. This should match the robot name from the input text.")
-    flow_operations: List[ParsedStep] = Field(description="An ordered list of operations identified from the user input text.")
+    robot: Optional[str] = Field(None, description="The name or model of the robot as explicitly stated in the parsed text, e.g., 'dobot_mg400'. This should match the robot name from the input text.")
+    operations: List[ParsedStep] = Field(description="An ordered list of operations identified from the user input text.")
 
 async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) -> RobotFlowAgentState:
     logger.info("--- Running Step 1: Understand Input (from potentially enriched text) ---")
@@ -593,9 +671,9 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
 
     user_message_for_llm = (
         f"Parse the following robot workflow description into a structured format. "
-        f"Identify the robot name (it must be explicitly stated in the text to be parsed, typically at the beginning like '机器人: model_name') and each distinct operation with its parameters. "
-        f"Pay close attention to control flow structures like loops and their nested operations.\n\n"
-        f"Workflow Description to Parse:\n```text\n{enriched_input_text}\n```"
+        f"Identify the robot name (it must be explicitly stated in the text to be parsed, typically at the beginning like '机器人: model_name') and each distinct operation. " # Removed "with its parameters"
+        f"Pay close attention to control flow structures like loops and their nested operations.\\n\\n"
+        f"Workflow Description to Parse:\\n```text\\n{enriched_input_text}\\n```"
     )
 
     parsed_output = await invoke_llm_for_json_output(
@@ -604,7 +682,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         placeholder_values=placeholder_values_for_prompt, # Use the enriched placeholders
         user_message_content=user_message_for_llm,
         json_schema=UnderstandInputSchema,
-        message_history=current_messages
+        message_history=None # Do not pass full history for this specific, intensive step
     )
 
     if "error" in parsed_output:
@@ -616,8 +694,8 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         return state
 
     # Manual validation of operation types BEFORE Pydantic parsing, if known_node_types_list is available
-    if known_node_types_list and parsed_output.get("flow_operations"):
-        flow_ops_data = parsed_output.get("flow_operations", [])
+    if known_node_types_list and parsed_output.get("operations"):
+        flow_ops_data = parsed_output.get("operations", [])
         invalid_types_details = []
         # Helper to recursively check types in sub_steps
         def check_op_types(ops_list, path_prefix=""): # path_prefix for better error reporting in nested steps
@@ -645,15 +723,15 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
 
     try:
         validated_data = UnderstandInputSchema(**parsed_output)
-        logger.info(f"Step 1 Succeeded. Parsed robot from text: {validated_data.robot_name}, Operations: {len(validated_data.flow_operations)}")
+        logger.info(f"Step 1 Succeeded. Parsed robot from text: {validated_data.robot}, Operations: {len(validated_data.operations)}")
         
-        state.parsed_flow_steps = [op.dict(exclude_none=True) for op in validated_data.flow_operations]
-        state.parsed_robot_name = validated_data.robot_name 
+        state.parsed_flow_steps = [op.dict(exclude_none=True) for op in validated_data.operations]
+        state.parsed_robot_name = validated_data.robot 
         state.dialog_state = "input_understood" 
         state.clarification_question = None 
         state.error_message = None
         state.is_error = False
-        state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Robot: {validated_data.robot_name}. Steps: {len(validated_data.flow_operations)}")]
+        state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Robot: {validated_data.robot}. Steps: {len(validated_data.operations)}")]
         return state
     except Exception as e: 
         logger.error(f"Step 1 Failed: Output validation error. Error: {e}. Raw Output: {parsed_output}", exc_info=True)
@@ -683,7 +761,7 @@ def _collect_all_operations_for_xml_generation(
         op_info_for_llm = {
             "type": op_data_from_step1['type'],
             "description": op_data_from_step1['description'],
-            "parameters_json": json.dumps(op_data_from_step1.get('parameters', {})), # Ensure parameters exist
+            # "parameters_json": json.dumps(op_data_from_step1.get('parameters', {})), # Ensure parameters exist
             "id_suggestion_from_step1": op_data_from_step1.get('id_suggestion', ''),
             
             "target_xml_block_id": xml_block_id, 
@@ -761,7 +839,7 @@ async def _generate_one_xml_for_operation_task(
         **config, # General config like OUTPUT_DIR_PATH, BLOCK_ID_PREFIX_EXAMPLE
         "CURRENT_NODE_TYPE": op_info_for_llm["type"],
         "CURRENT_NODE_DESCRIPTION": op_info_for_llm["description"],
-        "CURRENT_NODE_PARAMETERS_JSON": op_info_for_llm["parameters_json"],
+        # "CURRENT_NODE_PARAMETERS_JSON": op_info_for_llm["parameters_json"],
         "CURRENT_NODE_ID_SUGGESTION_FROM_STEP1": op_info_for_llm["id_suggestion_from_step1"],
         "TARGET_XML_BLOCK_ID": op_info_for_llm["target_xml_block_id"],
         "TARGET_XML_DATA_BLOCK_NO": op_info_for_llm["target_xml_data_block_no"],
@@ -774,7 +852,7 @@ async def _generate_one_xml_for_operation_task(
     # User message can be simple as the system prompt is detailed
     user_message_for_llm = (
         f"Generate the Blockly XML for a '{op_info_for_llm['type']}' node. "
-        f"Use the provided template content and parameters. "
+        f"Use the provided template content. "  # Removed parameters reference
         f"Target Block ID: {op_info_for_llm['target_xml_block_id']}. "
         f"Description: {op_info_for_llm['description']}."
     )
@@ -783,7 +861,7 @@ async def _generate_one_xml_for_operation_task(
         llm,
         system_prompt_content=get_filled_prompt("flow_step2_generate_node_xml.md", placeholder_values),
         user_message_content=user_message_for_llm,
-        message_history=state.messages
+        message_history=None # Explicitly set to None
     )
 
     if "error" in llm_response or not llm_response.get("text_output"):
@@ -1117,7 +1195,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         llm,
         system_prompt_content=system_prompt_content,
         user_message_content=user_message_for_llm,
-        message_history=state.messages
+        message_history=None # Explicitly set to None
     )
 
     if "error" in llm_response or not llm_response.get("text_output"): # pragma: no cover

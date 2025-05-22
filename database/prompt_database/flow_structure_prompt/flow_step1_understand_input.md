@@ -8,8 +8,6 @@
 `{{ KNOWN_NODE_TYPES_LIST_STR }}`
 如果输入中描述的某个操作无法明确映射到这些已知类型，请在最终 JSON 输出的该操作的 `description` 字段中注明此问题，并将该操作的 `type` 字段设置为特殊值 `unknown_operation`。
 
-节点所有必要的参数应尽可能从文本中提取。
-
 完整的例子，比如输入是（假设已知节点类型包含 moveL, set_motor, loop, return）：
 
 ```text

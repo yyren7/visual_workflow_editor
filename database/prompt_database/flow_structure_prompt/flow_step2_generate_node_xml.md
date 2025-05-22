@@ -26,7 +26,6 @@
 
 - `{{CURRENT_NODE_TYPE}}`: 当前操作的类型 (例如: "moveL", "set_motor")。
 - `{{CURRENT_NODE_DESCRIPTION}}`: 当前操作的自然语言描述 (例如: "线性移动到点 P1")。
-- `{{CURRENT_NODE_PARAMETERS_JSON}}`: 一个 JSON 字符串，包含为此操作提取的参数 (例如: `'\'\'\'{"point_name": "P1", "control_z": "enable"}\'\'\''`)。
 - `{{TARGET_XML_BLOCK_ID}}`: 你在 `<block>` 标签中要使用的 `id` (例如: "block_uuid_1")。
 - `{{TARGET_XML_DATA_BLOCK_NO}}`: 你在 `<block>` 标签中要使用的 `data-blockNo` (例如: "1")。
 - `{{ROBOT_MODEL_NAME_FROM_STATE}}`: 当前流程使用的机器人型号 (例如: "dobot_mg400")。
