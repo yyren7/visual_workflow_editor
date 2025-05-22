@@ -44,12 +44,13 @@ class RobotFlowAgentState(BaseModel):
     relation_xml_path: Optional[str] = Field(None, description="Path to the saved relation.xml file.")
 
     # Outputs from Step 4 (generate_final_flow_xml_node)
-    final_flow_xml_content: Optional[str] = Field(None, description="The content of the merged final flow XML.")
-    final_flow_xml_path: Optional[str] = Field(None, description="Path to the saved final flow.xml file.")
+    final_flow_xml_content: Optional[str] = None
+    final_flow_xml_path: Optional[str] = None
     
     current_step_description: Optional[str] = Field(None, description="A human-readable description of the current processing step.")
     error_message: Optional[str] = Field(None, description="A message describing an error if one occurred.")
-    is_error: bool = Field(False, description="Flag indicating if the agent is in an error state.")
+    upload_status: Optional[str] = None # To track file upload status e.g. "success", "remote_address_offline"
+    is_error: bool = False
 
     class Config:
         arbitrary_types_allowed = True 

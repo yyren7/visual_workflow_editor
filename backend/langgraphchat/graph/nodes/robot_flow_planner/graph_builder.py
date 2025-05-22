@@ -17,6 +17,7 @@ from .llm_nodes import preprocess_and_enrich_input_node, understand_input_node, 
 # from .xml_tools import merge_xml_files # Assuming step 4 might be a direct Python function node
 
 from .xml_tools import WriteXmlFileTool # Example tool
+from .file_share_tool import upload_file # Import the upload_file function
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +256,20 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         with open(final_flow_file_path, "w", encoding="utf-8") as f: f.write(final_xml_string_output)
         state.final_flow_xml_path = str(final_flow_file_path)
         logger.info(f"Successfully merged and wrote final flow XML to {final_flow_file_path}")
+
+        # Attempt to upload the generated flow.xml file
+        logger.info(f"Attempting to upload {final_flow_file_path}...")
+        upload_successful = upload_file(str(final_flow_file_path), final_flow_file_name)
+
+        if upload_successful:
+            logger.info(f"Successfully uploaded {final_flow_file_name} to remote share.")
+            state.upload_status = "success"
+        else:
+            logger.warning(f"Failed to upload {final_flow_file_name}. Remote address might be offline or other smbclient issue.")
+            state.upload_status = "remote_address_offline" # Or a more general "upload_failed"
+            # We don't set is_error=True here, as the local file generation was successful.
+            # The flow can still be considered "completed" locally.
+
     except IOError as e:
         logger.error(f"Failed to write final flow XML to {final_flow_file_path}: {e}", exc_info=True)
         state.is_error = True; state.error_message = f"Failed to write final XML file: {e}"; state.dialog_state = "error"; return state

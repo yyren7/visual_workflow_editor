@@ -9,3 +9,4 @@ if project_root not in sys.path:
     print(f"Added {project_root} to sys.path") # Optional: for debugging
 
 # You can also define fixtures here if needed later 
+# python3 backend/tests/file_share.py smb backend/tests/conftest.py //172.30.84.220/llm_test/
