@@ -54,7 +54,7 @@
       }
     }
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y dos2unix postgresql-client && sudo dos2unix .devcontainer/post-create.sh && bash .devcontainer/post-create.sh",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y dos2unix postgresql-client sshfs && sudo dos2unix .devcontainer/post-create.sh && bash .devcontainer/post-create.sh",
   
   "remoteUser": "vscode"
 }
