@@ -74,7 +74,8 @@ async def main():
                 model=deepseek_model,
                 api_key=deepseek_api_key,
                 base_url=deepseek_base_url, # Pass base_url if your .env has it
-                temperature=0
+                temperature=0,
+                streaming=True # Enable streaming
             )
             logging.info(f"Successfully instantiated ChatDeepSeek with model '{deepseek_model}' and base URL '{deepseek_base_url}'.")
         except Exception as e:

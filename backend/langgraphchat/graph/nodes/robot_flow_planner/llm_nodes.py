@@ -101,13 +101,41 @@ async def invoke_llm_for_text_output( # Renamed for clarity, as it's now primari
     messages.append(HumanMessage(content=user_message_content))
 
     logger.info(f"Invoking LLM for raw text output.")
-    chain = llm | StrOutputParser()
-    try:
-        ai_response_content = await chain.ainvoke(messages)
-        return {"text_output": ai_response_content}
-    except Exception as e:
-        logger.error(f"LLM call for string output failed. Error: {e}", exc_info=True)
-        return {"error": "LLM call for string output failed.", "details": str(e)}
+    
+    # Check if LLM is ChatDeepSeek and streaming is enabled
+    is_streaming_deepseek = isinstance(llm, BaseChatModel) and hasattr(llm, 'streaming') and llm.streaming and "deepseek" in llm.model_name.lower()
+
+    if is_streaming_deepseek:
+        logger.info("Using streaming for ChatDeepSeek text output.")
+        full_response_content = ""
+        try:
+            # Langchain's stream() method is synchronous, astream() is asynchronous
+            # Assuming this function might be called in an async context from other nodes,
+            # we should ideally use astream if invoke_llm_for_text_output itself is async.
+            # For now, let's use a simple loop that would work with a sync llm.stream()
+            # or an async llm.astream() if adapted.
+            # Given the function is `async def`, we should use `astream`.
+            async for chunk in llm.astream(messages): # Ensure llm.astream is available and correctly used
+                if hasattr(chunk, 'content'):
+                    print(chunk.content, end="", flush=True)
+                    full_response_content += chunk.content
+            print() # Add a newline after streaming is complete
+            return {"text_output": full_response_content}
+        except Exception as e:
+            logger.error(f"LLM streaming call for string output failed. Error: {e}", exc_info=True)
+            # Fallback or error reporting
+            if full_response_content: # If some content was streamed before error
+                 print("\\n<Streaming incomplete due to error>", flush=True)
+                 return {"text_output": full_response_content, "error": "LLM streaming failed partially.", "details": str(e)}
+            return {"error": "LLM streaming call for string output failed.", "details": str(e)}
+    else:
+        chain = llm | StrOutputParser()
+        try:
+            ai_response_content = await chain.ainvoke(messages)
+            return {"text_output": ai_response_content}
+        except Exception as e:
+            logger.error(f"LLM call for string output failed. Error: {e}", exc_info=True)
+            return {"error": "LLM call for string output failed.", "details": str(e)}
 
 async def invoke_llm_for_json_output(
     llm: BaseChatModel,

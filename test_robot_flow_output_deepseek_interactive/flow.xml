@@ -7,7 +7,7 @@
         <field name="state_list">on</field>
         <next>
           <block type="moveL" id="block_uuid_3" data-blockNo="3">
-            <field name="point_name_list">P1</field>
+            <field name="point_name_list">P5</field>
             <field name="control_x">disable</field>
             <field name="control_y">disable</field>
             <field name="control_z">enable</field>
@@ -18,7 +18,7 @@
             <field name="camera_list">none</field>
             <next>
               <block type="moveL" id="block_uuid_4" data-blockNo="4">
-                <field name="point_name_list">P1</field>
+                <field name="point_name_list">P5</field>
                 <field name="control_x">enable</field>
                 <field name="control_y">enable</field>
                 <field name="control_z">disable</field>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="moveL" id="block_uuid_4" data-blockNo="4">
-    <field name="point_name_list">P1</field>
+    <field name="point_name_list">P5</field>
     <field name="control_x">enable</field>
     <field name="control_y">enable</field>
     <field name="control_z">disable</field>
