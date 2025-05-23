@@ -3,7 +3,7 @@ from langchain_core.messages import BaseMessage
 import operator
 
 # from .conditions import RouteDecision # RouteDecision is now in conditions.py
-from .types import RouteDecision # RouteDecision is now in types.py
+from .graph_types import RouteDecision # RouteDecision is now in types.py
 
 # 为了与 LangGraph 兼容，并让我们可以添加任意数量的键，
 # 我们将基础状态类定义为 TypedDict，然后使用它来注解 StateGraph。
