@@ -184,7 +184,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     
     # 新节点绑定
     bound_task_router_node = partial(task_router_node, llm=llm) 
-    bound_teaching_node = partial(teaching_node) 
+    bound_teaching_node = partial(teaching_node, llm=llm)
     bound_ask_info_node = partial(ask_info_node) 
 
 

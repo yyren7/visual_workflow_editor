@@ -1,31 +1,31 @@
 import logging
-import functools # Added functools
-from typing import Dict, Any, Optional, Callable, List # Ensure List is imported
+import functools
+from typing import Dict, Any, Optional, Callable, List
 import asyncio
 import os
-import xml.etree.ElementTree as ET # Ensure ET is imported
-import copy # Ensure copy is imported
-from pathlib import Path # Ensure Path is imported
+import xml.etree.ElementTree as ET
+import copy
+from pathlib import Path
 
 from langgraph.graph import StateGraph, END
-from langchain_core.language_models import BaseChatModel # For type hint
+from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
+from langchain_core.messages import AIMessage
 
 from .state import RobotFlowAgentState, GeneratedXmlFile
-from .llm_nodes import preprocess_and_enrich_input_node, understand_input_node, generate_individual_xmls_node, generate_relation_xml_node
-# Import other node functions as they are created
-# from .xml_tools import merge_xml_files # Assuming step 4 might be a direct Python function node
-
-from .xml_tools import WriteXmlFileTool # Example tool
-from .file_share_tool import upload_file # Import the upload_file function
+from .llm_nodes import (
+    preprocess_and_enrich_input_node,
+    understand_input_node,
+    generate_individual_xmls_node,
+    generate_relation_xml_node
+)
+from .xml_tools import WriteXmlFileTool
+from .file_share_tool import upload_file
 
 logger = logging.getLogger(__name__)
 
-# Placeholder for loading initial config (placeholder values from flow_placeholders.md)
-# This could come from a file, environment variables, or direct input.
 DEFAULT_CONFIG = {
     "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
-    # "作为机器人流程文件创建智能体，根据上下文和用户的最新自然语言输入，你需要执行以下多步骤流程来生成机器人控制的 XML 文件："
     "ROBOT_NAME_EXAMPLE": "dobot_mg400",
     "POINT_NAME_EXAMPLE_1": "P3",
     "POINT_NAME_EXAMPLE_2": "P1",
@@ -38,108 +38,53 @@ DEFAULT_CONFIG = {
     "FINAL_FLOW_FILE_NAME_ACTUAL": "flow.xml"
 }
 
-def initialize_state_node(state: RobotFlowAgentState) -> RobotFlowAgentState:
-    """Node to initialize the agent state with default config if not already present."""
-    logger.info("--- Initializing Agent State ---")
-    
-    # Initialize config
-    # state.config is initialized as {} by Pydantic's default_factory=dict
+# Node name constants for clarity in graph definition
+INITIALIZE_STATE = "initialize_state"
+CORE_INTERACTION_NODE = "core_interaction_node"
+UNDERSTAND_INPUT = "understand_input"
+GENERATE_INDIVIDUAL_XMLS = "generate_individual_xmls"
+GENERATE_RELATION_XML = "generate_relation_xml"
+GENERATE_FINAL_XML = "generate_final_xml"
+ERROR_HANDLER = "error_handler" # General error logging node, if needed beyond is_error flag
+UPLOAD_FINAL_XML_NODE = "upload_final_xml_node" # If you have this node for uploading
+
+def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
+    logger.info("--- Initializing Agent State (Robot Flow Subgraph) ---")
     merged_config = DEFAULT_CONFIG.copy()
-    # Ensure state.config is not None before attempting update, though default_factory should prevent it.
-    if state.config is None:
-        state.config = {} # Should not be necessary with default_factory
+    if state.config is None: state.config = {}
     merged_config.update(state.config)
     state.config = merged_config
+    if state.dialog_state is None: state.dialog_state = "initial"
+    state.current_step_description = "Initialized Robot Flow Subgraph"
+    # Ensure user_input from invoker is preserved if dialog_state is initial
+    # preprocess_and_enrich_input_node will consume it.
+    logger.info(f"Agent state initialized. Dialog state: {state.dialog_state}, Initial User Input: '{state.user_input}'")
+    return state.dict(exclude_none=True)
 
-    # Pydantic models handle default initialization for fields.
-    # For example, 'messages' has default_factory=list.
-    # 'dialog_state' has a default "initial".
-    # Optional fields default to None.
-
-    # If 'dialog_state' somehow became None and we want to enforce 'initial'
-    # (though its default in RobotFlowAgentState is "initial")
-    if state.dialog_state is None: 
-        state.dialog_state = "initial"
-
-    # Fields like robot_model, raw_user_request are Optional and will be None by default.
-    # No need for setdefault for them if None is the desired initial state.
-
-    state.current_step_description = "Initialized"
-    
-    output_dir_path = state.config.get('OUTPUT_DIR_PATH') # Use .get() on the dict state.config
-    logger.info(f"Agent state initialized/updated. Output directory: {output_dir_path}, Dialog state: {state.dialog_state}")
-    return state
-
-def error_handling_node(state: RobotFlowAgentState) -> RobotFlowAgentState:
-    """Node to handle errors. It can log the error and prepare for termination."""
-    logger.error("--- Error Detected in Flow ---")
-    logger.error(f"Current Step: {state.current_step_description}, Dialog State: {state.dialog_state}") # Direct access
-    logger.error(f"Error Message: {state.error_message}") # Direct access
-    return state
-
-# Placeholder Node for Step 2: Generate Independent Node XMLs
-# def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> RobotFlowAgentState:
-#     logger.info("--- Running Step 2: Generate Independent Node XMLs (Placeholder) ---")
-#     state.current_step_description = "Generating individual XML nodes"
-#     # Actual logic for XML generation will go here.
-#     # For now, simulate success and prepare for the next step.
-#     state.generated_node_xmls = [
-#         GeneratedXmlFile(
-#             block_id="example_node_1", 
-#             type="placeholder_type", # Added placeholder type
-#             source_description="Placeholder step description", # Added placeholder source_description
-#             status="success", # Added status
-#             file_path="/path/to/example_node_1.xml", 
-#             xml_content="<example_node />"
-#         )
-#     ]
-#     logger.info("Placeholder: Individual XML nodes generated.")
-#     state.dialog_state = "generating_relations"
-#     return state
-
-# Placeholder for Step 3: Generate Node Relation XML (Placeholder - to be implemented)
-# async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatModel) -> RobotFlowAgentState:
-#     logger.info("--- Step 3: Generate Node Relation XML (Placeholder) ---")
-#     state.current_step_description = "Generating node relation XML (Placeholder)"
-#     # TODO: Implement logic to create relation.xml based on state.parsed_flow_steps and generated_node_xmls IDs
-#     # This will likely involve taking the parsed_flow_steps, mapping to the generated block_ids,
-#     # and then constructing an XML string that defines <next> and <statement name=\"DO\"> relationships.
-#     # It should NOT include <field> values or data-blockNo attributes in relation.xml.
-#     # The output should be saved to a file and its path stored in state.relation_xml_path
-#     # state.relation_xml_content = "<?xml version=\"1.0\"?><xml><block type=\"start\" id=\"start_block\"><next><block type=\"end\" id=\"end_block\" /></next></block></xml>" # Dummy content
-#     # state.relation_xml_path = "/tmp/relation_placeholder.xml"
-#     # with open(state.relation_xml_path, "w") as f:
-#     #     f.write(state.relation_xml_content)
-    
-#     state.dialog_state = "relation_xml_generated" # Placeholder success state
-#     logger.info("Relation XML generation (Placeholder) complete.")
-#     return state
-
-# --- Step 4: Merge Individual XMLs into Final Flow XML ---
-# This node takes the relation.xml structure and the content of individual block XMLs
-# and merges them into a single, final flow.xml file.
-# This is a pure Python XML manipulation node, does not require LLM.
-
-BLOCKLY_NS = "https://developers.google.com/blockly/xml" # Namespace used in Blockly XMLs
-
-async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> RobotFlowAgentState:
+async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> Dict[str, Any]:
     logger.info("--- Running Step 4: Merge Individual XMLs into Final Flow XML ---")
     state.current_step_description = "Merging XMLs into final flow file"
+    state.is_error = False # Reset error flag at the beginning of the node execution
+    state.dialog_state = "generating_xml_final" # Update dialog state
 
     relation_xml_str = state.relation_xml_content
     individual_xmls_info = state.generated_node_xmls
     config = state.config
+    state.is_error = False # Reset error before attempting
 
     if not relation_xml_str:
         logger.error("Relation XML content is missing from state.")
         state.is_error = True
-        state.error_message = "Relation XML content missing for final merge."
-        state.dialog_state = "error"
-        return state
+        state.error_message = "内部错误：关系XML内容缺失，无法合并最终流程。"
+        # state.messages = state.messages + [AIMessage(content=state.error_message)] # Message will be added by routing logic
+        return state.dict(exclude_none=True)
 
     if not individual_xmls_info:
         logger.warning("List of generated individual XMLs is empty. Final flow may be minimal.")
 
+    # ... (rest of the existing XML merging logic from the original file) ...
+    # Ensure BLOCKLY_NS is defined or imported
+    BLOCKLY_NS = "https://developers.google.com/blockly/xml"
     block_element_map: Dict[str, ET.Element] = {}
     if individual_xmls_info: 
         for gf in individual_xmls_info:
@@ -147,37 +92,45 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
                 try:
                     individual_xml_file_root = ET.fromstring(gf.xml_content)
                     block_node = None
-                    for child in individual_xml_file_root:
-                        if child.tag == f"{{{BLOCKLY_NS}}}block":
-                            block_node = child
-                            break
+                    # Blockly XMLs might or might not have the namespace directly on <block>
+                    # but often have it on the root <xml> tag.
+                    # We search for any block tag, with or without namespace explicitly here for robustness.
+                    block_node_ns = individual_xml_file_root.find(f"{{{BLOCKLY_NS}}}block")
+                    block_node_no_ns = individual_xml_file_root.find("block")
+                    block_node = block_node_ns if block_node_ns is not None else block_node_no_ns
+                    
+                    if block_node is None: # If still not found, check children of the root if root is <xml>
+                        if individual_xml_file_root.tag == f"{{{BLOCKLY_NS}}}xml" or individual_xml_file_root.tag == "xml":
+                            for child in individual_xml_file_root:
+                                if child.tag == f"{{{BLOCKLY_NS}}}block" or child.tag == "block":
+                                    block_node = child
+                                    break
+                    
                     if block_node is not None:
                         block_element_map[gf.block_id] = block_node
                     else:
-                        logger.warning(f"Could not find main <block> in individual XML for block_id: {gf.block_id}.")
+                        logger.warning(f"Could not find main <block> in individual XML for block_id: {gf.block_id} (content: {gf.xml_content[:100]}...).")
                 except ET.ParseError as e:
-                    logger.error(f"Failed to parse XML for block_id {gf.block_id}: {e}.", exc_info=True)
+                    logger.error(f"Failed to parse XML for block_id {gf.block_id}: {e}. XML: {gf.xml_content[:200]}", exc_info=True)
                     state.is_error = True
-                    state.error_message = f"Malformed XML for block_id {gf.block_id}: {e}"
-                    state.dialog_state = "error"
-                    return state
+                    state.error_message = f"内部错误：解析节点 {gf.block_id} 的XML时失败: {e}"
+                    return state.dict(exclude_none=True)
             elif gf.block_id:
                 logger.warning(f"Skipping block_id {gf.block_id} for merge due to status '{gf.status}' or no content.")
 
     try:
         relation_structure_root = ET.fromstring(relation_xml_str)
     except ET.ParseError as e:
-        logger.error(f"Failed to parse relation.xml: {e}.", exc_info=True)
+        logger.error(f"Failed to parse relation.xml: {e}. XML: {relation_xml_str[:200]}", exc_info=True)
         state.is_error = True
-        state.error_message = f"Failed to parse relation.xml: {e}"
-        state.dialog_state = "error"
-        return state
+        state.error_message = f"内部错误：解析关系XML时失败: {e}"
+        return state.dict(exclude_none=True)
 
     final_flow_xml_root = ET.Element(f"{{{BLOCKLY_NS}}}xml")
-    for name, value in relation_structure_root.attrib.items():
+    for name, value in relation_structure_root.attrib.items(): # Copy attributes from relation <xml> root
          final_flow_xml_root.set(name, value)
     
-    memo_processed_relation_blocks = {} # Memoization for _build_final_block_tree
+    memo_processed_relation_blocks: Dict[str, ET.Element] = {}
 
     def _build_final_block_tree(relation_block_element: ET.Element) -> ET.Element:
         block_id = relation_block_element.get("id")
@@ -186,267 +139,259 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
             logger.error(err_msg)
             raise LookupError(err_msg)
         
-        # Check memoization table before re-processing
         if block_id in memo_processed_relation_blocks:
-            return copy.deepcopy(memo_processed_relation_blocks[block_id]) # Return a copy
+            return copy.deepcopy(memo_processed_relation_blocks[block_id])
 
         full_block_template_from_map = block_element_map.get(block_id)
         if full_block_template_from_map is None:
             block_type_from_relation = relation_block_element.get("type", "N/A")
-            err_msg = f"Content for block_id '{block_id}' (type: {block_type_from_relation}) not found."
+            err_msg = f"Content for block_id '{block_id}' (type: {block_type_from_relation}) not found in provided individual XMLs."
             logger.error(err_msg)
             raise LookupError(err_msg)
 
         final_merged_block = copy.deepcopy(full_block_template_from_map)
         for child_tag_to_clear in ["next", "statement"]:
-            for element_to_remove in final_merged_block.findall(f"{{{BLOCKLY_NS}}}{child_tag_to_clear}"):
-                final_merged_block.remove(element_to_remove)
-
-        for rel_statement_element in relation_block_element.findall(f"{{{BLOCKLY_NS}}}statement"):
+            # Check with and without namespace for broader compatibility
+            for ns_prefix in [f"{{{BLOCKLY_NS}}}", ""]:
+                for element_to_remove in final_merged_block.findall(f"{ns_prefix}{child_tag_to_clear}"):
+                    final_merged_block.remove(element_to_remove)
+        
+        for rel_statement_element in relation_block_element.findall(f"{{{BLOCKLY_NS}}}statement") + relation_block_element.findall("statement"):
             statement_name = rel_statement_element.get("name")
             final_stmt_element_for_merge = ET.SubElement(final_merged_block, f"{{{BLOCKLY_NS}}}statement", name=statement_name)
-            rel_inner_block = rel_statement_element.find(f"{{{BLOCKLY_NS}}}block")
+            rel_inner_block = rel_statement_element.find(f"{{{BLOCKLY_NS}}}block") or rel_statement_element.find("block")
             if rel_inner_block is not None:
                 constructed_inner_block = _build_final_block_tree(rel_inner_block)
                 final_stmt_element_for_merge.append(constructed_inner_block)
         
-        rel_next_element = relation_block_element.find(f"{{{BLOCKLY_NS}}}next")
+        rel_next_element = relation_block_element.find(f"{{{BLOCKLY_NS}}}next") or relation_block_element.find("next")
         if rel_next_element is not None:
-            rel_next_inner_block = rel_next_element.find(f"{{{BLOCKLY_NS}}}block")
+            rel_next_inner_block = rel_next_element.find(f"{{{BLOCKLY_NS}}}block") or rel_next_element.find("block")
             if rel_next_inner_block is not None:
                 final_next_element_for_merge = ET.SubElement(final_merged_block, f"{{{BLOCKLY_NS}}}next")
                 constructed_next_inner_block = _build_final_block_tree(rel_next_inner_block)
                 final_next_element_for_merge.append(constructed_next_inner_block)
         
-        memo_processed_relation_blocks[block_id] = final_merged_block # Store the original constructed block
-        return copy.deepcopy(final_merged_block) # Return a copy for the current caller
+        memo_processed_relation_blocks[block_id] = final_merged_block
+        return copy.deepcopy(final_merged_block)
 
     try:
-        first_block_in_relation = relation_structure_root.find(f"{{{BLOCKLY_NS}}}block")
+        # Find the first block, might be namespaced or not
+        first_block_in_relation = relation_structure_root.find(f"{{{BLOCKLY_NS}}}block") or relation_structure_root.find("block")
         if first_block_in_relation is not None:
             root_block_for_final_flow = _build_final_block_tree(first_block_in_relation)
             final_flow_xml_root.append(root_block_for_final_flow)
-        elif block_element_map: # individual XMLs exist but relation.xml is empty
+        elif block_element_map:
              logger.warning("Relation.xml is empty but individual XMLs exist. Final flow.xml will be empty.")
-        else: # Both are empty
+        else: 
             logger.info("Relation.xml and individual_node_xmls are empty. Final flow.xml will be empty.")
     except LookupError as e:
         logger.error(f"Merge process failed due to missing block data or structure: {e}", exc_info=True)
-        state.is_error = True; state.error_message = str(e); state.dialog_state = "error"; return state
+        state.is_error = True; state.error_message = str(e); 
+        return state.dict(exclude_none=True)
     except Exception as e:
         logger.error(f"Unexpected error during final XML construction: {e}", exc_info=True)
-        state.is_error = True; state.error_message = f"Unexpected merge error: {e}"; state.dialog_state = "error"; return state
+        state.is_error = True; state.error_message = f"内部错误：构建最终XML时发生意外: {e}"; 
+        return state.dict(exclude_none=True)
 
-    ET.register_namespace("", BLOCKLY_NS)
+    ET.register_namespace("", BLOCKLY_NS) # Ensure default namespace for output
     try:
-        if hasattr(ET, 'indent'): ET.indent(final_flow_xml_root, space="  ")
+        if hasattr(ET, 'indent'): ET.indent(final_flow_xml_root, space="  ") # Python 3.9+
         merged_xml_content_string = ET.tostring(final_flow_xml_root, encoding='unicode', xml_declaration=False)
         final_xml_string_output = f"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{merged_xml_content_string}"
     except Exception as e:
         logger.error(f"Error serializing final merged XML: {e}", exc_info=True)
-        state.is_error = True; state.error_message = f"Error serializing final XML: {e}"; state.dialog_state = "error"; return state
+        state.is_error = True; state.error_message = f"内部错误：序列化最终XML时出错: {e}"; 
+        return state.dict(exclude_none=True)
 
     state.final_flow_xml_content = final_xml_string_output
-    output_dir_path_str = config.get("OUTPUT_DIR_PATH", "/tmp")
+    output_dir_path_str = config.get("OUTPUT_DIR_PATH", "/tmp") # Ensure config is available
     final_flow_file_name = config.get("FINAL_FLOW_FILE_NAME_ACTUAL", "flow.xml")
-    final_flow_file_path = Path(output_dir_path_str) / final_flow_file_name
-
+    final_file_path = Path(output_dir_path_str) / final_flow_file_name
     try:
         os.makedirs(output_dir_path_str, exist_ok=True)
-        with open(final_flow_file_path, "w", encoding="utf-8") as f: f.write(final_xml_string_output)
-        state.final_flow_xml_path = str(final_flow_file_path)
-        logger.info(f"Successfully merged and wrote final flow XML to {final_flow_file_path}")
+        with open(final_file_path, "w", encoding="utf-8") as f:
+            f.write(state.final_flow_xml_content)
+        state.final_flow_xml_path = str(final_file_path)
+        logger.info(f"Successfully merged and saved final flow XML to: {state.final_flow_xml_path}")
+    except Exception as e:
+        logger.error(f"Error saving final_flow.xml to {final_file_path}: {e}", exc_info=True)
+        state.is_error = True
+        state.error_message = f"保存最终流程文件 {final_file_path} 失败: {e}"
+        # Keep final_flow_xml_content in state even if save fails
 
-        # Attempt to upload the generated flow.xml file
-        logger.info(f"Attempting to upload {final_flow_file_path}...")
-        upload_successful = upload_file(str(final_flow_file_path), final_flow_file_name)
+    return state.dict(exclude_none=True)
 
-        if upload_successful:
-            logger.info(f"Successfully uploaded {final_flow_file_name} to remote share.")
-            state.upload_status = "success"
-        else:
-            logger.warning(f"Failed to upload {final_flow_file_name}. Remote address might be offline or other smbclient issue.")
-            state.upload_status = "remote_address_offline" # Or a more general "upload_failed"
-            # We don't set is_error=True here, as the local file generation was successful.
-            # The flow can still be considered "completed" locally.
-
-    except IOError as e:
-        logger.error(f"Failed to write final flow XML to {final_flow_file_path}: {e}", exc_info=True)
-        state.is_error = True; state.error_message = f"Failed to write final XML file: {e}"; state.dialog_state = "error"; return state
+# --- Conditional Edge Functions ---
+def route_after_core_interaction(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Routing after Core Interaction (dialog_state: '{state.dialog_state}', is_error: {state.is_error}) ---")
     
-    state.dialog_state = "flow_completed"
-    return state
+    # Check if preprocess_and_enrich_input_node (CORE_INTERACTION_NODE) itself set an error during its execution
+    if state.is_error: # This implies preprocess_and_enrich_input_node failed its own task
+        logger.warning(f"Error flag is set by CORE_INTERACTION_NODE. Dialog state: {state.dialog_state}. Routing back to core for user correction.")
+        # Ensure error message is in messages for the user to see
+        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = state.messages + [AIMessage(content=f"预处理输入时出错: {state.error_message}")]
+        state.dialog_state = 'awaiting_user_input' # Prepare for new user input
+        state.user_input = None # Crucial: Clear stale user_input to prevent re-processing old data if core node failed.
+        state.clarification_question = None # Clear any pending questions from core node
+        return CORE_INTERACTION_NODE
 
-# Conditional routing function
-def should_continue(state: RobotFlowAgentState) -> str:
-    """Determines the next step based on the current state, especially error flags."""
-    if state.is_error: # Direct access for boolean
-        logger.warning("Error flag is set. Routing to error handler.")
-        return "error_handler"
+    current_dialog_state = state.dialog_state
+    if current_dialog_state == "input_understood_ready_for_xml":
+        if state.enriched_structured_text:
+            logger.info("Core interaction successful (input_understood_ready_for_xml). Routing to: UNDERSTAND_INPUT")
+            return UNDERSTAND_INPUT
+        else: 
+            logger.warning("State is 'input_understood_ready_for_xml' but enriched_structured_text is missing. Awaiting user input.")
+            if not any("流程描述不完整" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+                 state.messages = state.messages + [AIMessage(content="流程描述不完整或未能正确处理，请重新输入。" )]
+            state.dialog_state = "awaiting_user_input"
+            state.user_input = None # Clear stale input
+            return CORE_INTERACTION_NODE
+    elif current_dialog_state in ["awaiting_robot_model_input", "awaiting_enrichment_confirmation", "awaiting_user_input", "processing_user_input", "generation_failed"]:
+        # If CORE_INTERACTION_NODE (preprocess_and_enrich_input_node) has set one of these states, 
+        # it means it's either waiting for a specific user reply (e.g. to a clarification_question),
+        # actively processing, or has just handled a generation failure by setting state to await input.
+        # In all these cases, the graph should loop back to CORE_INTERACTION_NODE.
+        # If it's awaiting specific input (e.g. robot model), state.user_input should ideally be None 
+        # (consumed by preprocess_and_enrich_input_node in the current cycle if it was a response to a question, 
+        # or will be None if it just set a question and is waiting for the *next* graph invocation).
+        # The invoker node is responsible for providing new user_input in the next cycle if required.
+        logger.info(f"Staying in CORE_INTERACTION_NODE. Dialog_state: {current_dialog_state}. This node will await next invocation or process further.")
+        return CORE_INTERACTION_NODE
+    # else:
+        # This 'else' block is removed because this function should ONLY route based on the outcome of CORE_INTERACTION_NODE.
+        # Other states like 'generating_xml_individual' are outcomes of *other* nodes, and routing from those
+        # is handled by route_xml_generation_step or decide_after_final_xml_generation.
+        # If CORE_INTERACTION_NODE produces an unexpected dialog_state not covered above, 
+        # it's an internal logic error in preprocess_and_enrich_input_node.
+        # logger.error(f"Unexpected dialog_state '{current_dialog_state}' set by CORE_INTERACTION_NODE. Defaulting to CORE_INTERACTION_NODE to reset.")
+        # if not any(f"系统遇到意外的内部状态 ({current_dialog_state})" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        #     state.messages = state.messages + [AIMessage(content=f"系统遇到意外的内部状态 ({current_dialog_state})，请尝试重新描述您的请求。" )]
+        # state.dialog_state = "awaiting_user_input"
+        # state.user_input = None 
+        # state.is_error = True 
+        # state.error_message = f"系统遇到由核心交互节点设置的意外内部状态 ({current_dialog_state})，已重置到等待用户输入。"
+        # return CORE_INTERACTION_NODE
     
-    dialog_state = state.dialog_state # Direct access
-    # current_step_desc is the description of the node THAT JUST FINISHED.
-    last_completed_node_desc = state.current_step_description # Direct access
+    # Fallback: If no conditions above are met (which should be rare if preprocess_and_enrich_input_node behaves as expected)
+    # this indicates an unexpected state produced by CORE_INTERACTION_NODE itself.
+    logger.error(f"CRITICAL: route_after_core_interaction encountered an unhandled dialog_state '{current_dialog_state}' originating from CORE_INTERACTION_NODE. This suggests an issue in preprocess_and_enrich_input_node's state setting. Resetting to await user input.")
+    if not any(f"系统遇到意外的内部状态 ({current_dialog_state})" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        state.messages = state.messages + [AIMessage(content=f"机器人流程子图遇到未处理的核心状态 ({current_dialog_state})。请重试或联系支持。" )]
+    state.dialog_state = "awaiting_user_input"
+    state.user_input = None
+    state.is_error = True
+    state.error_message = f"机器人流程子图遇到未处理的核心状态 ({current_dialog_state})。"
+    state.clarification_question = None
+    return CORE_INTERACTION_NODE
 
-    # From initialize_state
-    if last_completed_node_desc == "Initialized":
-        logger.info("State initialized. Routing to preprocess_and_enrich_input.")
-        return "preprocess_and_enrich_input"
+def route_xml_generation_step(state: RobotFlowAgentState, next_step_if_ok: str, current_step_name_for_log: str) -> str:
+    logger.info(f"--- Routing after XML Gen Step: '{current_step_name_for_log}' (is_error: {state.is_error}) ---")
+    if state.is_error:
+        logger.warning(f"Error during '{current_step_name_for_log}'. Routing to core_interaction_node.")
+        # Ensure error message is in messages for the user
+        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = state.messages + [AIMessage(content=f"在 '{current_step_name_for_log}' 步骤中发生错误: {state.error_message}")]
+        state.dialog_state = 'generation_failed'
+        state.user_input = None # Clear to signify waiting for new input
+        return CORE_INTERACTION_NODE
+    else:
+        logger.info(f"'{current_step_name_for_log}' successful. Routing to {next_step_if_ok}.")
+        return next_step_if_ok
 
-    # From preprocess_and_enrich_input
-    if last_completed_node_desc == "Preprocessing and enriching input":
-        if dialog_state == "awaiting_robot_model":
-            logger.info("Dialog state is 'awaiting_robot_model'. Ending turn.")
-            return END
-        if dialog_state == "awaiting_enrichment_confirmation":
-            logger.info("Dialog state is 'awaiting_enrichment_confirmation'. Ending turn.")
-            return END
-        if dialog_state == "initial": # This means user provided feedback, and we want to re-enrich
-            logger.info("User provided feedback or model normalized, dialog_state is 'initial'. Re-routing to preprocess_and_enrich_input.")
-            return "preprocess_and_enrich_input" # Loop back to itself with updated state
-        if dialog_state == "processing_enriched_input":
-            logger.info("Input enriched and confirmed. Routing to understand_input.")
-            return "understand_input"
-        
-    # From understand_input
-    if last_completed_node_desc == "Understanding user input":
-        if dialog_state == "input_understood": # This is set by understand_input_node on success
-            logger.info("Input understood. Routing to Step 2 (generate_individual_xmls).")
-            return "generate_individual_xmls" # Route to Step 2
-    
-    # Routing from the actual generate_individual_xmls_node (from llm_nodes.py)
-    if last_completed_node_desc == "Generating individual XML files for each flow operation":
-        if dialog_state == "individual_xmls_generated":
-            logger.info("Individual XMLs generated (from llm_nodes). Routing to Step 3 (generate_relation_xml).")
-            return "generate_relation_xml"
-    
-    # Routing from generate_relation_xml_node (from llm_nodes.py)
-    if last_completed_node_desc == "Generating node relation XML file":
-        if dialog_state == "relation_xml_generated":
-            logger.info("Relation XML generated. Routing to Step 4 (merge_xmls).")
-            return "merge_xmls"
-    
-    # Routing for a potential future generate_relation_xml_node from llm_nodes.py
-    # if last_completed_node_desc == "Generating node relation XML file": # Future description from llm_nodes
-    #     if dialog_state == "relation_xml_generated": # State it might set
-    #         logger.info("Relation XML generated (from llm_nodes). Routing to Step 4 (generate_final_flow_xml).")
-    #         return "generate_final_flow_xml"
+def decide_after_final_xml_generation(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Deciding after Final XML Generation (is_error: {state.is_error}, final_xml_content exists: {bool(state.final_flow_xml_content)}) ---")
+    if not state.is_error and state.final_flow_xml_content:
+        logger.info("Final XML generated successfully. Routing to END.")
+        if not any("流程XML已成功生成" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+             state.messages = state.messages + [AIMessage(content=f"流程XML已成功生成。您可以在路径 {state.final_flow_xml_path or '未保存到文件'} 查看，或在聊天记录中查看内容.")]
+        state.dialog_state = 'final_xml_generated_success'
+        return END
+    else:
+        logger.warning("Final XML generation failed or produced no content. Routing back to core_interaction_node.")
+        if not state.is_error:
+            state.is_error = True
+            state.error_message = state.error_message or "最终XML内容为空或生成失败。"
+        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = state.messages + [AIMessage(content=f"生成最终XML时遇到问题: {state.error_message}。请修改您的指令。" )]
+        state.dialog_state = 'generation_failed'
+        state.user_input = None
+        return CORE_INTERACTION_NODE
 
-    if last_completed_node_desc == "Merging XMLs into final flow file": # Updated description
-        if dialog_state == "flow_completed":
-            logger.info("Final flow XML generated. Flow completed. Routing to END.")
-            return END
-            
-    logger.info(f"should_continue: No route for dialog '{dialog_state}', last_node '{last_completed_node_desc}'. Default END.")
-    return END
+# Simple error handler node logic (optional, could be merged into routing)
+# async def error_handler_node(state: RobotFlowAgentState) -> Dict[str, Any]:
+#     logger.error(f"--- Error Handler Node Entered. Error: {state.error_message} ---")
+#     # This node primarily logs. The routing logic will take it back to core_interaction_node.
+#     # It might add a generic error message to state.messages if not already specific enough.
+#     if state.error_message and not any("通用错误提示" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+#          state.messages = state.messages + [AIMessage(content=f"发生错误: {state.error_message}. 请尝试修改您的请求.")]
+#     state.dialog_state = "generation_failed"
+#     return state.dict(exclude_none=True)
 
-
+# create_robot_flow_graph function (original was L344, this is a rewrite for the new flow)
 def create_robot_flow_graph(
-    llm: BaseChatModel, 
-    # tools: Optional[List[BaseTool]] = None # Tools might be specific to nodes
-) -> Callable[[Dict[str, Any]], Any]:
-    """
-    Creates and compiles the Langgraph StatefulGraph for the robot flow generation agent.
-    """
+    llm: BaseChatModel,
+) -> Callable[[Dict[str, Any]], Any]: 
+    
     workflow = StateGraph(RobotFlowAgentState)
 
-    # Add Nodes
-    workflow.add_node("initialize_state", initialize_state_node)
-    
-    preprocess_node_with_llm = functools.partial(preprocess_and_enrich_input_node, llm=llm)
-    workflow.add_node("preprocess_and_enrich_input", preprocess_node_with_llm)
-    
-    understand_input_node_with_llm = functools.partial(understand_input_node, llm=llm)
-    workflow.add_node("understand_input", understand_input_node_with_llm)
-    
-    # Add new placeholder nodes (Step 2, 3, 4)
-    # Note: These placeholders currently don't use the LLM, but it's passed for future consistency.
-    generate_xmls_node_with_deps = functools.partial(generate_individual_xmls_node, llm=llm) # This will now use the imported one
-    workflow.add_node("generate_individual_xmls", generate_xmls_node_with_deps)
+    # Node Binding (using functools.partial for llm where needed)
+    workflow.add_node(INITIALIZE_STATE, initialize_state_node)
+    workflow.add_node(CORE_INTERACTION_NODE, functools.partial(preprocess_and_enrich_input_node, llm=llm))
+    workflow.add_node(UNDERSTAND_INPUT, functools.partial(understand_input_node, llm=llm))
+    workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
+    workflow.add_node(GENERATE_RELATION_XML, functools.partial(generate_relation_xml_node, llm=llm))
+    # generate_final_flow_xml_node is in this file, needs llm passed if its signature requires, currently Optional
+    workflow.add_node(GENERATE_FINAL_XML, functools.partial(generate_final_flow_xml_node, llm=llm))
+    # workflow.add_node(ERROR_HANDLER, error_handler_node) # Optional: if a separate error logging node is desired.
 
-    generate_relations_node_with_deps = functools.partial(generate_relation_xml_node, llm=llm) 
-    workflow.add_node("generate_relation_xml", generate_relations_node_with_deps)
+    # --- Define Graph Edges ---
+    workflow.set_entry_point(INITIALIZE_STATE)
+    workflow.add_edge(INITIALIZE_STATE, CORE_INTERACTION_NODE)
 
-    # Step 4 is conceptually "merge_xmls" which then produces the final flow. 
-    # We'll name the node "merge_xmls" but it will call the generate_final_flow_xml_node placeholder for now.
-    merge_xmls_node_placeholder = functools.partial(generate_final_flow_xml_node, llm=llm)
-    workflow.add_node("merge_xmls", merge_xmls_node_placeholder)
-    
-    workflow.add_node("error_handler", error_handling_node)
-
-    # Set Entry Point
-    workflow.set_entry_point("initialize_state")
-
-    # Add Edges and Conditional Edges
     workflow.add_conditional_edges(
-        "initialize_state",
-        should_continue,
+        CORE_INTERACTION_NODE,
+        route_after_core_interaction,
         {
-            "preprocess_and_enrich_input": "preprocess_and_enrich_input",
-            "error_handler": "error_handler", 
-            END: END
+            UNDERSTAND_INPUT: UNDERSTAND_INPUT,
+            CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, # For loops waiting for user reply to clarification_question
+            # ERROR_HANDLER: ERROR_HANDLER # If preprocess itself has an unrecoverable error
         }
     )
 
+    # XML Generation Chain with error handling routing back to Core Interaction
     workflow.add_conditional_edges(
-        "preprocess_and_enrich_input",
-        should_continue,
-        {
-            "understand_input": "understand_input",
-            "preprocess_and_enrich_input": "preprocess_and_enrich_input", # Added self-loop for re-enrichment
-            "error_handler": "error_handler",
-            END: END  # This occurs if awaiting_robot_model or awaiting_enrichment_confirmation
-        }
+        UNDERSTAND_INPUT, 
+        functools.partial(route_xml_generation_step, next_step_if_ok=GENERATE_INDIVIDUAL_XMLS, current_step_name_for_log="Understand Input"),
+        {CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, GENERATE_INDIVIDUAL_XMLS: GENERATE_INDIVIDUAL_XMLS}
+    )
+    workflow.add_conditional_edges(
+        GENERATE_INDIVIDUAL_XMLS, 
+        functools.partial(route_xml_generation_step, next_step_if_ok=GENERATE_RELATION_XML, current_step_name_for_log="Generate Individual XMLs"),
+        {CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, GENERATE_RELATION_XML: GENERATE_RELATION_XML}
+    )
+    workflow.add_conditional_edges(
+        GENERATE_RELATION_XML, 
+        functools.partial(route_xml_generation_step, next_step_if_ok=GENERATE_FINAL_XML, current_step_name_for_log="Generate Relation XML"),
+        {CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, GENERATE_FINAL_XML: GENERATE_FINAL_XML}
+    )
+    workflow.add_conditional_edges(
+        GENERATE_FINAL_XML,
+        decide_after_final_xml_generation, # This handles final success (END) or failure (CORE_INTERACTION_NODE)
+        {END: END, CORE_INTERACTION_NODE: CORE_INTERACTION_NODE}
     )
     
-    workflow.add_conditional_edges(
-        "understand_input",
-        should_continue, 
-        {
-            "generate_individual_xmls": "generate_individual_xmls", # Enabled route to Step 2
-            "error_handler": "error_handler",
-            END: END 
-        }
-    )
-    
-    # Add edges for Step 2 -> Step 3 -> Step 4 -> END
-    workflow.add_conditional_edges(
-        "generate_individual_xmls",
-        should_continue,
-        {
-            "generate_relation_xml": "generate_relation_xml",
-            "error_handler": "error_handler",
-            END: END # In case of unexpected state
-        }
-    )
+    # If using a separate ERROR_HANDLER node that gets routed to from various error points:
+    # workflow.add_edge(ERROR_HANDLER, CORE_INTERACTION_NODE) 
 
-    workflow.add_conditional_edges(
-        "generate_relation_xml",
-        should_continue,
-        {
-            "merge_xmls": "merge_xmls", # Route to the merge_xmls node
-            "error_handler": "error_handler",
-            END: END 
-        }
-    )
+    logger.info("Robot Flow Subgraph (循环版) compiled.")
+    return workflow.compile() # Returns a Runnable
 
-    # Edges from merge_xmls (which runs the generate_final_flow_xml_node placeholder)
-    workflow.add_conditional_edges(
-        "merge_xmls", # This is the new name for the node that was previously generate_final_flow_xml
-        should_continue,
-        {
-            END: END, 
-            "error_handler": "error_handler"
-        }
-    )
-    
-    workflow.add_edge("error_handler", END)
-
-    # Compile the graph
-    app = workflow.compile()
-    # Updated log message to reflect current state of nodes
-    logger.info("Robot flow generation graph compiled. generate_individual_xmls and generate_relation_xml are from llm_nodes. merge_xmls is local placeholder (generate_final_flow_xml_node).")
-    return app
+# Removed old should_continue and other unused/placeholder nodes/edges from original file if they existed.
+# Ensure all node functions (initialize_state_node, generate_final_flow_xml_node, etc.)
+# return state.dict(exclude_none=True) if RobotFlowAgentState is Pydantic model.
 
 # Example of how to run (for testing, typically in a main script)
 # if __name__ == '__main__':
