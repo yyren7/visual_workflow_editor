@@ -1,8 +1,8 @@
 P1:
   name: initial_point
   x_pos: 250.0
-  y_pos: 0.0
-  z_pos: 60.0
+  y_pos: 10.0
+  z_pos: 50.0
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: -32.643
@@ -41,17 +41,17 @@ P3:
   stime: 0.0
   tool: 0.0
 P4:
-  name: ''
+  name: null
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
-  vel: 0
-  acc: 0.0
-  dec: 0
-  dist: 0.0
+  vel: 100.0
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
   stime: 0.0
   tool: 0.0
 P5:

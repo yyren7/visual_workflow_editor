@@ -31,9 +31,9 @@
         "python.linting.flake8Enabled": true,
         "python.formatting.provider": "black",
         "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.fixAll.eslint": true
-        },
+        "editor.codeActionsOnSave": [
+          "source.fixAll.eslint"
+        ],
         "eslint.validate": [
           "javascript",
           "javascriptreact",

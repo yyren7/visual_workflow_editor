@@ -229,123 +229,91 @@ def _get_llm_prompt_for_teaching(user_input: str, points_data: Dict[str, Dict[st
             name = p_data.get("name")
             if name:
                 existing_points_summary.append(f"  - {p_key} (Logical Name: {name})")
-            elif p_data and any(v is not None for k, v in p_data.items() if k != 'name'): # Check if other fields are set
+            elif p_data and any(v is not None for k, v in p_data.items() if k != 'name'):
                  existing_points_summary.append(f"  - {p_key} (No logical name, but has data)")
     else:
         existing_points_summary.append("  (No teaching points defined yet)")
     existing_points_str = "\n".join(existing_points_summary)
 
-    # --- Try to get context from the last AI message from this node ---
-    previous_context_str = "No specific point context from the immediately preceding turn."
-    ctx_p_key_for_prompt_example = "[P_Key from context]"
+    # New System Prompt
+    new_system_prompt_template = f"""你是一个专业的机器人示教点管理助手。
+你的任务是分析【用户最新的输入】，并结合【最近的对话历史】来理解用户的意图，然后输出一个结构化的JSON对象。
 
-    if len(messages) >= 2:
-        last_ai_message = messages[-2]
-        logger.info(f"Attempting to extract context from messages[-2]: {last_ai_message}")
-        if isinstance(last_ai_message, AIMessage) and last_ai_message.additional_kwargs.get("node") == "teaching":
-            last_point_ctx = last_ai_message.additional_kwargs.get("last_successful_point_context")
-            logger.info(f"Extracted last_successful_point_context: {last_point_ctx}")
-            if last_point_ctx and isinstance(last_point_ctx, dict):
-                ctx_user_id = last_point_ctx.get("user_provided")
-                actual_ctx_p_key = last_point_ctx.get("resolved_p_key")
-                ctx_op = last_point_ctx.get("intent_of_last_op")
-                if actual_ctx_p_key:
-                    ctx_p_key_for_prompt_example = actual_ctx_p_key
-                    previous_context_str = (
-                        f"RECENTLY PROCESSED POINT: The point '{actual_ctx_p_key}' (user referred to it as '{ctx_user_id}') "
-                        f"was successfully processed with operation '{ctx_op}' in the previous turn. "
-                        f"This point ('{actual_ctx_p_key}') is the primary candidate if the user says \"it\", \"that one\", etc."
-                    )
-                    logger.info(f"Populated previous_context_str: {previous_context_str}")
-                else:
-                    logger.info("No actual_ctx_p_key found in last_point_ctx.")
-            else:
-                logger.info("last_point_ctx is None or not a dict.")
-        else:
-            logger.info("messages[-2] is not an AIMessage or not from teaching_node.")
-    else:
-        logger.info("Not enough messages to extract previous context (len(messages) < 2).")
-    # --- End context retrieval ---
+【重要：指代消解】
+当用户使用代词（如"它"、"他的"、"那个点"）或模糊引用时，你必须仔细查看【最近的对话历史】，特别是【上一个用户输入】和【上一个AI的回复】，来确定这些指代具体指向哪个已定义的示教点（P_Key，如P1，或逻辑名称，如"入口点"）。
+- 如果你能成功解析指代，请在输出的JSON中将 "resolved_target_p_key" 设置为解析到的 P_Key。
+- 如果指代不明或无法从上下文中解析，请将 "resolved_target_p_key" 设置为 null，并在 "resolution_details" 中详细说明原因。
 
-    system_prompt = f"""You are an expert assistant for managing robot teaching points.
-Your task is to understand the user's request and extract relevant information, including resolving point identifiers against a provided list and using conversational context.
-Teaching points are stored with primary keys like P1, P2, ..., P100. Each point can have a 'name' field (a user-defined logical name).
-
-SCHEMA:
-{schema_str}
-
-CURRENT DEFINED TEACHING POINTS:
+【现有示教点参考】：
 {existing_points_str}
 
-PREVIOUS TURN CONTEXT:
-{previous_context_str}
+【示教点参数规范】：
+{schema_str}
 
-Based on the user's input, the current defined points, and the previous turn context, determine the intent and extract parameters. Respond in JSON format.
+【你的JSON输出格式要求】：
+请严格按照以下字段输出JSON对象：
+- "intent": (字符串) 用户意图，例如："save_update_point", "query_point", "delete_point", "list_points", "rename_point", "clarify_ambiguous_instruction", "unsupported_operation"。
+- "user_provided_target_identifier": (字符串或null) 用户输入的原始点标识符（名称、P_Key或代词）。
+- "resolved_target_p_key": (字符串或null) 解析后的目标点P_Key。如果是新点或是无法解析的指代，则为null。
+- "resolution_details": (字符串) 你是如何解析（或未能解析）指代的思考过程和详细解释。
+- "parameters": (对象或null) 用户要求修改或保存的点参数，例如 {{"name": "新名称", "z_pos": 100.0}}。只包含用户明确提及的字段。
+- "target_identifiers_for_multi_point_ops": (字符串列表或null) 适用于多点操作（如批量删除）的目标标识符列表。
 
-General instructions for resolving identifiers:
-1. Extract the identifier(s) the user provided in their input.
-2. For each identifier (or for `it` if referential based on PREVIOUS TURN CONTEXT):
-    a. If the user input is a referential term (e.g., "it", "that", "that one") AND the PREVIOUS TURN CONTEXT section indicates a RECENTLY PROCESSED POINT (e.g., "...'P_N' is the primary candidate..."), then you MUST resolve the user's term to that specific P_N. Set resolution_details clearly, e.g., "Resolved from 'it' based on previous context: '{ctx_p_key_for_prompt_example}'."
-    b. If not a referential term resolved from context, and it's an exact P-number (e.g., "P1") listed in the defined points, that's your resolved key.
-    c. If not resolved by above, and it's a logical name, try to match it against the logical names in the defined points list (exact first, then close fuzzy).
-    d. If an identifier is not resolved by any of the above means:
-        - For 'save_update_point', this usually means a new point is being created with this identifier as its proposed name.
-        - For 'query_points' or 'delete_point', it means the point was not found.
+【处理流程】：
+1. 分析【用户最新的输入】。
+2. 参考【最近的对话历史】进行指代消解。
+3. 根据分析结果填充上述JSON字段。
 
-JSON Response Format:
+示例1：成功解析指代
+  对话历史:
+    用户: "查询P1"
+    AI: "P1点的数据是 X:10, Y:20, Z:30，名称是'初始点'。"
+  用户最新的输入: "把它Z轴改为50，并重命名为'新起点'"
+  你的JSON输出:
+  {{
+    "intent": "save_update_point",
+    "user_provided_target_identifier": "它",
+    "resolved_target_p_key": "P1",
+    "resolution_details": "代词"它"根据上一轮对话上下文明确指向P1。",
+    "parameters": {{ "z_pos": 50.0, "name": "新起点" }}
+  }}
 
-1.  Intent: "query_points"
-    - "identifiers_to_query": [
-        {{
-            "user_provided": "<original_id_as_stated_by_user_or_referential_like_it>",
-            "resolved_p_key": "<P_N_or_null>",
-            "resolution_details": "<E.g., 'Exact P-Key match.', 'Matched logical name: [name].', 'Resolved from \'it\' based on previous context targeting P2.', 'No match found.'>"
-        }},
-        ...
-      ]
-
-2.  Intent: "list_all_points" (No specific parameters needed beyond intent)
-
-3.  Intent: "save_update_point"
-    - "user_provided_target_identifier": "<original_id_for_target_as_stated_by_user_or_referential_like_it>"
-    - "resolved_target_p_key": "<P_N_or_null_if_new_or_unresolved>"
-    - "resolution_details": "<E.g., 'Exact P-Key match to [P_Key].', 'Resolved from \'it\' based on previous context targeting P1, will update P1.', 'Identifier does not match existing points, will create new point.'>"
-    - "parameters": {{ <dict of parameters to set/update. If creating a new point with a logical name, 'name' MUST be in parameters.> }}
-
-4.  Intent: "delete_point"
-    - "user_provided_identifier": "<original_id_for_delete_as_stated_by_user_or_referential_like_it>"
-    - "resolved_p_key_to_delete": "<P_N_or_null_if_unresolved>"
-    - "resolution_details": "<E.g., 'Exact P-Key match to [P_Key].', 'Resolved from \'it\' based on previous context targeting P5, will delete P5.', 'No match found.'>"
-
-5.  Intent: "unclear_intent"
-    - "reason": "<explanation>"
-
-Examples:
-(Assuming P1 (Name: home_A), P2 (Name: station_B) were defined. Previous turn context: User queried "P2" which resolved to P2 successfully.)
-
-User: "delete it"
-JSON: {{
-  "intent": "delete_point",
-  "user_provided_identifier": "it",
-  "resolved_p_key_to_delete": "P2",
-  "resolution_details": "Resolved from 'it' based on previous context targeting P2."
-}}
-
-User: "查询点位 P1 和 station_C"
-JSON: {{
-  "intent": "query_points",
-  "identifiers_to_query": [
-    {{"user_provided": "P1", "resolved_p_key": "P1", "resolution_details": "Exact P-Key match."}},
-    {{"user_provided": "station_C", "resolved_p_key": null, "resolution_details": "No match found for 'station_C'."}}
-  ]
-}}
-
-Now, analyze the following user input:
+示例2：指代不明
+  对话历史:
+    用户: "列出所有点"
+    AI: "当前有点位P1 (入口), P2 (出口)。"
+  用户最新的输入: "删除它"
+  你的JSON输出:
+  {{
+    "intent": "clarify_ambiguous_instruction", 
+    "user_provided_target_identifier": "它",
+    "resolved_target_p_key": null,
+    "resolution_details": "代词"它"指代不明，因为上一轮对话提及了多个点 (P1, P2)，无法确定用户意图删除哪一个。",
+    "parameters": null
+  }}
 """
-    return [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=user_input)
-    ]
+
+    # Construct the list of messages for the LLM
+    llm_messages: List[BaseMessage] = []
+    llm_messages.append(SystemMessage(content=new_system_prompt_template))
+
+    # Add recent history from 'messages'.
+    # 'messages' contains the history *before* the current user_input.
+    # We want to give the LLM the most relevant recent turns.
+    # Let's take up to the last 4 messages (2 user, 2 AI turns typically) as context.
+    # Adjust N as needed for optimal performance.
+    if messages:
+        history_to_include = messages[-4:] # Take last 4 messages
+        llm_messages.extend(history_to_include)
+        logger.debug(f"Including last {len(history_to_include)} messages from history for LLM context in teaching_node.")
+
+    llm_messages.append(HumanMessage(content=user_input))
+    
+    # Log the messages being sent to LLM for teaching intent analysis (optional, can be verbose)
+    # for i, msg in enumerate(llm_messages):
+    #     logger.debug(f"LLM Teaching Prompt - Message {i} ({type(msg).__name__}):\\n{msg.content[:500]}...") # Log first 500 chars
+
+    return llm_messages
 
 async def _invoke_llm_for_intent(llm: BaseChatModel, user_input: str, points_data: Dict[str, Dict[str, Any]], messages: List[BaseMessage]) -> Dict[str, Any]:
     prompt_messages = _get_llm_prompt_for_teaching(user_input, points_data, messages)
@@ -409,208 +377,421 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
     all_points_data = _load_teaching_points()
     response_parts = [] # For constructing response message
 
-    # Pass the full messages list to _invoke_llm_for_intent
+    # Pass the full messages list (which includes history *before* current user_input) 
+    # to _invoke_llm_for_intent. _get_llm_prompt_for_teaching (called by _invoke_llm_for_intent)
+    # will select the relevant recent history.
     llm_analysis = await _invoke_llm_for_intent(llm, user_input_content, all_points_data, messages)
     intent = llm_analysis.get("intent")
+    resolution_details = llm_analysis.get("resolution_details", "No details provided by LLM.") # Get this early for clarification messages
     logger.info(f"LLM intent: {intent}, analysis: {llm_analysis}")
 
-    # Initialize last_successful_point_context for this turn's AIMessage
     current_turn_aimessage_kwargs = {"node": "teaching"}
 
-    if intent == "query_points":
-        identifiers_to_query = llm_analysis.get("identifiers_to_query", [])
-        if not isinstance(identifiers_to_query, list) or not identifiers_to_query:
-            response_parts.append("LLM did not return any identifiers to query. Please specify point identifiers (P-number or logical name).")
-        else:
-            found_data_for_json = []
-            any_point_found = False
+    # 1. Handle explicit clarification request from LLM
+    if intent == "clarify_ambiguous_instruction":
+        logger.info(f"Teaching Node: LLM requested clarification. Details: {resolution_details}")
+        # Prefer resolution_details if it's well-formed for the user, otherwise a generic message.
+        clarification_message = resolution_details if resolution_details and len(resolution_details) > 10 else f"抱歉，我不太理解您的意思。{resolution_details} 您能说得更具体一些吗？"
+        return {"messages": [AIMessage(content=clarification_message, additional_kwargs=current_turn_aimessage_kwargs)]}
 
-            for item in identifiers_to_query:
-                user_provided = item.get("user_provided")
-                resolved_p_key = item.get("resolved_p_key")
-                details = item.get("resolution_details", "No details provided by LLM.")
+    # --- Main intent processing starts here ---
+    if intent == "query_points" or intent == "query_point":
+        # Unified query processing for both single and multi-point queries
+        queried_points_info = [] # Collects info about each queried point
+        final_query_results_data = []
+        any_point_found_successfully = False
 
-                if resolved_p_key and resolved_p_key in all_points_data:
-                    point_data = all_points_data[resolved_p_key].copy()
-                    point_data["_id"] = resolved_p_key # Ensure the P-key is part of the output data
-                    found_data_for_json.append(point_data)
-                    response_parts.append(f"Found point for '{user_provided}' (resolved to {resolved_p_key}): {details}")
-                    any_point_found = True
-                else:
-                    response_parts.append(f"Could not find point for '{user_provided}'. LLM resolution: {details}")
+        # Check for multi-point query first
+        multi_point_ids_llm = llm_analysis.get("target_identifiers_for_multi_point_ops")
+        user_provided_id = llm_analysis.get("user_provided_target_identifier")
+        resolved_p_key = llm_analysis.get("resolved_target_p_key")
+        
+        # Enhanced logic: If user_provided_id suggests "all named points" but no specific resolution
+        is_all_named_points_query = (
+            user_provided_id and 
+            any(phrase in user_provided_id.lower() for phrase in [
+                "all", "these points", "points all", "所有", "全部", 
+                "all which have names", "all that have names", "有名字的点"
+            ]) and
+            not resolved_p_key and 
+            not multi_point_ids_llm
+        )
+        
+        if is_all_named_points_query:
+            logger.info(f"Detected 'all named points' query from user_provided_id: '{user_provided_id}'")
+            # Convert to list all named points with coordinates
+            named_points = []
+            for p_key in sorted(all_points_data.keys(), 
+                              key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf')):
+                p_data = all_points_data[p_key]
+                if p_data.get('name'):  # Only points with logical names
+                    point_with_id = p_data.copy()
+                    point_with_id["_id"] = p_key
+                    named_points.append(point_with_id)
+                    final_query_results_data.append(point_with_id)
+                    any_point_found_successfully = True
             
-            if found_data_for_json:
-                response_parts.append(f"Queried point information:\\n{json.dumps(found_data_for_json, ensure_ascii=False, indent=2)}")
-                if len(found_data_for_json) == 1:
-                    the_found_point_data = found_data_for_json[0]
-                    resolved_p_key_for_context = the_found_point_data.get("_id")
-                    user_provided_for_context = None
+            if named_points:
+                response_parts.append(f"查询到 {len(named_points)} 个具有逻辑名称的示教点:")
+                for point in named_points:
+                    p_key = point["_id"]
+                    p_name = point.get("name", "")
+                    response_parts.append(f"  - {p_key}: {p_name}")
+                response_parts.append(f"\n详细坐标信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
+            else:
+                response_parts.append("没有找到具有逻辑名称的示教点。")
+                
+        elif isinstance(multi_point_ids_llm, list) and multi_point_ids_llm:
+            logger.info(f"Processing multi-point query for: {multi_point_ids_llm}")
+            found_points_list = _find_points_by_identifiers(all_points_data, multi_point_ids_llm)
+            for found_item in found_points_list:
+                uid = found_item["original_identifier"]
+                rpk = found_item["data"].get("_id") if found_item["data"] else None
+                r_details = f"Matched by: {found_item['matched_by']}" if rpk else "No match found."
+                queried_points_info.append(f"查询 '{uid}': {r_details}")
+                if rpk and rpk in all_points_data:
+                    final_query_results_data.append(all_points_data[rpk])
+                    any_point_found_successfully = True
+            
+            response_parts.extend(queried_points_info)
+            if final_query_results_data:
+                response_parts.append(f"查询到的点位信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
+                
+        elif user_provided_id: # Single point query
+            if resolved_p_key and resolved_p_key in all_points_data:
+                queried_points_info.append(f"查询 '{user_provided_id}' (解析为 {resolved_p_key}): {resolution_details}")
+                final_query_results_data.append(all_points_data[resolved_p_key])
+                any_point_found_successfully = True
+            else:
+                queried_points_info.append(f"查询 '{user_provided_id}' 失败: {resolution_details}")
+            
+            response_parts.extend(queried_points_info)
+            if final_query_results_data:
+                response_parts.append(f"查询到的点位信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
+        else:
+            response_parts.append("LLM 未能识别要查询的点。请明确指定。")
 
-                    if resolved_p_key_for_context:
-                        # Try to find the original user_provided term that led to this resolved_p_key
-                        for queried_item in identifiers_to_query: 
-                            if queried_item.get("resolved_p_key") == resolved_p_key_for_context:
-                                user_provided_for_context = queried_item.get("user_provided")
-                                break
-                        
-                        # Fallback if direct match not found but only one thing was initially queried by LLM
-                        if user_provided_for_context is None and len(identifiers_to_query) == 1:
-                            user_provided_for_context = identifiers_to_query[0].get("user_provided")
-                        
-                        # If still None, use a generic placeholder
-                        user_provided_for_context = user_provided_for_context if user_provided_for_context else resolved_p_key_for_context # Fallback to P_Key if user_provided is elusive
+        # Set context for successful single point queries
+        if len(final_query_results_data) == 1 and any_point_found_successfully:
+            single_result_data = final_query_results_data[0]
+            ctx_resolved_pk = single_result_data.get("_id")
+            user_provided_id_for_ctx = user_provided_id or ctx_resolved_pk
+            
+            if ctx_resolved_pk:
+                current_turn_aimessage_kwargs["last_successful_point_context"] = {
+                    "user_provided": user_provided_id_for_ctx,
+                    "resolved_p_key": ctx_resolved_pk,
+                    "intent_of_last_op": "query_points"
+                }
+                logger.info(f"Set last_successful_point_context for query: {current_turn_aimessage_kwargs['last_successful_point_context']}")
+        
+        if not response_parts:
+            response_parts.append("没有指定要查询的点，或无法识别您的查询请求。")
 
-                        current_turn_aimessage_kwargs["last_successful_point_context"] = {
-                            "user_provided": user_provided_for_context,
-                            "resolved_p_key": resolved_p_key_for_context,
-                            "intent_of_last_op": "query_points"
-                        }
-                        logger.info(f"Set last_successful_point_context for query: {current_turn_aimessage_kwargs['last_successful_point_context']}")
-                    else:
-                        logger.warning("Single found point in found_data_for_json is missing '_id'. Cannot set context.")
-            elif not any_point_found:
-                 response_parts.append("No matching points found based on the provided identifiers and LLM resolution.")
-
-    elif intent == "list_all_points":
+    elif intent == "list_all_points" or intent == "list_points":
         if all_points_data:
             summary_list = []
-            sorted_p_keys = sorted(all_points_data.keys(), key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf'))
-            for p_key in sorted_p_keys:
-                p_data = all_points_data[p_key]
-                p_name = p_data.get('name', '')
-                status = f"Logical Name: {p_name}" if p_name else "(Logical name not set)"
-                summary_list.append(f"  - {p_key}: {status}")
-            response_parts.append("Current status of all teaching point slots:\n" + "\n".join(summary_list))
-            defined_points_details = {k:v for k,v in sorted(all_points_data.items()) if v.get("name")}
-            if defined_points_details:
-                 response_parts.append(f"\n\nDetailed defined point information (P-key: data):\n{json.dumps(defined_points_details, ensure_ascii=False, indent=2)}")
+            detailed_points_to_show = []
+            sorted_p_keys = sorted(
+                all_points_data.keys(),
+                key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf')
+            )
+            
+            # Check if this is a conditional query (list_points) vs complete listing (list_all_points)
+            if intent == "list_points":
+                # Enhanced logic for conditional listing based on user criteria
+                user_request = llm_analysis.get("user_provided_target_identifier", "").lower()
+                resolution_details = llm_analysis.get("resolution_details", "")
+                
+                # Determine what kind of filtering the user wants
+                wants_named_points = any(keyword in user_request for keyword in ["name", "named", "有名字", "逻辑名称"])
+                wants_detailed_coords = any(keyword in resolution_details for keyword in ["坐标信息", "coordinate", "详细", "detail"])
+                
+                logger.info(f"Enhanced list_points processing: wants_named_points={wants_named_points}, wants_detailed_coords={wants_detailed_coords}")
+                
+                if wants_named_points or wants_detailed_coords:
+                    # Filter points that have logical names and collect their detailed data
+                    for p_key in sorted_p_keys:
+                        p_data = all_points_data[p_key]
+                        p_name = p_data.get('name', '')
+                        if p_name:  # Only include points with logical names
+                            status = f"逻辑名称: {p_name}"
+                            summary_list.append(f"  - {p_key}: {status}")
+                            # Add full point data for detailed display
+                            point_with_id = p_data.copy()
+                            point_with_id["_id"] = p_key
+                            detailed_points_to_show.append(point_with_id)
+                    
+                    if detailed_points_to_show:
+                        response_parts.append(f"找到 {len(detailed_points_to_show)} 个具有逻辑名称的示教点:")
+                        response_parts.append("\n".join(summary_list))
+                        if wants_detailed_coords:
+                            response_parts.append(f"\n详细坐标信息:\n{json.dumps(detailed_points_to_show, ensure_ascii=False, indent=2)}")
+                    else:
+                        response_parts.append("没有找到具有逻辑名称的示教点。")
+                else:
+                    # Fallback to basic listing for other types of list_points requests
+                    for p_key in sorted_p_keys:
+                        p_data = all_points_data[p_key]
+                        p_name = p_data.get('name', '')
+                        status = f"逻辑名称: {p_name}" if p_name else "(未设置逻辑名称)"
+                        summary_list.append(f"  - {p_key}: {status}")
+                        if p_name or any(val is not None and val != POINT_FIELD_SCHEMA[field]["default"] for field, val in p_data.items() if field != "name"):
+                            point_with_id = p_data.copy()
+                            point_with_id["_id"] = p_key
+                            detailed_points_to_show.append(point_with_id)
+                    
+                    response_parts.append("已定义的示教点:")
+                    response_parts.append("\n".join(summary_list))
+                    if detailed_points_to_show:
+                        response_parts.append(f"\n详细信息:\n{json.dumps(detailed_points_to_show, ensure_ascii=False, indent=2)}")
+            else:
+                # Original list_all_points logic
+                for p_key in sorted_p_keys:
+                    p_data = all_points_data[p_key]
+                    p_name = p_data.get('name', '')
+                    status = f"逻辑名称: {p_name}" if p_name else "(未设置逻辑名称)"
+                    summary_list.append(f"  - {p_key}: {status}")
+                
+                response_parts.append("当前所有示教点槽位状态:\n" + "\n".join(summary_list))
+                defined_points_details = {
+                    k:v for k,v in sorted(all_points_data.items())
+                    if v.get("name") or any(
+                        val is not None and val != POINT_FIELD_SCHEMA[field]["default"]
+                        for field, val in v.items() if field != "name"
+                    )
+                }
+                if defined_points_details:
+                    response_parts.append(
+                        f"\n\n已定义点位详细信息 (P-Key: 数据):\n{json.dumps(defined_points_details, ensure_ascii=False, indent=2)}"
+                    )
         else:
-            response_parts.append("There is currently no saved teaching point information.")
+            response_parts.append("当前没有保存任何示教点信息。")
 
     elif intent == "save_update_point":
         user_provided_target_id = llm_analysis.get("user_provided_target_identifier")
         resolved_target_p_key = llm_analysis.get("resolved_target_p_key")
-        resolution_details = llm_analysis.get("resolution_details", "No resolution details from LLM.")
         llm_params = llm_analysis.get("parameters")
 
         if not user_provided_target_id or not isinstance(llm_params, dict):
-            response_parts.append(f"Cannot save/update point: LLM failed to extract target identifier or valid parameters. Details: {resolution_details}")
+            response_parts.append(f"无法保存/更新点: LLM 未能提取目标标识符或有效参数。详情: {resolution_details}")
         else:
-            action = "save"
+            is_potentially_ambiguous_ref = user_provided_target_id.lower() in ["他", "它", "他的", "她的", "它的", "那个", "这个"] or (
+                "ambiguous" in resolution_details.lower() or
+                "no specific point context" in resolution_details.lower() or
+                "could not resolve" in resolution_details.lower() or
+                "unclear which point" in resolution_details.lower()
+            )
+            
+            if not resolved_target_p_key and is_potentially_ambiguous_ref:
+                clarification_message = (
+                    f"""您想对"{user_provided_target_id}"进行操作，但我未能明确它具体指向哪个已定义的点。
+{resolution_details} 请提供一个已存在的点位名称或编号，
+或者如果您想创建一个新点，请使用一个唯一的名称。"""
+                )
+                logger.info(
+                    f"Teaching Node: Ambiguous reference for '{user_provided_target_id}' in save_update_point intent. "
+                    f"Asking for clarification. LLM details: {resolution_details}"
+                )
+                return {"messages": [AIMessage(content=clarification_message, additional_kwargs=current_turn_aimessage_kwargs)]}
+            
+            action = "保存"
             existing_data_for_slot = None
             slot_to_use = resolved_target_p_key
 
             if resolved_target_p_key and resolved_target_p_key in all_points_data:
-                action = "update"
+                action = "更新"
                 existing_data_for_slot = all_points_data.get(resolved_target_p_key)
-                logger.info(f"{action.capitalize()} existing teaching point. User ID: '{user_provided_target_id}', Resolved P-Key: '{resolved_target_p_key}'. LLM Details: {resolution_details}. Params: {llm_params}")
-            elif resolved_target_p_key: # LLM resolved a P-Key but it's not in current data (e.g. P101)
-                logger.warning(f"LLM resolved to P-Key '{resolved_target_p_key}' for '{user_provided_target_id}', but this P-Key is not in current data. Treating as new if possible. Details: {resolution_details}")
-                # This might be a case where LLM hallucinates a P-key not in current data. We will try to find an empty slot or reject if name isn't in params.
-                slot_to_use = None # Force finding an empty slot if we proceed with save.
+                logger.info(
+                    f"{action}现有示教点。用户标识: '{user_provided_target_id}', "
+                    f"解析后P-Key: '{resolved_target_p_key}'. LLM详情: {resolution_details}. 参数: {llm_params}"
+                )
+            elif resolved_target_p_key:
+                logger.warning(
+                    f"LLM 解析到 P-Key '{resolved_target_p_key}' (用户标识: '{user_provided_target_id}'), "
+                    f"但此 P-Key 不在当前数据中。将尝试作为新点处理。详情: {resolution_details}"
+                )
+                slot_to_use = None
 
             final_logical_name = llm_params.get("name")
             if not final_logical_name:
-                if action == "update" and existing_data_for_slot and existing_data_for_slot.get("name"):
+                if action == "更新" and existing_data_for_slot and existing_data_for_slot.get("name"):
                     final_logical_name = existing_data_for_slot.get("name")
-                elif action == "save" and not re.fullmatch(r"P\\d+", user_provided_target_id, re.IGNORECASE): # If saving new and user_provided wasn't a P-key
+                elif action == "保存" and not re.fullmatch(r"P\d+", user_provided_target_id, re.IGNORECASE) and \
+                     not is_potentially_ambiguous_ref:
                     final_logical_name = user_provided_target_id
             
-            llm_params["name"] = final_logical_name # Ensure name is consistently set in params
+            if final_logical_name:
+                llm_params["name"] = final_logical_name
+            else:
+                # Condition: new point (slot_to_use is None or resolved_target_p_key was not in all_points_data)
+                # and no final_logical_name could be derived.
+                if not slot_to_use or (resolved_target_p_key and resolved_target_p_key not in all_points_data):
+                    response_parts.append(
+                        f"""无法{action}点: 新点需要逻辑名称，但未提供或无法从"{user_provided_target_id}"派生。
+{resolution_details}"""
+                    )
+                    slot_to_use = "NO_NAME_FOR_NEW_POINT"
 
             point_data_to_save = _apply_schema_and_defaults_to_llm_params(llm_params, existing_data_for_slot)
 
-            if not slot_to_use: # If slot_to_use is None (new point or LLM resolved P-key was invalid)
-                if not point_data_to_save.get("name"): # Cannot save a new point without a logical name
-                    response_parts.append(f"Cannot {action} point: New point requires a logical name, but none was provided or derived. User ID: '{user_provided_target_id}'. LLM Resolution: {resolution_details}")
-                    slot_to_use = None # Explicitly ensure it stays None
+            if not slot_to_use: # If slot_to_use is still None (it's a new point needing a slot)
+                if not point_data_to_save.get("name"):
+                    response_parts.append(
+                        f"无法保存点: 新点需要一个逻辑名称。用户标识: '{user_provided_target_id}'. "
+                        f"LLM解析: {resolution_details}"
+                    )
+                    slot_to_use = "NO_NAME_FOR_NEW_POINT"
                 else:
-                    # Check if a point with this logical name already exists in a DIFFERENT P_N slot
                     for p_key_iter, p_data_iter in all_points_data.items():
                         if p_data_iter.get("name") == point_data_to_save.get("name"):
-                            response_parts.append(f"Error: Logical name '{point_data_to_save.get('name')}' already exists at slot {p_key_iter}. Cannot create a new point with a duplicate logical name.")
-                            slot_to_use = "DUPLICATE_LOGICAL_NAME" # Special value to prevent saving
+                            response_parts.append(
+                                f"错误: 逻辑名称 '{point_data_to_save.get('name')}' 已存在于槽位 {p_key_iter}。"
+                                f"无法用重复的逻辑名称创建新点。"
+                            )
+                            slot_to_use = "DUPLICATE_LOGICAL_NAME"
                             break
-                    if slot_to_use != "DUPLICATE_LOGICAL_NAME":
+                    if slot_to_use not in ["DUPLICATE_LOGICAL_NAME", "NO_NAME_FOR_NEW_POINT"]:
                         slot_to_use = _find_empty_slot_key(all_points_data)
                         if slot_to_use:
-                            action = "save" # Explicitly set to save for new slot
-                            logger.info(f"Assigned empty slot '{slot_to_use}' for new teaching point '{final_logical_name}'. Original user ID: '{user_provided_target_id}'. LLM Resolution: {resolution_details}")
+                            action = "保存"
+                            logger.info(
+                                f"分配空槽位 '{slot_to_use}' 给新示教点 '{point_data_to_save.get('name')}'. "
+                                f"原用户标识: '{user_provided_target_id}'. LLM解析: {resolution_details}"
+                            )
                         else:
-                            response_parts.append(f"Cannot {action} teaching point '{final_logical_name}': All slots are full. User ID: '{user_provided_target_id}'.")
+                            response_parts.append(
+                                f"无法{action}示教点 '{point_data_to_save.get('name')}': 所有槽位已满。"
+                                f"用户标识: '{user_provided_target_id}'."
+                            )
+                            slot_to_use = "NO_EMPTY_SLOT"
             
-            if slot_to_use and slot_to_use != "DUPLICATE_LOGICAL_NAME":
+            if slot_to_use and slot_to_use not in ["DUPLICATE_LOGICAL_NAME", "NO_NAME_FOR_NEW_POINT", "NO_EMPTY_SLOT"]:
                 all_points_data[slot_to_use] = point_data_to_save
                 if _save_teaching_points(all_points_data):
-                    saved_name = point_data_to_save.get('name', slot_to_use)
-                    response_parts.append(f"Teaching point '{saved_name}' (slot: {slot_to_use}) successfully {action}d. User ID: '{user_provided_target_id}'. LLM Resolution: {resolution_details}")
+                    saved_name_display = point_data_to_save.get('name', slot_to_use)
+                    response_parts.append(
+                        f"示教点 '{saved_name_display}' (槽位: {slot_to_use}) 已成功{action}。"
+                        f"用户标识: '{user_provided_target_id}'. LLM解析: {resolution_details}"
+                    )
                     point_display_data = {slot_to_use: point_data_to_save}
-                    response_parts.append(f"Data for {slot_to_use}:\\n{json.dumps(point_display_data, ensure_ascii=False, indent=2)}")
+                    response_parts.append(
+                        f"{action}后 {slot_to_use} 的数据:\\n"
+                        f"{json.dumps(point_display_data, ensure_ascii=False, indent=2)}"
+                    )
                     current_turn_aimessage_kwargs["last_successful_point_context"] = {
-                        "user_provided": user_provided_target_id, # or saved_name if more appropriate as antecedent
+                        "user_provided": user_provided_target_id,
                         "resolved_p_key": slot_to_use,
                         "intent_of_last_op": "save_update_point"
                     }
                 else:
-                    response_parts.append(f"{action.capitalize()} teaching point '{point_data_to_save.get('name', slot_to_use)}' failed: Cannot write to file. User ID: '{user_provided_target_id}'.")
-            elif slot_to_use != "DUPLICATE_LOGICAL_NAME": # Only if not already handled by duplicate name message
-                 response_parts.append(f"Could not {action} point for '{user_provided_target_id}'. Check logs. LLM details: {resolution_details}")
+                    response_parts.append(
+                        f"{action.capitalize()}示教点 '{point_data_to_save.get('name', slot_to_use)}' 失败: "
+                        f"无法写入文件。用户标识: '{user_provided_target_id}'."
+                    )
+            elif not response_parts:
+                 response_parts.append(
+                     f"无法{action}点 '{user_provided_target_id}'。请检查日志。LLM详情: {resolution_details}"
+                 )
 
     elif intent == "delete_point":
-        user_provided_id = llm_analysis.get("user_provided_identifier")
-        resolved_p_key_to_delete = llm_analysis.get("resolved_p_key_to_delete")
-        resolution_details = llm_analysis.get("resolution_details", "No resolution details from LLM.")
+        user_provided_id = llm_analysis.get("user_provided_target_identifier")
+        resolved_p_key_to_delete = llm_analysis.get("resolved_target_p_key")
 
         if not user_provided_id:
-            response_parts.append("Please specify the point identifier to delete. LLM did not provide one.")
-        elif resolved_p_key_to_delete and resolved_p_key_to_delete in all_points_data:
-            deleted_point_name_display = all_points_data[resolved_p_key_to_delete].get("name", resolved_p_key_to_delete)
-            # Store details before deleting from all_points_data for context
-            context_user_provided_id = user_provided_id
-            context_resolved_p_key = resolved_p_key_to_delete
-            
-            empty_point_template = {key: spec["default"] for key, spec in POINT_FIELD_SCHEMA.items()}
-            empty_point_template["name"] = None 
-            all_points_data[resolved_p_key_to_delete] = empty_point_template
-            
-            if _save_teaching_points(all_points_data):
-                response_parts.append(f"Contents of teaching point '{deleted_point_name_display}' (slot {resolved_p_key_to_delete}) have been cleared. The slot is reusable. User ID: '{user_provided_id}'. LLM Resolution: {resolution_details}")
-                current_turn_aimessage_kwargs["last_successful_point_context"] = {
-                    "user_provided": context_user_provided_id,
-                    "resolved_p_key": context_resolved_p_key, # The key that was deleted
-                    "intent_of_last_op": "delete_point"
-                }
-            else:
-                response_parts.append(f"Clearing point '{deleted_point_name_display}' (from user ID '{user_provided_id}') failed: Cannot write to file. LLM Resolution: {resolution_details}")
+            response_parts.append("请指定要删除的点标识符。LLM未能提供。")
         else:
-            response_parts.append(f"Teaching point specified by user as '{user_provided_id}' not found for deletion. LLM Resolution: {resolution_details}")
+            is_potentially_ambiguous_ref_delete = user_provided_id.lower() in ["他", "它", "他的", "她的", "它的", "那个", "这个"] or (
+                "ambiguous" in resolution_details.lower() or
+                "no specific point context" in resolution_details.lower() or
+                "could not resolve" in resolution_details.lower() or
+                "unclear which point" in resolution_details.lower()
+            )
+            if not resolved_p_key_to_delete and is_potentially_ambiguous_ref_delete:
+                clarification_message = (
+                    f"""您想删除"{user_provided_id}"，但我未能明确它具体指向哪个已定义的点。
+{resolution_details} 请提供一个已存在的点位名称或编号。"""
+                )
+                logger.info(
+                    f"Teaching Node: Ambiguous reference for deletion '{user_provided_id}'. "
+                    f"Asking for clarification. LLM details: {resolution_details}"
+                )
+                return {"messages": [AIMessage(content=clarification_message, additional_kwargs=current_turn_aimessage_kwargs)]}
+            elif not resolved_p_key_to_delete:
+                response_parts.append(f"无法找到您指定要删除的点'{user_provided_id}'。LLM解析: {resolution_details}")
+            elif resolved_p_key_to_delete in all_points_data:
+                deleted_point_name_display = all_points_data[resolved_p_key_to_delete].get("name", resolved_p_key_to_delete)
+                context_user_provided_id = user_provided_id
+                context_resolved_p_key = resolved_p_key_to_delete
+                
+                empty_point_template = {key: spec["default"] for key, spec in POINT_FIELD_SCHEMA.items()}
+                empty_point_template["name"] = None 
+                all_points_data[resolved_p_key_to_delete] = empty_point_template
+                
+                if _save_teaching_points(all_points_data):
+                    response_parts.append(
+                        f"示教点 '{deleted_point_name_display}' (槽位 {resolved_p_key_to_delete}) 的内容已被清除。"
+                        f"该槽位可复用。用户标识: '{user_provided_id}'. LLM解析: {resolution_details}"
+                    )
+                    current_turn_aimessage_kwargs["last_successful_point_context"] = {
+                        "user_provided": context_user_provided_id,
+                        "resolved_p_key": context_resolved_p_key,
+                        "intent_of_last_op": "delete_point"
+                    }
+                else:
+                    response_parts.append(
+                        f"清除点 '{deleted_point_name_display}' (来自用户标识 '{user_provided_id}') 失败: "
+                        f"无法写入文件。LLM解析: {resolution_details}"
+                    )
+            else:
+                response_parts.append(
+                    f"点 {resolved_p_key_to_delete} (来自用户标识 '{user_provided_id}') 未找到，无法删除。"
+                    f"LLM解析: {resolution_details}"
+                )
     
-    elif intent == "unclear_intent":
-        reason = llm_analysis.get("reason", "Could not parse your request.")
-        response_parts.append(f"Cannot process your request: {reason}")
-        response_parts.append("Please refer to the following format:\n" +
-                           "  - Query: 'Query point P1', 'Query point home', 'Query all points'\n" +
-                           "  - Save/Modify: 'Save point home x_pos 10 ...', 'Modify P2 x_pos 15 name P2_new'\n" +
-                           "  - Delete: 'Delete point P1', 'Delete point home'")
-    else: 
-        response_parts.append("Cannot recognize your instruction. Please specify if you want to query, save/modify, or delete a teaching point.")
-        logger.warning(f"Fallback: LLM analysis was {llm_analysis}")
-        # Fallback help info
+    elif intent == "unclear_intent" or intent == "unsupported_operation":
+        reason = llm_analysis.get("reason", resolution_details if intent == "unclear_intent" else "操作不被支持或无法理解。")
+        response_parts.append(f"无法处理您的请求: {reason}")
+
+    if not response_parts:
+        response_parts.append(
+            f"我不太确定如何处理您的示教点请求。LLM分析意图为：{intent if intent else '未知'}。细节：{resolution_details}"
+        )
+        logger.warning(f"Fallback: Unhandled intent '{intent}' or empty response_parts. LLM analysis was {llm_analysis}")
         if all_points_data:
-            saved_points_summary = [] ; empty_slot_keys = []
-            sorted_p_keys = sorted(all_points_data.keys(), key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf'))
+            saved_points_summary = []
+            empty_slot_keys = []
+            sorted_p_keys = sorted(
+                all_points_data.keys(),
+                key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf')
+            )
             for p_key in sorted_p_keys:
                 p_data = all_points_data[p_key]
                 p_name = p_data.get('name', '')
-                if p_name: saved_points_summary.append(f"  - {p_key} (Logical Name: {p_name})")
-                else: empty_slot_keys.append(p_key)
+                # Check if point has a name OR any field is different from its default
+                if p_name or any(
+                    val is not None and val != POINT_FIELD_SCHEMA[field]["default"]
+                    for field, val in p_data.items() if field != "name"
+                ):
+                    saved_points_summary.append(f"  - {p_key} (逻辑名称: {p_name if p_name else '(未设置)'})")
+                else:
+                    empty_slot_keys.append(p_key)
+            
+            # Add P_N keys that are not in all_points_data at all
             for i in range(1, 101): 
                 k = f"P{i}"
-                if k not in all_points_data and k not in empty_slot_keys: empty_slot_keys.append(k)
+                if k not in all_points_data and k not in empty_slot_keys:
+                    empty_slot_keys.append(k)
+            
             empty_slot_keys.sort(key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf'))
-            response_parts.append("\nDefined/Used Point Slots:\n" + ('\n'.join(saved_points_summary) if saved_points_summary else "  (None)"))
-            response_parts.append("Available Empty Slots (Example):\n  " + (', '.join(empty_slot_keys[:10]) + ("..." if len(empty_slot_keys) > 10 else "") if empty_slot_keys else " (None)"))
-        else: response_parts.append("\nCurrently, there is no teaching point file in the workspace or the file is empty.")
+            
+            response_parts.append("\n已定义/使用中的点槽位:\n" + ("\n".join(saved_points_summary) if saved_points_summary else "  (无)"))
+            response_parts.append(
+                "可用的空槽位 (示例):\\n  " + 
+                (', '.join(empty_slot_keys[:10]) + ("..." if len(empty_slot_keys) > 10 else "") if empty_slot_keys else " (无)")
+            )
+        else:
+            response_parts.append("\n当前，工作区中没有示教点文件或文件为空。")
 
     final_response_content = "\n".join(filter(None, response_parts))
     logger.info(f"Teaching Node: Final response: '{final_response_content[:300]}...' AIMessage kwargs: {current_turn_aimessage_kwargs}")

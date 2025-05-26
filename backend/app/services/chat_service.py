@@ -47,6 +47,7 @@ class ChatService:
     def _get_active_llm(self) -> BaseChatModel:
         """根据环境变量选择并实例化活动 LLM。"""
         provider = os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower()
+        provider = "gemini"
         logger.info(f"Active LLM provider selected: {provider}")
 
         if provider == "gemini":
@@ -56,7 +57,7 @@ class ChatService:
                 raise ValueError("GOOGLE_API_KEY environment variable not set.")
             try:
                 # convert_system_message_to_human=True 对于某些Agent类型使用Gemini时是必要的
-                llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=api_key, convert_system_message_to_human=True)
+                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20", google_api_key=api_key, convert_system_message_to_human=True)
                 logger.info("Instantiated ChatGoogleGenerativeAI (Gemini).")
                 return llm
             except Exception as e:

@@ -37,6 +37,7 @@ class AgentState(TypedDict):
         # 新增字段，用于存储 task_router 节点的决策结果
         task_route_decision: Optional[RouteDecision]
         user_request_for_router: Optional[str] # 新增：专门用于task_router处理的用户请求内容
+        rephrase_count: int # 新增：用于跟踪 rephrase 的次数，默认为0
     """
     input: str
     messages: Annotated[List[BaseMessage], operator.add]
@@ -45,3 +46,4 @@ class AgentState(TypedDict):
     input_processed: bool
     task_route_decision: Optional[RouteDecision]
     user_request_for_router: Optional[str] # 新增 
+    rephrase_count: int # 新增字段 
