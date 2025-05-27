@@ -3,6 +3,7 @@ from typing import Literal
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
+from langchain.globals import get_llm_cache, set_llm_cache
 # from pydantic import BaseModel, Field # RouteDecision is now imported
 
 from ..agent_state import AgentState
@@ -27,13 +28,6 @@ PLANNER_EXAMPLES = """
     - "如果传感器检测到物体，就执行操作A，否则执行操作B。"
     - "先依次运动到点1、点2、点3，然后重复抓取和放置的动作5次。"
     - "点2、3、1の順で運動させ、その後、点4、5、6の順で循環運動させてください。" (按点2、3、1的顺序运动，然后按点4、5、6的顺序循环运动)"""
-
-TEACHING_PRIORITY_RULES = """**重要：会话模式持续性与 teaching 节点优先**
-- 如果用户之前进行过示教点操作（即对话历史中最近的 AI 或用户消息与示教点相关），并且当前输入涉及点位、坐标、位置等相关内容，应优先路由到 teaching 节点。
-- **主要规则：当用户输入包含明确的"示教点相关名词"（如 "坐标/coordinate(s)", "点/point(s)", "位置/position", "示教点/teaching point", 或其具体名称如 "P1", "入口点"）与明确的"数据管理操作性动词"（如 "查询/query/get/tell me/what is/what are", "列出/list/show", "获取/fetch", "保存/save/record", "修改/update/change", "删除/delete/remove", "创建/create", "复制/copy", "拷贝/duplicate", "克隆/clone", "粘贴为新/paste as new"）的组合时，通常应将 `next_node` 判断为 `teaching`。这类操作被视为对示教点数据的直接管理。**此规则的优先级较高，但如果用户明确表示要用这些点来构建一个序列化的机器人动作流程（例如，包含"移动到"、"然后"、"执行"、"如果...就..."等流程性词汇），则应判断为 `planner`。**
-- 特别注意代词引用："它们(them)"、"这些点(these points)"、"那些(those)"等，如果上下文中刚讨论过示教点，并且当前操作是针对这些点的数据管理（如查询、修改），则后续操作倾向于 `teaching`。
-- 涉及坐标、位置、点位查询的模糊表达，请仔细判断上下文。如果用户似乎在管理数据，则倾向 `teaching`；如果似乎在构建流程，则倾向 `planner`。
-- 即使用户使用了"粘贴(paste)"这样的词，如果上下文明确指向的是用一个已有点位的数据创建一个新的点位，也应归类为 `teaching`。例如："复制点A，然后粘贴为一个新点B"。"""
 
 TEACHING_DESCRIPTION = """用户主要目的是查询、保存、修改、删除单个或多个已命名的坐标点 (示教点) 的信息，或者通过复制现有示教点信息来创建新的示教点。这包括坐标数据的查看和管理，而不是用它们来构建复杂流程。"""
 TEACHING_EXAMPLES = """
@@ -156,7 +150,6 @@ TASK_ROUTER_PROMPT = ChatPromptTemplate.from_messages(
 
 2.  **示教点操作 (teaching)**:
 {TEACHING_DESCRIPTION}
-{TEACHING_PRIORITY_RULES}
 {TEACHING_EXAMPLES}
 
 3.  **其他助手 (other_assistant)**:
@@ -215,17 +208,21 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
     
     structured_llm = llm.with_structured_output(RouteDecision)
     
+    original_cache = get_llm_cache()
+    set_llm_cache(None) # 暂时禁用缓存
     try:
-        history_messages = list(state.get("messages", []))
-        messages_for_llm_invocation = history_messages + prompt_messages
+        # 仅使用格式化后的提示（包含最新输入），不直接传递额外历史记录给路由决策LLM
+        messages_for_llm_invocation = prompt_messages
         
         route_decision: RouteDecision = await structured_llm.ainvoke(messages_for_llm_invocation)
         logger.info(f"Task Router: LLM decision: Intent='{route_decision.user_intent}', Next Node='{route_decision.next_node}'")
         
-        return {"task_route_decision": route_decision, "user_request_for_router": None} # 仅在LLM调用成功时清除 user_request_for_router
+        set_llm_cache(original_cache) # 恢复原始缓存设置
+        return {"task_route_decision": route_decision, "user_request_for_router": None} 
 
     except Exception as e:
         logger.error(f"Task Router: Error invoking LLM or processing decision: {e}")
+        set_llm_cache(original_cache) # 出错时也要恢复原始缓存设置
         return {
             "task_route_decision": RouteDecision(user_intent="LLM调用或决策处理失败", next_node="rephrase"),
             "user_request_for_router": None

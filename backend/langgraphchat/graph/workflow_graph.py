@@ -47,6 +47,7 @@ from .nodes.task_router import task_router_node # Import RouteDecision if needed
 from .nodes.teaching_node import teaching_node
 from .nodes.other_assistant_node import other_assistant_node # Changed from ask_info_node
 from .nodes.robot_flow_invoker_node import robot_flow_invoker_node # 新的调用节点
+from .nodes.rephrase_prompt_node import rephrase_prompt_node # <-- 新增导入
 from .conditions import should_continue, route_after_task_router # RouteDecision is now in types
 from .graph_types import RouteDecision # Import RouteDecision from types
 
@@ -212,6 +213,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     bound_task_router_node = partial(task_router_node, llm=llm) 
     bound_teaching_node = partial(teaching_node, llm=llm)
     bound_other_assistant_node = partial(other_assistant_node) # Changed from bound_ask_info_node and ask_info_node
+    bound_rephrase_prompt_node = partial(rephrase_prompt_node) # <-- 新增绑定
 
 
     # 添加节点到图
@@ -222,6 +224,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # workflow.add_node("tools", bound_tool_node) # 旧的 tools 节点，如果不再需要，也可以移除
     workflow.add_node("teaching", bound_teaching_node) 
     workflow.add_node("other_assistant", bound_other_assistant_node) # Changed from ask_info
+    workflow.add_node("rephrase_prompt", bound_rephrase_prompt_node) # <-- 添加新节点
 
 
     # 设置图的入口点
@@ -238,7 +241,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
             "planner": "robot_flow_planner", # 路由到新的机器人流程规划器
             "teaching": "teaching",
             "other_assistant": "other_assistant", # Changed from ask_info
-            "task_router": "task_router", 
+            "rephrase": "rephrase_prompt",  # <-- 修改 rephrase 路由
             END: END 
         }
     )
@@ -268,6 +271,9 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
             END: END # Normal completion routes to END
         }
     )
+
+    # 新增：从 rephrase_prompt 节点出来的边，固定到 END
+    workflow.add_edge("rephrase_prompt", END)
 
     # 旧的 planner 和 tools 相关的边被移除
     # workflow.add_conditional_edges(
