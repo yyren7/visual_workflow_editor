@@ -26,8 +26,8 @@ def route_after_task_router(state: AgentState) -> str:
         return "planner"
     elif next_node == "teaching":
         return "teaching"
-    elif next_node == "ask_info":
-        return "ask_info"
+    elif next_node == "other_assistant":
+        return "other_assistant"
     elif next_node == "rephrase":
         logger.info("route_after_task_router: LLM requested rephrase. Routing back to task_router.")
         return "task_router"

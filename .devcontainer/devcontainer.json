@@ -50,7 +50,8 @@
             "username": "yyren",
             "password": "yyren123123"
           }
-        ]
+        ],
+        "http.proxyStrictSSL": false
       }
     }
   },

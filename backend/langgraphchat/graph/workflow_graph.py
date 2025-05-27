@@ -45,7 +45,7 @@ from .nodes.input_handler import input_handler_node # Will be used
 from .nodes.tool_executor import tool_node # Already configured to be used
 from .nodes.task_router import task_router_node # Import RouteDecision if needed here, or ensure AgentState handles it
 from .nodes.teaching_node import teaching_node
-from .nodes.ask_info_node import ask_info_node
+from .nodes.other_assistant_node import other_assistant_node # Changed from ask_info_node
 from .nodes.robot_flow_invoker_node import robot_flow_invoker_node # 新的调用节点
 from .conditions import should_continue, route_after_task_router # RouteDecision is now in types
 from .graph_types import RouteDecision # Import RouteDecision from types
@@ -185,7 +185,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 新节点绑定
     bound_task_router_node = partial(task_router_node, llm=llm) 
     bound_teaching_node = partial(teaching_node, llm=llm)
-    bound_ask_info_node = partial(ask_info_node) 
+    bound_other_assistant_node = partial(other_assistant_node) # Changed from bound_ask_info_node and ask_info_node
 
 
     # 添加节点到图
@@ -195,7 +195,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # workflow.add_node("planner", bound_planner_node) # 旧的 planner 节点，移除
     # workflow.add_node("tools", bound_tool_node) # 旧的 tools 节点，如果不再需要，也可以移除
     workflow.add_node("teaching", bound_teaching_node) 
-    workflow.add_node("ask_info", bound_ask_info_node) 
+    workflow.add_node("other_assistant", bound_other_assistant_node) # Changed from ask_info
 
 
     # 设置图的入口点
@@ -211,7 +211,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         {
             "planner": "robot_flow_planner", # 路由到新的机器人流程规划器
             "teaching": "teaching",
-            "ask_info": "ask_info",
+            "other_assistant": "other_assistant", # Changed from ask_info
             "task_router": "task_router", 
             END: END 
         }
@@ -233,8 +233,8 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
 
     # teaching 节点执行完毕后也导向 END
     workflow.add_edge("teaching", END)
-    # ask_info 节点执行完毕后导向 END
-    workflow.add_edge("ask_info", END)
+    # other_assistant 节点执行完毕后导向 END (Changed from ask_info)
+    workflow.add_edge("other_assistant", END)
 
     # 编译图
     logger.info("Workflow graph compilation complete.")

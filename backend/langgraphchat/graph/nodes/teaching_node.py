@@ -235,65 +235,75 @@ def _get_llm_prompt_for_teaching(user_input: str, points_data: Dict[str, Dict[st
         existing_points_summary.append("  (No teaching points defined yet)")
     existing_points_str = "\n".join(existing_points_summary)
 
-    # New System Prompt
-    new_system_prompt_template = f"""你是一个专业的机器人示教点管理助手。
+    VALID_INTENTS_LIST = [
+        "save_update_point", 
+        "delete_point", 
+        "query_points",
+        "list_points", 
+        "clarify_ambiguous_instruction"
+    ]
+    valid_intents_str = ", ".join([f'"{i}"' for i in VALID_INTENTS_LIST])
+
+    new_system_prompt_template = f"""
+你是一个专业的机器人示教点管理助手。
 你的任务是分析【用户最新的输入】，并结合【最近的对话历史】来理解用户的意图，然后输出一个结构化的JSON对象。
 
-【重要：指代消解】
-当用户使用代词（如"它"、"他的"、"那个点"）或模糊引用时，你必须仔细查看【最近的对话历史】，特别是【上一个用户输入】和【上一个AI的回复】，来确定这些指代具体指向哪个已定义的示教点（P_Key，如P1，或逻辑名称，如"入口点"）。
-- 如果你能成功解析指代，请在输出的JSON中将 "resolved_target_p_key" 设置为解析到的 P_Key。
-- 如果指代不明或无法从上下文中解析，请将 "resolved_target_p_key" 设置为 null，并在 "resolution_details" 中详细说明原因。
+【JSON输出结构】
+你必须输出一个符合以下描述的JSON对象：
+- intent: (String) 用户的核心意图。必须从以下列表中选择：[{valid_intents_str}]。
+- user_provided_target_identifier: (String or Null) 用户输入中明确指定的点标识符（P_Key或逻辑名称）。如果用户没有明确指定，则为null。
+- resolved_target_p_key: (String or Null) 如果 `user_provided_target_identifier` 或上下文能够明确解析到某个已定义点的P_Key，则为该P_Key (例如 "P1")；否则为null。
+- resolution_details: (String) 详细说明你是如何解析（或为何无法解析） `user_provided_target_identifier` 到 `resolved_target_p_key` 的。包括你考虑的上下文信息。
+- parameters: (Object or Null) 包含操作所需的参数。
+    - 对于 `save_update_point`，它可能包含 `name`, `x_pos` 等字段及其值。
+    - 对于 `query_points`，可以包含 `query_scope` 字段，其值可以是:
+        - "specific": 当用户查询一个或多个【特定】点时。此时应填充 `user_provided_target_identifier` (单个) 或 `target_identifiers_for_multi_point_ops` (多个)。
+        - "all_named": 当用户想要查询【所有带逻辑名称的示教点】时。
+        - "all": 当用户想要查询【所有已定义的示教点】时（无论有无名称）。
+    - 对于查询或删除，如果无其他参数（例如 `query_scope`），则为null。
+- target_identifiers_for_multi_point_ops: (List of Strings or Null) 仅用于 `query_points` (当 `query_scope` 为 "specific" 且需要查询多个特定点时) 或 `delete_point` (当需要批量删除时)，用户指定的多个点标识符列表。
+
+【意图选择规则与指导】
+1.  **`save_update_point`**: 
+    *   当用户想要【创建】一个新的示教点并赋予其属性（名称、坐标等）。
+    *   当用户想要【修改/更新】一个【已存在】的示教点的任何属性（包括其逻辑名称、坐标、工具号等）。
+    *   **重命名点**: 如果用户想【重命名】一个点，这属于更新点的逻辑名称，因此应使用此意图。在 `parameters` 中提供新的 `name`。
+2.  **`delete_point`**: 当用户想要【删除】一个或多个已定义的示教点。
+3.  **`query_points`**: 
+    *   当用户想要查询【单个特定点】的详细信息。在 `parameters` 中设置 `query_scope: "specific"`，并将该点的标识符放入 `user_provided_target_identifier`。
+    *   当用户想要查询【多个特定点】的详细信息。在 `parameters` 中设置 `query_scope: "specific"`，并将这些点的标识符列表放入 `target_identifiers_for_multi_point_ops`。
+    *   当用户想要查询【所有示教点】。在 `parameters` 中设置 `query_scope: "all"`。
+    *   当用户想要查询【所有带逻辑名称的示教点】。在 `parameters` 中设置 `query_scope: "all_named"`。
+4.  **`list_points`**: 
+    *   当用户想要【列出多个特定点】的概览信息（通常是P_Key和逻辑名称）。
+    *   当用户想要列出【所有点】或【所有有名称的点】等概览信息。此时 `target_identifiers_for_multi_point_ops` 可能为null或包含特殊指令（如 "all_named"），由后续代码处理。LLM需要根据用户描述在 `parameters` 中设置 `list_options` (例如: "all", "named_only", "details_for_identified")。
+5.  **`clarify_ambiguous_instruction`**: 
+    *   当用户的指令不明确，或者你无法安全地解析出用户想要操作的目标点时（特别是对于 `save_update_point` 更新操作 和 `delete_point` 操作）。
+    *   当你根据【重要：指代消解与歧义处理】部分的规则判断需要澄清时。
+
+【重要：指代消解与歧义处理】
+当用户使用代词（如\"它\"、\"他的\"、\"那个点\"）或模糊引用时，你必须仔细查看【最近的对话历史】，特别是【上一个用户输入】和【上一个AI的回复】，来确定这些指代具体指向哪个已定义的示教点（P_Key，如P1，或逻辑名称，如\"入口点\"）。
+- 如果你能成功解析指代，请在输出的JSON中将 \"resolved_target_p_key\" 设置为解析到的 P_Key。
+- 如果指代不明或无法从上下文中解析，请将 \"resolved_target_p_key\" 设置为 null，并在 \"resolution_details\" 中详细说明原因。
+- **关键：如果 `user_provided_target_identifier` 是一个代词 (例如, '他', '它', '那个') 或任何根据你的 `resolution_details` 分析表明具有高度歧义的标识符，并且你因此将 `resolved_target_p_key` 设置为 `null`，那么你必须将 `intent` 设置为 `clarify_ambiguous_instruction`。**
+- **对于意图 `save_update_point` (当更新一个现有机器人示教点时，而不是用新名称创建一个新点) 和 `delete_point`，必须在JSON中提供一个非空的 `resolved_target_p_key`。如果你无法为这些意图解析出目标点，则必须将 `intent` 设置为 `clarify_ambiguous_instruction`。**
 
 【现有示教点参考】：
 {existing_points_str}
 
-【示教点参数规范】：
+【点位数据字段定义 (用于 `parameters` 对象)】:
 {schema_str}
 
-【你的JSON输出格式要求】：
-请严格按照以下字段输出JSON对象：
-- "intent": (字符串) 用户意图，例如："save_update_point", "query_point", "delete_point", "list_points", "rename_point", "clarify_ambiguous_instruction", "unsupported_operation"。
-- "user_provided_target_identifier": (字符串或null) 用户输入的原始点标识符（名称、P_Key或代词）。
-- "resolved_target_p_key": (字符串或null) 解析后的目标点P_Key。如果是新点或是无法解析的指代，则为null。
-- "resolution_details": (字符串) 你是如何解析（或未能解析）指代的思考过程和详细解释。
-- "parameters": (对象或null) 用户要求修改或保存的点参数，例如 {{"name": "新名称", "z_pos": 100.0}}。只包含用户明确提及的字段。
-- "target_identifiers_for_multi_point_ops": (字符串列表或null) 适用于多点操作（如批量删除）的目标标识符列表。
+【最近的对话历史】:
+AI: {ai_response_history_str}
+User: {user_request_history_str}
 
-【处理流程】：
-1. 分析【用户最新的输入】。
-2. 参考【最近的对话历史】进行指代消解。
-3. 根据分析结果填充上述JSON字段。
+【用户最新的输入】:
+{user_input}
 
-示例1：成功解析指代
-  对话历史:
-    用户: "查询P1"
-    AI: "P1点的数据是 X:10, Y:20, Z:30，名称是'初始点'。"
-  用户最新的输入: "把它Z轴改为50，并重命名为'新起点'"
-  你的JSON输出:
-  {{
-    "intent": "save_update_point",
-    "user_provided_target_identifier": "它",
-    "resolved_target_p_key": "P1",
-    "resolution_details": "代词"它"根据上一轮对话上下文明确指向P1。",
-    "parameters": {{ "z_pos": 50.0, "name": "新起点" }}
-  }}
-
-示例2：指代不明
-  对话历史:
-    用户: "列出所有点"
-    AI: "当前有点位P1 (入口), P2 (出口)。"
-  用户最新的输入: "删除它"
-  你的JSON输出:
-  {{
-    "intent": "clarify_ambiguous_instruction", 
-    "user_provided_target_identifier": "它",
-    "resolved_target_p_key": null,
-    "resolution_details": "代词"它"指代不明，因为上一轮对话提及了多个点 (P1, P2)，无法确定用户意图删除哪一个。",
-    "parameters": null
-  }}
+请根据以上所有信息，生成你的JSON输出。
 """
-
-    # Construct the list of messages for the LLM
+    # Prepare message history for the prompt
     llm_messages: List[BaseMessage] = []
     llm_messages.append(SystemMessage(content=new_system_prompt_template))
 
@@ -395,98 +405,136 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
         return {"messages": [AIMessage(content=clarification_message, additional_kwargs=current_turn_aimessage_kwargs)]}
 
     # --- Main intent processing starts here ---
-    if intent == "query_points" or intent == "query_point":
-        # Unified query processing for both single and multi-point queries
-        queried_points_info = [] # Collects info about each queried point
+    if intent == "query_points":
+        queried_points_info = []
         final_query_results_data = []
         any_point_found_successfully = False
 
-        # Check for multi-point query first
+        llm_params = llm_analysis.get("parameters", {})
+        query_scope = llm_params.get("query_scope")
+
         multi_point_ids_llm = llm_analysis.get("target_identifiers_for_multi_point_ops")
         user_provided_id = llm_analysis.get("user_provided_target_identifier")
         resolved_p_key = llm_analysis.get("resolved_target_p_key")
         
-        # Enhanced logic: If user_provided_id suggests "all named points" but no specific resolution
-        is_all_named_points_query = (
-            user_provided_id and 
-            any(phrase in user_provided_id.lower() for phrase in [
-                "all", "these points", "points all", "所有", "全部", 
-                "all which have names", "all that have names", "有名字的点"
-            ]) and
-            not resolved_p_key and 
-            not multi_point_ids_llm
-        )
-        
-        if is_all_named_points_query:
-            logger.info(f"Detected 'all named points' query from user_provided_id: '{user_provided_id}'")
-            # Convert to list all named points with coordinates
+        if query_scope == "all_named":
+            logger.info(f"Processing 'query_points' with scope 'all_named'.")
             named_points = []
-            for p_key in sorted(all_points_data.keys(), 
+            for p_key_iter in sorted(all_points_data.keys(), 
                               key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf')):
-                p_data = all_points_data[p_key]
-                if p_data.get('name'):  # Only points with logical names
-                    point_with_id = p_data.copy()
-                    point_with_id["_id"] = p_key
+                p_data_item = all_points_data[p_key_iter]
+                if p_data_item.get('name'):
+                    point_with_id = p_data_item.copy()
+                    point_with_id["_id"] = p_key_iter
                     named_points.append(point_with_id)
-                    final_query_results_data.append(point_with_id)
-                    any_point_found_successfully = True
+                    any_point_found_successfully = True # Found at least one named point
             
             if named_points:
                 response_parts.append(f"查询到 {len(named_points)} 个具有逻辑名称的示教点:")
                 for point in named_points:
-                    p_key = point["_id"]
-                    p_name = point.get("name", "")
-                    response_parts.append(f"  - {p_key}: {p_name}")
-                response_parts.append(f"\n详细坐标信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
+                    p_key_display = point["_id"]
+                    p_name_display = point.get("name", "")
+                    response_parts.append(f"  - {p_key_display}: {p_name_display}")
+                # For context setting, even if we only show summary, all results are relevant
+                final_query_results_data.extend(named_points)
+                # Optionally, to show full details in message:
+                # response_parts.append(f"\n详细坐标信息:\n{json.dumps(named_points, ensure_ascii=False, indent=2)}")
             else:
                 response_parts.append("没有找到具有逻辑名称的示教点。")
-                
-        elif isinstance(multi_point_ids_llm, list) and multi_point_ids_llm:
-            logger.info(f"Processing multi-point query for: {multi_point_ids_llm}")
-            found_points_list = _find_points_by_identifiers(all_points_data, multi_point_ids_llm)
-            for found_item in found_points_list:
-                uid = found_item["original_identifier"]
-                rpk = found_item["data"].get("_id") if found_item["data"] else None
-                r_details = f"Matched by: {found_item['matched_by']}" if rpk else "No match found."
-                queried_points_info.append(f"查询 '{uid}': {r_details}")
-                if rpk and rpk in all_points_data:
-                    final_query_results_data.append(all_points_data[rpk])
-                    any_point_found_successfully = True
-            
-            response_parts.extend(queried_points_info)
-            if final_query_results_data:
-                response_parts.append(f"查询到的点位信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
-                
-        elif user_provided_id: # Single point query
-            if resolved_p_key and resolved_p_key in all_points_data:
-                queried_points_info.append(f"查询 '{user_provided_id}' (解析为 {resolved_p_key}): {resolution_details}")
-                final_query_results_data.append(all_points_data[resolved_p_key])
-                any_point_found_successfully = True
-            else:
-                queried_points_info.append(f"查询 '{user_provided_id}' 失败: {resolution_details}")
-            
-            response_parts.extend(queried_points_info)
-            if final_query_results_data:
-                response_parts.append(f"查询到的点位信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
-        else:
-            response_parts.append("LLM 未能识别要查询的点。请明确指定。")
 
-        # Set context for successful single point queries
-        if len(final_query_results_data) == 1 and any_point_found_successfully:
+        elif query_scope == "all":
+            logger.info(f"Processing 'query_points' with scope 'all'.")
+            all_defined_points_list = []
+            for p_key_iter in sorted(all_points_data.keys(), 
+                              key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf')):
+                p_data_item = all_points_data[p_key_iter]
+                is_defined = False
+                if p_data_item.get("name"):
+                    is_defined = True
+                else:
+                    for field, spec in POINT_FIELD_SCHEMA.items():
+                        if field != "name" and p_data_item.get(field) != spec["default"] and p_data_item.get(field) is not None:
+                            is_defined = True
+                            break
+                if is_defined:
+                    point_with_id = p_data_item.copy()
+                    point_with_id["_id"] = p_key_iter
+                    all_defined_points_list.append(point_with_id)
+                    any_point_found_successfully = True # Found at least one defined point
+            
+            if all_defined_points_list:
+                response_parts.append(f"查询到 {len(all_defined_points_list)} 个已定义的示教点:")
+                for point in all_defined_points_list:
+                    p_key_display = point["_id"]
+                    p_name_display = point.get("name", "(无逻辑名称)")
+                    response_parts.append(f"  - {p_key_display}: {p_name_display}")
+                final_query_results_data.extend(all_defined_points_list)
+                # Optionally, to show full details in message:
+                # response_parts.append(f"\n详细坐标信息:\n{json.dumps(all_defined_points_list, ensure_ascii=False, indent=2)}")
+            else:
+                response_parts.append("没有找到任何已定义的示教点。")
+
+        elif query_scope == "specific" or (not query_scope and (isinstance(multi_point_ids_llm, list) and multi_point_ids_llm or user_provided_id)):
+            logger.info(f"Processing 'query_points' with scope 'specific' (or inferred). IDs: {multi_point_ids_llm or user_provided_id}")
+            
+            identifiers_to_query = []
+            if isinstance(multi_point_ids_llm, list) and multi_point_ids_llm:
+                identifiers_to_query.extend(multi_point_ids_llm)
+            elif user_provided_id:
+                identifiers_to_query.append(user_provided_id)
+
+            if identifiers_to_query:
+                found_points_results_list = _find_points_by_identifiers(all_points_data, identifiers_to_query)
+                for found_item in found_points_results_list:
+                    uid = found_item["original_identifier"]
+                    point_data = found_item["data"]
+                    if point_data:
+                        rpk_display = point_data.get("_id") # _find_points_by_identifiers adds _id
+                        match_type_display = found_item.get("matched_by")
+                        matched_id_display = found_item.get("matched_identifier")
+                        queried_points_info.append(f"查询 '{uid}': 成功。匹配方式: {match_type_display} ('{matched_id_display}'), 槽位: {rpk_display}")
+                        final_query_results_data.append(point_data) 
+                        any_point_found_successfully = True
+                    else:
+                        queried_points_info.append(f"查询 '{uid}': 失败。未找到匹配的点。 (解析详情: {found_item.get('resolution_details', resolution_details)})")
+            else: # Should not be reached if the outer condition was met, but as a safe guard.
+                response_parts.append("LLM 未能识别要查询的点。请明确指定。")
+
+            if queried_points_info:
+                response_parts.extend(queried_points_info)
+            
+            if final_query_results_data: # If any points were actually found and data retrieved
+                response_parts.append(f"\n查询到的点位详细信息:\n{json.dumps(final_query_results_data, ensure_ascii=False, indent=2)}")
+            elif not response_parts: # Only if no specific messages were added above.
+                response_parts.append("未能根据提供的标识符找到任何点。")
+
+        else: 
+            response_parts.append(f"收到查询请求，但查询范围 '{query_scope}' 不明确或参数不足。请指明是查询特定点、全部命名点还是所有点。")
+            logger.warning(f"Teaching Node: query_points intent with unclear scope: '{query_scope}' or missing identifiers. LLM analysis: {llm_analysis}")
+
+        # Set context for successful single point queries or if only one point resulted from any query type
+        if any_point_found_successfully and len(final_query_results_data) == 1:
             single_result_data = final_query_results_data[0]
-            ctx_resolved_pk = single_result_data.get("_id")
-            user_provided_id_for_ctx = user_provided_id or ctx_resolved_pk
+            ctx_resolved_pk = single_result_data.get("_id") # Should exist
+            
+            user_provided_id_for_ctx = user_provided_id # Default from single specific query
+            if query_scope == "specific" and isinstance(multi_point_ids_llm, list) and len(multi_point_ids_llm) == 1:
+                user_provided_id_for_ctx = multi_point_ids_llm[0]
+            elif query_scope in ["all_named", "all"] or (isinstance(multi_point_ids_llm, list) and len(multi_point_ids_llm) > 1):
+                # If it was a list all/all_named that resulted in one, or a multi-specific that resolved to one
+                # Use its P_key or name for the context's "user_provided" field as a best guess.
+                user_provided_id_for_ctx = single_result_data.get("name") or ctx_resolved_pk
             
             if ctx_resolved_pk:
                 current_turn_aimessage_kwargs["last_successful_point_context"] = {
-                    "user_provided": user_provided_id_for_ctx,
+                    "user_provided": user_provided_id_for_ctx or ctx_resolved_pk, 
                     "resolved_p_key": ctx_resolved_pk,
                     "intent_of_last_op": "query_points"
                 }
                 logger.info(f"Set last_successful_point_context for query: {current_turn_aimessage_kwargs['last_successful_point_context']}")
-        
+
         if not response_parts:
-            response_parts.append("没有指定要查询的点，或无法识别您的查询请求。")
+            response_parts.append("没有查询到任何结果或无法识别您的查询请求。")
 
     elif intent == "list_all_points" or intent == "list_points":
         if all_points_data:
@@ -497,56 +545,40 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
                 key=lambda x: int(x[1:]) if x.startswith('P') and x[1:].isdigit() else float('inf')
             )
             
-            # Check if this is a conditional query (list_points) vs complete listing (list_all_points)
-            if intent == "list_points":
-                # Enhanced logic for conditional listing based on user criteria
-                user_request = llm_analysis.get("user_provided_target_identifier", "").lower()
-                resolution_details = llm_analysis.get("resolution_details", "")
-                
-                # Determine what kind of filtering the user wants
-                wants_named_points = any(keyword in user_request for keyword in ["name", "named", "有名字", "逻辑名称"])
-                wants_detailed_coords = any(keyword in resolution_details for keyword in ["坐标信息", "coordinate", "详细", "detail"])
-                
-                logger.info(f"Enhanced list_points processing: wants_named_points={wants_named_points}, wants_detailed_coords={wants_detailed_coords}")
-                
-                if wants_named_points or wants_detailed_coords:
-                    # Filter points that have logical names and collect their detailed data
-                    for p_key in sorted_p_keys:
-                        p_data = all_points_data[p_key]
-                        p_name = p_data.get('name', '')
-                        if p_name:  # Only include points with logical names
-                            status = f"逻辑名称: {p_name}"
-                            summary_list.append(f"  - {p_key}: {status}")
-                            # Add full point data for detailed display
-                            point_with_id = p_data.copy()
-                            point_with_id["_id"] = p_key
-                            detailed_points_to_show.append(point_with_id)
+            list_options = llm_analysis.get("list_options", {})
+            wants_named_only = list_options.get("only_named", False)
+            wants_detailed_coords = list_options.get("include_details", False)
+            is_conditional_list = wants_named_only or wants_detailed_coords
+
+            logger.info(f"List points processing: wants_named_only={wants_named_only}, wants_detailed_coords={wants_detailed_coords}, intent={intent}")
+
+            if intent == "list_points" and is_conditional_list:
+                for p_key in sorted_p_keys:
+                    p_data = all_points_data[p_key]
+                    p_name = p_data.get('name', '')
+                    if wants_named_only and not p_name:
+                        continue # Skip if only named points are requested and this one has no name
                     
-                    if detailed_points_to_show:
-                        response_parts.append(f"找到 {len(detailed_points_to_show)} 个具有逻辑名称的示教点:")
-                        response_parts.append("\n".join(summary_list))
-                        if wants_detailed_coords:
-                            response_parts.append(f"\n详细坐标信息:\n{json.dumps(detailed_points_to_show, ensure_ascii=False, indent=2)}")
-                    else:
-                        response_parts.append("没有找到具有逻辑名称的示教点。")
-                else:
-                    # Fallback to basic listing for other types of list_points requests
-                    for p_key in sorted_p_keys:
-                        p_data = all_points_data[p_key]
-                        p_name = p_data.get('name', '')
-                        status = f"逻辑名称: {p_name}" if p_name else "(未设置逻辑名称)"
-                        summary_list.append(f"  - {p_key}: {status}")
-                        if p_name or any(val is not None and val != POINT_FIELD_SCHEMA[field]["default"] for field, val in p_data.items() if field != "name"):
-                            point_with_id = p_data.copy()
-                            point_with_id["_id"] = p_key
-                            detailed_points_to_show.append(point_with_id)
-                    
-                    response_parts.append("已定义的示教点:")
+                    status = f"逻辑名称: {p_name}" if p_name else "(未设置逻辑名称)"
+                    summary_list.append(f"  - {p_key}: {status}")
+                    point_with_id = p_data.copy()
+                    point_with_id["_id"] = p_key
+                    detailed_points_to_show.append(point_with_id)
+                
+                if detailed_points_to_show:
+                    count_display = f"{len(detailed_points_to_show)} 个"
+                    if wants_named_only:
+                        count_display += "具有逻辑名称的"
+                    response_parts.append(f"找到 {count_display}示教点:")
                     response_parts.append("\n".join(summary_list))
-                    if detailed_points_to_show:
+                    if wants_detailed_coords:
                         response_parts.append(f"\n详细信息:\n{json.dumps(detailed_points_to_show, ensure_ascii=False, indent=2)}")
-            else:
-                # Original list_all_points logic
+                else:
+                    if wants_named_only:
+                        response_parts.append("没有找到具有逻辑名称的示教点。")
+                    else:
+                        response_parts.append("没有找到符合条件的示教点。") # Generic if not specifically only_named
+            else: # Handles list_all_points or list_points without specific conditions from LLM
                 for p_key in sorted_p_keys:
                     p_data = all_points_data[p_key]
                     p_name = p_data.get('name', '')
@@ -561,7 +593,7 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
                         for field, val in v.items() if field != "name"
                     )
                 }
-                if defined_points_details:
+            if defined_points_details:
                     response_parts.append(
                         f"\n\n已定义点位详细信息 (P-Key: 数据):\n{json.dumps(defined_points_details, ensure_ascii=False, indent=2)}"
                     )
@@ -576,25 +608,6 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
         if not user_provided_target_id or not isinstance(llm_params, dict):
             response_parts.append(f"无法保存/更新点: LLM 未能提取目标标识符或有效参数。详情: {resolution_details}")
         else:
-            is_potentially_ambiguous_ref = user_provided_target_id.lower() in ["他", "它", "他的", "她的", "它的", "那个", "这个"] or (
-                "ambiguous" in resolution_details.lower() or
-                "no specific point context" in resolution_details.lower() or
-                "could not resolve" in resolution_details.lower() or
-                "unclear which point" in resolution_details.lower()
-            )
-            
-            if not resolved_target_p_key and is_potentially_ambiguous_ref:
-                clarification_message = (
-                    f"""您想对"{user_provided_target_id}"进行操作，但我未能明确它具体指向哪个已定义的点。
-{resolution_details} 请提供一个已存在的点位名称或编号，
-或者如果您想创建一个新点，请使用一个唯一的名称。"""
-                )
-                logger.info(
-                    f"Teaching Node: Ambiguous reference for '{user_provided_target_id}' in save_update_point intent. "
-                    f"Asking for clarification. LLM details: {resolution_details}"
-                )
-                return {"messages": [AIMessage(content=clarification_message, additional_kwargs=current_turn_aimessage_kwargs)]}
-            
             action = "保存"
             existing_data_for_slot = None
             slot_to_use = resolved_target_p_key
@@ -617,56 +630,57 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
             if not final_logical_name:
                 if action == "更新" and existing_data_for_slot and existing_data_for_slot.get("name"):
                     final_logical_name = existing_data_for_slot.get("name")
-                elif action == "保存" and not re.fullmatch(r"P\d+", user_provided_target_id, re.IGNORECASE) and \
-                     not is_potentially_ambiguous_ref:
+                elif action == "保存" and not re.fullmatch(r"P\d+", user_provided_target_id, re.IGNORECASE):
                     final_logical_name = user_provided_target_id
             
             if final_logical_name:
                 llm_params["name"] = final_logical_name
-            else:
-                # Condition: new point (slot_to_use is None or resolved_target_p_key was not in all_points_data)
-                # and no final_logical_name could be derived.
-                if not slot_to_use or (resolved_target_p_key and resolved_target_p_key not in all_points_data):
-                    response_parts.append(
-                        f"""无法{action}点: 新点需要逻辑名称，但未提供或无法从"{user_provided_target_id}"派生。
-{resolution_details}"""
-                    )
-                    slot_to_use = "NO_NAME_FOR_NEW_POINT"
 
             point_data_to_save = _apply_schema_and_defaults_to_llm_params(llm_params, existing_data_for_slot)
 
-            if not slot_to_use: # If slot_to_use is still None (it's a new point needing a slot)
+            if not slot_to_use: # Implies a new point or a point LLM resolved to a P_Key not in data
                 if not point_data_to_save.get("name"):
                     response_parts.append(
-                        f"无法保存点: 新点需要一个逻辑名称。用户标识: '{user_provided_target_id}'. "
-                        f"LLM解析: {resolution_details}"
+                        f"无法保存新点: 新点需要一个逻辑名称，但未提供或无法从用户输入 '{user_provided_target_id}' 派生。"
+                        f"LLM解析详情: {resolution_details}"
                     )
-                    slot_to_use = "NO_NAME_FOR_NEW_POINT"
+                    slot_to_use = "NO_NAME_FOR_NEW_POINT" # Error condition
                 else:
+                    # Check for duplicate logical name IF IT'S A NEW POINT
                     for p_key_iter, p_data_iter in all_points_data.items():
                         if p_data_iter.get("name") == point_data_to_save.get("name"):
                             response_parts.append(
                                 f"错误: 逻辑名称 '{point_data_to_save.get('name')}' 已存在于槽位 {p_key_iter}。"
                                 f"无法用重复的逻辑名称创建新点。"
                             )
-                            slot_to_use = "DUPLICATE_LOGICAL_NAME"
+                            slot_to_use = "DUPLICATE_LOGICAL_NAME" # Error condition
                             break
                     if slot_to_use not in ["DUPLICATE_LOGICAL_NAME", "NO_NAME_FOR_NEW_POINT"]:
                         slot_to_use = _find_empty_slot_key(all_points_data)
                         if slot_to_use:
-                            action = "保存"
+                            action = "保存" # Confirm action is save for new slot
                             logger.info(
-                                f"分配空槽位 '{slot_to_use}' 给新示教点 '{point_data_to_save.get('name')}'. "
+                                f"分配空槽位 '{slot_to_use}' 给新示教点 '{point_data_to_save.get('name')}'."
                                 f"原用户标识: '{user_provided_target_id}'. LLM解析: {resolution_details}"
                             )
                         else:
                             response_parts.append(
-                                f"无法{action}示教点 '{point_data_to_save.get('name')}': 所有槽位已满。"
+                                f"无法保存新示教点 '{point_data_to_save.get('name')}'."
                                 f"用户标识: '{user_provided_target_id}'."
                             )
-                            slot_to_use = "NO_EMPTY_SLOT"
+                            slot_to_use = "NO_EMPTY_SLOT" # Error condition
+            elif llm_params.get("name") is not None: # Existing point, but name is being changed in parameters
+                new_name_to_check = llm_params.get("name")
+                for p_key_iter, p_data_iter in all_points_data.items():
+                    if p_key_iter != slot_to_use and p_data_iter.get("name") == new_name_to_check:
+                        response_parts.append(
+                            f"错误: 逻辑名称 '{new_name_to_check}' 已被槽位 {p_key_iter} 使用."
+                            f"无法更新点 '{slot_to_use}' 为已存在的逻辑名称."
+                        )
+                        slot_to_use = "DUPLICATE_LOGICAL_NAME_ON_UPDATE" # Error condition
+                        break
             
-            if slot_to_use and slot_to_use not in ["DUPLICATE_LOGICAL_NAME", "NO_NAME_FOR_NEW_POINT", "NO_EMPTY_SLOT"]:
+            if slot_to_use and slot_to_use not in ["DUPLICATE_LOGICAL_NAME", "NO_NAME_FOR_NEW_POINT", "NO_EMPTY_SLOT", "DUPLICATE_LOGICAL_NAME_ON_UPDATE"]:
                 all_points_data[slot_to_use] = point_data_to_save
                 if _save_teaching_points(all_points_data):
                     saved_name_display = point_data_to_save.get('name', slot_to_use)
@@ -698,56 +712,40 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
         user_provided_id = llm_analysis.get("user_provided_target_identifier")
         resolved_p_key_to_delete = llm_analysis.get("resolved_target_p_key")
 
-        if not user_provided_id:
-            response_parts.append("请指定要删除的点标识符。LLM未能提供。")
-        else:
-            is_potentially_ambiguous_ref_delete = user_provided_id.lower() in ["他", "它", "他的", "她的", "它的", "那个", "这个"] or (
-                "ambiguous" in resolution_details.lower() or
-                "no specific point context" in resolution_details.lower() or
-                "could not resolve" in resolution_details.lower() or
-                "unclear which point" in resolution_details.lower()
-            )
-            if not resolved_p_key_to_delete and is_potentially_ambiguous_ref_delete:
-                clarification_message = (
-                    f"""您想删除"{user_provided_id}"，但我未能明确它具体指向哪个已定义的点。
-{resolution_details} 请提供一个已存在的点位名称或编号。"""
+        if not resolved_p_key_to_delete: # If LLM still didn't resolve, despite prompt instructions.
+            # This implies LLM provided `delete_point` intent but no `resolved_target_p_key`.
+            # And it was not caught as `clarify_ambiguous_instruction`.
+            logger.warning(f"delete_point intent without resolved_target_p_key. User ID: '{user_provided_id}', Details: {resolution_details}")
+            response_parts.append(f"无法找到您指定要删除的点 '{user_provided_id}'。请确保点存在或您的表述清晰。LLM解析: {resolution_details}")
+        elif resolved_p_key_to_delete in all_points_data:
+            deleted_point_name_display = all_points_data[resolved_p_key_to_delete].get("name", resolved_p_key_to_delete)
+            context_user_provided_id = user_provided_id
+            context_resolved_p_key = resolved_p_key_to_delete
+            
+            empty_point_template = {key: spec["default"] for key, spec in POINT_FIELD_SCHEMA.items()}
+            empty_point_template["name"] = None 
+            all_points_data[resolved_p_key_to_delete] = empty_point_template
+            
+            if _save_teaching_points(all_points_data):
+                response_parts.append(
+                    f"示教点 '{deleted_point_name_display}' (槽位 {resolved_p_key_to_delete}) 的内容已被清除。"
+                    f"该槽位可复用。用户标识: '{user_provided_id}'. LLM解析: {resolution_details}"
                 )
-                logger.info(
-                    f"Teaching Node: Ambiguous reference for deletion '{user_provided_id}'. "
-                    f"Asking for clarification. LLM details: {resolution_details}"
-                )
-                return {"messages": [AIMessage(content=clarification_message, additional_kwargs=current_turn_aimessage_kwargs)]}
-            elif not resolved_p_key_to_delete:
-                response_parts.append(f"无法找到您指定要删除的点'{user_provided_id}'。LLM解析: {resolution_details}")
-            elif resolved_p_key_to_delete in all_points_data:
-                deleted_point_name_display = all_points_data[resolved_p_key_to_delete].get("name", resolved_p_key_to_delete)
-                context_user_provided_id = user_provided_id
-                context_resolved_p_key = resolved_p_key_to_delete
-                
-                empty_point_template = {key: spec["default"] for key, spec in POINT_FIELD_SCHEMA.items()}
-                empty_point_template["name"] = None 
-                all_points_data[resolved_p_key_to_delete] = empty_point_template
-                
-                if _save_teaching_points(all_points_data):
-                    response_parts.append(
-                        f"示教点 '{deleted_point_name_display}' (槽位 {resolved_p_key_to_delete}) 的内容已被清除。"
-                        f"该槽位可复用。用户标识: '{user_provided_id}'. LLM解析: {resolution_details}"
-                    )
-                    current_turn_aimessage_kwargs["last_successful_point_context"] = {
-                        "user_provided": context_user_provided_id,
-                        "resolved_p_key": context_resolved_p_key,
-                        "intent_of_last_op": "delete_point"
-                    }
-                else:
-                    response_parts.append(
-                        f"清除点 '{deleted_point_name_display}' (来自用户标识 '{user_provided_id}') 失败: "
-                        f"无法写入文件。LLM解析: {resolution_details}"
-                    )
+                current_turn_aimessage_kwargs["last_successful_point_context"] = {
+                    "user_provided": context_user_provided_id,
+                    "resolved_p_key": context_resolved_p_key,
+                    "intent_of_last_op": "delete_point"
+                }
             else:
                 response_parts.append(
-                    f"点 {resolved_p_key_to_delete} (来自用户标识 '{user_provided_id}') 未找到，无法删除。"
-                    f"LLM解析: {resolution_details}"
+                    f"清除点 '{deleted_point_name_display}' (来自用户标识 '{user_provided_id}') 失败: "
+                    f"无法写入文件。LLM解析: {resolution_details}"
                 )
+        else:
+            response_parts.append(
+                f"点 {resolved_p_key_to_delete} (来自用户标识 '{user_provided_id}') 未找到，无法删除。"
+                f"LLM解析: {resolution_details}"
+            )
     
     elif intent == "unclear_intent" or intent == "unsupported_operation":
         reason = llm_analysis.get("reason", resolution_details if intent == "unclear_intent" else "操作不被支持或无法理解。")

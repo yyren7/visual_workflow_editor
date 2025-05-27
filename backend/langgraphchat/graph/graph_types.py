@@ -5,6 +5,6 @@ from pydantic import BaseModel, Field
 class RouteDecision(BaseModel):
     """用户的意图以及相应的路由目标。"""
     user_intent: str = Field(description="对用户输入的简要总结或分类。")
-    next_node: Literal["planner", "teaching", "ask_info", "rephrase", "end_session"] = Field(
+    next_node: Literal["planner", "teaching", "other_assistant", "rephrase", "end_session"] = Field(
         description="根据用户意图，决定下一个要跳转到的节点。"
     ) 

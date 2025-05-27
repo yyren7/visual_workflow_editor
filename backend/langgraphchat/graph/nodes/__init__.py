@@ -5,7 +5,7 @@ from .input_handler import input_handler_node
 from .tool_executor import tool_node
 from .task_router import task_router_node
 from .teaching_node import teaching_node
-from .ask_info_node import ask_info_node
+from .other_assistant_node import other_assistant_node
 
 __all__ = [
     "input_handler_node",
@@ -13,5 +13,5 @@ __all__ = [
     "tool_node",
     "task_router_node",
     "teaching_node",
-    "ask_info_node",
+    "other_assistant_node",
 ] 

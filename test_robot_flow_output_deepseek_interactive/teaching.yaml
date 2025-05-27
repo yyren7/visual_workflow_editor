@@ -41,13 +41,13 @@ P3:
   stime: 0.0
   tool: 0.0
 P4:
-  name: null
-  x_pos: 0.0
-  y_pos: 0.0
-  z_pos: 0.0
+  name: dcopy
+  x_pos: 247.146
+  y_pos: 10.0
+  z_pos: 42.285
   rx_pos: 0.0
   ry_pos: 0.0
-  rz_pos: 0.0
+  rz_pos: -32.643
   vel: 100.0
   acc: 100.0
   dec: 100.0
