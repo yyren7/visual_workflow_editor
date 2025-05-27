@@ -553,7 +553,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         logger.info(f"Step 1 Succeeded. Parsed robot from text: {validated_data.robot}, Operations: {len(validated_data.operations)}")
         
         state.parsed_flow_steps = [op.dict(exclude_none=True) for op in validated_data.operations]
-        state.parsed_robot_name = validated_data.robot
+        state.parsed_robot_name = validated_data.robot 
         state.error_message = None
         state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Robot: {validated_data.robot}. Steps: {len(validated_data.operations)}")]
         state.subgraph_completion_status = None
