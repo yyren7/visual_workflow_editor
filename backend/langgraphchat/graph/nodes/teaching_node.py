@@ -244,6 +244,38 @@ def _get_llm_prompt_for_teaching(user_input: str, points_data: Dict[str, Dict[st
     ]
     valid_intents_str = ", ".join([f'"{i}"' for i in VALID_INTENTS_LIST])
 
+    # Parse recent conversation history from messages
+    ai_response_history_str = "(无最近AI回复)"
+    user_request_history_str = "(无最近用户请求)"
+    
+    if messages:
+        # Find the most recent AI response and user request from the messages list
+        recent_ai_messages = []
+        recent_user_messages = []
+        
+        # Look at the last few messages to get recent context
+        recent_messages = messages[-6:] if len(messages) > 6 else messages
+        
+        for msg in reversed(recent_messages):
+            if isinstance(msg, AIMessage) and len(recent_ai_messages) < 2:
+                recent_ai_messages.append(msg.content.strip())
+            elif isinstance(msg, HumanMessage) and len(recent_user_messages) < 2:
+                recent_user_messages.append(msg.content.strip())
+        
+        # Format AI response history (most recent first)
+        if recent_ai_messages:
+            ai_response_history_str = "\n".join([
+                f"AI回复{i+1}: {msg[:200]}..." if len(msg) > 200 else f"AI回复{i+1}: {msg}"
+                for i, msg in enumerate(recent_ai_messages)
+            ])
+        
+        # Format user request history (most recent first)
+        if recent_user_messages:
+            user_request_history_str = "\n".join([
+                f"用户请求{i+1}: {msg[:200]}..." if len(msg) > 200 else f"用户请求{i+1}: {msg}"
+                for i, msg in enumerate(recent_user_messages)
+            ])
+
     new_system_prompt_template = f"""
 你是一个专业的机器人示教点管理助手。
 你的任务是分析【用户最新的输入】，并结合【最近的对话历史】来理解用户的意图，然后输出一个结构化的JSON对象。
