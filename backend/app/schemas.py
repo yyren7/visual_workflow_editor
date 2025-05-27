@@ -108,6 +108,10 @@ class ChatAddMessage(BaseModel):
     role: str  # user, assistant, system
     content: str
 
+class ChatMessageEdit(BaseModel):
+    """编辑聊天消息模型"""
+    new_content: str
+
 class Chat(ChatBase):
     """聊天响应模型"""
     id: str

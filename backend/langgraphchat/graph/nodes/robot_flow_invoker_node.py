@@ -140,10 +140,27 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> dict
     # 所以直接使用子图的 messages 是合适的。
     logger.info(f"Robot flow subgraph returned {len(subgraph_final_messages)} messages. Updating main graph state.")
 
+    completion_status = final_subgraph_state_dict.get("subgraph_completion_status")
+    
     # 主 AgentState 的其他字段保持不变，除非子图明确要修改它们（不常见）
-    # 我们只更新 messages。
-    return {
+    # 我们只更新 messages 和 subgraph_completion_status。
+    # task_route_decision 和 user_request_for_router 的清除是有条件的。
+    update_dict = {
         "messages": subgraph_final_messages,
-        "task_route_decision": None, # 清除路由决策，因为这个路径已经执行完毕
-        "user_request_for_router": None # 清除用户请求
-    } 
+        "subgraph_completion_status": completion_status,
+    }
+
+    if completion_status == "needs_clarification":
+        logger.info("Subgraph needs clarification. Preserving task_route_decision and user_request_for_router.")
+        # task_route_decision 和 user_request_for_router 将保持不变 (不包含在 update_dict 中)
+        # 确保它们在 state 中确实存在且被保留
+        if state.get("task_route_decision") is not None: # Redundant if TypedDict enforces, but safe
+            update_dict["task_route_decision"] = state.get("task_route_decision")
+        if state.get("user_request_for_router") is not None:
+            update_dict["user_request_for_router"] = state.get("user_request_for_router")
+    else:
+        logger.info(f"Subgraph completion status is '{completion_status}'. Clearing task_route_decision and user_request_for_router.")
+        update_dict["task_route_decision"] = None
+        update_dict["user_request_for_router"] = None
+        
+    return update_dict 

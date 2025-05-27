@@ -196,6 +196,161 @@ export const chatApi = {
     return response.data;
   },
 
+  // 更新聊天记录 (例如，重命名)
+  updateChat: async (chatId: string, updates: { name?: string; chat_data?: Record<string, any> }): Promise<Chat> => {
+    const response = await apiClient.put<Chat>(`/chats/${chatId}`, updates);
+    return response.data;
+  },
+
+  // 删除聊天记录
+  deleteChat: async (chatId: string): Promise<boolean> => {
+    // Assuming the backend returns a boolean or a 204 No Content for success
+    await apiClient.delete(`/chats/${chatId}`);
+    return true; // Or handle response more specifically if needed
+  },
+
+  // 编辑用户消息并截断后续消息, 然后触发 agent 响应流
+  editUserMessage: (
+    chatId: string,
+    messageTimestamp: string,
+    newContent: string,
+    onEvent: OnChatEventCallback,
+    onError: OnChatErrorCallback,
+    onClose: OnChatCloseCallback
+  ): (() => void) => {
+    const editUrl = `${API_BASE_URL}/chats/${chatId}/messages/${messageTimestamp}`;
+    const eventUrl = `${API_BASE_URL}/chats/${chatId}/events`;
+    const requestBody = { new_content: newContent };
+    let eventSource: EventSource | null = null;
+
+    const startProcessingAndStreaming = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        console.log(`editUserMessage API: Triggering backend with PUT ${editUrl}`);
+        const putResponse = await fetch(editUrl, {
+          method: 'PUT',
+          headers: headers,
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!putResponse.ok) { // Covers 2xx and other statuses like 4xx, 5xx
+          let errorData: any = { message: `Edit PUT request failed! Status: ${putResponse.status}` };
+          try {
+            errorData = { ...errorData, ...(await putResponse.json()) }; // Try to parse error details
+          } catch (e) { 
+            errorData.details = await putResponse.text(); // Fallback to text if JSON parsing fails
+          }
+          console.error("editUserMessage API: Edit PUT request failed:", errorData);
+          onError(new Error(errorData.detail || errorData.message));
+          onClose(); // Ensure onClose is called to clean up UI state (e.g., isSending)
+          return;
+        }
+        
+        // 重要: 只有当后端返回 202 Accepted 时，我们才开始监听 SSE 事件
+        // 其他成功状态 (例如 200 OK 如果后端直接返回了更新后的 Chat 对象且不触发 SSE) 需要不同的处理
+        if (putResponse.status !== 202) { 
+          console.warn(`editUserMessage API: Edit PUT returned status ${putResponse.status}, expected 202 if SSE is to follow. Handling as non-SSE success for now.`);
+          // 如果不是202, 假设操作成功但没有SSE流，可以尝试解析响应体为 Chat 对象
+          try {
+            const updatedChat = await putResponse.json();
+            // 调用一个特殊的事件来告诉UI更新，但这不是一个标准的SSE事件
+            // 或者，让前端的 handleConfirmEditMessage 在这里直接调用 fetchChatMessages
+            onEvent({ type: 'custom_edit_complete_no_sse', data: updatedChat } as any); 
+          } catch (e) {
+            console.error("editUserMessage API: Failed to parse response body after non-202 success: ", e);
+            onError(new Error(`Edit succeeded with status ${putResponse.status} but response parsing failed.`));
+          }
+          onClose(); // Clean up UI
+          return;
+        }
+
+        console.log(`editUserMessage API: Edit PUT successful (status ${putResponse.status}). Starting EventSource for subsequent agent response.`);
+
+        // ---- Start EventSource listening (logic copied and adapted from sendMessage) ----
+        eventSource = new EventSource(eventUrl); // Assumes withCredentials is not needed or handled by global fetch config
+
+        eventSource.onopen = () => {
+          console.log(`EventSource (for editUserMessage) connected to ${eventUrl}`);
+        };
+
+        eventSource.onerror = (error: Event) => {
+          console.error('EventSource (for editUserMessage) failed:', error);
+          if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+            console.log("EventSource (for editUserMessage) closed by server, likely after stream_end.");
+          } else {
+             const err = new Error('EventSource (for editUserMessage) connection error.');
+             (err as any).originalEvent = error;
+             onError(err);
+             closeEventSource(); 
+          }
+        };
+
+        const addEventListener = <T extends ChatEvent>(eventType: T['type']) => {
+          eventSource?.addEventListener(eventType, (event: MessageEvent) => {
+            try {
+              let parsedData: T['data'];
+              if (eventType === 'token') {
+                parsedData = event.data as T['data']; 
+              } else {
+                 try {
+                   parsedData = JSON.parse(event.data) as T['data'];
+                 } catch(parseError) {
+                    console.error(`Error parsing JSON for event type ${eventType} (editUserMessage):`, event.data, parseError);
+                    onError(new Error(`Failed to parse JSON data for ${eventType}: ${parseError}`));
+                    return; 
+                 }
+              }
+              // console.log(`Received event [${eventType}] (editUserMessage):`, parsedData); // Can be verbose
+              onEvent({ type: eventType, data: parsedData } as T);
+              if (eventType === 'stream_end') {
+                console.log("Received stream_end event (editUserMessage). Closing connection.");
+                closeEventSource();
+              }
+            } catch (e) {
+              console.error(`Error processing SSE event ${eventType} (editUserMessage):`, event.data, e);
+              onError(new Error(`Failed processing event ${eventType}: ${e}`));
+            }
+          });
+        };
+
+        // Register listeners
+        addEventListener<TokenEvent>('token');
+        addEventListener<ToolStartEvent>('tool_start');
+        addEventListener<ToolEndEvent>('tool_end');
+        addEventListener<StreamEndEvent>('stream_end');
+        addEventListener<ErrorEvent>('error');
+        addEventListener<PingEvent>('ping');
+        // ---- End EventSource listening ----
+
+      } catch (error: any) { // Catch errors from the fetch call itself or other synchronous parts
+        console.error('editUserMessage API: Error during startProcessingAndStreaming:', error);
+        onError(error instanceof Error ? error : new Error('Failed to initiate chat edit and stream: ' + String(error)));
+        onClose(); // Ensure cleanup
+      }
+    };
+
+    const closeEventSource = () => {
+      if (eventSource) {
+        console.log(`Closing EventSource connection to ${eventUrl} (from editUserMessage API utility)`);
+        eventSource.close();
+        eventSource = null;
+        // onClose callback is critical for UI state management (e.g. setIsSending(false))
+        // It should be called when the logical stream operation is considered complete or aborted.
+        onClose(); 
+      }
+    };
+
+    startProcessingAndStreaming();
+    return closeEventSource; // Return the function that can be used to prematurely close the EventSource
+  },
+
   // 发送消息 (Updated Event Listeners)
   sendMessage: (
     chatId: string,
@@ -338,26 +493,5 @@ export const chatApi = {
     startStreaming();
 
     return closeEventSource;
-  },
-
-  updateChat: async (chatId: string, chatUpdate: { name?: string; chat_data?: any }): Promise<Chat> => {
-    console.log(`API call: updateChat for chatId ${chatId} with data:`, chatUpdate);
-    try {
-      const response = await apiClient.put<Chat>(`/chats/${chatId}`, chatUpdate);
-      return response.data;
-    } catch (error: any) {
-      console.error(`Error updating chat ${chatId}:`, error);
-      if (error.response && error.response.status === 404) {
-        throw new Error("聊天不存在，无法更新");
-      } else if (error.response && error.response.status === 403) {
-        throw new Error("没有权限更新此聊天");
-      }
-      throw error;
-    }
-  },
-
-  deleteChat: async (chatId: string): Promise<{ message: string }> => {
-    const response = await apiClient.delete<{ message: string }>(`/chats/${chatId}`);
-    return response.data;
   }
 };

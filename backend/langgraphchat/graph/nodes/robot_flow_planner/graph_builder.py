@@ -76,6 +76,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         logger.error("Relation XML content is missing from state.")
         state.is_error = True
         state.error_message = "内部错误：关系XML内容缺失，无法合并最终流程。"
+        state.subgraph_completion_status = "error"
         # state.messages = state.messages + [AIMessage(content=state.error_message)] # Message will be added by routing logic
         return state.dict(exclude_none=True)
 
@@ -114,6 +115,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
                     logger.error(f"Failed to parse XML for block_id {gf.block_id}: {e}. XML: {gf.xml_content[:200]}", exc_info=True)
                     state.is_error = True
                     state.error_message = f"内部错误：解析节点 {gf.block_id} 的XML时失败: {e}"
+                    state.subgraph_completion_status = "error"
                     return state.dict(exclude_none=True)
             elif gf.block_id:
                 logger.warning(f"Skipping block_id {gf.block_id} for merge due to status '{gf.status}' or no content.")
@@ -124,6 +126,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         logger.error(f"Failed to parse relation.xml: {e}. XML: {relation_xml_str[:200]}", exc_info=True)
         state.is_error = True
         state.error_message = f"内部错误：解析关系XML时失败: {e}"
+        state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
 
     final_flow_xml_root = ET.Element(f"{{{BLOCKLY_NS}}}xml")
@@ -188,10 +191,12 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
     except LookupError as e:
         logger.error(f"Merge process failed due to missing block data or structure: {e}", exc_info=True)
         state.is_error = True; state.error_message = str(e); 
+        state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
     except Exception as e:
         logger.error(f"Unexpected error during final XML construction: {e}", exc_info=True)
         state.is_error = True; state.error_message = f"内部错误：构建最终XML时发生意外: {e}"; 
+        state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
 
     ET.register_namespace("", BLOCKLY_NS) # Ensure default namespace for output
@@ -202,6 +207,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
     except Exception as e:
         logger.error(f"Error serializing final merged XML: {e}", exc_info=True)
         state.is_error = True; state.error_message = f"内部错误：序列化最终XML时出错: {e}"; 
+        state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
 
     state.final_flow_xml_content = final_xml_string_output
@@ -218,7 +224,13 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         logger.error(f"Error saving final_flow.xml to {final_file_path}: {e}", exc_info=True)
         state.is_error = True
         state.error_message = f"保存最终流程文件 {final_file_path} 失败: {e}"
+        state.subgraph_completion_status = "error"
         # Keep final_flow_xml_content in state even if save fails
+
+    if not state.is_error:
+        state.subgraph_completion_status = "completed_success"
+        state.dialog_state = "final_xml_generated_success"
+        state.clarification_question = None
 
     return state.dict(exclude_none=True)
 

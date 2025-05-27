@@ -151,7 +151,7 @@ async def main():
         try:
             # Ensure recursion_limit is high enough for potential internal retries or complex paths
             # Pass the Pydantic model instance directly to ainvoke
-            final_state_output = await robot_flow_app.ainvoke(current_state, {"recursion_limit": 25})
+            final_state_output = await robot_flow_app.ainvoke(current_state, {"recursion_limit": 5})
             
             # Check if the output is a dict and re-instantiate if necessary, 
             # or if it's already a RobotFlowAgentState instance, use it directly.
@@ -200,10 +200,16 @@ async def main():
                     user_response = input()
 
                 current_state.user_input = user_response
-                logging.info(f"Received user response: '{user_response}'")
+                # Add the user's new response as a HumanMessage to the messages list
+                from langchain_core.messages import HumanMessage # Ensure import
+                if not current_state.messages: current_state.messages = [] # Initialize if None for safety
+                current_state.messages.append(HumanMessage(content=user_response))
+                
+                logging.info(f"Received user response: '{user_response}', added to messages.")
+                current_state.clarification_question = None # Clear the question as it's (presumably) answered
                 continue 
             
-            if current_state.dialog_state in ['input_understood', 'flow_completed']:
+            if current_state.dialog_state in ['input_understood', 'flow_completed', 'final_xml_generated_success']: # Added final_xml_generated_success
                 logging.info(f"Agent has reached a terminal state: {current_state.dialog_state}.")
                 break 
             
@@ -226,12 +232,12 @@ async def main():
     # current_state is a RobotFlowAgentState Pydantic model instance here
     # Use model_dump() for proper serialization of Pydantic models to dict for JSON
     try:
-        final_state_dict_for_json = current_state.model_dump(exclude_none=True, mode='json') # Use mode='json' for better serialization of complex types
+        final_state_dict_for_json = current_state.model_dump(exclude_none=True) # Removed mode='json' as it might not be standard/needed if output is dict
         # json.dumps is still needed if model_dump(mode='json') returns a string already, 
         # but typically it returns a dict for mode='python' (default) or 'json' (which aims for json-compatible dict)
         # If model_dump(mode='json') itself produces the final JSON string, then logging.info(final_state_dict_for_json) would be enough.
         # However, the standard pattern is model_dump -> dict, then json.dumps(dict)
-        final_state_str = json.dumps(final_state_dict_for_json, indent=2, ensure_ascii=False) if isinstance(final_state_dict_for_json, dict) else final_state_dict_for_json
+        final_state_str = json.dumps(final_state_dict_for_json, indent=2, ensure_ascii=False) # No change here if final_state_dict_for_json is already dict
         logging.info(final_state_str)
         save_to_md(os.path.join(session_log_dir, "final_agent_state.md"), f"```json\n{final_state_str}\n```", "Final Agent State")
     except Exception as e:

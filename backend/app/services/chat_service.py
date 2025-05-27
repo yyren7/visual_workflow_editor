@@ -314,3 +314,73 @@ class ChatService:
             self.db.rollback()
             logger.error(f"删除聊天 {chat_id} 失败: {str(e)}")
             return False 
+
+    def edit_user_message_and_truncate(self, chat_id: str, message_timestamp: str, new_content: str) -> Optional[Chat]:
+        """
+        编辑用户消息，删除此消息之后的所有消息，并以新内容重新生成用户消息。
+
+        Args:
+            chat_id: 聊天ID
+            message_timestamp: 要编辑的用户消息的时间戳
+            new_content: 用户消息的新内容
+
+        Returns:
+            更新后的Chat对象，如果失败则返回None
+        """
+        logger.info(f"ChatService: Attempting to edit message in chat_id: {chat_id} at timestamp: {message_timestamp}")
+        try:
+            chat = self.db.query(Chat).filter(Chat.id == chat_id).first()
+            if not chat:
+                logger.error(f"ChatService: Chat {chat_id} not found. Cannot edit message.")
+                return None
+
+            chat_data_variable = MutableDict.as_mutable(chat.chat_data) if chat.chat_data else MutableDict()
+            if "messages" not in chat_data_variable or not isinstance(chat_data_variable["messages"], list):
+                logger.error(f"ChatService: Chat {chat_id} has no messages or messages are not a list. Cannot edit.")
+                return None
+
+            messages: List[Dict[str, Any]] = chat_data_variable["messages"]
+            target_message_index = -1
+            for i, msg in enumerate(messages):
+                if msg.get("timestamp") == message_timestamp and msg.get("role") == "user":
+                    target_message_index = i
+                    break
+            
+            if target_message_index == -1:
+                logger.error(f"ChatService: User message with timestamp {message_timestamp} not found in chat {chat_id}.")
+                return None
+
+            logger.debug(f"ChatService: Found user message at index {target_message_index} for editing.")
+
+            # 删除目标消息及之后的所有消息
+            truncated_messages = messages[:target_message_index]
+            logger.debug(f"ChatService: Messages truncated. Kept {len(truncated_messages)} messages.")
+
+            # 添加编辑后的用户消息
+            edited_message = {
+                "role": "user",
+                "content": new_content,
+                "timestamp": datetime.utcnow().isoformat() # 使用新的时间戳
+            }
+            truncated_messages.append(edited_message)
+            logger.debug(f"ChatService: Added edited user message. Total messages now: {len(truncated_messages)}")
+            
+            chat_data_variable["messages"] = truncated_messages
+            chat.chat_data = chat_data_variable
+            flag_modified(chat, "chat_data")
+            chat.updated_at = datetime.utcnow()
+
+            self.db.add(chat)
+            self.db.commit()
+            self.db.refresh(chat)
+            
+            logger.info(f"ChatService: Successfully edited message in chat {chat_id} at timestamp {message_timestamp}.")
+            return chat
+
+        except Exception as e:
+            logger.error(f"ChatService: Error editing message in chat {chat_id}: {e}", exc_info=True)
+            try:
+                self.db.rollback()
+            except Exception as rb_err:
+                logger.error(f"ChatService: Rollback FAILED while editing message in chat {chat_id}: {rb_err}", exc_info=True)
+            return None 

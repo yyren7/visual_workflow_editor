@@ -6,7 +6,7 @@ import {
   ChatEvent,
   OnChatEventCallback,
   OnChatErrorCallback,
-  OnChatCloseCallback
+  OnChatCloseCallback,
 } from '../api/chatApi'; // 更新 chatApi 导入路径
 import { getLastChatIdForFlow } from '../api/flowApi'; // 更新 getLastChatIdForFlow 导入路径
 import { Message, Chat } from '../types'; // Assuming Chat type exists in types.ts
@@ -117,6 +117,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const streamingAssistantMsgIdRef = useRef<string | null>(null);
   const closeEventSourceRef = useRef<(() => void) | null>(null);
+
+  // --- 新增：编辑消息相关的状态 ---
+  const [editingMessageTimestamp, setEditingMessageTimestamp] = useState<string | null>(null);
+  const [editingMessageContent, setEditingMessageContent] = useState<string>("");
+  // --- 结束新增 ---
 
   // --- Data Fetching ---
 
@@ -722,6 +727,278 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setChatToDelete(null);
   };
 
+  // --- 编辑消息处理函数 (更新版本) ---
+  const handleStartEditMessage = (message: DisplayMessage) => {
+    if (message.role === 'user' && message.timestamp) {
+      // --- 关闭任何正在进行的流 --- 
+      if (closeEventSourceRef.current) {
+        console.log("Starting edit: Closing previous EventSource.");
+        closeEventSourceRef.current();
+        closeEventSourceRef.current = null;
+      }
+      // --- 清理流式助手消息引用 --- 
+      streamingAssistantMsgIdRef.current = null;
+      // --- 移除任何流式占位符 ---
+      setMessages(prev => prev.filter(msg => !(msg.isStreaming && msg.role === 'assistant')));
+      setInputMessage(''); // <--- 清空主输入框
+
+      setEditingMessageTimestamp(message.timestamp);
+      setEditingMessageContent(message.content);
+    } else {
+      console.warn("Cannot edit non-user message or message without timestamp/ID");
+    }
+  };
+
+  const handleCancelEditMessage = () => {
+    setEditingMessageTimestamp(null);
+    setEditingMessageContent("");
+  };
+
+  const handleConfirmEditMessage = async () => {
+    const originalMessageTimestampToEdit = editingMessageTimestamp; // Capture before clearing state
+    if (!originalMessageTimestampToEdit || !activeChatId || !flowId) {
+        console.warn("handleConfirmEditMessage: Missing required IDs or content.");
+        return;
+    }
+
+    // --- 先关闭可能存在的旧连接 (以防万一) ---
+    if (closeEventSourceRef.current) {
+      console.log("Confirming edit: Closing previous EventSource first (safety).", closeEventSourceRef.current);
+      closeEventSourceRef.current();
+      closeEventSourceRef.current = null;
+    }
+    // -----------------------------
+
+    setIsSending(true); 
+    setError(null);
+    
+    const editedContent = editingMessageContent; // Capture before clearing editingMessageContent
+
+    // 1. 更新UI: 立即移除正在编辑的消息及其之后的所有消息，然后添加编辑后的用户消息。
+    //    这样用户会立刻看到编辑的结果。后续AI的回复将通过SSE流入。
+    setMessages(prevMessages => {
+        const editMsgIndex = prevMessages.findIndex(msg => msg.timestamp === originalMessageTimestampToEdit);
+        if (editMsgIndex === -1) {
+            console.warn("Could not find message to edit in current UI state. Aborting UI update for edit.");
+            return prevMessages; // Or handle error more gracefully
+        }
+        // 保留编辑点之前的所有消息
+        const newMessages = prevMessages.slice(0, editMsgIndex);
+        // 添加编辑后的用户消息 (用新的临时时间戳以避免key冲突，后端会生成真实的)
+        newMessages.push({
+            role: 'user',
+            content: editedContent,
+            timestamp: `user-edited-${Date.now()}`,
+            type: 'text'
+        });
+        return newMessages;
+    });
+
+    // 2. 清理编辑状态
+    setEditingMessageTimestamp(null);
+    setEditingMessageContent("");
+
+    // 3. 添加AI助手消息的占位符 (与 handleSendMessage 类似)
+    const assistantMessageId = `assistant-after-edit-${Date.now()}`;
+    streamingAssistantMsgIdRef.current = assistantMessageId; // 更新流式消息ID的引用
+    const assistantPlaceholder: DisplayMessage = {
+      role: 'assistant',
+      content: '', 
+      timestamp: assistantMessageId,
+      type: 'text',
+      isStreaming: true 
+    };
+    setMessages(prev => [...prev, assistantPlaceholder]); // Append placeholder to the new message list
+
+    // 4. 定义 SSE 回调 (这些回调与 handleSendMessage 中的回调几乎完全相同)
+    //    可以考虑将这些回调提取到 ChatInterface 组件的顶层作用域，如果它们完全一样的话。
+    const handleChatEvent: OnChatEventCallback = (event) => {
+      console.log("Received SSE Event (after edit):", JSON.stringify(event));
+      let capturedStreamEndId: string | null = null;
+      if (event.type === 'stream_end') {
+        capturedStreamEndId = streamingAssistantMsgIdRef.current;
+      }
+      setMessages(prevMessages => {
+        const newMessages = [...prevMessages];
+        const currentStreamingMsgIndex = newMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current && msg.type === 'text');
+
+        switch (event.type) {
+          case 'token':
+            const token = event.data;
+            const currentStreamingId = streamingAssistantMsgIdRef.current;
+            const streamingMsgIndex = newMessages.findIndex(msg => msg.timestamp === currentStreamingId && msg.type === 'text');
+            if (streamingMsgIndex !== -1) {
+              newMessages[streamingMsgIndex] = {
+                ...newMessages[streamingMsgIndex],
+                content: newMessages[streamingMsgIndex].content + token,
+                isStreaming: true,
+              };
+            } else {
+              if (token) {
+                const newAssistantMessageId = currentStreamingId || `assistant-token-${Date.now()}`;
+                if (!currentStreamingId) streamingAssistantMsgIdRef.current = newAssistantMessageId;
+                newMessages.push({
+                  role: 'assistant', content: token, timestamp: newAssistantMessageId, type: 'text', isStreaming: true,
+                });
+              }
+            }
+            break;
+          case 'tool_start':
+            const toolStartMsgId = `tool-${event.data.name}-${Date.now()}`;
+            const toolStartMessage: DisplayMessage = {
+                 role: 'assistant', content: '', timestamp: toolStartMsgId, type: 'tool_status',
+                 toolName: event.data.name, toolInput: event.data.input, toolStatus: 'running', isStreaming: false,
+            };
+            if (currentStreamingMsgIndex !== -1) newMessages.splice(currentStreamingMsgIndex, 0, toolStartMessage);
+            else newMessages.push(toolStartMessage);
+            break;
+          case 'tool_end':
+            const toolEndMsgIndex = newMessages.findLastIndex(msg =>
+                msg.type === 'tool_status' && msg.toolName === event.data.name && msg.toolStatus === 'running'
+            );
+            if (toolEndMsgIndex !== -1) {
+              newMessages[toolEndMsgIndex] = {
+                ...newMessages[toolEndMsgIndex], toolStatus: 'completed', toolOutputSummary: event.data.output_summary,
+              };
+            } else {
+                 const toolEndFallback: DisplayMessage = {
+                     role: 'assistant', content: '', timestamp: `tool-end-fallback-${event.data.name}-${Date.now()}`,
+                     type: 'tool_status', toolName: event.data.name, toolStatus: 'completed',
+                     toolOutputSummary: event.data.output_summary, isStreaming: false
+                 };
+                 if (currentStreamingMsgIndex !== -1) newMessages.splice(currentStreamingMsgIndex, 0, toolEndFallback);
+                 else newMessages.push(toolEndFallback);
+            }
+            break;
+          case 'stream_end':
+            const finishedMsgIndex = newMessages.findIndex(msg => msg.timestamp === capturedStreamEndId);
+            if (finishedMsgIndex !== -1) {
+              newMessages[finishedMsgIndex] = { ...newMessages[finishedMsgIndex], isStreaming: false };
+            } else {
+              const lastStreamingAssistantMsgIndex = newMessages.findLastIndex(msg => msg.role === 'assistant' && msg.isStreaming === true);
+              if (lastStreamingAssistantMsgIndex !== -1) {
+                newMessages[lastStreamingAssistantMsgIndex] = { ...newMessages[lastStreamingAssistantMsgIndex], isStreaming: false };
+              }
+            }
+            break;
+          case 'error':
+            const errorData = event.data;
+            const errorMessage = `错误 (阶段: ${errorData.stage || '未知'}): ${errorData.message}`;
+            setError(errorMessage);
+            if (errorData.tool_name) {
+                const toolErrorMsgIndex = newMessages.findLastIndex(msg =>
+                    msg.type === 'tool_status' && msg.toolName === errorData.tool_name && msg.toolStatus === 'running'
+                );
+                if (toolErrorMsgIndex !== -1) {
+                    newMessages[toolErrorMsgIndex] = { ...newMessages[toolErrorMsgIndex], toolStatus: 'error', toolErrorMessage: errorData.message };
+                } else {
+                     if (currentStreamingMsgIndex !== -1) {
+                        newMessages[currentStreamingMsgIndex] = { ...newMessages[currentStreamingMsgIndex], content: newMessages[currentStreamingMsgIndex].content + `\n\n${errorMessage}`, isStreaming: false };
+                     } else {
+                         const errorMsgId = streamingAssistantMsgIdRef.current || `error-${Date.now()}`;
+                         if (!streamingAssistantMsgIdRef.current) streamingAssistantMsgIdRef.current = errorMsgId;
+                         newMessages.push({ role: 'assistant', content: errorMessage, timestamp: errorMsgId, type: 'error', isStreaming: false });
+                     }
+                }
+            } else {
+                 if (currentStreamingMsgIndex !== -1) {
+                   newMessages[currentStreamingMsgIndex] = { ...newMessages[currentStreamingMsgIndex], content: newMessages[currentStreamingMsgIndex].content + `\n\n${errorMessage}`, isStreaming: false, type: 'error' };
+                 } else {
+                     const errorMsgId = streamingAssistantMsgIdRef.current || `error-${Date.now()}`;
+                     if (!streamingAssistantMsgIdRef.current) streamingAssistantMsgIdRef.current = errorMsgId;
+                     newMessages.push({ role: 'assistant', content: errorMessage, timestamp: errorMsgId, type: 'error', isStreaming: false });
+                 }
+            }
+            setIsSending(false);
+            break;
+          case 'ping':
+             console.log("Received ping event from server (after edit).");
+             break;
+           // Handling 'custom_edit_complete_no_sse' from chatApi if backend PUT doesn't return 202
+           // This case assumes the API directly returned the updated Chat object.
+           case 'custom_edit_complete_no_sse' as any: // Type assertion for custom event
+                console.log("Edit complete (no SSE), attempting to refresh chat messages from API response data.");
+                const chatDataFromApi = event.data as Chat; // Assuming event.data is the Chat object
+                const displayMessages = (chatDataFromApi.chat_data?.messages || []).map((msg): DisplayMessage => ({
+                    ...msg,
+                    type: 'text' 
+                }));
+                setIsSending(false);
+                streamingAssistantMsgIdRef.current = null; // No stream happened
+                // Directly set messages, then remove the placeholder as no streaming will occur
+                return displayMessages.filter(msg => msg.timestamp !== assistantPlaceholder.timestamp);
+
+          default:
+            console.warn("Received unknown event type (after edit):", event);
+        }
+        return newMessages;
+      });
+    };
+
+    const handleChatError: OnChatErrorCallback = (error) => {
+      console.error("Chat API Error (after edit):", error);
+      const errorMessage = error.message || "与服务器的连接出错 (编辑后)";
+      setError(errorMessage);
+      setMessages(prevMessages => {
+        const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
+        if (currentStreamingMsgIndex !== -1) {
+          const newMessages = [...prevMessages];
+          newMessages[currentStreamingMsgIndex] = {
+            ...newMessages[currentStreamingMsgIndex],
+            content: newMessages[currentStreamingMsgIndex].content + `\n错误: ${errorMessage}`,
+            isStreaming: false
+          };
+          return newMessages;
+        }
+        return prevMessages;
+      });
+      setIsSending(false);
+    };
+
+    const handleChatClose: OnChatCloseCallback = () => {
+      console.log("Chat EventSource closed (after edit).");
+      setIsSending(false); 
+      streamingAssistantMsgIdRef.current = null; 
+      closeEventSourceRef.current = null; 
+
+      // NEW: Fetch updated messages to reflect permanent timestamp for edited message
+      if (activeChatId) {
+        fetchChatMessages(activeChatId);
+      }
+    };
+    
+    // 5. 调用 API
+    if (activeChatId) { 
+        if (originalMessageTimestampToEdit && originalMessageTimestampToEdit.startsWith('user-edited-')) {
+            console.error("[ChatInterface] CRITICAL: Attempting to call editUserMessage with a temporary UI timestamp:", originalMessageTimestampToEdit);
+            setError("编辑错误：内部时间戳问题，请重试。");
+            setIsSending(false);
+            // Clean up placeholder if it was added
+            const assistantMessageId = streamingAssistantMsgIdRef.current; // Get current ref before clearing
+            if (assistantMessageId) {
+                 setMessages(prev => prev.filter(msg => msg.timestamp !== assistantMessageId));
+            }
+            streamingAssistantMsgIdRef.current = null; // Clear ref as well
+            return; 
+        }
+        console.log("[ChatInterface] Calling chatApi.editUserMessage with timestamp:", originalMessageTimestampToEdit, "and content:", editedContent);
+        closeEventSourceRef.current = chatApi.editUserMessage(
+            activeChatId,
+            originalMessageTimestampToEdit, // Use the original timestamp for the PUT request
+            editedContent, // The new content from the input field
+            handleChatEvent, // Standard SSE event handler
+            handleChatError, // Standard SSE error handler
+            handleChatClose  // Standard SSE close handler
+        );
+    } else {
+        console.error("Cannot confirm edit, activeChatId is null after UI updates.");
+        setError("无法编辑消息，没有活动的聊天会话。");
+        setIsSending(false);
+        // Clean up placeholder if API call wasn't made
+        setMessages(prev => prev.filter(msg => msg.timestamp !== assistantPlaceholder.timestamp));
+    }
+  };
+  // --- 结束新增 ---
 
   // --- Render Logic ---
   const hasActiveChat = !!activeChatId;
@@ -766,6 +1043,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         // ... (rendering logic for error remains the same) ...
         return <Typography color="error">{message.content}</Typography>;
     }
+
+    // --- 新增：处理正在编辑的消息 ---
+    if (editingMessageTimestamp === message.timestamp) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
+          <TextField
+            fullWidth
+            multiline
+            value={editingMessageContent}
+            onChange={(e) => setEditingMessageContent(e.target.value)}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleConfirmEditMessage();
+              }
+              if (e.key === 'Escape') {
+                handleCancelEditMessage();
+              }
+            }}
+            sx={{ 
+              backgroundColor: 'white', 
+              borderRadius: '4px',
+              '.MuiInputBase-input': {
+                color: 'black', // 确保文本颜色为黑色
+              }
+            }}
+          />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Button size="small" variant="outlined" onClick={handleCancelEditMessage}>取消</Button>
+            <Button size="small" variant="contained" onClick={handleConfirmEditMessage} disabled={isSending}>
+              {isSending ? <CircularProgress size={20}/> : "保存"}
+            </Button>
+          </Box>
+        </Box>
+      );
+    }
+    // --- 结束新增 ---
 
     // Default to text rendering logic
     // ... (rendering logic for text remains the same) ...
@@ -945,9 +1260,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   maxWidth: '80%',
                   wordWrap: 'break-word',
                   whiteSpace: 'pre-wrap', // Important for preserving newlines
+                  position: 'relative', // Needed for positioning the edit button
                 }}
               >
                 {renderMessageContent(message)}
+                {/* --- 新增：用户消息的编辑按钮 --- */}
+                {message.role === 'user' && 
+                 message.timestamp && 
+                 !message.timestamp.startsWith('user-edited-') &&
+                 !editingMessageTimestamp && (
+                  <Tooltip title="编辑此消息">
+                    <IconButton 
+                      size="small"
+                      onClick={() => handleStartEditMessage(message)}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        color: 'primary.contrastText', // Or a color that contrasts well with primary.light
+                        backgroundColor: 'rgba(0,0,0,0.1)', // Slight background for visibility
+                        '&:hover': {
+                          backgroundColor: 'rgba(0,0,0,0.2)',
+                        }
+                      }}
+                    >
+                      <EditIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                {/* --- 结束新增 --- */}
               </Paper>
             </Box>
           ))}
@@ -965,7 +1306,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={hasActiveChat ? "输入消息 (Shift+Enter 换行)" : "请先选择一个聊天"}
-            disabled={inputDisabled}
+            disabled={inputDisabled || !!editingMessageTimestamp} // 编辑时禁用主输入框
             sx={{
               backgroundColor: '#ffffff',
               borderRadius: '20px',

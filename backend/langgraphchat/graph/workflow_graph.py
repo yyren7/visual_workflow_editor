@@ -105,6 +105,32 @@ async def rephrase_request_node(state: AgentState) -> dict:
     # 路由将通过条件边完成
     return {}
 
+def route_after_functional_node(state: AgentState) -> str:
+    """
+    在功能节点（如 robot_flow_planner, teaching, other_assistant）执行完毕后进行路由。
+    检查子图是否需要澄清，或者任务是否完成/出错。
+    """
+    logger.info(f"--- Routing after Functional Node. Subgraph status: {state.get('subgraph_completion_status')}, Current Task Route: {state.get('task_route_decision')}")
+    
+    subgraph_status = state.get("subgraph_completion_status")
+
+    if subgraph_status == "needs_clarification":
+        logger.info("Functional node/subgraph needs clarification. Routing to input_handler to await user input.")
+        # task_route_decision 和 user_request_for_router 应该已被 invoker_node 保留
+        # subgraph_completion_status 也保留，以便 input_handler 或后续节点知道上下文
+        return "input_handler"
+    elif subgraph_status in ["completed_success", "error"]:
+        logger.info(f"Subgraph completed with status: {subgraph_status}. Resetting task context and routing to input_handler for new cycle.")
+        state["task_route_decision"] = None
+        state["user_request_for_router"] = None
+        state["subgraph_completion_status"] = None # 清除状态
+        return "input_handler"
+    else: # subgraph_status is None (it was a simple functional node like teaching/other_assistant)
+        logger.info(f"Simple functional node completed (status: {subgraph_status}). Resetting task context and routing to END to signify turn completion.")
+        state["task_route_decision"] = None # Task is done for this turn.
+        state["user_request_for_router"] = None # Request was processed.
+        state["subgraph_completion_status"] = None # Ensure it's cleared.
+        return END
 
 # Graph compilation
 def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = None) -> StateGraph:
@@ -217,8 +243,31 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         }
     )
     
-    # 从新的 robot_flow_planner 节点出来后，通常应该结束，因为它处理了完整的交互流程
-    workflow.add_edge("robot_flow_planner", END)
+    # 从功能节点出来后，进行统一路由处理
+    workflow.add_conditional_edges(
+        "robot_flow_planner",
+        route_after_functional_node,
+        {
+            "input_handler": "input_handler",
+            END: END # Handle case where it might end
+        }
+    )
+    workflow.add_conditional_edges(
+        "teaching",
+        route_after_functional_node,
+        {
+            "input_handler": "input_handler", # Should not happen for simple nodes unless they can ask for clarification
+            END: END # Normal completion routes to END
+        }
+    )
+    workflow.add_conditional_edges(
+        "other_assistant",
+        route_after_functional_node,
+        {
+            "input_handler": "input_handler", # Should not happen for simple nodes
+            END: END # Normal completion routes to END
+        }
+    )
 
     # 旧的 planner 和 tools 相关的边被移除
     # workflow.add_conditional_edges(
@@ -231,10 +280,10 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # )
     # workflow.add_edge("tools", "planner")
 
-    # teaching 节点执行完毕后也导向 END
-    workflow.add_edge("teaching", END)
-    # other_assistant 节点执行完毕后导向 END (Changed from ask_info)
-    workflow.add_edge("other_assistant", END)
+    # teaching 节点执行完毕后也导向 END # 旧逻辑，已通过上面条件边处理
+    # workflow.add_edge("teaching", END)
+    # other_assistant 节点执行完毕后导向 END (Changed from ask_info) # 旧逻辑，已通过上面条件边处理
+    # workflow.add_edge("other_assistant", END)
 
     # 编译图
     logger.info("Workflow graph compilation complete.")

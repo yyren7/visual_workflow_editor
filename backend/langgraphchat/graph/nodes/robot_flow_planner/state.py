@@ -65,5 +65,7 @@ class RobotFlowAgentState(BaseModel):
     upload_status: Optional[str] = None # To track file upload status e.g. "success", "remote_address_offline"
     is_error: bool = False
 
+    subgraph_completion_status: Optional[Literal["completed_success", "completed_partial", "needs_clarification", "error"]] = Field(None, description="Indicates how the robot_flow_subgraph concluded its execution for the current call.")
+
     class Config:
         arbitrary_types_allowed = True 

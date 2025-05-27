@@ -226,6 +226,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                  clarify_msg = USER_INTERACTION_TEXTS_ZH["PROMPT_ASK_ROBOT_MODEL_TEMPLATE"].format(known_models_str=known_models_str)
                  add_ai_message_if_needed(clarify_msg)
                  state.clarification_question = clarify_msg
+                 state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
 
         logger.info(f"Processing user response for robot model: '{current_user_input_for_this_cycle}'")
@@ -283,6 +284,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                 )
                 add_ai_message_if_needed(confirm_prompt)
                 state.clarification_question = confirm_prompt
+            state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
 
         logger.info(f"Processing user response for enrichment confirmation: '{current_user_input_for_this_cycle}'")
@@ -310,10 +312,12 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             state.proposed_enriched_text = None
             state.clarification_question = None
             state.dialog_state = "processing_user_input" # Re-process this new basis
+            state.subgraph_completion_status = "needs_clarification"
         else: # Unclear feedback
             logger.info("User feedback on enriched plan is unclear.")
             add_ai_message_if_needed(USER_INTERACTION_TEXTS_ZH["GENERAL_FEEDBACK_GUIDANCE"])
             state.dialog_state = "awaiting_enrichment_confirmation" # Stay and re-ask
+            state.subgraph_completion_status = "needs_clarification"
         return state.dict(exclude_none=True)
 
     # 2. Handle 'generation_failed' state if user provides new input
@@ -324,6 +328,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             if not any("生成XML时遇到问题" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
                 add_ai_message_if_needed(f"抱歉，上次生成XML时遇到问题: {state.error_message or '未知错误'}。请修改您的指令或提供新的流程描述。")
             state.dialog_state = 'awaiting_user_input' # General wait state
+            state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
         
         logger.info(f"Received user input after generation failure: '{current_user_input_for_this_cycle}'. Treating as new/revised flow.")
@@ -348,6 +353,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                  add_ai_message_if_needed("您好！我是机器人流程设计助手。请输入您的流程描述。")
             # Stay in 'awaiting_user_input'
             state.dialog_state = 'awaiting_user_input'
+            state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
 
         logger.info(f"Received new user input in '{state.dialog_state}' state: '{current_user_input_for_this_cycle}'")
@@ -373,6 +379,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             logger.warning("Reached 'processing_user_input' but active_plan_basis is empty. Reverting to awaiting_user_input.")
             add_ai_message_if_needed("请输入有效的流程描述。")
             state.dialog_state = "awaiting_user_input"
+            state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
 
         # 4a. Check for robot model if not yet set
@@ -383,6 +390,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             add_ai_message_if_needed(question)
             state.clarification_question = question
             state.dialog_state = "awaiting_robot_model_input"
+            state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
 
         # 4b. Robot model is known, proceed with plan enrichment
@@ -437,6 +445,8 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         logger.error("Enriched input text is missing in state for understand_input_node.")
         state.is_error = True
         state.error_message = "Enriched input text is missing for parsing."
+        state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     config = state.config
@@ -444,6 +454,8 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         logger.error("Config (placeholder values) is missing in state.")
         state.is_error = True
         state.error_message = "Configuration (placeholders) is missing."
+        state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
     
     current_messages = state.messages
@@ -502,6 +514,8 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         raw_out = parsed_output.get('raw_output', '')
         state.is_error = True
         state.error_message = f"Step 1: Failed to understand input. LLM Error: {error_msg_detail}. Raw: {str(raw_out)[:500]}"
+        state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     # Manual validation of operation types BEFORE Pydantic parsing, if known_node_types_list is available
@@ -530,6 +544,8 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
             logger.error(f"Step 1 Failed: Invalid node types found after LLM parsing. {error_message}")
             state.is_error = True
             state.error_message = f"Step 1: Invalid node types found. {error_message} Raw LLM Output: {str(parsed_output)[:500]}"
+            state.dialog_state = "error"
+            state.subgraph_completion_status = "error"
             return state
 
     try:
@@ -537,16 +553,17 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         logger.info(f"Step 1 Succeeded. Parsed robot from text: {validated_data.robot}, Operations: {len(validated_data.operations)}")
         
         state.parsed_flow_steps = [op.dict(exclude_none=True) for op in validated_data.operations]
-        state.parsed_robot_name = validated_data.robot 
-        state.dialog_state = "input_understood_ready_for_xml"
-        state.clarification_question = None 
+        state.parsed_robot_name = validated_data.robot
         state.error_message = None
         state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Robot: {validated_data.robot}. Steps: {len(validated_data.operations)}")]
+        state.subgraph_completion_status = None
         return state
     except Exception as e: 
         logger.error(f"Step 1 Failed: Output validation error. Error: {e}. Raw Output: {parsed_output}", exc_info=True)
         state.is_error = True
         state.error_message = f"Step 1: Output validation error. Details: {e}. Parsed: {str(parsed_output)[:500]}"
+        state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
 # --- Helper function to recursively collect all operations for XML generation --- 
@@ -751,6 +768,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: BaseCha
         state.is_error = True
         state.error_message = "Parsed flow steps are missing for XML generation."
         state.dialog_state = "error" # Or back to understand_input or initial
+        state.subgraph_completion_status = "error"
         return state
 
     if not config or not config.get("OUTPUT_DIR_PATH"):
@@ -758,6 +776,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: BaseCha
         state.is_error = True
         state.error_message = "Output directory path (OUTPUT_DIR_PATH) is not configured."
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     # 1. Flatten all operations
@@ -766,6 +785,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: BaseCha
         logger.warning("No operations collected for XML generation. This might be an empty plan.")
         state.generated_node_xmls = []
         state.dialog_state = "generating_xml_relation" # Mark step as complete even if no XMLs
+        state.subgraph_completion_status = "error"
         return state
 
     logger.info(f"Collected {len(all_ops_for_llm)} operations for XML generation.")
@@ -788,6 +808,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: BaseCha
         state.error_message = f"Failed to create output directory: {e}"
         state.generated_node_xmls = generation_results # Store partial results if any
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     processed_xml_files: List[GeneratedXmlFile] = []
@@ -818,16 +839,15 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: BaseCha
 
     if any_errors:
         logger.error("One or more errors occurred during individual XML generation.")
+        state.subgraph_completion_status = "error"
         # Decide if this is a full stop error or if we can proceed with partial results
         # For now, let's flag it but allow the graph to potentially continue if some succeeded
         # state["is_error"] = True 
-        # state["error_message"] = "Errors occurred during XML generation for some nodes."
-        # state["dialog_state"] = "error" 
-        # Let graph builder decide based on number of successes vs failures perhaps
         pass # For now, just log and proceed to next state
 
     logger.info(f"Finished Step 2. Generated {len(processed_xml_files) - sum(1 for r in processed_xml_files if r.status=='failure')} XML files successfully.")
     state.dialog_state = "generating_xml_relation" # Corrected value to reflect readiness for next step
+    state.subgraph_completion_status = None # 修正：成功时不应是 needs_clarification
     return state
 
 # --- Helper function to prepare data for the relation XML prompt ---
@@ -917,6 +937,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         state.is_error = True
         state.error_message = "Parsed flow steps are missing for relation XML."
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     # If there are no parsed steps, or no generated XMLs, generate an empty relation XML.
@@ -939,6 +960,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
             state.is_error = True # Still an error if file write fails
             state.error_message = f"Failed to write empty relation XML: {e}"
             state.dialog_state = "error"
+            state.subgraph_completion_status = "error"
         return state
 
     try:
@@ -951,6 +973,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         state.is_error = True
         state.error_message = f"Failed to prepare data for relation XML: {e}"
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     if not simplified_flow_structure_with_ids: # Should be caught by earlier check on generated_node_xmls_list
@@ -966,12 +989,13 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
             with open(relation_file_path, "w", encoding="utf-8") as f:
                 f.write(state.relation_xml_content)
             state.relation_xml_path = str(relation_file_path)
-            logger.info(f"Wrote empty relation XML (after prep) to {relation_file_path}")
+            logger.info(f"Successfully wrote relation XML to {relation_file_path}. Content head: {state.relation_xml_content[:100]}")
          except IOError as e: # pragma: no cover
-            logger.error(f"Failed to write empty relation XML (after prep) to {relation_file_path}: {e}", exc_info=True)
+            logger.error(f"Failed to write relation XML to {relation_file_path}: {e}", exc_info=True)
             state.is_error = True
-            state.error_message = f"Failed to write empty relation XML (after prep): {e}"
+            state.error_message = f"Failed to write relation XML: {e}"
             state.dialog_state = "error"
+            state.subgraph_completion_status = "error"
          return state
 
     flow_structure_json_for_prompt = json.dumps(simplified_flow_structure_with_ids, indent=2)
@@ -996,6 +1020,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         state.is_error = True
         state.error_message = "Failed to load relation XML generation prompt."
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     user_message_for_llm = (
@@ -1016,6 +1041,8 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         state.is_error = True
         state.error_message = error_msg
         state.relation_xml_content = llm_response.get("text_output") 
+        state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
     
     generated_relation_xml_string = llm_response["text_output"].strip()
@@ -1042,6 +1069,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         state.error_message = error_msg
         state.relation_xml_content = generated_relation_xml_string
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     try:
@@ -1055,6 +1083,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         state.error_message = error_msg
         state.relation_xml_content = generated_relation_xml_string
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     state.relation_xml_content = generated_relation_xml_string
@@ -1067,15 +1096,17 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: BaseChatMo
         with open(relation_file_path, "w", encoding="utf-8") as f:
             f.write(state.relation_xml_content)
         state.relation_xml_path = str(relation_file_path)
-        logger.info(f"Successfully generated and wrote relation XML to {relation_file_path}")
+        logger.info(f"Successfully wrote relation XML to {relation_file_path}. Content head: {state.relation_xml_content[:100]}")
     except IOError as e: # pragma: no cover
         logger.error(f"Failed to write relation XML to {relation_file_path}: {e}", exc_info=True)
         state.is_error = True
         state.error_message = f"Failed to write relation XML: {e}"
         state.dialog_state = "error"
+        state.subgraph_completion_status = "error"
         return state
 
     state.dialog_state = "generating_xml_final" # Corrected value to reflect readiness for the final XML generation step
+    state.subgraph_completion_status = None # 修正：成功时不应是 needs_clarification
     return state
 
 # Ensure logger is available at the module level if not already defined

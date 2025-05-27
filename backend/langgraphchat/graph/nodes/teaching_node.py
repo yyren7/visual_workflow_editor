@@ -403,8 +403,43 @@ async def _invoke_llm_for_intent(llm: BaseChatModel, user_input: str, points_dat
         logger.error(f"Failed to parse extracted JSON string. Error: {e}. String attempted to parse: '{json_str_to_parse}'. Original LLM content: '{original_llm_content}'")
         return {"intent": "unclear_intent", "reason": f"LLM output was not valid JSON despite extraction attempts. Extracted part: '{json_str_to_parse}'. Raw output: '{original_llm_content}'"}
     except Exception as e:
-        logger.error(f"Error invoking LLM or processing response: {e}. Original LLM content (if available): '{original_llm_content}'")
-        return {"intent": "unclear_intent", "reason": "Error processing LLM response."}
+        logger.error(f"Error invoking LLM for teaching intent or parsing JSON: {e}. Raw content: '{original_llm_content}'")
+        return {"error": str(e), "intent": "error_parsing_llm_response", "raw_content": original_llm_content}
+
+async def _invoke_llm_for_polishing(
+    llm: BaseChatModel,
+    original_user_query: str,
+    step_a_analysis: str,
+    intermediate_results: str,
+    logger_object: logging.Logger # Pass logger for consistent logging
+) -> str:
+    """
+    Invokes an LLM to polish the raw intermediate results into a natural, user-facing response.
+    """
+    prompt_template = f"""原始用户问题:
+{original_user_query}
+
+已进行的分析和决策:
+{step_a_analysis}
+
+根据上述分析和决策，以及执行工具/查询后得到的初步结果如下:
+{intermediate_results}
+
+请根据以上所有信息，生成一个友好、简洁且直接回答原始用户问题的最终回复。
+确保最终回复是自然的对话式语言，并且只包含给用户的回复内容，不要包含任何额外解释或元数据。
+"""
+    
+    polishing_messages = [HumanMessage(content=prompt_template)]
+    
+    try:
+        response = await llm.ainvoke(polishing_messages)
+        polished_content = response.content.strip()
+        logger_object.info(f"Polished LLM response: {polished_content}")
+        return polished_content
+    except Exception as e:
+        logger_object.error(f"Error invoking LLM for polishing: {e}")
+        # Fallback to intermediate results if polishing fails
+        return f"处理出现错误，请查看原始信息：\n{intermediate_results}"
 
 
 # --- Main Node Logic ---
@@ -824,5 +859,22 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
             response_parts.append("\n当前，工作区中没有示教点文件或文件为空。")
 
     final_response_content = "\n".join(filter(None, response_parts))
-    logger.info(f"Teaching Node: Final response: '{final_response_content[:300]}...' AIMessage kwargs: {current_turn_aimessage_kwargs}")
-    return {"messages": [AIMessage(content=final_response_content, additional_kwargs=current_turn_aimessage_kwargs)]} 
+    
+    # --- 新增步骤 B: 调用LLM进行润色 ---
+    original_user_query = user_input_content # 来自 teaching_node 开头的 messages[-1].content
+    step_a_llm_analysis_details = llm_analysis.get("resolution_details", 
+                                                   f"意图: {intent}, 参数: {llm_analysis.get('parameters', {})}")
+    
+    logger.info(f"Teaching Node: Invoking LLM for polishing. Original query: '{original_user_query[:100]}...', Analysis: '{step_a_llm_analysis_details[:100]}...', Intermediate: '{final_response_content[:200]}...'")
+
+    polished_response_content = await _invoke_llm_for_polishing(
+        llm=llm,
+        original_user_query=original_user_query,
+        step_a_analysis=step_a_llm_analysis_details,
+        intermediate_results=final_response_content,
+        logger_object=logger # Pass the existing logger instance
+    )
+    # --- 步骤 B 结束 ---
+
+    logger.info(f"Teaching Node: Final polished response: '{polished_response_content[:300]}...' AIMessage kwargs: {current_turn_aimessage_kwargs}")
+    return {"messages": [AIMessage(content=polished_response_content, additional_kwargs=current_turn_aimessage_kwargs)]} 

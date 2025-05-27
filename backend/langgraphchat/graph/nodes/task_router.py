@@ -180,6 +180,18 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
     处理后会清除 state['user_request_for_router']。
     """
     logger.info("Task Router: Entered node.")
+
+    # 检查是否有预设的路由决策 (例如，在子图澄清循环中)
+    existing_route_decision = state.get("task_route_decision")
+    if existing_route_decision and state.get("subgraph_completion_status") == "needs_clarification":
+        logger.info(f"Task Router: Found existing route decision for clarification: {existing_route_decision.next_node}. Re-using it.")
+        # user_request_for_router 应该已经被 robot_flow_invoker_node 保留了
+        # subgraph_completion_status 也会被保留，直到 functional_node_router 清除它
+        return {
+            "task_route_decision": existing_route_decision, 
+            "user_request_for_router": state.get("user_request_for_router") # 确保原始请求被保留并传回
+        }
+
     user_input_to_process = state.get("user_request_for_router")
     
     effective_input_for_llm: str
@@ -207,7 +219,7 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
         route_decision: RouteDecision = await structured_llm.ainvoke(messages_for_llm_invocation)
         logger.info(f"Task Router: LLM decision: Intent='{route_decision.user_intent}', Next Node='{route_decision.next_node}'")
         
-        return {"task_route_decision": route_decision, "user_request_for_router": None}
+        return {"task_route_decision": route_decision, "user_request_for_router": None} # 仅在LLM调用成功时清除 user_request_for_router
 
     except Exception as e:
         logger.error(f"Task Router: Error invoking LLM or processing decision: {e}")

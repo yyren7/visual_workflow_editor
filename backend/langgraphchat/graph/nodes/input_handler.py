@@ -33,8 +33,12 @@ async def input_handler_node(state: AgentState) -> dict:
 
         if should_add_new_message:
             newly_added_message_for_operator_add = new_human_message
-            updated_state_dict["user_request_for_router"] = new_human_message.content
-            logger.info(f"Input handler: Prepared new HumanMessage for appending and set user_request_for_router: {new_human_message.content}")
+            # 只有在不是子图澄清的情况下，才将新输入设为 router 的请求
+            if state.get("subgraph_completion_status") != "needs_clarification":
+                updated_state_dict["user_request_for_router"] = new_human_message.content
+                logger.info(f"Input handler: Prepared new HumanMessage and set user_request_for_router: {new_human_message.content}")
+            else:
+                logger.info(f"Input handler: Subgraph needs clarification. New HumanMessage prepared, but user_request_for_router is preserved from previous state.")
         else:
             logger.info("Input handler: Input string matches last HumanMessage; not preparing for append.")
 
