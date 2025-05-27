@@ -30,9 +30,9 @@ PLANNER_EXAMPLES = """
 
 TEACHING_PRIORITY_RULES = """**重要：会话模式持续性与 teaching 节点优先**
 - 如果用户之前进行过示教点操作（即对话历史中最近的 AI 或用户消息与示教点相关），并且当前输入涉及点位、坐标、位置等相关内容，应优先路由到 teaching 节点。
-- **首要规则：当用户输入包含明确的"示教点相关名词"（如 "坐标/coordinate(s)", "点/point(s)", "位置/position", "示教点/teaching point", 或其具体名称如 "P1", "入口点"）与明确的"数据管理操作性动词"（如 "查询/query/get/tell me/what is/what are", "列出/list/show", "获取/fetch", "保存/save/record", "修改/update/change", "删除/delete/remove", "创建/create", "复制/copy", "拷贝/duplicate", "克隆/clone", "粘贴为新/paste as new"）的组合时，无论表达方式如何，均必须将 `next_node` 判断为 `teaching`。这类操作被视为对示教点数据的直接管理。此规则的优先级最高，除非用户明确表示要用这些点来构建一个序列化的机器人动作流程（此时应判断为 `planner`）。**
-- 特别注意代词引用："它们(them)"、"这些点(these points)"、"那些(those)"等，如果上下文中刚讨论过示教点，则后续操作通常指向 `teaching`。
-- 涉及坐标、位置、点位查询的模糊表达，优先考虑 teaching 节点。
+- **主要规则：当用户输入包含明确的"示教点相关名词"（如 "坐标/coordinate(s)", "点/point(s)", "位置/position", "示教点/teaching point", 或其具体名称如 "P1", "入口点"）与明确的"数据管理操作性动词"（如 "查询/query/get/tell me/what is/what are", "列出/list/show", "获取/fetch", "保存/save/record", "修改/update/change", "删除/delete/remove", "创建/create", "复制/copy", "拷贝/duplicate", "克隆/clone", "粘贴为新/paste as new"）的组合时，通常应将 `next_node` 判断为 `teaching`。这类操作被视为对示教点数据的直接管理。**此规则的优先级较高，但如果用户明确表示要用这些点来构建一个序列化的机器人动作流程（例如，包含"移动到"、"然后"、"执行"、"如果...就..."等流程性词汇），则应判断为 `planner`。**
+- 特别注意代词引用："它们(them)"、"这些点(these points)"、"那些(those)"等，如果上下文中刚讨论过示教点，并且当前操作是针对这些点的数据管理（如查询、修改），则后续操作倾向于 `teaching`。
+- 涉及坐标、位置、点位查询的模糊表达，请仔细判断上下文。如果用户似乎在管理数据，则倾向 `teaching`；如果似乎在构建流程，则倾向 `planner`。
 - 即使用户使用了"粘贴(paste)"这样的词，如果上下文明确指向的是用一个已有点位的数据创建一个新的点位，也应归类为 `teaching`。例如："复制点A，然后粘贴为一个新点B"。"""
 
 TEACHING_DESCRIPTION = """用户主要目的是查询、保存、修改、删除单个或多个已命名的坐标点 (示教点) 的信息，或者通过复制现有示教点信息来创建新的示教点。这包括坐标数据的查看和管理，而不是用它们来构建复杂流程。"""
@@ -79,7 +79,10 @@ END_SESSION_EXAMPLES = """
     例如："结束吧", "退出", "就这样了", "谢谢，再见"
 """
 
-REPHRASE_CONDITION = """如果用户的输入不属于以上定义的任何一种节点，或者意图不明确，无法根据节点描述清晰判断，请将任务分类为 **重新输入 (rephrase)**，并提示用户更清晰地描述他们的需求。"""
+REPHRASE_CONDITION = """如果用户的输入不属于以上定义的任何一种节点，或者意图不明确，无法根据节点描述清晰判断：
+1. 如果输入看起来像是一个问题或通用对话，但又不符合 'other_assistant' 的严格定义（即不涉及系统能力、使用方法或完全无关的闲聊），请先尝试判断为 'other_assistant'。
+2. 如果判断为 'other_assistant' 也不合适，或者输入确实非常模糊，请将任务分类为 **重新输入 (rephrase)**，并提示用户更清晰地描述他们的需求。
+避免在不确定的情况下默认路由到 'teaching'。"""
 
 FEW_SHOT_EXAMPLES = """**输入示例与预期输出（用于学习）：**
 
