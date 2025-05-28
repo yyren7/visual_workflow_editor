@@ -10,7 +10,7 @@ from langchain_core.language_models import BaseChatModel
 
 logger = logging.getLogger(__name__)
 
-TEACHING_POINTS_FILE = "/workspace/test_robot_flow_output_deepseek_interactive/teaching.yaml"
+TEACHING_POINTS_FILE = "backend/langgraphchat/synced_files/teaching.yaml"
 
 # --- Helper Data Structures ---
 POINT_FIELD_SCHEMA: Dict[str, Dict[str, Any]] = {

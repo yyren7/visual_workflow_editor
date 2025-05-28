@@ -6,28 +6,25 @@ load_dotenv() # 加载 .env 文件中的变量
 
 # 配置 - 从环境变量加载
 smb_host = os.getenv("SMB_HOST")
-smb_share = os.getenv("SMB_SHARE")
+smb_share_flow = os.getenv("SMB_SHARE_LLM")
+smb_share_config = os.getenv("SMB_SHARE_CONFIG")
 smb_user_domain = os.getenv("SMB_USER_DOMAIN")
 smb_username = os.getenv("SMB_USERNAME")
 smb_password = os.getenv("SMB_PASSWORD")
 
 # 检查是否所有必要的环境变量都已设置
-if not all([smb_host, smb_share, smb_user_domain, smb_username, smb_password]):
+if not all([smb_host, smb_share_flow, smb_share_config, smb_user_domain, smb_username, smb_password]):
     print("错误：一个或多个 SMB 配置环境变量未在 .env 文件中设置。")
     print("请确保 SMB_HOST, SMB_SHARE, SMB_USER_DOMAIN, SMB_USERNAME, SMB_PASSWORD 都已定义。")
     exit(1) # 如果配置不完整则退出
 
-local_download_dir = "/workspace/backend/tests/share_folder"
-files_to_download = ["auto.py", "flow.xml"]
+local_download_dir = "/workspace/backend/langgraphchat/synced_files"
+files_to_download = ["flow.xml"]
 
 # 完整 SMB 用户凭证，格式为 'DOMAIN\\username%password'
 # smb_credentials = f"{smb_user_domain}\\\\{smb_username}%{smb_password}" # 旧方式，注释掉
 smb_user_pass = f"{smb_username}%{smb_password}" # 新方式：用户名%密码
 smb_base_url = f"//{smb_host}/{smb_share}"
-
-# 新增：配置要上传的文件
-local_file_to_upload = "/workspace/backend/tests/conftest.py"
-remote_file_name_for_upload = "conftest.py" # 上传到共享目录的根，使用此文件名
 
 def download_files():
     # 创建本地目录（如果不存在）
@@ -153,4 +150,4 @@ if __name__ == "__main__":
 
     print("\n开始文件上传过程...")
     upload_file(local_file_to_upload, remote_file_name_for_upload)
-    print("文件上传过程结束。")
+    print("文件上传过程结束。") 
