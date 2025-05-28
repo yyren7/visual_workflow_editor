@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional
 # 不再需要UUID类型
 # from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Body, Response
 from sqlalchemy.orm import Session
 from backend.app import schemas, utils
 from database.models import Flow, FlowVariable, Chat
@@ -221,3 +221,51 @@ async def get_flow_last_chat_id(
             detail=f"获取最后聊天ID时出错: {str(e)}"
         )
 # --- End modify endpoint ---
+
+# --- 新增: 设置流程的最后交互聊天 ---
+@router.post("/{flow_id}/set_last_chat", status_code=status.HTTP_204_NO_CONTENT)
+async def set_flow_last_chat(
+    flow_id: str,
+    payload: schemas.SetLastChatRequest, # 使用定义的请求体模型
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user)
+):
+    """
+    设置指定流程图的最后交互聊天ID。
+    必须登录，并且只能操作自己的流程图。
+    """
+    logger.info(f"Attempting to set last interacted chat for flow: {flow_id} to chat: {payload.chat_id} for user: {current_user.id}")
+
+    # 1. 验证流程图所有权并获取流程对象
+    flow = verify_flow_ownership(flow_id, current_user, db)
+
+    # 2. 验证 chat_id 对应的聊天是否存在且属于该 flow
+    chat_to_set = db.query(Chat).filter(
+        Chat.id == payload.chat_id,
+        Chat.flow_id == flow_id # 确保聊天属于当前流程
+    ).first()
+
+    if not chat_to_set:
+        logger.warning(f"Chat ID {payload.chat_id} not found or does not belong to flow {flow_id} for user {current_user.id}.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Chat with id {payload.chat_id} not found for flow {flow_id}"
+        )
+
+    # 3. 更新流程的 last_interacted_chat_id
+    try:
+        flow.last_interacted_chat_id = payload.chat_id
+        db.add(flow) # 添加到会话以进行更新
+        db.commit()
+        db.refresh(flow) # 刷新以获取更新后的状态 (可选，但良好实践)
+        logger.info(f"Successfully set last interacted chat for flow {flow_id} to {payload.chat_id}")
+        # 对于 204 No Content，通常不返回任何响应体
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to set last interacted chat for flow {flow_id} to {payload.chat_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update the last interacted chat for the flow."
+        )
+# --- 结束新增 ---

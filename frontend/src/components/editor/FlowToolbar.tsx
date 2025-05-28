@@ -98,9 +98,9 @@ const FlowToolbar: React.FC<FlowToolbarProps> = ({
           <MenuItem onClick={() => { onToggleGlobalVarsPanel(); onToggleMenuClose(); }}>
             {globalVarsOpen ? t('flowEditor.closeGlobalVars') : t('flowEditor.openGlobalVars')}
           </MenuItem>
-          <MenuItem onClick={() => { onToggleChatPanel(); onToggleMenuClose(); }}>
-            {chatOpen ? t('flowEditor.closeChat') : t('flowEditor.openChat')}
-          </MenuItem>
+          {/* <MenuItem onClick={() => { onToggleChatPanel(); onToggleMenuClose(); }}> */}
+          {/* {chatOpen ? t('flowEditor.closeChat') : t('flowEditor.openChat')} */}
+          {/* </MenuItem> */}
         </Menu>
 
         <Tooltip title={t('flowEditor.addNode')}>

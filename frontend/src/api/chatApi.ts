@@ -220,6 +220,20 @@ export const chatApi = {
     return true; // Or handle response more specifically if needed
   },
 
+  // 更新：更新流程的最后活动聊天ID
+  updateLastActiveChatForFlow: async (flowId: string, chatId: string): Promise<void> => {
+    try {
+      // 路径 /flows/{flowId}/last_chat 返回405 (Method Not Allowed) for POST and PUT.
+      // 尝试一个更具动作性的路径，类似于 flowApi.ts 中的 setAsLastSelectedFlow (POST /flows/{flowId}/set-as-last-selected)
+      // 尝试 POST /flows/{flowId}/set_last_chat，请求体为 { chat_id: chatId }
+      await apiClient.post(`/flows/${flowId}/set_last_chat`, { chat_id: chatId });
+      console.log(`Updated last active chat for flow ${flowId} to ${chatId} via POST /flows/${flowId}/set_last_chat`);
+    } catch (error) {
+      console.error(`Failed to update last active chat for flow ${flowId} using POST /flows/${flowId}/set_last_chat:`, error);
+      // 保持之前的日志和错误处理
+    }
+  },
+
   // 编辑用户消息并截断后续消息, 然后触发 agent 响应流
   editUserMessage: (
     chatId: string,

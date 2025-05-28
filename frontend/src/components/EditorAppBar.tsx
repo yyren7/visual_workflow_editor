@@ -20,6 +20,7 @@ import LanguageSelector from './LanguageSelector';
 import { useTranslation } from 'react-i18next';
 import SaveIcon from '@mui/icons-material/Save';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ChatIcon from '@mui/icons-material/Chat';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale/zh-CN';
 import { enUS } from 'date-fns/locale/en-US';
@@ -33,10 +34,10 @@ interface EditorAppBarProps {
   onToggleGlobalVars: () => void;
   onToggleChat: () => void;
   onSelectFlowClick: () => void;
-  onLayoutClick: () => void;
   onLogout: () => void;
   isSaving?: boolean;
   lastSaveTime?: string | null;
+  chatOpen?: boolean;
 }
 
 // Helper to get locale for date-fns
@@ -55,10 +56,10 @@ const EditorAppBar: React.FC<EditorAppBarProps> = ({
   onToggleGlobalVars,
   onToggleChat,
   onSelectFlowClick,
-  onLayoutClick,
   onLogout,
   isSaving,
   lastSaveTime,
+  chatOpen,
 }) => {
   const { t, i18n } = useTranslation();
   const [localFlowName, setLocalFlowName] = useState<string>(flowName);
@@ -153,21 +154,12 @@ const EditorAppBar: React.FC<EditorAppBarProps> = ({
           <MenuItem onClick={() => handleToggleMenuAction(onToggleGlobalVars)}>
             {t('flowEditor.toggleGlobalVars')}
           </MenuItem>
-          <MenuItem onClick={() => handleToggleMenuAction(onToggleChat)}>
-            {t('flowEditor.toggleChat')}
-          </MenuItem>
         </Menu>
 
         <Tooltip title={t('flowEditor.addNode')}>
           <IconButton color="inherit" onClick={onToggleSidebar} size="small">
             <AddIcon />
           </IconButton>
-        </Tooltip>
-
-        <Tooltip title={t('flowEditor.autoLayout')}>
-             <IconButton color="inherit" onClick={onLayoutClick} size="small">
-                 <SortIcon />
-             </IconButton>
         </Tooltip>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -210,6 +202,11 @@ const EditorAppBar: React.FC<EditorAppBarProps> = ({
       {/* Right Side */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 0 }}>
         <LanguageSelector />
+        <Tooltip title={chatOpen ? t('flowEditor.closeChat') : t('flowEditor.openChat')}>
+          <IconButton color="inherit" onClick={onToggleChat} size="small">
+            <ChatIcon />
+          </IconButton>
+        </Tooltip>
         {isAuthenticated && (
           <>
             <IconButton color="inherit" onClick={handleMenuOpen} size="small">

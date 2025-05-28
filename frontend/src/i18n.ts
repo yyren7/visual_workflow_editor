@@ -230,7 +230,11 @@ const resources: Resource = {
       'nodeSelector.title': '可用节点',
       'nodeDrag.start': '开始拖拽节点',
       'nodeDrag.end': '结束拖拽节点',
-      'nodeDrag.hover': '拖拽至此处放置'
+      'nodeDrag.hover': '拖拽至此处放置',
+
+      // 聊天界面 (ChatPanel and ChatInterface specific)
+      'chatInterface.createNewChat': '新建聊天',
+      'chatInterface.downloadChat': '下载当前聊天'
     }
   },
   en: {
@@ -459,7 +463,11 @@ const resources: Resource = {
       'nodeSelector.title': 'Available Nodes',
       'nodeDrag.start': 'Started dragging node',
       'nodeDrag.end': 'Ended dragging node',
-      'nodeDrag.hover': 'Drop here to place'
+      'nodeDrag.hover': 'Drop here to place',
+
+      // Chat Interface (ChatPanel and ChatInterface specific)
+      'chatInterface.createNewChat': 'New Chat',
+      'chatInterface.downloadChat': 'Download Current Chat'
     }
   },
   ja: {
@@ -641,7 +649,11 @@ const resources: Resource = {
       'nodeSelector.title': '利用可能なノード',
       'nodeDrag.start': 'ノードのドラッグを開始しました',
       'nodeDrag.end': 'ノードのドラッグを終了しました',
-      'nodeDrag.hover': 'ここにドロップして配置'
+      'nodeDrag.hover': 'ここにドロップして配置',
+
+      // Chat Interface (ChatPanel and ChatInterface specific)
+      'chatInterface.createNewChat': '新規チャット',
+      'chatInterface.downloadChat': '現在のチャットをダウンロード'
     }
   }
 };

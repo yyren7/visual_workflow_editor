@@ -1,5 +1,5 @@
 // visual_workflow_editor/frontend/src/components/ChatInterface.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
   chatApi,
   JsonChatResponse,
@@ -9,7 +9,7 @@ import {
   OnChatCloseCallback,
 } from '../api/chatApi'; // 更新 chatApi 导入路径
 import { getLastChatIdForFlow } from '../api/flowApi'; // 更新 getLastChatIdForFlow 导入路径
-import { Message, Chat } from '../types'; // Assuming Chat type exists in types.ts
+import { Chat } from '../types'; // Assuming Chat type exists in types.ts
 import {
   Box, TextField, Button, Paper, Typography, CircularProgress,
   List, ListItem, ListItemButton, ListItemText, IconButton,
@@ -24,81 +24,88 @@ import {
   Check as CheckIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import { DisplayMessage, ChatInterfaceProps, ChatInterfaceHandle, ChatInteractionState } from './chat/chatTypes'; // Added import
+import { formatMessagesToMarkdown, downloadMarkdown } from './chat/chatUtils'; // Added import
+// import ChatListPanel from './chat/ChatListPanel'; // Removed import for ChatListPanel
+import ChatMessageArea from './chat/ChatMessageArea'; // Added import for ChatMessageArea
+import MessageInputBar from './chat/MessageInputBar'; // Added import for MessageInputBar
+import DeleteChatDialog from './chat/DeleteChatDialog'; // Added import for DeleteChatDialog
 
 // Interface for messages, updated for new event structure
-interface DisplayMessage extends Message {
-  type: 'text' | 'tool_status' | 'error'; // Refined types
-  isStreaming?: boolean; // Indicate if assistant text message is currently streaming
+// interface DisplayMessage extends Message {  // REMOVE THIS
+//   type: 'text' | 'tool_status' | 'error'; // Refined types
+//   isStreaming?: boolean; // Indicate if assistant text message is currently streaming
 
-  // Fields for tool status messages
-  toolName?: string;
-  toolInput?: any;
-  toolOutputSummary?: string;
-  toolStatus?: 'running' | 'completed' | 'error'; // Status of the tool call
-  toolErrorMessage?: string; // Specific error message for a tool failure
-}
+//   // Fields for tool status messages
+//   toolName?: string;
+//   toolInput?: any;
+//   toolOutputSummary?: string;
+//   toolStatus?: 'running' | 'completed' | 'error'; // Status of the tool call
+//   toolErrorMessage?: string; // Specific error message for a tool failure
+// }
 
-interface ChatInterfaceProps {
-  flowId: string | undefined;
-  // chatId prop is no longer needed to drive loading, flowId is the primary driver
-  // Keep onChatCreated for potential future use if needed, but primary interaction is within the component
-  onChatCreated?: (newChatId: string) => void;
-  onNodeSelect: (nodeId: string, position?: { x: number; y: number }) => void;
-}
+// interface ChatInterfaceProps { // REMOVE THIS
+//   flowId: string | undefined;
+//   // chatId prop is no longer needed to drive loading, flowId is the primary driver
+//   // Keep onChatCreated for potential future use if needed, but primary interaction is within the component
+//   onChatCreated?: (newChatId: string) => void;
+//   onNodeSelect: (nodeId: string, position?: { x: number; y: number }) => void;
+// }
 
-// Helper function to format messages to Markdown
-const formatMessagesToMarkdown = (messages: DisplayMessage[], chatName: string): string => {
-  let markdown = `# Chat History: ${chatName}\n\n`;
-  messages.forEach(message => {
-    const role = message.role.charAt(0).toUpperCase() + message.role.slice(1);
-    markdown += `## ${role}\n\n`;
-    // Remove specific handling for old 'tool_card' type
-    // if (message.type === 'tool_card' && message.toolInfo) {
-    //   markdown += `**[Tool Execution Card]**\n`;
-    //   markdown += `* Summary: ${message.toolInfo.summary || 'N/A'}\n`;
-    //   if (message.toolInfo.tool_calls_info) {
-    //     markdown += `* Calls: ${JSON.stringify(message.toolInfo.tool_calls_info)}\n`;
-    //   }
-    //   if (message.toolInfo.tool_results_info) {
-    //     markdown += `* Results: ${JSON.stringify(message.toolInfo.tool_results_info)}\n`;
-    //   }
-    //   if (message.toolInfo.error) {
-    //     markdown += `* Error: ${message.toolInfo.error}\n`;
-    //   }
-    //   markdown += `\n`;
-    // } else {
-    //   markdown += `${message.content}\n\n`;
-    // }
-    // Render base content (might need refinement for tool_status later)
-    if (message.type === 'tool_status') {
-         markdown += `**[Tool: ${message.toolName || 'Unknown'}]** - Status: ${message.toolStatus}${message.toolOutputSummary ? '\nOutput: ' + message.toolOutputSummary : ''}${message.toolErrorMessage ? '\nError: ' + message.toolErrorMessage : ''}\n\n`;
-    } else {
-         markdown += `${message.content}\n\n`;
-    }
-    markdown += `---\n\n`;
-  });
-  return markdown;
-};
+// Helper function to format messages to Markdown // REMOVE THIS
+// const formatMessagesToMarkdown = (messages: DisplayMessage[], chatName: string): string => {
+//   let markdown = `# Chat History: ${chatName}\n\n`;
+//   messages.forEach(message => {
+//     const role = message.role.charAt(0).toUpperCase() + message.role.slice(1);
+//     markdown += `## ${role}\n\n`;
+//     // Remove specific handling for old 'tool_card' type
+//     // if (message.type === 'tool_card' && message.toolInfo) {
+//     //   markdown += `**[Tool Execution Card]**\n`;
+//     //   markdown += `* Summary: ${message.toolInfo.summary || 'N/A'}\n`;
+//     //   if (message.toolInfo.tool_calls_info) {
+//     //     markdown += `* Calls: ${JSON.stringify(message.toolInfo.tool_calls_info)}\n`;
+//     //   }
+//     //   if (message.toolInfo.tool_results_info) {
+//     //     markdown += `* Results: ${JSON.stringify(message.toolInfo.tool_results_info)}\n`;
+//     //   }
+//     //   if (message.toolInfo.error) {
+//     //     markdown += `* Error: ${message.toolInfo.error}\n`;
+//     //   }
+//     //   markdown += `\n`;
+//     // } else {
+//     //   markdown += `${message.content}\n\n`;
+//     // }
+//     // Render base content (might need refinement for tool_status later)
+//     if (message.type === 'tool_status') {
+//          markdown += `**[Tool: ${message.toolName || 'Unknown'}]** - Status: ${message.toolStatus}${message.toolOutputSummary ? '\nOutput: ' + message.toolOutputSummary : ''}${message.toolErrorMessage ? '\nError: ' + message.toolErrorMessage : ''}\n\n`;
+//     } else {
+//          markdown += `${message.content}\n\n`;
+//     }
+//     markdown += `--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// };
 
-// Helper function to trigger download
-const downloadMarkdown = (markdownContent: string, filename: string) => {
-  const blob = new Blob([markdownContent], { type: 'text/markdown' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename.endsWith('.md') ? filename : `${filename}.md`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
+// Helper function to trigger download // REMOVE THIS
+// const downloadMarkdown = (markdownContent: string, filename: string) => {
+//   const blob = new Blob([markdownContent], { type: 'text/markdown' });
+//   const url = URL.createObjectURL(blob);
+//   const a = document.createElement('a');
+//   a.href = url;
+//   a.download = filename.endsWith('.md') ? filename : `${filename}.md`;
+//   document.body.appendChild(a);
+//   a.click();
+//   document.body.removeChild(a);
+//   URL.revokeObjectURL(url);
+// };
 
-
-const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  flowId,
-  onChatCreated,
-  onNodeSelect,
-}) => {
+const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>((
+  {
+    flowId,
+    onNodeSelect,
+    onActiveChatChange,
+    onChatInteractionStateChange,
+  },
+  ref
+) => {
   // --- State Variables ---
   const [chatList, setChatList] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -238,6 +245,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [activeChatId, fetchChatMessages]); // Rerun only when activeChatId changes
 
+  // Effect to inform parent about active chat name change
+  useEffect(() => {
+    if (onActiveChatChange) {
+      if (activeChatId) {
+        const currentChat = chatList.find(chat => chat.id === activeChatId);
+        onActiveChatChange(currentChat ? currentChat.name : null);
+      } else {
+        onActiveChatChange(null);
+      }
+    }
+  }, [activeChatId, chatList, onActiveChatChange]);
+
+  // Effect to inform parent about interaction states for buttons
+  useEffect(() => {
+    if (onChatInteractionStateChange) {
+      onChatInteractionStateChange({
+        isCreatingChat: isCreatingChat,
+        canDownload: !!activeChatId && messages.length > 0,
+      });
+    }
+  }, [isCreatingChat, activeChatId, messages, onChatInteractionStateChange]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -271,6 +299,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setActiveChatId(chatId);
       setIsRenamingChatId(null); // Cancel rename if a different chat is selected
       handleCancelEditMessage(); // <--- 在这里添加，取消编辑状态
+
+      // --- 新增：通知后端更新最后活动聊天 ---
+      if (flowId) {
+        chatApi.updateLastActiveChatForFlow(flowId, chatId)
+          .then(() => console.log(`Successfully updated last active chat to ${chatId} for flow ${flowId}`))
+          .catch(err => console.error(`Error updating last active chat for flow ${flowId}:`, err));
+      } else {
+        console.warn("Cannot update last active chat: flowId is undefined.");
+      }
+      // --- 结束新增 ---
     }
   };
 
@@ -292,9 +330,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // Refresh list and set new chat as active
       await fetchChatList(flowId); // Update the list
       setActiveChatId(newChat.id); // Select the new chat
-      if (onChatCreated) { // Optional: notify parent if needed
-        onChatCreated(newChat.id);
-      }
+      handleCancelEditMessage(); // <--- 添加此行以取消编辑状态
     } catch (err: any) {
       console.error('Failed to create new chat:', err);
       setError(`创建新聊天失败: ${err.message}`);
@@ -698,11 +734,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         closeEventSourceRef.current = null;
       }
       streamingAssistantMsgIdRef.current = null;
+      // Remove any streaming assistant messages as we are starting a new interaction flow
       setMessages(prev => prev.filter(msg => !(msg.isStreaming && msg.role === 'assistant')));
-      setInputMessage('');
+      setInputMessage(''); // Clear main input when starting edit
 
       setEditingMessageTimestamp(message.timestamp);
       setEditingMessageContent(message.content);
+
+      setTimeout(() => {
+        const messageElement = document.getElementById(`message-${message.timestamp}`);
+        if (messageElement) {
+          // Try to scroll the message being edited into view if it's not fully visible.
+          // 'nearest' will scroll only if it's not visible.
+          messageElement.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        }
+      }, 0);
     } else {
       console.warn("Cannot edit non-user message or message without timestamp/ID");
     }
@@ -944,338 +990,100 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const hasActiveChat = !!activeChatId;
   const inputDisabled = !hasActiveChat || isSending || isLoadingChat || isLoadingList || isCreatingChat;
 
-  const renderMessageContent = (message: DisplayMessage) => {
-    if (message.type === 'tool_status') {
-        return (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {message.toolStatus === 'running' && <CircularProgress size={16} />}
-                {message.toolStatus === 'completed' && <CheckIcon fontSize="small" color="success" />}
-                {message.toolStatus === 'error' && <CloseIcon fontSize="small" color="error" />}
-                <Typography variant="body2" component="span" sx={{ fontWeight: 'bold' }}>
-                  Tool: {message.toolName || 'Unknown Tool'}
-                </Typography>
-                <Typography variant="caption" component="span">
-                  ({message.toolStatus})
-                </Typography>
-              </Box>
-              {message.toolStatus === 'completed' && message.toolOutputSummary && (
-                <Typography variant="body2" sx={{ pl: 3, whiteSpace: 'pre-wrap' }}>
-                  Output: {message.toolOutputSummary}
-                </Typography>
-              )}
-               {message.toolStatus === 'error' && message.toolErrorMessage && (
-                <Typography variant="body2" color="error" sx={{ pl: 3, whiteSpace: 'pre-wrap' }}>
-                  Error: {message.toolErrorMessage}
-                </Typography>
-              )}
-            </Box>
-          );
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    createNewChat: handleCreateNewChat,
+    downloadActiveChat: handleDownloadChat,
+    getChatList: async () => {
+      if (flowId) {
+        return await fetchChatList(flowId);
+      }
+      return null;
+    },
+    renameChat: async (chatId: string, newName: string) => {
+      if (!newName.trim()) {
+        console.warn("Rename skipped: new name is empty.");
+        return;
+      }
+      const originalName = chatList.find(c => c.id === chatId)?.name;
+      setIsLoadingList(true);
+      try {
+        console.log(`[Imperative] Renaming chat ${chatId} to: ${newName.trim()}`);
+        await chatApi.updateChat(chatId, { name: newName.trim() });
+        await fetchChatList(flowId!);
+        console.log("[Imperative] Chat renamed successfully");
+      } catch (err: any) {
+        console.error(`[Imperative] Failed to rename chat ${chatId}:`, err);
+        setError(`重命名失败: ${err.message}`);
+      } finally {
+        setIsLoadingList(false);
+      }
+    },
+    deleteChat: async (chatId: string) => {
+      handleDeleteChat(chatId);
+    },
+    selectChat: (chatId: string) => {
+      handleSelectChat(chatId);
     }
-
-    if (message.type === 'error') {
-        return <Typography color="error">{message.content}</Typography>;
-    }
-
-    if (editingMessageTimestamp === message.timestamp) {
-      return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-          <TextField
-            fullWidth
-            multiline
-            value={editingMessageContent}
-            onChange={(e) => setEditingMessageContent(e.target.value)}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleConfirmEditMessage();
-              }
-              if (e.key === 'Escape') {
-                handleCancelEditMessage();
-              }
-            }}
-            sx={{ 
-              backgroundColor: 'white', 
-              borderRadius: '4px',
-              '.MuiInputBase-input': {
-                color: 'black',
-              }
-            }}
-          />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-            <Button size="small" variant="outlined" onClick={handleCancelEditMessage}>取消</Button>
-            <Button size="small" variant="contained" onClick={handleConfirmEditMessage} disabled={isSending}>
-              {isSending ? <CircularProgress size={20}/> : "保存"}
-            </Button>
-          </Box>
-        </Box>
-      );
-    }
-
-    const parts = message.content.split(/(\[Node: [a-zA-Z0-9_-]+\])/g);
-    return (
-        <>
-          {parts.map((part, index) => {
-            const match = part.match(/\[Node: ([a-zA-Z0-9_-]+)\]/);
-            if (match) {
-              const nodeId = match[1];
-              return (
-                <Button
-                  key={index}
-                  size="small"
-                  variant="text"
-                  onClick={() => onNodeSelect(nodeId)}
-                  sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline', textTransform: 'none', display: 'inline', lineHeight: 'inherit' }}
-                >
-                  (Node: {nodeId})
-                </Button>
-              );
-            }
-            return <span key={index} style={{ whiteSpace: 'pre-wrap'}}>{part}</span>;
-          })}
-          {message.isStreaming && message.type === 'text' && <CircularProgress size={12} sx={{ ml: 1, verticalAlign: 'middle' }} />}
-        </>
-      );
-  };
+  }));
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row', padding: 1, gap: 1, overflow: 'hidden' }}>
 
-      <Paper elevation={2} sx={{ width: '250px', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <Box sx={{ p: 1, display: 'flex', gap: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddCommentIcon />}
-            onClick={handleCreateNewChat}
-            disabled={!flowId || isCreatingChat || isLoadingList}
-            sx={{ flexGrow: 1 }}
-          >
-            {isCreatingChat ? <CircularProgress size={20} /> : "新建聊天"}
-          </Button>
-          <Tooltip title="下载当前聊天记录 (Markdown)">
-            <span>
-              <IconButton
-                size="small"
-                onClick={handleDownloadChat}
-                disabled={!activeChatId || messages.length === 0}
-                aria-label="下载聊天记录"
-              >
-                <DownloadIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-
-        <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
-          {isLoadingList && !chatList.length && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress /></Box>
-          )}
-          {!isLoadingList && chatList.length === 0 && (
-            <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>暂无聊天记录</Typography>
-          )}
-          {chatList.map((chat) => (
-            <ListItem
-              key={chat.id}
-              disablePadding
-              secondaryAction={isRenamingChatId === chat.id ? (
-                <>
-                  <IconButton edge="end" aria-label="确认重命名" size="small" onClick={() => handleConfirmRename(chat.id)}>
-                    <CheckIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton edge="end" aria-label="取消重命名" size="small" onClick={handleCancelRename}>
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </>
-              ) : (
-                <>
-                  <Tooltip title="重命名">
-                    <IconButton edge="end" aria-label="重命名" size="small" onClick={(e) => { e.stopPropagation(); handleStartRename(chat.id, chat.name); }}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="删除">
-                    <span>
-                      <IconButton
-                        edge="end"
-                        aria-label="删除"
-                        size="small"
-                        disabled={isDeletingChatId === chat.id}
-                        onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat.id); }}
-                      >
-                        {isDeletingChatId === chat.id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                </>
-              )}
-              sx={{ backgroundColor: activeChatId === chat.id ? 'action.selected' : 'inherit' }}
-            >
-              {isRenamingChatId === chat.id ? (
-                <Input
-                  value={renameInputValue}
-                  onChange={(e) => setRenameInputValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmRename(chat.id); else if (e.key === 'Escape') handleCancelRename(); }}
-                  autoFocus
-                  fullWidth
-                  disableUnderline
-                  sx={{ px: 2, py: 1 }}
-                />
-              ) : (
-                <ListItemButton onClick={() => handleSelectChat(chat.id)} dense>
-                  <ListItemText primary={chat.name} primaryTypographyProps={{ noWrap: true, title: chat.name }} />
-                </ListItemButton>
-              )}
-            </ListItem>
-          ))}
-        </List>
-        {error && <Typography color="error" variant="caption" sx={{ p: 1 }}>{error}</Typography>}
-      </Paper>
+      {/* ChatListPanel was here - Removed */}
+      {/* <ChatListPanel
+        chatList={chatList}
+        activeChatId={activeChatId}
+        isLoadingList={isLoadingList}
+        isCreatingChat={isCreatingChat}
+        isDeletingChatId={isDeletingChatId}
+        isRenamingChatId={isRenamingChatId}
+        error={error}
+        flowId={flowId}
+        onSelectChat={handleSelectChat}
+        onStartRename={handleStartRename}
+        onCancelRename={handleCancelRename}
+        onConfirmRename={handleConfirmRename}
+        onDeleteChat={handleDeleteChat}
+        renameInputValue={renameInputValue}
+        onRenameInputChange={setRenameInputValue}
+      /> */}
 
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        <Paper
-          elevation={2}
-          sx={{
-            flex: 1,
-            overflow: 'auto',
-            p: 2,
-            mb: 1,
-            backgroundColor: '#ffffff',
-            position: 'relative',
-            ...(!hasActiveChat && {
-              opacity: 0.6,
-            }),
-          }}
-        >
-          {isLoadingChat && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <CircularProgress />
-            </Box>
-          )}
-          {!isLoadingChat && !hasActiveChat && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', textAlign: 'center', p: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>请选择或创建聊天</Typography>
-              <Typography color="black">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
-            </Box>
-          )}
-          {!isLoadingChat && hasActiveChat && messages.length === 0 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <Typography color="black">开始对话吧！</Typography>
-            </Box>
-          )}
-          {!isLoadingChat && messages.length > 0 && messages.map((message) => (
-            <Box
-              key={message.timestamp}
-              sx={{
-                display: 'flex',
-                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-                mb: 1.5
-              }}
-            >
-              <Paper
-                elevation={1}
-                sx={{
-                  p: 1.5,
-                  borderRadius: '10px',
-                  bgcolor: message.role === 'user' ? 'primary.light' : 'grey.200',
-                  color: message.role === 'user' ? 'primary.contrastText' : 'black',
-                  maxWidth: '80%',
-                  wordWrap: 'break-word',
-                  whiteSpace: 'pre-wrap',
-                  position: 'relative',
-                }}
-              >
-                {renderMessageContent(message)}
-                {message.role === 'user' && 
-                 message.timestamp && 
-                 !message.timestamp.startsWith('user-edited-') &&
-                 !editingMessageTimestamp && (
-                  <Tooltip title="编辑此消息">
-                    <IconButton 
-                      size="small"
-                      onClick={() => handleStartEditMessage(message)}
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        color: 'primary.contrastText',
-                        backgroundColor: 'rgba(0,0,0,0.1)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(0,0,0,0.2)',
-                        }
-                      }}
-                    >
-                      <EditIcon fontSize="inherit" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Paper>
-            </Box>
-          ))}
-          <div ref={messagesEndRef} />
-        </Paper>
-
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, mt: 'auto', padding: '8px 0' }}>
-          <TextField
-            fullWidth
-            multiline
-            minRows={1}
-            maxRows={5}
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={hasActiveChat ? "输入消息 (Shift+Enter 换行)" : "请先选择一个聊天"}
-            disabled={inputDisabled || !!editingMessageTimestamp}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '20px',
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '20px',
-                padding: '10px 15px',
-                '& fieldset': { border: 'none' },
-              },
-              '& .MuiInputBase-input': {
-                color: 'black',
-              }
-            }}
-          />
-          <Button
-            variant="contained"
-            onClick={handleSendMessage}
-            disabled={inputDisabled || !inputMessage.trim()}
-            sx={{
-              minWidth: 'auto', padding: '10px', borderRadius: '50%', height: '48px', width: '48px',
-            }}
-            aria-label="发送消息"
-          >
-            {isSending ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
-          </Button>
-        </Box>
+        <ChatMessageArea
+          messages={messages}
+          activeChatId={activeChatId}
+          isLoadingChat={isLoadingChat}
+          editingMessageTimestamp={editingMessageTimestamp}
+          editingMessageContent={editingMessageContent}
+          isSending={isSending}
+          onNodeSelect={onNodeSelect}
+          onStartEditMessage={handleStartEditMessage}
+          onEditingContentChange={setEditingMessageContent}
+          onConfirmEditMessage={handleConfirmEditMessage}
+          onCancelEditMessage={handleCancelEditMessage}
+        />
+        
+        <MessageInputBar
+          inputMessage={inputMessage}
+          inputDisabled={inputDisabled}
+          isSending={isSending}
+          editingMessageTimestamp={editingMessageTimestamp}
+          onInputChange={setInputMessage}
+          onSendMessage={handleSendMessage}
+          onKeyPress={handleKeyPress}
+          hasActiveChat={hasActiveChat}
+        />
       </Box>
 
-      <Dialog
+      <DeleteChatDialog
         open={showDeleteConfirm}
         onClose={cancelDeleteChat}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"确认删除"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            你确定要删除这个聊天记录吗？此操作无法撤销。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cancelDeleteChat}>取消</Button>
-          <Button onClick={confirmDeleteChat} color="error" autoFocus>
-            删除
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirmDelete={confirmDeleteChat}
+      />
 
     </Box>
   );
-};
+});
 
 export default ChatInterface;

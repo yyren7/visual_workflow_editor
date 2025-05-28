@@ -136,3 +136,6 @@ class ChatMessageResponse(BaseModel):
 
 class LastChatResponse(BaseModel):
     chatId: Optional[str] = None
+
+class SetLastChatRequest(BaseModel):
+    chat_id: str

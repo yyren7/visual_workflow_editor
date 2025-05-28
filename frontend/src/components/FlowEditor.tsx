@@ -421,7 +421,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         flowName={flowName}
         onFlowNameChange={handleFlowNameChange}
         onSelectFlowClick={handleFlowSelect}
-        onLayoutClick={handleLayout}
         onToggleSidebar={toggleSidebar}
         onToggleGlobalVars={toggleGlobalVarsPanel}
         onToggleChat={toggleChatPanel}
@@ -429,12 +428,21 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         onLogout={logout}
         isSaving={isSaving}
         lastSaveTime={lastSaveTime}
+        chatOpen={chatOpen}
       />
 
       <Box sx={{ display: 'flex', flexGrow: 1, position: 'relative' }}>
         <NodeSelectorSidebar open={sidebarOpen} />
 
-        <Box sx={{ flexGrow: 1, height: '100%', position: 'relative' }} ref={reactFlowWrapper}>
+        <Box 
+          sx={{ 
+            flexGrow: 1, 
+            height: '100%', 
+            position: 'relative',
+            transition: 'margin-right 0.3s ease', // This transition might no longer be needed or could be adjusted
+          }} 
+          ref={reactFlowWrapper}
+        >
           {error && (
             <Alert severity="error" sx={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 11 }}>
               {t('flowEditor.errorLoadingFlow')}: {error}
@@ -488,9 +496,8 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         {chatOpen && currentFlowId && (
           <ChatPanel
             flowId={currentFlowId}
-          isOpen={chatOpen}
+            isOpen={chatOpen}
             onClose={toggleChatPanel}
-            initialPosition={chatPosition}
             onNodeSelect={handleNodeSelectFromChat}
           />
         )}

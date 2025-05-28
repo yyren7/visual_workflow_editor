@@ -351,56 +351,85 @@ async def _invoke_llm_for_polishing(
     llm: BaseChatModel,
     original_user_query: str,
     step_a_analysis: str,
-    intermediate_results: str,
-    generated_json_data_str: str,
+    intermediate_results_text: str,
+    generated_json_data_for_potential_inclusion: str,
+    intent: str,
     logger_object: logging.Logger
 ) -> str:
     """
-    Invokes an LLM to polish the raw intermediate results into a natural, user-facing response,
-    and appends a pre-generated JSON string if provided.
+    Invokes an LLM to polish the raw intermediate results into a natural, user-facing response.
+    The LLM also decides whether to include the provided JSON data based on the context and intent.
     """
-    natural_language_prompt_template = f"""原始用户问题:
-{original_user_query}
+    is_json_available = bool(
+        generated_json_data_for_potential_inclusion and
+        generated_json_data_for_potential_inclusion.strip() and
+        generated_json_data_for_potential_inclusion.strip() != '""'
+    )
+    logger_object.info(
+        f"Polishing: Intent='{intent}', Original Query='{original_user_query[:100]}...', "
+        f"JSON available for potential inclusion: {is_json_available}"
+    )
 
-已进行的分析和决策 (JSON格式):
-{step_a_analysis}
+    prompt_parts = [
+        f"原始用户问题:\n{original_user_query}\n",
+        f"你的初步分析和决策 (来自第一阶段的LLM输出 - JSON格式):\n{step_a_analysis}\n",
+        f"根据上述分析和你的内部处理，得到的初步文本结果如下:\n{intermediate_results_text}\n"
+    ]
 
-根据上述分析和决策，以及执行工具/查询后得到的初步结果如下:
-{intermediate_results}
+    json_data_to_consider_str = ""
+    json_was_valid_and_available = False
 
-请根据以上所有信息，生成一个友好、简洁且直接回答原始用户问题的【自然语言回复】。
-不要包含JSON代码块，除非用户明确要求纯JSON。专注于对话式的回复。
-例如："答案如下：..."， "好的，已经为您处理完成。"， "查询结果是：..."
-"""
+    if is_json_available:
+        try:
+            # Validate that it's proper JSON before presenting to LLM as such
+            json.loads(generated_json_data_for_potential_inclusion)
+            json_data_to_consider_str = generated_json_data_for_potential_inclusion
+            json_was_valid_and_available = True
+            prompt_parts.append(
+                f"以下是你的内部处理生成的详细JSON数据。你将决定是否将其包含在最终面向用户的回复中:\n"
+                f"```json\n{json_data_to_consider_str}\n```\n"
+            )
+        except json.JSONDecodeError:
+            logger_object.warning(
+                f"Polishing - provided generated_json_data was not valid JSON. "
+                f"Not including in prompt for LLM decision. Data: {generated_json_data_for_potential_inclusion[:100]}..."
+            )
+            prompt_parts.append("备注: 初步处理中生成了部分数据，但其格式非标准JSON，故不在此提供让你考虑是否包含的详细内容。\n")
+    else:
+        prompt_parts.append("备注: 初步处理中没有生成额外的详细JSON数据供你考虑是否包含。\n")
 
-    natural_language_response = ""
+    instruction_clauses = [
+        "1. 你的主要回复应该是自然语言，友好、简洁且直接回答原始用户问题。"
+    ]
+    if json_was_valid_and_available:
+        instruction_clauses.extend([
+            "2. 关于是否在你生成的自然语言回复之后附加上述详细JSON数据:",
+            f"    *   当前操作的意图是 '{intent}'.",
+            f"    *   **如果意图是列出多个项目 (例如，意图为 `list_points`，或者 `query_points` 且查询范围是 `all` 或 `all_named`)，并且你判断这些详细JSON数据对于普通用户可能过于冗长，或者你的自然语言总结已经足够清晰，那么请【不要】在你的回复中包含那些详细的JSON数据。**",
+            f"    *   在其他情况下 (例如，查询单个特定项目且JSON数据简短，或者用户可能需要复制粘贴这些数据，或者意图不是批量列举)，你可以将详细JSON数据包含在自然语言回复之后，使用标准的markdown JSON代码块 (```json ... ```)。",
+            f"    *   如果你决定包含JSON，请确保它是从上面提供给你的JSON数据中准确复制的，并正确包裹在 ```json ... ``` 中。"
+        ])
+    else:
+        instruction_clauses.append("2. 由于没有有效或相关的详细JSON数据提供，你的回复应仅包含自然语言部分。")
+    
+    instruction_clauses.append("\n请直接输出最终给用户的完整回复内容。不要添加任何额外的解释或对话标记，除非那是你最终回复的一部分。")
+
+    instruction_text = "\n任务:\n" + "\\n".join(instruction_clauses) # Ensure newlines are correctly formatted for the final prompt string
+    prompt_parts.append(instruction_text)
+    
+    final_prompt_for_llm = "\\n".join(prompt_parts)
+    logger_object.debug(f"Polishing - Final prompt for LLM:\n{final_prompt_for_llm}") # Changed to debug level for potentially long prompts
 
     try:
-        # 1. Generate Natural Language Response
-        nl_messages = [HumanMessage(content=natural_language_prompt_template)]
-        nl_llm_response = await llm.ainvoke(nl_messages)
-        natural_language_response = nl_llm_response.content.strip()
-        logger_object.info(f"Polishing - Natural Language LLM response: {natural_language_response}")
-
+        messages_for_llm = [HumanMessage(content=final_prompt_for_llm)]
+        llm_response = await llm.ainvoke(messages_for_llm)
+        polished_response = llm_response.content.strip()
+        logger_object.info(f"Polishing - LLM generated response: {polished_response[:300]}...")
+        return polished_response
     except Exception as e:
-        logger_object.error(f"Error invoking LLM for polishing natural language: {e}")
-        if not natural_language_response:
-             return f"处理自然语言回复时出现错误。原始信息：\\n{intermediate_results}"
-
-    # 3. Combine the responses
-    if generated_json_data_str and generated_json_data_str.strip() and generated_json_data_str.strip() != '""':
-        try:
-            final_polished_content = f"{natural_language_response}\\n\\n```json\\n{generated_json_data_str.strip()}\\n```"
-            logger_object.info(f"Polishing - Appended provided JSON string: {generated_json_data_str.strip()[:100]}...")
-        except json.JSONDecodeError as e:
-            logger_object.warning(f"Polishing - provided generated_json_data_str ('{generated_json_data_str.strip()[:100]}...') was not valid JSON: {e}. Not appending.")
-            final_polished_content = natural_language_response
-    else:
-        final_polished_content = natural_language_response
-        logger_object.info("Polishing - No valid provided JSON string to append or it was explicitly empty.")
-        
-    logger_object.info(f"Polishing - Combined final response: {final_polished_content[:300]}...")
-    return final_polished_content
+        logger_object.error(f"Error invoking LLM for polishing: {e}")
+        # Fallback to a simpler response if polishing LLM fails
+        return f"处理您的请求时遇到问题。初步结果是：\\n{intermediate_results_text}"
 
 
 # --- Main Node Logic ---
@@ -784,8 +813,9 @@ async def teaching_node(state: AgentState, llm: BaseChatModel, **kwargs) -> Dict
         llm=llm,
         original_user_query=user_input_content,
         step_a_analysis=step_a_analysis_str,
-        intermediate_results=final_response_content,
-        generated_json_data_str=generated_json_str_for_polishing, # MODIFIED: Pass the generated string
+        intermediate_results_text=final_response_content,
+        generated_json_data_for_potential_inclusion=generated_json_str_for_polishing,
+        intent=intent,
         logger_object=logger
     )
 
