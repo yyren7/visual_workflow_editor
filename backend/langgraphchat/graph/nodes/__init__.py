@@ -6,6 +6,8 @@ from .tool_executor import tool_node
 from .task_router import task_router_node
 from .teaching_node import teaching_node
 from .other_assistant_node import other_assistant_node
+from .rephrase_prompt_node import rephrase_prompt_node
+from .goodbye_node import handle_goodbye_node
 
 __all__ = [
     "input_handler_node",
@@ -14,4 +16,6 @@ __all__ = [
     "task_router_node",
     "teaching_node",
     "other_assistant_node",
+    "rephrase_prompt_node",
+    "handle_goodbye_node",
 ] 

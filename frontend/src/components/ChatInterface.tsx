@@ -270,6 +270,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log("Selecting chat:", chatId);
       setActiveChatId(chatId);
       setIsRenamingChatId(null); // Cancel rename if a different chat is selected
+      handleCancelEditMessage(); // <--- 在这里添加，取消编辑状态
     }
   };
 
@@ -343,47 +344,46 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const handleChatEvent: OnChatEventCallback = (event) => {
       console.log("Received SSE Event:", JSON.stringify(event)); // 保持这个日志用于调试
 
-      // If it's a stream_end event, capture the ID *now*, before the setMessages callback is even queued or executed.
       let capturedStreamEndId: string | null = null;
       if (event.type === 'stream_end') {
         capturedStreamEndId = streamingAssistantMsgIdRef.current;
-        console.log(`[ChatInterface stream_end event] Captured streamingAssistantMsgIdRef: ${capturedStreamEndId}`); // Diagnostic log
+        console.log(`[ChatInterface stream_end event] Captured streamingAssistantMsgIdRef: ${capturedStreamEndId}`);
       }
 
       setMessages(prevMessages => {
-        // const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
-        const newMessages = [...prevMessages]; // Create mutable copy
+        const newMessages = [...prevMessages];
         const currentStreamingMsgIndex = newMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current && msg.type === 'text');
-        // console.log("Found streaming index:", currentStreamingMsgIndex);
-
-        // if (currentStreamingMsgIndex === -1 && event.type !== 'final_result' && event.type !== 'error') {
-        //   console.warn(`Received event type ${event.type} but no streaming message ref found.`);
-        //   return prevMessages;
-        // }
-        // Allow events even if no streaming message ref exists yet (e.g., first token or tool call)
-
-        // const newMessages = [...prevMessages];
 
         switch (event.type) {
+          case 'user_message_saved':
+            const { client_message_id, server_message_timestamp, content: userContent } = event.data as { client_message_id: string, server_message_timestamp: string, content: string };
+            const userMsgIndex = newMessages.findIndex(msg => msg.timestamp === client_message_id && msg.role === 'user');
+            if (userMsgIndex !== -1) {
+              newMessages[userMsgIndex] = {
+                ...newMessages[userMsgIndex],
+                timestamp: server_message_timestamp,
+              };
+              console.log(`[ChatInterface] User message timestamp updated: ${client_message_id} -> ${server_message_timestamp}`);
+            } else {
+              console.warn(`[ChatInterface] Received user_message_saved for ${client_message_id} but not found in UI.`);
+            }
+            break;
           case 'token':
             const token = event.data;
-            // Capture ref value before async update
             const currentStreamingId = streamingAssistantMsgIdRef.current;
             const streamingMsgIndex = newMessages.findIndex(msg => msg.timestamp === currentStreamingId && msg.type === 'text');
 
             if (streamingMsgIndex !== -1) {
-              // Append token to existing streaming message
               newMessages[streamingMsgIndex] = {
                 ...newMessages[streamingMsgIndex],
                 content: newMessages[streamingMsgIndex].content + token,
-                isStreaming: true, // Keep streaming flag
+                isStreaming: true,
               };
             } else {
-              // If no streaming message exists, create it ONLY if token is not empty
               if (token) {
                 const assistantMessageId = currentStreamingId || `assistant-${Date.now()}`;
                 if (!currentStreamingId) {
-                    streamingAssistantMsgIdRef.current = assistantMessageId; // Update ref if it was null
+                    streamingAssistantMsgIdRef.current = assistantMessageId;
                 }
                 newMessages.push({
                   role: 'assistant',
@@ -397,34 +397,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }
             }
             break;
-
-          // case 'final_result': // Removed
-          //    const finalData = event.data;
-          //    ...
-          //   break;
           case 'tool_start':
-            // Insert a new message indicating the tool call is starting
             const toolStartMsgId = `tool-${event.data.name}-${Date.now()}`;
             const toolStartMessage: DisplayMessage = {
-                 role: 'assistant', // Rendered as assistant message for flow
-                 content: '', // No main text content
+                 role: 'assistant',
+                 content: '',
                  timestamp: toolStartMsgId,
                  type: 'tool_status',
                  toolName: event.data.name,
                  toolInput: event.data.input,
                  toolStatus: 'running',
-                 isStreaming: false, // This message itself isn't streaming text
+                 isStreaming: false,
             };
-            // Insert *before* the current text streaming message if it exists
             if (currentStreamingMsgIndex !== -1) {
                 newMessages.splice(currentStreamingMsgIndex, 0, toolStartMessage);
             } else {
-                newMessages.push(toolStartMessage); // Append if no text stream yet
+                newMessages.push(toolStartMessage);
             }
             break;
-
           case 'tool_end':
-            // Find the *last* running tool message with the matching name
             const toolEndMsgIndex = newMessages.findLastIndex(msg =>
                 msg.type === 'tool_status' &&
                 msg.toolName === event.data.name &&
@@ -438,7 +429,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               };
             } else {
                  console.warn(`Received tool_end for ${event.data.name} but no matching running tool message found.`);
-                 // Optionally add a new completed tool message as fallback?
                  const toolEndFallback: DisplayMessage = {
                      role: 'assistant',
                      content: '',
@@ -456,10 +446,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                  }
             }
             break;
-
           case 'stream_end':
-            // 'newMessages' is from the outer 'setMessages' scope: const newMessages = [...prevMessages];
-            // 'capturedStreamEndId' was captured when the 'stream_end' event first arrived.
             const finishedMsgIndex = newMessages.findIndex(msg => msg.timestamp === capturedStreamEndId);
 
             if (finishedMsgIndex !== -1) {
@@ -468,16 +455,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 isStreaming: false
               };
               console.log(`[ChatInterface stream_end] Marked message with ID '${capturedStreamEndId}' as not streaming.`);
-            } else { // finishedMsgIndex === -1, meaning message with capturedStreamEndId was not found
+            } else {
               if (capturedStreamEndId) {
-                // The ref had a value, but it wasn't found in the messages array.
                 console.warn(`[ChatInterface stream_end] Message with ref ID '${capturedStreamEndId}' not found. Attempting to mark last streaming assistant message.`);
               } else {
-                // The ref was already null when the stream_end event was initially processed.
                 console.warn("[ChatInterface stream_end] Streaming message reference was already null when 'stream_end' event was received. Attempting to mark last streaming assistant message.");
               }
 
-              // Attempt to find and mark the absolutely last assistant message that is still marked as streaming.
               const lastStreamingAssistantMsgIndex = newMessages.findLastIndex(msg =>
                 msg.role === 'assistant' && msg.isStreaming === true
               );
@@ -489,15 +473,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 console.log("[ChatInterface stream_end] No specific message by ref found, and no other streaming assistant message was found to mark as finished.");
               }
             }
-            break; // Break from switch
+            break;
           case 'error':
-            console.error("Received error event:", event.data); // Log the full data object
+            console.error("Received error event:", event.data);
             const errorData = event.data;
             const errorMessage = `错误 (阶段: ${errorData.stage || '未知'}): ${errorData.message}`;
-            setError(errorMessage); // Set global error state
+            setError(errorMessage);
 
             if (errorData.tool_name) {
-                // Find the running tool message to mark as error
                 const toolErrorMsgIndex = newMessages.findLastIndex(msg =>
                     msg.type === 'tool_status' &&
                     msg.toolName === errorData.tool_name &&
@@ -507,11 +490,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     newMessages[toolErrorMsgIndex] = {
                         ...newMessages[toolErrorMsgIndex],
                         toolStatus: 'error',
-                        toolErrorMessage: errorData.message, // Store specific message
+                        toolErrorMessage: errorData.message,
                     };
                 } else {
                      console.warn(`Received tool error for ${errorData.tool_name} but no matching running tool message found.`);
-                     // Add a generic error message instead
                      if (currentStreamingMsgIndex !== -1) {
                         newMessages[currentStreamingMsgIndex] = {
                            ...newMessages[currentStreamingMsgIndex],
@@ -519,28 +501,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                            isStreaming: false,
                         };
                      } else {
-                         // Add a new error message block if no streaming message
                          const errorMsgId = streamingAssistantMsgIdRef.current || `error-${Date.now()}`;
                          if (!streamingAssistantMsgIdRef.current) {
-                             streamingAssistantMsgIdRef.current = errorMsgId; // Use ref for consistency
+                             streamingAssistantMsgIdRef.current = errorMsgId;
                          }
                          newMessages.push({
-                             role: 'assistant', // Render as assistant
+                             role: 'assistant',
                              content: errorMessage,
                              timestamp: errorMsgId,
-                             type: 'error', // Use specific error type
+                             type: 'error',
                              isStreaming: false,
                          });
                      }
                 }
             } else {
-                 // General error, append to streaming message or add new one
                  if (currentStreamingMsgIndex !== -1) {
                    newMessages[currentStreamingMsgIndex] = {
                      ...newMessages[currentStreamingMsgIndex],
                      content: newMessages[currentStreamingMsgIndex].content + `\n\n${errorMessage}`,
-                     isStreaming: false, // Stop streaming on error
-                     type: 'error' // Mark message as error type? Or keep text?
+                     isStreaming: false,
+                     type: 'error'
                    };
                  } else {
                      const errorMsgId = streamingAssistantMsgIdRef.current || `error-${Date.now()}`;
@@ -556,14 +536,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                      });
                  }
             }
-            setIsSending(false); // Stop sending indicator on error
-            // No need to clear ref here, handleChatClose does it
+            setIsSending(false);
             break;
           case 'ping':
              console.log("Received ping event from server.");
              break;
           default:
-            // Use exhaustiveness check helper if possible, or log warning
             console.warn("Received unknown event type:", event);
         }
         return newMessages;
@@ -574,7 +552,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.error("Chat API Error:", error);
       const errorMessage = error.message || "与服务器的连接出错";
       setError(errorMessage);
-      // 更新可能存在的占位符以显示错误
       setMessages(prevMessages => {
         const currentStreamingMsgIndex = prevMessages.findIndex(msg => msg.timestamp === streamingAssistantMsgIdRef.current);
         if (currentStreamingMsgIndex !== -1) {
@@ -586,25 +563,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           };
           return newMessages;
         }
-        // 如果没有占位符，可能需要添加新的错误消息，或者仅依赖全局错误状态
         return prevMessages;
       });
       setIsSending(false);
-      // streamingAssistantMsgIdRef.current = null; // <-- 移除（或确认不存在）
     };
 
     const handleChatClose: OnChatCloseCallback = () => {
-      console.log("Chat EventSource closed."); // 保持这个日志
-      // No longer need to update isStreaming here, stream_end handles it.
-      // setMessages(prevMessages => { ... }); 
+      console.log("Chat EventSource closed.");
       setIsSending(false); 
-      streamingAssistantMsgIdRef.current = null; // <-- **在这里清除 Ref**
+      streamingAssistantMsgIdRef.current = null;
       closeEventSourceRef.current = null; 
     };
 
     // --- 调用新的 API ---
-    if (activeChatId) { // 再次确认 activeChatId 存在
-      // 保存关闭函数
+    if (activeChatId) {
       closeEventSourceRef.current = chatApi.sendMessage(
         activeChatId,
         messageToSend,
@@ -616,7 +588,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.error("Cannot send message, activeChatId is null");
       setError("无法发送消息，没有活动的聊天。");
       setIsSending(false);
-      // 清理可能已添加的占位符
       setMessages(prev => prev.filter(msg => msg.timestamp !== assistantMessageId));
     }
   };
@@ -638,7 +609,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     try {
       const markdown = formatMessagesToMarkdown(messages, chatName);
       downloadMarkdown(markdown, `${chatName}.md`);
-      setError(null); // Clear previous errors
+      setError(null);
     } catch (err: any) {
       console.error('Failed to download chat:', err);
       setError(`下载聊天记录失败: ${err.message}`);
@@ -658,34 +629,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleConfirmRename = async (chatId: string) => {
     if (!renameInputValue.trim() || renameInputValue.trim() === chatList.find(c => c.id === chatId)?.name) {
-      handleCancelRename(); // Cancel if name is empty or unchanged
+      handleCancelRename();
       return;
     }
-    const originalName = chatList.find(c => c.id === chatId)?.name; // Store original name for potential revert
-    setIsLoadingList(true); // Indicate activity
+    const originalName = chatList.find(c => c.id === chatId)?.name;
+    setIsLoadingList(true);
     try {
       console.log(`Renaming chat ${chatId} to: ${renameInputValue.trim()}`);
-      // Optimistic UI update (optional but can feel snappier)
       setChatList(prevList => prevList.map(chat =>
         chat.id === chatId ? { ...chat, name: renameInputValue.trim() } : chat
       ));
 
       await chatApi.updateChat(chatId, { name: renameInputValue.trim() });
-      // Refresh the list from the server to get the confirmed state
-      await fetchChatList(flowId!); // Assert flowId exists here
+      await fetchChatList(flowId!);
       console.log("Chat renamed successfully");
-      handleCancelRename(); // Close input field
+      handleCancelRename();
     } catch (err: any) {
       console.error(`Failed to rename chat ${chatId}:`, err);
       setError(`重命名失败: ${err.message}`);
-      // Revert optimistic update if it was implemented
       setChatList(prevList => prevList.map(chat =>
-        chat.id === chatId ? { ...chat, name: originalName || chat.name } : chat // 使用 originalName 回滚
+        chat.id === chatId ? { ...chat, name: originalName || chat.name } : chat
       ));
-      setIsLoadingList(false); // Ensure loading indicator is off on error
-    } finally {
-      // fetchChatList sets isLoadingList to false
-      // setIsLoadingList(false); // Set loading false if not using optimistic update
+      setIsLoadingList(false);
     }
   };
 
@@ -698,19 +663,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const confirmDeleteChat = async () => {
     if (!chatToDelete || !flowId) return;
     setShowDeleteConfirm(false);
-    setIsDeletingChatId(chatToDelete); // Indicate which item is being deleted
+    setIsDeletingChatId(chatToDelete);
     setError(null);
     try {
       console.log(`Deleting chat ${chatToDelete}`);
       await chatApi.deleteChat(chatToDelete);
       console.log("Chat deleted successfully");
 
-      // Clear active chat if it was the one deleted
       if (activeChatId === chatToDelete) {
         setActiveChatId(null);
         setMessages([]);
       }
-      // Refresh the chat list
       await fetchChatList(flowId);
 
     } catch (err: any) {
@@ -727,20 +690,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setChatToDelete(null);
   };
 
-  // --- 编辑消息处理函数 (更新版本) ---
   const handleStartEditMessage = (message: DisplayMessage) => {
     if (message.role === 'user' && message.timestamp) {
-      // --- 关闭任何正在进行的流 --- 
       if (closeEventSourceRef.current) {
         console.log("Starting edit: Closing previous EventSource.");
         closeEventSourceRef.current();
         closeEventSourceRef.current = null;
       }
-      // --- 清理流式助手消息引用 --- 
       streamingAssistantMsgIdRef.current = null;
-      // --- 移除任何流式占位符 ---
       setMessages(prev => prev.filter(msg => !(msg.isStreaming && msg.role === 'assistant')));
-      setInputMessage(''); // <--- 清空主输入框
+      setInputMessage('');
 
       setEditingMessageTimestamp(message.timestamp);
       setEditingMessageContent(message.content);
@@ -755,36 +714,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleConfirmEditMessage = async () => {
-    const originalMessageTimestampToEdit = editingMessageTimestamp; // Capture before clearing state
+    const originalMessageTimestampToEdit = editingMessageTimestamp;
     if (!originalMessageTimestampToEdit || !activeChatId || !flowId) {
         console.warn("handleConfirmEditMessage: Missing required IDs or content.");
         return;
     }
 
-    // --- 先关闭可能存在的旧连接 (以防万一) ---
     if (closeEventSourceRef.current) {
       console.log("Confirming edit: Closing previous EventSource first (safety).", closeEventSourceRef.current);
       closeEventSourceRef.current();
       closeEventSourceRef.current = null;
     }
-    // -----------------------------
 
     setIsSending(true); 
     setError(null);
     
-    const editedContent = editingMessageContent; // Capture before clearing editingMessageContent
+    const editedContent = editingMessageContent;
 
-    // 1. 更新UI: 立即移除正在编辑的消息及其之后的所有消息，然后添加编辑后的用户消息。
-    //    这样用户会立刻看到编辑的结果。后续AI的回复将通过SSE流入。
     setMessages(prevMessages => {
         const editMsgIndex = prevMessages.findIndex(msg => msg.timestamp === originalMessageTimestampToEdit);
         if (editMsgIndex === -1) {
             console.warn("Could not find message to edit in current UI state. Aborting UI update for edit.");
-            return prevMessages; // Or handle error more gracefully
+            return prevMessages;
         }
-        // 保留编辑点之前的所有消息
         const newMessages = prevMessages.slice(0, editMsgIndex);
-        // 添加编辑后的用户消息 (用新的临时时间戳以避免key冲突，后端会生成真实的)
         newMessages.push({
             role: 'user',
             content: editedContent,
@@ -794,13 +747,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         return newMessages;
     });
 
-    // 2. 清理编辑状态
     setEditingMessageTimestamp(null);
     setEditingMessageContent("");
 
-    // 3. 添加AI助手消息的占位符 (与 handleSendMessage 类似)
     const assistantMessageId = `assistant-after-edit-${Date.now()}`;
-    streamingAssistantMsgIdRef.current = assistantMessageId; // 更新流式消息ID的引用
+    streamingAssistantMsgIdRef.current = assistantMessageId;
     const assistantPlaceholder: DisplayMessage = {
       role: 'assistant',
       content: '', 
@@ -808,10 +759,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       type: 'text',
       isStreaming: true 
     };
-    setMessages(prev => [...prev, assistantPlaceholder]); // Append placeholder to the new message list
+    setMessages(prev => [...prev, assistantPlaceholder]);
 
-    // 4. 定义 SSE 回调 (这些回调与 handleSendMessage 中的回调几乎完全相同)
-    //    可以考虑将这些回调提取到 ChatInterface 组件的顶层作用域，如果它们完全一样的话。
     const handleChatEvent: OnChatEventCallback = (event) => {
       console.log("Received SSE Event (after edit):", JSON.stringify(event));
       let capturedStreamEndId: string | null = null;
@@ -914,18 +863,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           case 'ping':
              console.log("Received ping event from server (after edit).");
              break;
-           // Handling 'custom_edit_complete_no_sse' from chatApi if backend PUT doesn't return 202
-           // This case assumes the API directly returned the updated Chat object.
-           case 'custom_edit_complete_no_sse' as any: // Type assertion for custom event
+           case 'custom_edit_complete_no_sse' as any:
                 console.log("Edit complete (no SSE), attempting to refresh chat messages from API response data.");
-                const chatDataFromApi = event.data as Chat; // Assuming event.data is the Chat object
+                const chatDataFromApi = event.data as Chat;
                 const displayMessages = (chatDataFromApi.chat_data?.messages || []).map((msg): DisplayMessage => ({
                     ...msg,
                     type: 'text' 
                 }));
                 setIsSending(false);
-                streamingAssistantMsgIdRef.current = null; // No stream happened
-                // Directly set messages, then remove the placeholder as no streaming will occur
+                streamingAssistantMsgIdRef.current = null;
                 return displayMessages.filter(msg => msg.timestamp !== assistantPlaceholder.timestamp);
 
           default:
@@ -961,57 +907,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       streamingAssistantMsgIdRef.current = null; 
       closeEventSourceRef.current = null; 
 
-      // NEW: Fetch updated messages to reflect permanent timestamp for edited message
       if (activeChatId) {
         fetchChatMessages(activeChatId);
       }
     };
     
-    // 5. 调用 API
     if (activeChatId) { 
         if (originalMessageTimestampToEdit && originalMessageTimestampToEdit.startsWith('user-edited-')) {
             console.error("[ChatInterface] CRITICAL: Attempting to call editUserMessage with a temporary UI timestamp:", originalMessageTimestampToEdit);
             setError("编辑错误：内部时间戳问题，请重试。");
             setIsSending(false);
-            // Clean up placeholder if it was added
-            const assistantMessageId = streamingAssistantMsgIdRef.current; // Get current ref before clearing
+            const assistantMessageId = streamingAssistantMsgIdRef.current;
             if (assistantMessageId) {
                  setMessages(prev => prev.filter(msg => msg.timestamp !== assistantMessageId));
             }
-            streamingAssistantMsgIdRef.current = null; // Clear ref as well
+            streamingAssistantMsgIdRef.current = null;
             return; 
         }
         console.log("[ChatInterface] Calling chatApi.editUserMessage with timestamp:", originalMessageTimestampToEdit, "and content:", editedContent);
         closeEventSourceRef.current = chatApi.editUserMessage(
             activeChatId,
-            originalMessageTimestampToEdit, // Use the original timestamp for the PUT request
-            editedContent, // The new content from the input field
-            handleChatEvent, // Standard SSE event handler
-            handleChatError, // Standard SSE error handler
-            handleChatClose  // Standard SSE close handler
+            originalMessageTimestampToEdit,
+            editedContent,
+            handleChatEvent,
+            handleChatError,
+            handleChatClose
         );
     } else {
         console.error("Cannot confirm edit, activeChatId is null after UI updates.");
         setError("无法编辑消息，没有活动的聊天会话。");
         setIsSending(false);
-        // Clean up placeholder if API call wasn't made
         setMessages(prev => prev.filter(msg => msg.timestamp !== assistantPlaceholder.timestamp));
     }
   };
-  // --- 结束新增 ---
 
-  // --- Render Logic ---
   const hasActiveChat = !!activeChatId;
   const inputDisabled = !hasActiveChat || isSending || isLoadingChat || isLoadingList || isCreatingChat;
 
-  // --- Rendering Logic (Needs update for clickable nodes) ---
-  // --- Rendering Logic (Updated for tool_status) ---
   const renderMessageContent = (message: DisplayMessage) => {
-    // Ensure old 'tool_card' logic is completely removed
-    // if (message.type === 'tool_card' && message.toolInfo) { ... }
-
     if (message.type === 'tool_status') {
-        // ... (rendering logic for tool_status remains the same as previous edit) ...
         return (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1040,11 +974,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
 
     if (message.type === 'error') {
-        // ... (rendering logic for error remains the same) ...
         return <Typography color="error">{message.content}</Typography>;
     }
 
-    // --- 新增：处理正在编辑的消息 ---
     if (editingMessageTimestamp === message.timestamp) {
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
@@ -1067,7 +999,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               backgroundColor: 'white', 
               borderRadius: '4px',
               '.MuiInputBase-input': {
-                color: 'black', // 确保文本颜色为黑色
+                color: 'black',
               }
             }}
           />
@@ -1080,10 +1012,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </Box>
       );
     }
-    // --- 结束新增 ---
 
-    // Default to text rendering logic
-    // ... (rendering logic for text remains the same) ...
     const parts = message.content.split(/(\[Node: [a-zA-Z0-9_-]+\])/g);
     return (
         <>
@@ -1113,9 +1042,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row', padding: 1, gap: 1, overflow: 'hidden' }}>
 
-      {/* --- Chat List Sidebar (Left) --- */}
       <Paper elevation={2} sx={{ width: '250px', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        {/* Sidebar Header Buttons */}
         <Box sx={{ p: 1, display: 'flex', gap: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Button
             variant="outlined"
@@ -1128,7 +1055,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {isCreatingChat ? <CircularProgress size={20} /> : "新建聊天"}
           </Button>
           <Tooltip title="下载当前聊天记录 (Markdown)">
-            <span> {/* Span needed for tooltip when button is disabled */}
+            <span>
               <IconButton
                 size="small"
                 onClick={handleDownloadChat}
@@ -1141,9 +1068,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </Tooltip>
         </Box>
 
-        {/* Chat List */}
         <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
-          {isLoadingList && !chatList.length && ( // Show loader only if list is truly empty initially
+          {isLoadingList && !chatList.length && (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress /></Box>
           )}
           {!isLoadingList && chatList.length === 0 && (
@@ -1170,7 +1096,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="删除">
-                    <span> {/* Span needed when button is potentially disabled by isDeletingChatId */}
+                    <span>
                       <IconButton
                         edge="end"
                         aria-label="删除"
@@ -1207,9 +1133,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {error && <Typography color="error" variant="caption" sx={{ p: 1 }}>{error}</Typography>}
       </Paper>
 
-      {/* --- Main Chat Area (Right) --- */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        {/* Messages Area */}
         <Paper
           elevation={2}
           sx={{
@@ -1242,7 +1166,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
           {!isLoadingChat && messages.length > 0 && messages.map((message) => (
             <Box
-              key={message.timestamp} // Use timestamp (or unique ID) as key
+              key={message.timestamp}
               sx={{
                 display: 'flex',
                 justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
@@ -1255,16 +1179,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   p: 1.5,
                   borderRadius: '10px',
                   bgcolor: message.role === 'user' ? 'primary.light' : 'grey.200',
-                  // Explicitly set text color for readability, try 'black' for assistant
                   color: message.role === 'user' ? 'primary.contrastText' : 'black',
                   maxWidth: '80%',
                   wordWrap: 'break-word',
-                  whiteSpace: 'pre-wrap', // Important for preserving newlines
-                  position: 'relative', // Needed for positioning the edit button
+                  whiteSpace: 'pre-wrap',
+                  position: 'relative',
                 }}
               >
                 {renderMessageContent(message)}
-                {/* --- 新增：用户消息的编辑按钮 --- */}
                 {message.role === 'user' && 
                  message.timestamp && 
                  !message.timestamp.startsWith('user-edited-') &&
@@ -1277,8 +1199,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         position: 'absolute',
                         top: 0,
                         right: 0,
-                        color: 'primary.contrastText', // Or a color that contrasts well with primary.light
-                        backgroundColor: 'rgba(0,0,0,0.1)', // Slight background for visibility
+                        color: 'primary.contrastText',
+                        backgroundColor: 'rgba(0,0,0,0.1)',
                         '&:hover': {
                           backgroundColor: 'rgba(0,0,0,0.2)',
                         }
@@ -1288,14 +1210,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     </IconButton>
                   </Tooltip>
                 )}
-                {/* --- 结束新增 --- */}
               </Paper>
             </Box>
           ))}
           <div ref={messagesEndRef} />
         </Paper>
 
-        {/* Input Area */}
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, mt: 'auto', padding: '8px 0' }}>
           <TextField
             fullWidth
@@ -1306,7 +1226,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={hasActiveChat ? "输入消息 (Shift+Enter 换行)" : "请先选择一个聊天"}
-            disabled={inputDisabled || !!editingMessageTimestamp} // 编辑时禁用主输入框
+            disabled={inputDisabled || !!editingMessageTimestamp}
             sx={{
               backgroundColor: '#ffffff',
               borderRadius: '20px',
@@ -1334,7 +1254,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </Box>
       </Box>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={showDeleteConfirm}
         onClose={cancelDeleteChat}

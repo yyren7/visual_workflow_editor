@@ -48,6 +48,7 @@ from .nodes.teaching_node import teaching_node
 from .nodes.other_assistant_node import other_assistant_node # Changed from ask_info_node
 from .nodes.robot_flow_invoker_node import robot_flow_invoker_node # 新的调用节点
 from .nodes.rephrase_prompt_node import rephrase_prompt_node # <-- 新增导入
+from .nodes.goodbye_node import handle_goodbye_node # <-- 新增导入
 from .conditions import should_continue, route_after_task_router # RouteDecision is now in types
 from .graph_types import RouteDecision # Import RouteDecision from types
 
@@ -214,6 +215,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     bound_teaching_node = partial(teaching_node, llm=llm)
     bound_other_assistant_node = partial(other_assistant_node) # Changed from bound_ask_info_node and ask_info_node
     bound_rephrase_prompt_node = partial(rephrase_prompt_node) # <-- 新增绑定
+    bound_handle_goodbye_node = partial(handle_goodbye_node) # <-- 新增绑定
 
 
     # 添加节点到图
@@ -225,6 +227,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     workflow.add_node("teaching", bound_teaching_node) 
     workflow.add_node("other_assistant", bound_other_assistant_node) # Changed from ask_info
     workflow.add_node("rephrase_prompt", bound_rephrase_prompt_node) # <-- 添加新节点
+    workflow.add_node("handle_goodbye", bound_handle_goodbye_node) # <-- 添加新节点
 
 
     # 设置图的入口点
@@ -238,10 +241,11 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         "task_router",
         route_after_task_router,
         {
-            "planner": "robot_flow_planner", # 路由到新的机器人流程规划器
+            "planner": "robot_flow_planner", 
             "teaching": "teaching",
-            "other_assistant": "other_assistant", # Changed from ask_info
-            "rephrase": "rephrase_prompt",  # <-- 修改 rephrase 路由
+            "other_assistant": "other_assistant", 
+            "rephrase_prompt": "rephrase_prompt",  # 确保这里与 route_after_task_router 的返回字符串一致
+            "handle_goodbye_node": "handle_goodbye", # 修改键名以匹配 conditions.py 的返回
             END: END 
         }
     )
@@ -290,6 +294,12 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # workflow.add_edge("teaching", END)
     # other_assistant 节点执行完毕后导向 END (Changed from ask_info) # 旧逻辑，已通过上面条件边处理
     # workflow.add_edge("other_assistant", END)
+
+    # 新增：从 rephrase_prompt 节点出来的边，固定到 task_router
+    workflow.add_edge("rephrase_prompt", "task_router")
+
+    # 新增：从 goodbye 节点出来的边，固定到 END
+    workflow.add_edge("handle_goodbye", END)
 
     # 编译图
     logger.info("Workflow graph compilation complete.")

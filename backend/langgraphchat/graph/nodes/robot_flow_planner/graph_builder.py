@@ -399,7 +399,9 @@ def create_robot_flow_graph(
     # workflow.add_edge(ERROR_HANDLER, CORE_INTERACTION_NODE) 
 
     logger.info("Robot Flow Subgraph (循环版) compiled.")
-    return workflow.compile() # Returns a Runnable
+    app = workflow.compile()
+    logger.info("Robot flow subgraph compilation complete.")
+    return app
 
 # Removed old should_continue and other unused/placeholder nodes/edges from original file if they existed.
 # Ensure all node functions (initialize_state_node, generate_final_flow_xml_node, etc.)
@@ -431,13 +433,13 @@ def create_robot_flow_graph(
 
 #     # # Stream events from the graph
 #     # async def stream_events():
-#     #     async for event in robot_flow_app.astream(initial_input_state, {"recursion_limit": 25}):
+#     #     async for event in robot_flow_app.astream(initial_input_state, {"recursion_limit": 5}):
 #     #         for key, value in event.items():
 #     #             logger.info(f"Event: {key} - Value: {value}")
 #     #         print("---")
 #     # asyncio.run(stream_events())
     
-#     final_state = asyncio.run(robot_flow_app.ainvoke(initial_input_state, {"recursion_limit": 25}))
+#     final_state = asyncio.run(robot_flow_app.ainvoke(initial_input_state, {"recursion_limit": 5}))
 #     logger.info(f"\nFinal State: {json.dumps(final_state, indent=2, ensure_ascii=False)}")
 
 #     if final_state.get('is_error'):

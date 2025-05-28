@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional, AsyncGenerator
+from typing import List, Dict, Any, Optional, AsyncGenerator, Tuple
 from datetime import datetime
 import logging
 import uuid
@@ -214,14 +214,14 @@ class ChatService:
             logger.error(f"更新聊天 {chat_id} 失败: {str(e)}")
             return None
     
-    def add_message_to_chat(self, chat_id: str, role: str, content: str) -> Optional[Chat]:
+    def add_message_to_chat(self, chat_id: str, role: str, content: str) -> Optional[Tuple[Chat, str]]:
         logger.info(f"ChatService: Attempting to add message to chat_id: {chat_id}, role: {role}") # 修改日志前缀以清晰
         try:
             # 1. 查询聊天对象
             chat = self.db.query(Chat).filter(Chat.id == chat_id).first()
             if not chat:
                 logger.error(f"ChatService: Chat {chat_id} not found. Cannot add message.")
-                return None
+                return None, None
             
             logger.debug(f"ChatService: Chat {chat_id} found. Current chat_data before modification: {chat.chat_data}") # 记录修改前的数据
 
@@ -275,18 +275,14 @@ class ChatService:
                 logger.debug(f"ChatService: Last message in current session after refresh for {chat_id}: {{'role': '{last_msg_role}', 'content': '{last_msg_preview}...'}}")
             # --- 结束调试 ---
 
-            logger.info(f"ChatService: Successfully added and committed '{role}' message to chat {chat_id}.") # 修改日志
-            return chat
-            
+            logger.info(f"ChatService: Successfully added and committed '{role}' message to chat {chat_id}.")
+            # 返回包含新消息时间戳的Chat对象或仅消息本身
+            return chat, new_message["timestamp"] 
+
         except Exception as e:
-            logger.error(f"ChatService: Error adding message to chat {chat_id}: {e}", exc_info=True)
-            try:
-                logger.info(f"ChatService: Attempting rollback for chat {chat_id} due to error in add_message_to_chat.") # 增强日志
-                self.db.rollback()
-                logger.info(f"ChatService: Rollback successful for chat {chat_id} in add_message_to_chat.") # 增强日志
-            except Exception as rb_err:
-                logger.error(f"ChatService: Rollback FAILED for chat {chat_id} in add_message_to_chat: {rb_err}", exc_info=True) # 增强日志
-            return None
+            self.db.rollback()
+            logger.error(f"ChatService: Error adding message to chat {chat_id}: {e}", exc_info=True) # 保持 exc_info=True
+            return None, None
 
     def delete_chat(self, chat_id: str) -> bool:
         """
@@ -384,3 +380,7 @@ class ChatService:
             except Exception as rb_err:
                 logger.error(f"ChatService: Rollback FAILED while editing message in chat {chat_id}: {rb_err}", exc_info=True)
             return None 
+
+    def get_chat_history(self, chat_id: str) -> List[BaseMessage]:
+        # Implementation of get_chat_history method
+        pass 

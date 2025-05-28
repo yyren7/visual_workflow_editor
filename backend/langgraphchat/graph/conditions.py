@@ -17,7 +17,7 @@ def route_after_task_router(state: AgentState) -> str:
     decision = state.get("task_route_decision")
     if not decision:
         logger.warning("route_after_task_router: No task_route_decision found in state. Defaulting to rephrase (back to task_router).")
-        return "task_router" # 或者一个专门的错误处理节点
+        return "rephrase" # 或者一个专门的错误处理节点
 
     next_node = decision.next_node
     logger.info(f"route_after_task_router: Routing to '{next_node}' based on LLM decision.")
@@ -29,14 +29,14 @@ def route_after_task_router(state: AgentState) -> str:
     elif next_node == "other_assistant":
         return "other_assistant"
     elif next_node == "rephrase":
-        logger.info("route_after_task_router: LLM requested rephrase. Routing back to task_router.")
-        return "task_router"
+        logger.info("route_after_task_router: LLM requested rephrase. Routing to rephrase_prompt node.")
+        return "rephrase_prompt"
     elif next_node == "end_session":
-        logger.info("route_after_task_router: LLM detected end_session. Routing to END.")
-        return END
+        logger.info("route_after_task_router: LLM detected end_session. Routing to handle_goodbye_node.")
+        return "handle_goodbye_node"
     else:
-        logger.warning(f"route_after_task_router: Unknown next_node '{next_node}'. Defaulting to rephrase.")
-        return "task_router" # 安全回退
+        logger.warning(f"route_after_task_router: Unknown next_node '{next_node}'. Defaulting to rephrase_prompt.")
+        return "rephrase_prompt" # 安全回退，也应指向 rephrase_prompt
 
 def should_continue(state: AgentState) -> str:
     """

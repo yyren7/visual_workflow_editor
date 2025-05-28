@@ -90,7 +90,7 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> dict
     final_subgraph_state_dict = None
     try:
         # .astream() 返回一个异步生成器，我们需要迭代以获取最终状态
-        async for event_output in robot_flow_subgraph.astream(initial_subgraph_input):
+        async for event_output in robot_flow_subgraph.astream(initial_subgraph_input, {"recursion_limit": 5}):
             # event_output 是一个字典，键是节点名，值是该节点的输出
             # 我们关心的是最终的累积状态，这通常在最后一个事件中，或者需要从事件流中推断
             # LangGraph 的 stream 事件会给出每个节点的输出。
@@ -112,7 +112,7 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> dict
         # The type hint for create_robot_flow_graph is `Callable[[Dict[str, Any]], Any]`
         # This implies it's ready to be called.
 
-        final_subgraph_state_dict = await robot_flow_subgraph.ainvoke(initial_subgraph_input)
+        final_subgraph_state_dict = await robot_flow_subgraph.ainvoke(initial_subgraph_input, {"recursion_limit": 5})
 
         if final_subgraph_state_dict is None:
              raise ValueError("Robot flow subgraph did not return a final state.")

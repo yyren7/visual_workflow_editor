@@ -3,6 +3,7 @@ from typing import Literal
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from langchain.globals import get_llm_cache, set_llm_cache
 # from pydantic import BaseModel, Field # RouteDecision is now imported
 
@@ -173,6 +174,7 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
     使用 LLM 分析用户输入或当前对话状态，决定下一个节点。
     如果 state['user_request_for_router'] 有内容，则优先使用它作为LLM判断的主要依据。
     如果为空（例如，节点执行完毕后返回此router），则LLM根据对话历史和上下文判断。
+    当LLM无法判断意图时，会智能地逐步增加历史上下文重新分析。
     处理后会清除 state['user_request_for_router']。
     """
     logger.info("Task Router: Entered node.")
@@ -192,7 +194,7 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
     
     effective_input_for_llm: str
     if user_input_to_process:
-        logger.info(f"Task Router: Processing user_request_for_router: \'{user_input_to_process[:100]}...\'")
+        logger.info(f"Task Router: Processing user_request_for_router: '{user_input_to_process[:100]}...'")
         effective_input_for_llm = user_input_to_process
         
     else:
@@ -204,21 +206,107 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
             "如果认为对话应结束，则选择 'end_session'。"
         )
 
-    prompt_messages = TASK_ROUTER_PROMPT.format_messages(input=effective_input_for_llm)
+    # 获取历史消息用于智能上下文扩展
+    messages = state.get("messages", [])
     
-    structured_llm = llm.with_structured_output(RouteDecision)
-    
+    # 智能上下文分析函数
+    async def analyze_with_context(input_text: str, context_messages: list = None) -> RouteDecision:
+        """
+        使用给定的输入和上下文消息进行路由分析
+        """
+        # 构建包含上下文的输入
+        if context_messages:
+            # 将历史消息转换为文本形式作为上下文
+            context_lines = []
+            for msg in context_messages[-10:]:  # 最多取最近10条消息避免token超限
+                if isinstance(msg, HumanMessage):
+                    content = msg.content.strip() if msg.content else ""
+                    if content:
+                        context_lines.append(f"用户: {content}")
+                elif isinstance(msg, AIMessage):
+                    content = msg.content.strip() if msg.content else ""
+                    # 检查是否有工具调用
+                    if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                        # 如果有工具调用但没有文本内容，添加工具调用信息
+                        if not content:
+                            tool_names = [tc.get('name', 'unknown') for tc in msg.tool_calls]
+                            content = f"[调用工具: {', '.join(tool_names)}]"
+                    if content:
+                        context_lines.append(f"AI: {content}")
+                elif hasattr(msg, 'content') and msg.content:
+                    # 处理其他类型的消息
+                    content = str(msg.content).strip()
+                    if content:
+                        context_lines.append(f"系统: {content}")
+            
+            if context_lines:
+                context_text = "\n".join(context_lines)
+                enhanced_input = f"对话历史上下文：\n{context_text}\n\n当前用户输入：\n{input_text}"
+            else:
+                enhanced_input = input_text
+        else:
+            enhanced_input = input_text
+            
+        prompt_messages = TASK_ROUTER_PROMPT.format_messages(input=enhanced_input)
+        structured_llm = llm.with_structured_output(RouteDecision)
+        
+        try:
+            route_decision: RouteDecision = await structured_llm.ainvoke(prompt_messages)
+            logger.info(f"Task Router: LLM decision with context: Intent='{route_decision.user_intent}', Next Node='{route_decision.next_node}'")
+            return route_decision
+        except Exception as e:
+            logger.error(f"Task Router: Error in analyze_with_context: {e}")
+            return RouteDecision(user_intent="LLM调用失败", next_node="rephrase")
+
     original_cache = get_llm_cache()
     set_llm_cache(None) # 暂时禁用缓存
+    
     try:
-        # 仅使用格式化后的提示（包含最新输入），不直接传递额外历史记录给路由决策LLM
-        messages_for_llm_invocation = prompt_messages
+        # 第一次尝试：仅使用当前输入
+        route_decision = await analyze_with_context(effective_input_for_llm)
         
-        route_decision: RouteDecision = await structured_llm.ainvoke(messages_for_llm_invocation)
-        logger.info(f"Task Router: LLM decision: Intent='{route_decision.user_intent}', Next Node='{route_decision.next_node}'")
+        # 如果结果不是 rephrase，直接返回
+        if route_decision.next_node != "rephrase":
+            logger.info(f"Task Router: Direct analysis successful: {route_decision.next_node}")
+            set_llm_cache(original_cache)
+            return {"task_route_decision": route_decision, "user_request_for_router": None}
         
-        set_llm_cache(original_cache) # 恢复原始缓存设置
-        return {"task_route_decision": route_decision, "user_request_for_router": None} 
+        # 如果是 rephrase 且有历史消息，尝试智能上下文扩展
+        if messages and user_input_to_process:
+            logger.info("Task Router: Initial analysis returned 'rephrase', attempting context expansion...")
+            
+            # 逐步增加历史上下文，从最近的消息开始
+            max_context_attempts = min(5, len(messages) // 2)  # 最多尝试5次或消息总数的一半
+            
+            for attempt in range(1, max_context_attempts + 1):
+                context_size = min(attempt * 2, len(messages))  # 每次增加2条消息，但不超过总消息数
+                
+                if context_size >= len(messages):
+                    # 如果已经是最后一次尝试，使用所有消息
+                    context_messages = messages
+                    logger.info(f"Task Router: Final attempt with all {len(messages)} messages...")
+                else:
+                    context_messages = messages[-context_size:]
+                    logger.info(f"Task Router: Attempt {attempt} with {context_size} context messages...")
+                
+                enhanced_decision = await analyze_with_context(effective_input_for_llm, context_messages)
+                
+                # 如果得到明确的路由决策，返回结果
+                if enhanced_decision.next_node != "rephrase":
+                    logger.info(f"Task Router: Context expansion successful on attempt {attempt} with {context_size} messages: {enhanced_decision.next_node}")
+                    set_llm_cache(original_cache)
+                    return {"task_route_decision": enhanced_decision, "user_request_for_router": None}
+                
+                # 如果已经使用了所有消息，跳出循环
+                if context_size >= len(messages):
+                    break
+            
+            logger.info("Task Router: Context expansion completed, still requires rephrase")
+        
+        # 所有尝试都失败，返回 rephrase
+        logger.info("Task Router: All analysis attempts resulted in rephrase")
+        set_llm_cache(original_cache)
+        return {"task_route_decision": route_decision, "user_request_for_router": None}
 
     except Exception as e:
         logger.error(f"Task Router: Error invoking LLM or processing decision: {e}")

@@ -97,11 +97,22 @@ export interface ErrorEvent {
 
 export interface PingEvent {
   type: "ping";
-  data: {};
+  data: {}; // Empty data for ping, or could include server timestamp
 }
 
+// --- 新增 UserMessageSavedEvent 定义 ---
+export interface UserMessageSavedEvent {
+  type: "user_message_saved";
+  data: {
+    client_message_id: string;      // The temporary ID used by the client
+    server_message_timestamp: string; // The permanent ISO 8601 timestamp from the server
+    content?: string;                 // Optional: The content of the message for verification
+  };
+}
+// --- 结束新增 ---
+
 // Updated ChatEvent union type
-export type ChatEvent = TokenEvent | ToolStartEvent | ToolEndEvent | StreamEndEvent | ErrorEvent | PingEvent;
+export type ChatEvent = TokenEvent | ToolStartEvent | ToolEndEvent | StreamEndEvent | ErrorEvent | PingEvent | UserMessageSavedEvent;
 
 export type OnChatEventCallback = (event: ChatEvent) => void;
 export type OnChatErrorCallback = (error: Error) => void;
@@ -327,6 +338,7 @@ export const chatApi = {
         addEventListener<StreamEndEvent>('stream_end');
         addEventListener<ErrorEvent>('error');
         addEventListener<PingEvent>('ping');
+        addEventListener<UserMessageSavedEvent>('user_message_saved');
         // ---- End EventSource listening ----
 
       } catch (error: any) { // Catch errors from the fetch call itself or other synchronous parts
@@ -469,7 +481,7 @@ export const chatApi = {
         addEventListener<ToolEndEvent>('tool_end');
         addEventListener<StreamEndEvent>('stream_end'); // Listener for explicit end
         addEventListener<ErrorEvent>('error'); // Listener for backend-sent errors
-        // addEventListener<PingEvent>('ping'); // Optional: if backend sends pings
+        addEventListener<UserMessageSavedEvent>('user_message_saved');
 
         // No need for a generic 'message' listener if all types are specific
         // eventSource.onmessage = (event) => { ... }

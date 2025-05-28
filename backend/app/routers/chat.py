@@ -226,6 +226,23 @@ async def edit_user_message(
     verify_flow_ownership(chat_before_edit.flow_id, current_user, db)
     logger.debug(f"Ownership verified for flow {chat_before_edit.flow_id}")
 
+    # 在调用服务层之前，先检查消息是否存在
+    message_found = False
+    if chat_before_edit.chat_data and "messages" in chat_before_edit.chat_data:
+        messages = chat_before_edit.chat_data.get("messages", [])
+        if isinstance(messages, list): # 确保 messages 是列表
+            for msg in messages:
+                if isinstance(msg, dict) and msg.get("timestamp") == message_timestamp and msg.get("role") == "user":
+                    message_found = True
+                    break
+    
+    if not message_found:
+        logger.error(f"User message with timestamp {message_timestamp} not found in chat {chat_id} before calling service.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"要编辑的消息不存在或时间戳不匹配 (ts: {message_timestamp})"
+        )
+
     updated_chat = chat_service.edit_user_message_and_truncate(
         chat_id=chat_id,
         message_timestamp=message_timestamp,
@@ -235,8 +252,8 @@ async def edit_user_message(
     if not updated_chat:
         logger.error(f"Failed to edit message {message_timestamp} in chat {chat_id} via service.")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="编辑消息失败，可能是消息不存在或内部错误"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, # 改为500，因为此时更可能是内部问题
+            detail="编辑消息时发生内部服务器错误"
         )
     
     logger.info(f"Successfully edited message {message_timestamp} in chat {chat_id}. DB state updated.")
@@ -291,9 +308,10 @@ async def add_message(
         chat_id, 
         initial_user_message_content=message.content, 
         event_queue=event_queue,
-        is_edit_flow=False
+        is_edit_flow=False,
+        client_message_id=message.client_message_id
     )
-    logger.info(f"已为 chat {chat_id} 启动后台事件处理任务 (new message)")
+    logger.info(f"已为 chat {chat_id} 启动后台事件处理任务 (new message, client_id: {message.client_message_id})")
     
     return Response(status_code=status.HTTP_202_ACCEPTED)
 
@@ -514,14 +532,13 @@ async def delete_chat(
 # --- 提取出来的后台事件处理函数 ---
 async def _process_and_publish_chat_events(
     chat_id: str, 
-    # For new messages, this is the content. For edited messages, 
-    # the latest content is already in DB, so this can be None or not directly used for graph input.
     initial_user_message_content: Optional[str], 
     event_queue: asyncio.Queue,
-    is_edit_flow: bool = False # Flag to indicate if this is from an edit operation
+    is_edit_flow: bool = False,
+    client_message_id: Optional[str] = None
 ):
     """
-    后台任务: 处理聊天(新消息或编辑后继续)，使用LangGraph生成回复，并将事件放入队列。
+    后台任务：处理聊天逻辑（添加消息，调用LangGraph），并通过队列发布SSE事件。
     """
     logger.debug(f"[Chat {chat_id}] Background task started (is_edit_flow: {is_edit_flow}). Initial content (if any): {initial_user_message_content}")
     is_error = False
@@ -547,14 +564,36 @@ async def _process_and_publish_chat_events(
             # For an edit flow, edit_user_message_and_truncate already updated the DB.
             if not is_edit_flow and initial_user_message_content is not None:
                 logger.debug(f"[Chat {chat_id}] Attempting to save user message to DB before agent call: {initial_user_message_content[:100]}...")
-                chat_service_bg.add_message_to_chat(chat_id=chat_id, role="user", content=initial_user_message_content)
-                logger.debug(f"[Chat {chat_id}] User message saved to DB.")
-                # Re-fetch chat to ensure chat_data is up-to-date for history formatting
-                chat = chat_service_bg.get_chat(chat_id)
-                if not chat: # Should not happen if add_message_to_chat was successful
-                    logger.error(f"[Chat {chat_id}] Background task could not re-find chat after adding message.")
-                    await event_queue.put({"type": "error", "data": {"message": "Chat disappeared after adding message.", "stage": "setup"}})
-                    return
+                # chat_service_bg.add_message_to_chat 返回 (Chat, str) 或 (None, None)
+                saved_chat_obj, server_message_timestamp = chat_service_bg.add_message_to_chat(
+                    chat_id=chat_id, 
+                    role="user", 
+                    content=initial_user_message_content
+                )
+                if saved_chat_obj and server_message_timestamp:
+                    logger.debug(f"[Chat {chat_id}] User message saved to DB with server_timestamp: {server_message_timestamp}.")
+                    # 如果有 client_message_id，则推送事件告知前端时间戳对应关系
+                    if client_message_id:
+                        await event_queue.put({
+                            "type": "user_message_saved", 
+                            "data": {
+                                "client_message_id": client_message_id,
+                                "server_message_timestamp": server_message_timestamp,
+                                "content": initial_user_message_content # 可以选择性包含内容以供前端校验
+                            }
+                        })
+                        logger.info(f"[Chat {chat_id}] Sent user_message_saved event for client_id: {client_message_id} -> server_ts: {server_message_timestamp}")
+                    
+                    # Re-fetch chat to ensure chat_data is up-to-date for history formatting
+                    # 使用返回的 saved_chat_obj 即可，无需重新查询
+                    chat = saved_chat_obj 
+                else:
+                    logger.error(f"[Chat {chat_id}] Failed to save user message to DB.")
+                    await event_queue.put({
+                        "type": "error", 
+                        "data": {"message": "Failed to save user message.", "stage": "setup"}
+                    })
+                    return # 如果消息保存失败，则终止后续处理
 
 
             flow_id = chat.flow_id

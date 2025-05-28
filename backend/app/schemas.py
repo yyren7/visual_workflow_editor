@@ -107,6 +107,7 @@ class ChatAddMessage(BaseModel):
     """向聊天添加消息模型"""
     role: str  # user, assistant, system
     content: str
+    client_message_id: Optional[str] = None # 前端生成的临时消息ID
 
 class ChatMessageEdit(BaseModel):
     """编辑聊天消息模型"""
