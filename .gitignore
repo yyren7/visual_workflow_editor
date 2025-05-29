@@ -51,3 +51,4 @@ logs/*
 
 # Ignore specific test result directories
 /database/flow_database/result/5.20_test/
+/database/test_database/test_robot_flow

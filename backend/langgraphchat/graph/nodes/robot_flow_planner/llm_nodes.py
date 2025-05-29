@@ -443,71 +443,13 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
                     existing_descriptions = load_node_descriptions()
                     descriptions_for_prompt = ["可用节点类型及其功能:"]
                     
-                    new_descriptions_added = False
                     for block_type in all_block_types:
-                        if block_type not in existing_descriptions:
-                            logger.info(f"Description for block type '{block_type}' not found. Generating...")
-                            
-                            node_template_content_for_desc = "Node template content not available or not applicable for description."
-                            # Try to find and read the template file, prioritizing .xml
-                            template_file_to_read = None
-                            if node_template_dir and os.path.isdir(node_template_dir):
-                                potential_files_paths = []
-                                # Check for .xml, .json, .py extensions in specified order
-                                for ext in (".xml", ".json", ".py"): 
-                                    pf = Path(node_template_dir) / f"{block_type}{ext}"
-                                    if pf.is_file():
-                                        potential_files_paths.append(pf)
-                                
-                                if potential_files_paths:
-                                    # Prioritize .xml if found among the existing files
-                                    xml_file = next((f for f in potential_files_paths if f.suffix == '.xml'), None)
-                                    template_file_to_read = xml_file if xml_file else potential_files_paths[0] # Fallback to the first found
-                                    
-                                    if template_file_to_read:
-                                        try:
-                                            with open(template_file_to_read, 'r', encoding='utf-8') as f_template:
-                                                node_template_content_for_desc = f_template.read()
-                                            logger.info(f"Read template content from '{template_file_to_read.name}' for description of '{block_type}'.")
-                                        except Exception as e_read:
-                                            logger.warning(f"Could not read template file {template_file_to_read.name} for {block_type}: {e_read}")
-                                            node_template_content_for_desc = f"Error reading template file {template_file_to_read.name}: {e_read}"
-                                    # else: # This case should ideally not be reached if potential_files_paths is not empty
-                                    #    logger.warning(f"Logical error: template_file_to_read is None for {block_type} despite potential files found.")
-                                else:
-                                    logger.warning(f"No template file found for {block_type} in {node_template_dir} with extensions .xml, .json, .py.")
-
-                            desc_gen_prompt_name = "generate_node_description.md"
-                            desc_gen_placeholders = {
-                                "NODE_TYPE_TO_DESCRIBE": block_type,
-                                "NODE_TEMPLATE_CONTENT": node_template_content_for_desc 
-                            }
-                            
-                            filled_desc_gen_prompt = get_filled_prompt(desc_gen_prompt_name, desc_gen_placeholders)
-                            if filled_desc_gen_prompt:
-                                desc_response = await invoke_llm_for_text_output(
-                                    llm,
-                                    system_prompt_content=filled_desc_gen_prompt, # The whole prompt is here for this simple case
-                                    user_message_content="Please generate a concise description for this node type based on the system prompt." # Ensure non-empty content
-                                )
-                                if "error" in desc_response or not desc_response.get("text_output"):
-                                    logger.error(f"Failed to generate description for '{block_type}': {desc_response.get('error')}")
-                                    existing_descriptions[block_type] = "描述自动生成失败。"
-                                else:
-                                    new_description = desc_response["text_output"].strip()
-                                    logger.info(f"Generated description for '{block_type}': {new_description}")
-                                    append_node_description(block_type, new_description)
-                                    existing_descriptions[block_type] = new_description
-                                    new_descriptions_added = True
-                            else:
-                                logger.error(f"Could not load or fill prompt '{desc_gen_prompt_name}' for '{block_type}'.")
-                                existing_descriptions[block_type] = "无法加载描述生成模板。"
-                        
-                        descriptions_for_prompt.append(f"- {block_type}: {existing_descriptions[block_type]}")
+                        description_to_use = existing_descriptions.get(block_type)
+                        if description_to_use is None:
+                            logger.info(f"Description for block type '{block_type}' not found in existing descriptions. Using default.")
+                            description_to_use = "该节点类型的描述当前不可用。" # Default message for missing descriptions
+                        descriptions_for_prompt.append(f"- {block_type}: {description_to_use}")
                     
-                    if new_descriptions_added: # Optionally reload if many were added, or trust the in-memory version
-                        pass
-
                     if len(descriptions_for_prompt) > 1: # More than just the header
                         available_node_types_with_descriptions_str = "\n".join(descriptions_for_prompt)
                     else:
