@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="block_uuid_1">
+    <next>
+      <block type="set_motor" id="block_uuid_2">
+        <next>
+          <block type="moveL" id="block_uuid_3">
+            <next>
+              <block type="moveL" id="block_uuid_4">
+                <next>
+                  <block type="moveL" id="block_uuid_5">
+                    <next>
+                      <block type="moveL" id="block_uuid_6">
+                        <next>
+                          <block type="moveL" id="block_uuid_7">
+                            <next>
+                              <block type="loop" id="block_uuid_8">
+                                <statement name="DO">
+                                  <block type="moveL" id="block_uuid_8a">
+                                    <next>
+                                      <block type="moveL" id="block_uuid_8b">
+                                        <next>
+                                          <block type="moveL" id="block_uuid_8c">
+                                            <next>
+                                              <block type="return" id="block_uuid_8d"></block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </statement>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

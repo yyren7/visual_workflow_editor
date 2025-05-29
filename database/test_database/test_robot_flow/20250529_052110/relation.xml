@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="unknown_operation" id="block_uuid_1">
+    <next>
+      <block type="unknown_operation" id="block_uuid_2">
+        <next>
+          <block type="unknown_operation" id="block_uuid_3">
+            <next>
+              <block type="loop" id="block_uuid_4">
+                <statement name="DO"></statement>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="loop" id="block_uuid_4" data-blockNo="4">
+    <statement name="DO">
+      <!-- 子块将通过关系定义连接，此处应为空 -->
+    </statement>
+    <!-- <next> ... </next>  (通常loop后紧跟statement内的return, 或者loop是末端) -->
+  </block>
+</xml>

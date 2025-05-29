@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 
 from .state import RobotFlowAgentState, GeneratedXmlFile
-from .prompt_loader import get_filled_prompt
+from .prompt_loader import get_filled_prompt, load_node_descriptions, append_node_description
 
 logger = logging.getLogger(__name__)
 
@@ -375,6 +375,38 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
     # 4. Core 'processing_user_input' logic (enrichment, or asking for robot model if unknown)
     if state.dialog_state == "processing_user_input":
         logger.info(f"Processing user input. Active plan basis: '{state.active_plan_basis[:200]}...'")
+        
+        # Attempt to auto-detect robot model from raw_user_request if not already set
+        if not state.robot_model and state.raw_user_request:
+            logger.info(f"Attempting to auto-detect robot model from raw_user_request: '{state.raw_user_request}'")
+            known_models_str = ", ".join(KNOWN_ROBOT_MODELS)
+            
+            auto_detect_prompt = (
+                f"The user's request is: '{state.raw_user_request}'. "
+                f"Known official robot models are: [{known_models_str}]. "
+                "Based on the user's request, identify if one of these known models is mentioned or clearly implied. "
+                "Respond with the matching official model name from the list if a clear match is found. "
+                "If no clear match or if it's ambiguous, respond with 'unknown_model'. "
+                "Output only the single model name or 'unknown_model'."
+            )
+            
+            norm_response = await invoke_llm_for_text_output(
+                llm,
+                system_prompt_content="You are a robot model identification assistant. Your task is to identify a robot model from the user's text based on a known list.",
+                user_message_content=auto_detect_prompt
+            )
+
+            if "error" in norm_response or not norm_response.get("text_output"):
+                logger.warning(f"LLM call for auto-detecting robot model failed or returned no output. Error: {norm_response.get('error')}")
+                # Proceed without auto-detected model, will ask user later if still not set.
+            else:
+                potential_model = norm_response["text_output"].strip()
+                if potential_model != "unknown_model" and potential_model in KNOWN_ROBOT_MODELS:
+                    state.robot_model = potential_model
+                    logger.info(f"Robot model '{state.robot_model}' auto-detected by LLM from initial user request.")
+                else:
+                    logger.info(f"LLM auto-detection did not identify a known robot model from the request (response: '{potential_model}'). Will proceed to ask user if necessary.")
+
         if not state.active_plan_basis: # Should not happen if logic above is correct
             logger.warning("Reached 'processing_user_input' but active_plan_basis is empty. Reverting to awaiting_user_input.")
             add_ai_message_if_needed("请输入有效的流程描述。")
@@ -384,7 +416,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
 
         # 4a. Check for robot model if not yet set
         if not state.robot_model:
-            logger.info("Robot model not set. Asking user for robot model.")
+            logger.info("Robot model not set (even after attempting auto-detection). Asking user for robot model.")
             known_models_str = ", ".join(KNOWN_ROBOT_MODELS)
             question = USER_INTERACTION_TEXTS_ZH["PROMPT_ASK_ROBOT_MODEL_TEMPLATE"].format(known_models_str=known_models_str)
             add_ai_message_if_needed(question)
@@ -394,28 +426,148 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             return state.dict(exclude_none=True)
 
         # 4b. Robot model is known, proceed with plan enrichment
-        # This is where you'd call an LLM to enrich `state.active_plan_basis`
-        # For simplicity, let's assume for now enrichment is optional or very basic.
-        # If you have a complex enrichment LLM call, it would go here.
-        # Example:
-        # enriched_result = await invoke_llm_for_text_output(llm, "system_prompt_for_enrichment", state.active_plan_basis)
-        # if "error" in enriched_result or not enriched_result.get("text_output"):
-        #     add_ai_message_if_needed("抱歉，我在理解和优化您的流程描述时遇到问题。请尝试换一种方式描述。")
-        #     state.dialog_state = "awaiting_user_input"
-        #     return state.dict(exclude_none=True)
-        # state.proposed_enriched_text = enriched_result["text_output"]
+        logger.info(f"Robot model is known: {state.robot_model}. Proceeding to enrich plan based on: '{state.active_plan_basis}'.")
         
-        # If your flow ALWAYS requires user confirmation for the enriched plan:
-        # state.clarification_question = USER_INTERACTION_TEXTS_ZH["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(...)
-        # add_ai_message_if_needed(state.clarification_question)
-        # state.dialog_state = "awaiting_enrichment_confirmation"
-        # return state.dict(exclude_none=True)
+        # Dynamically load block types and their descriptions
+        available_node_types_with_descriptions_str = "没有可用的节点类型信息。"
+        node_template_dir = state.config.get("NODE_TEMPLATE_DIR_PATH")
+        if node_template_dir and os.path.isdir(node_template_dir):
+            try:
+                all_block_types = sorted([
+                    os.path.splitext(f)[0]
+                    for f in os.listdir(node_template_dir)
+                    if os.path.isfile(os.path.join(node_template_dir, f)) and f.endswith((".xml", ".json", ".py"))
+                ])
+                if all_block_types:
+                    logger.info(f"Found {len(all_block_types)} block types: {all_block_types}")
+                    existing_descriptions = load_node_descriptions()
+                    descriptions_for_prompt = ["可用节点类型及其功能:"]
+                    
+                    new_descriptions_added = False
+                    for block_type in all_block_types:
+                        if block_type not in existing_descriptions:
+                            logger.info(f"Description for block type '{block_type}' not found. Generating...")
+                            
+                            node_template_content_for_desc = "Node template content not available or not applicable for description."
+                            # Try to find and read the template file, prioritizing .xml
+                            template_file_to_read = None
+                            if node_template_dir and os.path.isdir(node_template_dir):
+                                potential_files_paths = []
+                                # Check for .xml, .json, .py extensions in specified order
+                                for ext in (".xml", ".json", ".py"): 
+                                    pf = Path(node_template_dir) / f"{block_type}{ext}"
+                                    if pf.is_file():
+                                        potential_files_paths.append(pf)
+                                
+                                if potential_files_paths:
+                                    # Prioritize .xml if found among the existing files
+                                    xml_file = next((f for f in potential_files_paths if f.suffix == '.xml'), None)
+                                    template_file_to_read = xml_file if xml_file else potential_files_paths[0] # Fallback to the first found
+                                    
+                                    if template_file_to_read:
+                                        try:
+                                            with open(template_file_to_read, 'r', encoding='utf-8') as f_template:
+                                                node_template_content_for_desc = f_template.read()
+                                            logger.info(f"Read template content from '{template_file_to_read.name}' for description of '{block_type}'.")
+                                        except Exception as e_read:
+                                            logger.warning(f"Could not read template file {template_file_to_read.name} for {block_type}: {e_read}")
+                                            node_template_content_for_desc = f"Error reading template file {template_file_to_read.name}: {e_read}"
+                                    # else: # This case should ideally not be reached if potential_files_paths is not empty
+                                    #    logger.warning(f"Logical error: template_file_to_read is None for {block_type} despite potential files found.")
+                                else:
+                                    logger.warning(f"No template file found for {block_type} in {node_template_dir} with extensions .xml, .json, .py.")
 
-        # Simplified: Assume active_plan_basis is directly usable or enrichment is implicit/not requiring confirmation for now
-        logger.info("Skipping explicit enrichment confirmation for now. Using active_plan_basis as enriched_structured_text.")
-        state.enriched_structured_text = state.active_plan_basis 
-        state.dialog_state = "input_understood_ready_for_xml"
-        # No AI message here as we're directly proceeding to XML generation. understand_input_node will be next.
+                            desc_gen_prompt_name = "generate_node_description.md"
+                            desc_gen_placeholders = {
+                                "NODE_TYPE_TO_DESCRIBE": block_type,
+                                "NODE_TEMPLATE_CONTENT": node_template_content_for_desc 
+                            }
+                            
+                            filled_desc_gen_prompt = get_filled_prompt(desc_gen_prompt_name, desc_gen_placeholders)
+                            if filled_desc_gen_prompt:
+                                desc_response = await invoke_llm_for_text_output(
+                                    llm,
+                                    system_prompt_content=filled_desc_gen_prompt, # The whole prompt is here for this simple case
+                                    user_message_content="Please generate a concise description for this node type based on the system prompt." # Ensure non-empty content
+                                )
+                                if "error" in desc_response or not desc_response.get("text_output"):
+                                    logger.error(f"Failed to generate description for '{block_type}': {desc_response.get('error')}")
+                                    existing_descriptions[block_type] = "描述自动生成失败。"
+                                else:
+                                    new_description = desc_response["text_output"].strip()
+                                    logger.info(f"Generated description for '{block_type}': {new_description}")
+                                    append_node_description(block_type, new_description)
+                                    existing_descriptions[block_type] = new_description
+                                    new_descriptions_added = True
+                            else:
+                                logger.error(f"Could not load or fill prompt '{desc_gen_prompt_name}' for '{block_type}'.")
+                                existing_descriptions[block_type] = "无法加载描述生成模板。"
+                        
+                        descriptions_for_prompt.append(f"- {block_type}: {existing_descriptions[block_type]}")
+                    
+                    if new_descriptions_added: # Optionally reload if many were added, or trust the in-memory version
+                        pass
+
+                    if len(descriptions_for_prompt) > 1: # More than just the header
+                        available_node_types_with_descriptions_str = "\n".join(descriptions_for_prompt)
+                    else:
+                        available_node_types_with_descriptions_str = "未能加载任何节点类型或其描述。"
+                else:
+                    logger.warning(f"No block type files found in {node_template_dir}")
+                    available_node_types_with_descriptions_str = "在配置的路径中未找到任何节点模板文件。"
+            except Exception as e:
+                logger.error(f"Error loading block types or descriptions: {e}", exc_info=True)
+                available_node_types_with_descriptions_str = f"加载节点类型信息时出错: {e}"
+        else:
+            logger.warning(f"NODE_TEMPLATE_DIR_PATH '{node_template_dir}' is not configured or not a directory.")
+            available_node_types_with_descriptions_str = "节点模板目录未正确配置。"
+
+        # Attempt to enrich the plan using an LLM call
+        enrich_prompt_name = "flow_step0_enrich_input.md"
+        enrich_placeholders = {
+            "robot_model": state.robot_model,
+            "user_core_request": state.active_plan_basis,
+            "AVAILABLE_NODE_TYPES_WITH_DESCRIPTIONS": available_node_types_with_descriptions_str
+        }
+        
+        filled_enrich_prompt_content = get_filled_prompt(enrich_prompt_name, enrich_placeholders)
+
+        if not filled_enrich_prompt_content:
+            logger.error(f"Failed to load or fill enrichment prompt: {enrich_prompt_name}. Skipping enrichment.")
+            # Fallback: use active_plan_basis directly if prompt fails, and ask for confirmation
+            state.proposed_enriched_text = state.active_plan_basis 
+        else:
+            enriched_result = await invoke_llm_for_text_output(
+                llm,
+                # The system prompt for enrichment should ideally be part of the .md file itself,
+                # or a generic one could be used here if invoke_llm_for_text_output's system_prompt_content is designed to be general.
+                # For now, let's assume flow_step0_enrich_input.md contains the full instruction set for the LLM.
+                # If flow_step0_enrich_input.md is just a user message template, a system prompt is needed.
+                # Let's use a generic system prompt for now.
+                system_prompt_content="You are a helpful assistant that refines user requests into a structured, step-by-step robot plan.", # Generic system prompt
+                user_message_content=filled_enrich_prompt_content # The content from flow_step0_enrich_input.md
+            )
+            if "error" in enriched_result or not enriched_result.get("text_output"):
+                logger.error(f"Enrichment LLM call failed: {enriched_result.get('error')}. Using raw plan for confirmation.")
+                add_ai_message_if_needed("抱歉，我在理解和优化您的流程描述时遇到初步问题。我们将基于您的原始输入进行确认。")
+                state.proposed_enriched_text = state.active_plan_basis # Fallback to raw plan
+            else:
+                logger.info("Successfully enriched the plan with LLM.")
+                state.proposed_enriched_text = enriched_result["text_output"].strip()
+        
+        # Always require user confirmation for the (potentially) enriched plan
+        logger.info(f"Proposing enriched plan for confirmation: {state.proposed_enriched_text}")
+        current_raw_request_for_prompt = state.raw_user_request if state.raw_user_request else state.active_plan_basis
+        
+        state.clarification_question = USER_INTERACTION_TEXTS_ZH["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(
+            robot_model=state.robot_model, 
+            current_raw_user_request=str(current_raw_request_for_prompt), # Ensure it's a string
+            enriched_text_proposal=str(state.proposed_enriched_text) # Ensure it's a string
+        )
+        add_ai_message_if_needed(state.clarification_question)
+        state.dialog_state = "awaiting_enrichment_confirmation"
+        state.subgraph_completion_status = "needs_clarification"
+        return state.dict(exclude_none=True)
 
     logger.info(
         f"Exiting P&E Node. dialog_state: {state.dialog_state}, "

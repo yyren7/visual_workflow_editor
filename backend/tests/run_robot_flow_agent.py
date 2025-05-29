@@ -40,7 +40,7 @@ async def main():
     llm = None
     if active_llm_provider == "gemini":
         google_api_key = os.getenv("GOOGLE_API_KEY")
-        gemini_model_name = os.getenv("GEMINI_MODEL", "gemini-pro") # Default Gemini model
+        gemini_model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-05-20") # Default Gemini model
 
         if not google_api_key:
             logging.error("CRITICAL: GOOGLE_API_KEY not found in environment variables for Gemini.")
@@ -48,7 +48,7 @@ async def main():
             return
         try:
             llm = ChatGoogleGenerativeAI(
-                model="gemini-2.5-pro-preview-05-06",
+                model="gemini-2.5-flash-preview-05-20",
                 google_api_key=google_api_key,
                 temperature=0,
                 # convert_system_message_to_human=True # Depending on Langchain version and specific needs
@@ -97,7 +97,7 @@ async def main():
 
     # Create a unique directory for this session based on the current time
     session_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    base_log_dir = "/workspace/database/flow_database/result/5.20_test"
+    base_log_dir = "/workspace/database/test_database/test_robot_flow"
     session_log_dir = os.path.join(base_log_dir, session_timestamp)
     try:
         os.makedirs(session_log_dir, exist_ok=True)
@@ -117,7 +117,7 @@ async def main():
         messages=[],
         user_input=initial_user_input,
         config={
-            "OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_deepseek_interactive",
+            "OUTPUT_DIR_PATH": session_log_dir,
             "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new",
         },
         # Initialize other fields as per RobotFlowAgentState definition or let them use defaults
