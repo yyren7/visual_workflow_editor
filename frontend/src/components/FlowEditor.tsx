@@ -1,17 +1,10 @@
 // frontend/src/components/FlowEditor.tsx
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import ReactFlow, {
-  ReactFlowProvider,
-  Controls,
-  Background,
+import {
   Node,
   Edge,
-  Connection,
-  ReactFlowInstance,
   NodeTypes,
-  BackgroundVariant,
   DefaultEdgeOptions,
-  ConnectionLineType,
   MarkerType,
   Panel,
   NodeMouseHandler,
@@ -20,58 +13,30 @@ import 'reactflow/dist/style.css';
 import {
   Box,
   Button,
-  TextField,
-  IconButton,
-  Tooltip,
-  Paper,
-  Menu,
-  MenuItem,
-  Divider,
   Typography,
   CircularProgress,
   Alert
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import MenuIcon from '@mui/icons-material/Menu';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import AddIcon from '@mui/icons-material/Add';
-import ChatIcon from '@mui/icons-material/Chat';
-import CodeIcon from '@mui/icons-material/Code';
-import CloseIcon from '@mui/icons-material/Close';
-import InfoIcon from '@mui/icons-material/Info';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 import VersionInfo from './VersionInfo';
 import FlowSelect from './FlowSelect';
-import ConditionNode from './nodes/ConditionNode'; // 添加条件判断节点类型
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import SortIcon from '@mui/icons-material/Sort';
-import { clearFlowCache } from './FlowLoader'; // 导入清除缓存的函数
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getFlow, updateFlow, getLastChatIdForFlow } from '../api/flowApi'; // Ignore unused 'updateFlow' as it IS used in debounced effect
-import InputNode from './nodes/InputNode';
-import OutputNode from './nodes/OutputNode';
-import ProcessNode from './nodes/ProcessNode';
-import DecisionNode from './nodes/DecisionNode';
 import GenericNode from './nodes/GenericNode';
-import NodeProperties from './NodeProperties';
-import FlowVariables from './FlowVariables';
-import ChatInterface from './ChatInterface';
-import NodeSelector from './NodeSelector';
-import DraggableResizableContainer from './DraggableResizableContainer';
 import { debounce } from 'lodash';
 import { getNodeTemplates, NodeTemplatesResponse } from '../api/nodeTemplates'; // Import API function and type
 
 // --- Redux Imports ---
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '../store/store';
+import { AppDispatch } from '../store/store';
 import {
   fetchFlowById,
   setCurrentFlowId,
   setNodes as setFlowNodes,
   setEdges as setFlowEdges,
-  updateNodeData as updateFlowNodeData,
   setFlowName as setReduxFlowName,
   saveFlow,
   selectCurrentFlowId,
@@ -112,12 +77,12 @@ interface FlowEditorProps {
 
 // Base node types with specific components
 const baseNodeTypes: NodeTypes = {
-  input: InputNode,
-  output: OutputNode,
-  process: ProcessNode,
-  decision: DecisionNode,
-  condition: ConditionNode, // Specific component for 'condition'
-  generic: GenericNode, // Keep a generic fallback just in case
+  // input: InputNode,
+  // output: OutputNode,
+  // process: ProcessNode,
+  // decision: DecisionNode,
+  // condition: ConditionNode, // Specific component for 'condition'
+  // generic: GenericNode, // Keep a generic fallback just in case
 };
 
 const SAVE_DEBOUNCE_MS = 100;
@@ -277,7 +242,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     toggleChatPanel,
     nodeInfoPosition,
     globalVarsPosition,
-    chatPosition,
     openNodeInfoPanel,
   } = usePanelManager();
 

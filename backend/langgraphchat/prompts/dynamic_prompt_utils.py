@@ -1,13 +1,20 @@
 import os
 import xml.etree.ElementTree as ET
 import logging
+from dotenv import load_dotenv
+
+load_dotenv() # 加载 .env 文件中的环境变量
 
 logger = logging.getLogger(__name__)
 
 # Blockly XML 命名空间，根据您的日志，一些文件使用了这个
 BLOCKLY_NAMESPACE = "{https://developers.google.com/blockly/xml}"
 
-def get_dynamic_node_types_info(quickfcpr_dir: str = "/workspace/database/node_database/quick-fcpr/") -> str:
+# 尝试从环境变量读取路径，如果未设置，则使用默认值
+DEFAULT_QUICKFCPR_DIR = "/workspace/database/node_database/quick-fcpr-new/"
+NODE_TEMPLATE_DIR = os.getenv("NODE_TEMPLATE_DIR_PATH", DEFAULT_QUICKFCPR_DIR)
+
+def get_dynamic_node_types_info(quickfcpr_dir: str = NODE_TEMPLATE_DIR) -> str:
     """
     遍历指定目录下的XML文件，提取Blockly节点类型及其标签，
     并格式化为供Prompt使用的字符串。
@@ -142,10 +149,10 @@ if __name__ == '__main__':
     # For robust testing, consider an absolute path or environment variable for the test path.
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Assuming this script is in backend/langgraphchat/prompts, 
-    # go up three levels for backend/, then down to database/node_database/quickfcpr/
-    default_test_path = os.path.abspath(os.path.join(script_dir, "..", "..", "..", "database", "node_database", "quick-fcpr"))
+    # go up three levels for backend/, then down to database/node_database/quick-fcpr-new/
+    default_test_path = os.path.abspath(os.path.join(script_dir, "..", "..", "..", "database", "node_database", "quick-fcpr-new"))
     
-    info_string = get_dynamic_node_types_info(default_test_path)
+    info_string = get_dynamic_node_types_info() # 测试时将使用环境变量或默认值
     
     print("\n--- 动态生成的节点类型信息 ---")
     print(info_string)

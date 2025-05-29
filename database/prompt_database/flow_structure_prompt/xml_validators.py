@@ -25,7 +25,7 @@ def _parse_xml_string(xml_content_string: str):
     except ET.ParseError as e:
         raise ValueError(f"Invalid XML: {e}") from e
 
-# --- Node Definitions (based on /workspace/database/node_database/quick-fcpr/) ---
+# --- Node Definitions (based on /workspace/database/node_database/quick-fcpr-new/) ---
 # Ideally, these definitions would be dynamically loaded and parsed from the XML template files
 # in {{NODE_TEMPLATE_DIR_PATH}}. For this script, they are hardcoded based on known templates.
 NODE_DEFINITIONS = {

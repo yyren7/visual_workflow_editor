@@ -36,6 +36,7 @@ def save_to_md(filepath: str, content: str, title: Optional[str] = None):
 async def main():
     # Determine active LLM provider
     active_llm_provider = os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower() # Default to deepseek
+    active_llm_provider = "gemini"
     llm = None
     if active_llm_provider == "gemini":
         google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -117,6 +118,7 @@ async def main():
         user_input=initial_user_input,
         config={
             "OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_deepseek_interactive",
+            "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new",
         },
         # Initialize other fields as per RobotFlowAgentState definition or let them use defaults
         robot_model=None,
@@ -151,7 +153,7 @@ async def main():
         try:
             # Ensure recursion_limit is high enough for potential internal retries or complex paths
             # Pass the Pydantic model instance directly to ainvoke
-            final_state_output = await robot_flow_app.ainvoke(current_state, {"recursion_limit": 5})
+            final_state_output = await robot_flow_app.ainvoke(current_state, {"recursion_limit": 20})
             
             # Check if the output is a dict and re-instantiate if necessary, 
             # or if it's already a RobotFlowAgentState instance, use it directly.

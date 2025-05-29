@@ -417,6 +417,13 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
         state.dialog_state = "input_understood_ready_for_xml"
         # No AI message here as we're directly proceeding to XML generation. understand_input_node will be next.
 
+    logger.info(
+        f"Exiting P&E Node. dialog_state: {state.dialog_state}, "
+        f"raw_user_request: '{state.raw_user_request}', "
+        f"active_plan_basis: '{state.active_plan_basis}', "
+        f"enriched_structured_text: '{state.enriched_structured_text}', "
+        f"robot_model: '{state.robot_model}'"
+    )
     logger.info(f"--- Exiting Preprocess & Enrich (new dialog_state: {state.dialog_state}) ---")
     return state.dict(exclude_none=True)
 
@@ -427,9 +434,8 @@ class ParsedStep(BaseModel):
     type: str = Field(description="The type of operation, e.g., 'select_robot', 'set_motor', 'moveL', 'loop', 'return'.")
     description: str = Field(description="A brief natural language description of this specific step.")
     # parameters: Dict[str, Any] = Field(description="A dictionary of parameters for this operation, e.g., {'robotName': 'dobot_mg400'} or {'point_name_list': 'P1', 'control_z': 'enable'.}")
-    sub_steps: Optional[List["ParsedStep"]] = Field(None, description="For control flow blocks like 'loop', this contains the nested sequence of operations.")
-
-ParsedStep.update_forward_refs()
+    has_sub_steps: bool = Field(False, description="Whether this step contains nested sub-steps.")
+    sub_step_descriptions: List[str] = Field(default_factory=list, description="List of description strings for nested operations, to avoid deep recursion.")
 
 class UnderstandInputSchema(BaseModel):
     robot: Optional[str] = Field(None, description="The name or model of the robot as explicitly stated in the parsed text, e.g., 'dobot_mg400'. This should match the robot name from the input text.")
@@ -522,22 +528,16 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
     if known_node_types_list and parsed_output.get("operations"):
         flow_ops_data = parsed_output.get("operations", [])
         invalid_types_details = []
-        # Helper to recursively check types in sub_steps
-        def check_op_types(ops_list, path_prefix=""): # path_prefix for better error reporting in nested steps
-            for i, op_data in enumerate(ops_list):
-                op_type = op_data.get("type")
-                current_op_id_for_log = op_data.get('id_suggestion', f"{(path_prefix + str(i+1))}")
-                current_op_desc_for_log = op_data.get('description', 'N/A')
-                if op_type not in known_node_types_list and op_type != "unknown_operation": # Allow 'unknown_operation' as per prompt
-                    invalid_types_details.append(
-                        f"Operation {current_op_id_for_log} ('{current_op_desc_for_log}') has an invalid type '{op_type}'. "
-                        f"Valid types are: {known_node_types_list} (or 'unknown_operation')."
-                    )
-                # Recursively check sub_steps if they exist
-                if op_data.get("sub_steps") and isinstance(op_data["sub_steps"], list):
-                    check_op_types(op_data["sub_steps"], path_prefix=f"{current_op_id_for_log}.")
-        
-        check_op_types(flow_ops_data)
+        # Check types in operations (no longer recursive since we use flat structure)
+        for i, op_data in enumerate(flow_ops_data):
+            op_type = op_data.get("type")
+            current_op_id_for_log = op_data.get('id_suggestion', f"op_{i+1}")
+            current_op_desc_for_log = op_data.get('description', 'N/A')
+            if op_type not in known_node_types_list and op_type != "unknown_operation": # Allow 'unknown_operation' as per prompt
+                invalid_types_details.append(
+                    f"Operation {current_op_id_for_log} ('{current_op_desc_for_log}') has an invalid type '{op_type}'. "
+                    f"Valid types are: {known_node_types_list} (or 'unknown_operation')."
+                )
         
         if invalid_types_details:
             error_message = " ".join(invalid_types_details)
@@ -573,8 +573,9 @@ def _collect_all_operations_for_xml_generation(
     _block_counter: int = 1 # Internal counter, starts at 1
     ) -> (List[Dict[str, Any]], int): # Returns: (list of op_infos_for_llm, next_block_counter)
     """
-    Flattens the list of operations (including sub-steps) and assigns 
+    Flattens the list of operations and assigns 
     unique IDs and block numbers for XML generation.
+    Now handles flat structure with sub_step_descriptions instead of recursive sub_steps.
     """
     ops_to_generate = []
     block_id_prefix = config.get("BLOCK_ID_PREFIX_EXAMPLE", "block_uuid") 
@@ -585,9 +586,16 @@ def _collect_all_operations_for_xml_generation(
         
         generated_xml_filename = f"{xml_block_id}_{op_data_from_step1['type']}.xml"
 
+        # Include sub-step descriptions in the description if available
+        full_description = op_data_from_step1['description']
+        if op_data_from_step1.get('has_sub_steps', False) and op_data_from_step1.get('sub_step_descriptions'):
+            sub_descriptions = op_data_from_step1['sub_step_descriptions']
+            if sub_descriptions:
+                full_description += f" [Sub-steps: {'; '.join(sub_descriptions)}]"
+
         op_info_for_llm = {
             "type": op_data_from_step1['type'],
-            "description": op_data_from_step1['description'],
+            "description": full_description,
             # "parameters_json": json.dumps(op_data_from_step1.get('parameters', {})), # Ensure parameters exist
             "id_suggestion_from_step1": op_data_from_step1.get('id_suggestion', ''),
             
@@ -599,14 +607,15 @@ def _collect_all_operations_for_xml_generation(
         ops_to_generate.append(op_info_for_llm)
         _block_counter += 1
 
-        if "sub_steps" in op_data_from_step1 and op_data_from_step1["sub_steps"]:
-            sub_ops_list, next_block_counter_after_subs = _collect_all_operations_for_xml_generation(
-                op_data_from_step1["sub_steps"],
-                config,
-                _block_counter=_block_counter
-            )
-            ops_to_generate.extend(sub_ops_list)
-            _block_counter = next_block_counter_after_subs
+        # No longer process recursive sub_steps since we use flat structure
+        # if "sub_steps" in op_data_from_step1 and op_data_from_step1["sub_steps"]:
+        #     sub_ops_list, next_block_counter_after_subs = _collect_all_operations_for_xml_generation(
+        #         op_data_from_step1["sub_steps"],
+        #         config,
+        #         _block_counter=_block_counter
+        #     )
+        #     ops_to_generate.extend(sub_ops_list)
+        #     _block_counter = next_block_counter_after_subs
 
     return ops_to_generate, _block_counter
 
@@ -683,6 +692,12 @@ async def _generate_one_xml_for_operation_task(
         f"Target Block ID: {op_info_for_llm['target_xml_block_id']}. "
         f"Description: {op_info_for_llm['description']}."
     )
+
+    logger.info(f"Attempting LLM call for op type: {op_info_for_llm['type']}, block_id: {op_info_for_llm['target_xml_block_id']}")
+    logger.info(f"LLM User Message: {user_message_for_llm}")
+    # For more detailed debugging, you might log the system prompt, but it can be very long.
+    # system_prompt_for_debug = get_filled_prompt("flow_step2_generate_node_xml.md", placeholder_values)
+    # logger.debug(f"LLM System Prompt (first 500 chars): {system_prompt_for_debug[:500]}...")
 
     llm_response = await invoke_llm_for_text_output(
         llm,
@@ -858,66 +873,44 @@ def _prepare_data_for_relation_prompt(
     """
     Prepares a simplified tree structure of operations with their final block_ids
     for the relation XML generation prompt.
-    Relies on the order of generated_xmls matching a full traversal of parsed_steps.
+    Now works with flat structure without recursive sub_steps.
     """
     
-    generated_xml_iter = iter(generated_xmls) # Create an iterator for generated_xmls
-
-    def _build_relation_tree_with_ids(current_parsed_steps: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        tree_for_prompt = []
-        for step in current_parsed_steps:
-            try:
-                corresponding_xml_info = next(generated_xml_iter)
-            except StopIteration:
-                logger.error("Ran out of generated_xmls while building relation tree. Mismatch likely.")
-                # Optionally, raise an error or return a partial tree with an error indicator.
-                # For now, we'll just break and the resulting tree might be incomplete.
-                break 
-
-            relation_node_data = {
-                "type": step["type"], # Type from parsed_step
-                "id": corresponding_xml_info.block_id, # Actual block_id from generated_xmls
-            }
-            if step.get("sub_steps") and isinstance(step["sub_steps"], list):
-                relation_node_data["sub_steps"] = _build_relation_tree_with_ids(step["sub_steps"])
-            tree_for_prompt.append(relation_node_data)
-        return tree_for_prompt
-
     if not parsed_steps:
         return []
     if not generated_xmls: # If no XMLs were generated (e.g., empty plan), no relations to build
         logger.warning("_prepare_data_for_relation_prompt: No generated_xmls provided for mapping.")
-        # Fallback: build tree with original id_suggestions or placeholders if absolutely necessary,
-        # but this means the relation XML will not have correct final block IDs.
-        # For now, it's better to return an empty tree or signal an issue if IDs are crucial.
-        # Let's assume for now that if generated_xmls is empty, parsed_steps should also logically lead to empty relations.
         return []
 
-
-    # Check for length mismatch as a basic safeguard
-    # A more robust check would be to count total nodes in parsed_steps (including sub_steps)
-    # and compare with len(generated_xmls).
-    
-    # Simple count for now:
-    def count_total_ops(steps: List[Dict[str, Any]]) -> int:
-        count = 0
-        for step in steps:
-            count += 1
-            if step.get("sub_steps"):
-                count += count_total_ops(step["sub_steps"])
-        return count
-
-    total_parsed_ops = count_total_ops(parsed_steps)
-    if total_parsed_ops != len(generated_xmls):
+    # Simple validation: check if number of operations matches number of generated XMLs
+    if len(parsed_steps) != len(generated_xmls):
         logger.error(
-            f"Mismatch in total parsed operations ({total_parsed_ops}) "
+            f"Mismatch in parsed operations ({len(parsed_steps)}) "
             f"and number of generated XML files ({len(generated_xmls)}). "
             "Block IDs in relation.xml might be incorrect."
         )
         # Depending on severity, could raise an error here or return empty list.
         # For now, will proceed, but this is a sign of upstream issues.
 
-    return _build_relation_tree_with_ids(parsed_steps)
+    # Build simple mapping since we no longer have recursive structure
+    tree_for_prompt = []
+    for i, step in enumerate(parsed_steps):
+        if i < len(generated_xmls):
+            corresponding_xml_info = generated_xmls[i]
+            relation_node_data = {
+                "type": step["type"], # Type from parsed_step
+                "id": corresponding_xml_info.block_id, # Actual block_id from generated_xmls
+            }
+            # Add sub-step info if available but as metadata, not as nested structure
+            if step.get("has_sub_steps", False) and step.get("sub_step_descriptions"):
+                relation_node_data["has_sub_steps"] = True
+                relation_node_data["sub_step_descriptions"] = step["sub_step_descriptions"]
+            
+            tree_for_prompt.append(relation_node_data)
+        else:
+            logger.warning(f"No corresponding XML found for parsed step {i}: {step.get('description', 'N/A')}")
+
+    return tree_for_prompt
 
 
 # --- Node 3: Generate Node Relation XML ---

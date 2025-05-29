@@ -6,6 +6,7 @@ import os
 import xml.etree.ElementTree as ET
 import copy
 from pathlib import Path
+from dotenv import load_dotenv
 
 from langgraph.graph import StateGraph, END
 from langchain_core.language_models import BaseChatModel
@@ -20,9 +21,11 @@ from .llm_nodes import (
     generate_relation_xml_node
 )
 from .xml_tools import WriteXmlFileTool
-from .file_share_tool import upload_file
+from ....tools.file_share_tool import upload_file
 
 logger = logging.getLogger(__name__)
+
+load_dotenv() # 加载 .env 文件中的环境变量
 
 DEFAULT_CONFIG = {
     "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
@@ -30,7 +33,7 @@ DEFAULT_CONFIG = {
     "POINT_NAME_EXAMPLE_1": "P3",
     "POINT_NAME_EXAMPLE_2": "P1",
     "POINT_NAME_EXAMPLE_3": "P2",
-    "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr",
+    "NODE_TEMPLATE_DIR_PATH": os.getenv("NODE_TEMPLATE_DIR_PATH", "/workspace/database/node_database/quick-fcpr-new"), # 从环境变量读取，如果未设置则使用默认值
     "OUTPUT_DIR_PATH": "/workspace/database/flow_database/result/example_run/",
     "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml",
     "BLOCK_ID_PREFIX_EXAMPLE": "block_uuid",
@@ -48,17 +51,21 @@ GENERATE_FINAL_XML = "generate_final_xml"
 ERROR_HANDLER = "error_handler" # General error logging node, if needed beyond is_error flag
 UPLOAD_FINAL_XML_NODE = "upload_final_xml_node" # If you have this node for uploading
 
+# Define a new end state for clarification
+END_FOR_CLARIFICATION = "end_for_clarification"
+
 def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     logger.info("--- Initializing Agent State (Robot Flow Subgraph) ---")
     merged_config = DEFAULT_CONFIG.copy()
     if state.config is None: state.config = {}
-    merged_config.update(state.config)
+    merged_config.update(state.config) # Apply other overrides from input config
     state.config = merged_config
+    
     if state.dialog_state is None: state.dialog_state = "initial"
     state.current_step_description = "Initialized Robot Flow Subgraph"
     # Ensure user_input from invoker is preserved if dialog_state is initial
     # preprocess_and_enrich_input_node will consume it.
-    logger.info(f"Agent state initialized. Dialog state: {state.dialog_state}, Initial User Input: '{state.user_input}'")
+    logger.info(f"Agent state initialized. Dialog state: {state.dialog_state}, Initial User Input: '{state.user_input}', Using NODE_TEMPLATE_DIR_PATH: {state.config.get('NODE_TEMPLATE_DIR_PATH')}")
     return state.dict(exclude_none=True)
 
 async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> Dict[str, Any]:
@@ -236,6 +243,14 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
 
 # --- Conditional Edge Functions ---
 def route_after_core_interaction(state: RobotFlowAgentState) -> str:
+    logger.info(
+        f"Entering routing after Core Interaction. dialog_state: {state.dialog_state}, "
+        f"raw_user_request: '{state.raw_user_request}', "
+        f"active_plan_basis: '{state.active_plan_basis}', "
+        f"enriched_structured_text: '{state.enriched_structured_text}', "
+        f"robot_model: '{state.robot_model}', "
+        f"is_error: {state.is_error}"
+    )
     logger.info(f"--- Routing after Core Interaction (dialog_state: '{state.dialog_state}', is_error: {state.is_error}) ---")
     
     # Check if preprocess_and_enrich_input_node (CORE_INTERACTION_NODE) itself set an error during its execution
@@ -247,9 +262,24 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
         state.dialog_state = 'awaiting_user_input' # Prepare for new user input
         state.user_input = None # Crucial: Clear stale user_input to prevent re-processing old data if core node failed.
         state.clarification_question = None # Clear any pending questions from core node
+        # If core node itself errored, it might need to end to report error or go back to itself if it can self-correct with new input.
+        # For now, let's assume it should go back to itself to await new input if it set an error.
         return CORE_INTERACTION_NODE
 
     current_dialog_state = state.dialog_state
+
+    # If a clarification question has been set by CORE_INTERACTION_NODE, 
+    # and it's waiting for input, it should end the current graph run.
+    if state.clarification_question and current_dialog_state in [
+        "awaiting_robot_model_input", 
+        "awaiting_enrichment_confirmation", 
+        "awaiting_user_input", # If CORE_INTERACTION_NODE decided to ask a question and transitioned to this state
+        "initial" # If it asked a question right from the initial state (e.g. asking for robot model)
+    ]:
+        logger.info(f"Clarification question is pending ('{state.clarification_question}'). Dialog state: {current_dialog_state}. Ending graph invocation to get user input.")
+        state.subgraph_completion_status = "needs_clarification" # Indicate why it's ending
+        return END_FOR_CLARIFICATION
+
     if current_dialog_state == "input_understood_ready_for_xml":
         if state.enriched_structured_text:
             logger.info("Core interaction successful (input_understood_ready_for_xml). Routing to: UNDERSTAND_INPUT")
@@ -369,6 +399,7 @@ def create_robot_flow_graph(
         {
             UNDERSTAND_INPUT: UNDERSTAND_INPUT,
             CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, # For loops waiting for user reply to clarification_question
+            END_FOR_CLARIFICATION: END, # New edge to END node
             # ERROR_HANDLER: ERROR_HANDLER # If preprocess itself has an unrecoverable error
         }
     )

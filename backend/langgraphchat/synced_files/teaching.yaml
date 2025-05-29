@@ -55,35 +55,35 @@ P4:
   stime: 0.0
   tool: 0.0
 P5:
-  name: ""
-  x_pos: 0.0
+  name: b_copy
+  x_pos: 237.146
   y_pos: 0.0
-  z_pos: 0.0
+  z_pos: 52.285
   rx_pos: 0.0
   ry_pos: 0.0
-  rz_pos: 0.0
-  vel: 0
-  acc: 0.0
-  dec: 0
-  dist: 0.0
+  rz_pos: -22.643
+  vel: 100.0
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
   stime: 0.0
   tool: 0.0
 P6:
-  name: ""
-  x_pos: 0.0
+  name: b_copy_2
+  x_pos: 237.146
   y_pos: 0.0
-  z_pos: 0.0
+  z_pos: 52.285
   rx_pos: 0.0
   ry_pos: 0.0
-  rz_pos: 0.0
-  vel: 0
-  acc: 0.0
-  dec: 0
-  dist: 0.0
+  rz_pos: -22.643
+  vel: 100.0
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
   stime: 0.0
   tool: 0.0
 P7:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -97,7 +97,7 @@ P7:
   stime: 0.0
   tool: 0.0
 P8:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -111,7 +111,7 @@ P8:
   stime: 0.0
   tool: 0.0
 P9:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -125,7 +125,7 @@ P9:
   stime: 0.0
   tool: 0.0
 P10:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -139,7 +139,7 @@ P10:
   stime: 0.0
   tool: 0.0
 P11:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -153,7 +153,7 @@ P11:
   stime: 0.0
   tool: 0.0
 P12:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -167,7 +167,7 @@ P12:
   stime: 0.0
   tool: 0.0
 P13:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -181,7 +181,7 @@ P13:
   stime: 0.0
   tool: 0.0
 P14:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -195,7 +195,7 @@ P14:
   stime: 0.0
   tool: 0.0
 P15:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -209,7 +209,7 @@ P15:
   stime: 0.0
   tool: 0.0
 P16:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -223,7 +223,7 @@ P16:
   stime: 0.0
   tool: 0.0
 P17:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -237,7 +237,7 @@ P17:
   stime: 0.0
   tool: 0.0
 P18:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -251,7 +251,7 @@ P18:
   stime: 0.0
   tool: 0.0
 P19:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -265,7 +265,7 @@ P19:
   stime: 0.0
   tool: 0.0
 P20:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -279,7 +279,7 @@ P20:
   stime: 0.0
   tool: 0.0
 P21:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -293,7 +293,7 @@ P21:
   stime: 0.0
   tool: 0.0
 P22:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -307,7 +307,7 @@ P22:
   stime: 0.0
   tool: 0.0
 P23:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -321,7 +321,7 @@ P23:
   stime: 0.0
   tool: 0.0
 P24:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -335,7 +335,7 @@ P24:
   stime: 0.0
   tool: 0.0
 P25:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -349,7 +349,7 @@ P25:
   stime: 0.0
   tool: 0.0
 P26:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -363,7 +363,7 @@ P26:
   stime: 0.0
   tool: 0.0
 P27:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -377,7 +377,7 @@ P27:
   stime: 0.0
   tool: 0.0
 P28:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -391,7 +391,7 @@ P28:
   stime: 0.0
   tool: 0.0
 P29:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -405,7 +405,7 @@ P29:
   stime: 0.0
   tool: 0.0
 P30:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -419,7 +419,7 @@ P30:
   stime: 0.0
   tool: 0.0
 P31:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -433,7 +433,7 @@ P31:
   stime: 0
   tool: 0
 P32:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -447,7 +447,7 @@ P32:
   stime: 0
   tool: 0
 P33:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -461,7 +461,7 @@ P33:
   stime: 0
   tool: 0
 P34:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -475,7 +475,7 @@ P34:
   stime: 0
   tool: 0
 P35:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -489,7 +489,7 @@ P35:
   stime: 0
   tool: 0
 P36:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -503,7 +503,7 @@ P36:
   stime: 0
   tool: 0
 P37:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -517,7 +517,7 @@ P37:
   stime: 0
   tool: 0
 P38:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -531,7 +531,7 @@ P38:
   stime: 0
   tool: 0
 P39:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -545,7 +545,7 @@ P39:
   stime: 0
   tool: 0
 P40:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -559,7 +559,7 @@ P40:
   stime: 0
   tool: 0
 P41:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -573,7 +573,7 @@ P41:
   stime: 0
   tool: 0
 P42:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -587,7 +587,7 @@ P42:
   stime: 0
   tool: 0
 P43:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -601,7 +601,7 @@ P43:
   stime: 0
   tool: 0
 P44:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -615,7 +615,7 @@ P44:
   stime: 0.0
   tool: 0.0
 P45:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -629,7 +629,7 @@ P45:
   stime: 0.0
   tool: 0.0
 P46:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -643,7 +643,7 @@ P46:
   stime: 0.0
   tool: 0.0
 P47:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -657,7 +657,7 @@ P47:
   stime: 0.0
   tool: 0.0
 P48:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -671,7 +671,7 @@ P48:
   stime: 0.0
   tool: 0.0
 P49:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -685,7 +685,7 @@ P49:
   stime: 0.0
   tool: 0.0
 P50:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -699,7 +699,7 @@ P50:
   stime: 0.0
   tool: 0.0
 P51:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -713,7 +713,7 @@ P51:
   stime: 0.0
   tool: 0.0
 P52:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -727,7 +727,7 @@ P52:
   stime: 0.0
   tool: 0.0
 P53:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -741,7 +741,7 @@ P53:
   stime: 0.0
   tool: 0.0
 P54:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -755,7 +755,7 @@ P54:
   stime: 0.0
   tool: 0.0
 P55:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -769,7 +769,7 @@ P55:
   stime: 0.0
   tool: 0.0
 P56:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -783,7 +783,7 @@ P56:
   stime: 0.0
   tool: 0.0
 P57:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -797,7 +797,7 @@ P57:
   stime: 0.0
   tool: 0.0
 P58:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -811,7 +811,7 @@ P58:
   stime: 0.0
   tool: 0.0
 P59:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -825,7 +825,7 @@ P59:
   stime: 0
   tool: 0
 P60:
-  name: ""
+  name: ''
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
@@ -839,7 +839,7 @@ P60:
   stime: 0
   tool: 0
 P61:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -853,7 +853,7 @@ P61:
   stime: 0
   tool: 0
 P62:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -867,7 +867,7 @@ P62:
   stime: 0
   tool: 0
 P63:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -881,7 +881,7 @@ P63:
   stime: 0
   tool: 0
 P64:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -895,7 +895,7 @@ P64:
   stime: 0
   tool: 0
 P65:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -909,7 +909,7 @@ P65:
   stime: 0
   tool: 0
 P66:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -923,7 +923,7 @@ P66:
   stime: 0
   tool: 0
 P67:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -937,7 +937,7 @@ P67:
   stime: 0
   tool: 0
 P68:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -951,7 +951,7 @@ P68:
   stime: 0
   tool: 0
 P69:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -965,7 +965,7 @@ P69:
   stime: 0
   tool: 0
 P70:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -979,7 +979,7 @@ P70:
   stime: 0
   tool: 0
 P71:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -993,7 +993,7 @@ P71:
   stime: 0
   tool: 0
 P72:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1007,7 +1007,7 @@ P72:
   stime: 0
   tool: 0
 P73:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1021,7 +1021,7 @@ P73:
   stime: 0
   tool: 0
 P74:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1035,7 +1035,7 @@ P74:
   stime: 0
   tool: 0
 P75:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1049,7 +1049,7 @@ P75:
   stime: 0
   tool: 0
 P76:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1063,7 +1063,7 @@ P76:
   stime: 0
   tool: 0
 P77:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1077,7 +1077,7 @@ P77:
   stime: 0
   tool: 0
 P78:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1091,7 +1091,7 @@ P78:
   stime: 0
   tool: 0
 P79:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1105,7 +1105,7 @@ P79:
   stime: 0
   tool: 0
 P80:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1119,7 +1119,7 @@ P80:
   stime: 0
   tool: 0
 P81:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1133,7 +1133,7 @@ P81:
   stime: 0
   tool: 0
 P82:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1147,7 +1147,7 @@ P82:
   stime: 0
   tool: 0
 P83:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1161,7 +1161,7 @@ P83:
   stime: 0
   tool: 0
 P84:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1175,7 +1175,7 @@ P84:
   stime: 0
   tool: 0
 P85:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1189,7 +1189,7 @@ P85:
   stime: 0
   tool: 0
 P86:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1203,7 +1203,7 @@ P86:
   stime: 0
   tool: 0
 P87:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1217,7 +1217,7 @@ P87:
   stime: 0
   tool: 0
 P88:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1231,7 +1231,7 @@ P88:
   stime: 0
   tool: 0
 P89:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1245,7 +1245,7 @@ P89:
   stime: 0
   tool: 0
 P90:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1259,7 +1259,7 @@ P90:
   stime: 0
   tool: 0
 P91:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1273,7 +1273,7 @@ P91:
   stime: 0
   tool: 0
 P92:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1287,7 +1287,7 @@ P92:
   stime: 0
   tool: 0
 P93:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1301,7 +1301,7 @@ P93:
   stime: 0
   tool: 0
 P94:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1315,7 +1315,7 @@ P94:
   stime: 0
   tool: 0
 P95:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1329,7 +1329,7 @@ P95:
   stime: 0
   tool: 0
 P96:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1343,7 +1343,7 @@ P96:
   stime: 0
   tool: 0
 P97:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1357,7 +1357,7 @@ P97:
   stime: 0
   tool: 0
 P98:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1371,7 +1371,7 @@ P98:
   stime: 0
   tool: 0
 P99:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0
@@ -1385,7 +1385,7 @@ P99:
   stime: 0
   tool: 0
 P100:
-  name: ""
+  name: ''
   x_pos: 0
   y_pos: 0
   z_pos: 0

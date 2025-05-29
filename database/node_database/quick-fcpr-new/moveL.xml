@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="moveL" id="GENERATED_ID" data-blockNo="1">
+    <field name="point_name_list">P1<!-- point_name_list (pointName - 目標位置名): 机器人要到达的目标位置名称。 --><!-- 有效范围: 在示教表中设定的点位名称 (最多 100 点) --><!-- 初期値: ポイント名 --><!-- 示例: P1 --></field>
+    <field name="control_x">enable<!-- control_x (X - X軸動作有無): X轴移动是否有效。 --><!-- 有效范围: enable (有效), disable (无效) --><!-- 初期値: X (有效) --><!-- 示例: enable --></field>
+    <field name="control_y">enable<!-- control_y (Y - Y軸動作有無): Y轴移动是否有效。 --><!-- 有效范围: enable (有效), disable (无效) --><!-- 初期値: Y (有效) --><!-- 示例: enable --></field>
+    <field name="control_z">enable<!-- control_z (Z - Z軸動作有無): Z轴移动是否有效。 --><!-- 有效范围: enable (有效), disable (无效) --><!-- 初期値: Z (有效) --><!-- 示例: enable --></field>
+    <field name="control_rz">enable<!-- control_rz (Rz - Rz軸動作有無): Rz轴 (通常是旋转轴) 移动是否有效。 --><!-- 有效范围: enable (有效), disable (无效) --><!-- 初期値: Rz (有效) --><!-- 示例: enable --></field>
+    <field name="control_ry">enable<!-- control_ry (Ry - Ry軸動作有無): Ry轴移动是否有效。 --><!-- 有效范围: enable (有效), disable (无效) --><!-- 初期値: Ry (有效) --><!-- 示例: enable --></field>
+    <field name="control_rx">enable<!-- control_rx (Rx - Rx軸動作有無): Rx轴移动是否有效。 --><!-- 有效范围: enable (有效), disable (无效) --><!-- 初期値: Rx (有效) --><!-- 示例: enable --></field>
+    <field name="pallet_list">none<!-- pallet_list (pallet No. - パレット番号): 用于偏移目标位置的托盘补正量。 --><!-- 有效范围: pallet No.1 ~ 10, no pallet (不使用托盘) --><!-- 初期値: no pallet --><!-- 示例: none (对应 no pallet) --></field>
+    <field name="camera_list">none<!-- camera_list (camera No. - カメラ番号): 用于偏移目标位置的相机补正量。 --><!-- 有效范围: camera No.1 ~ 10, no camera (不使用相机) --><!-- 初期値: no camera --><!-- 示例: none (对应 no camera) --></field>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

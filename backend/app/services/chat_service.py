@@ -56,8 +56,7 @@ class ChatService:
                 logger.error("GOOGLE_API_KEY environment variable not set.")
                 raise ValueError("GOOGLE_API_KEY environment variable not set.")
             try:
-                # convert_system_message_to_human=True 对于某些Agent类型使用Gemini时是必要的
-                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20", google_api_key=api_key, convert_system_message_to_human=True)
+                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20", google_api_key=api_key)
                 logger.info("Instantiated ChatGoogleGenerativeAI (Gemini).")
                 return llm
             except Exception as e:

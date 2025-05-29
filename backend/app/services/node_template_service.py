@@ -2,6 +2,9 @@ import os
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from dotenv import load_dotenv # 确保 dotenv 被导入
+
+load_dotenv() # 加载 .env 文件中的环境变量
 
 class NodeTemplate:
     """
@@ -43,18 +46,23 @@ class NodeTemplateService:
         load_templates: 加载所有XML模板文件
         get_templates: 获取所有模板用于API响应
     """
-    def __init__(self, template_dir: str = None):
+    def __init__(self, template_dir: Optional[str] = None):
         """
         初始化节点模板服务
         
         参数:
-            template_dir: XML模板文件所在目录
+            template_dir: XML模板文件所在目录。如果为None，则尝试从环境变量NODE_TEMPLATE_DIR_PATH读取，否则使用默认路径。
         """
         if template_dir is None:
-            # 使用绝对路径
-            BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-            template_dir = os.path.join(BASE_DIR, "database/node_database/quick-fcpr")
-            print(f"使用自动计算的模板目录路径: {template_dir}")
+            # 尝试从环境变量读取路径，如果未设置，则使用默认值
+            default_new_path = os.path.join(Path(__file__).resolve().parent.parent.parent.parent, "database/node_database/quick-fcpr-new")
+            template_dir = os.getenv("NODE_TEMPLATE_DIR_PATH", default_new_path)
+            if template_dir == default_new_path:
+                print(f"环境变量 NODE_TEMPLATE_DIR_PATH 未设置或无效，使用默认模板目录路径: {template_dir}")
+            else:
+                print(f"从环境变量 NODE_TEMPLATE_DIR_PATH 使用模板目录路径: {template_dir}")
+        else:
+            print(f"使用指定的模板目录路径: {template_dir}")
             
         self.template_dir = template_dir
         self.templates = {}

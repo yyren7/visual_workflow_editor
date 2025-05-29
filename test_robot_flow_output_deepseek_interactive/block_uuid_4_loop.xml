@@ -4,5 +4,6 @@
     <statement name="DO">
       <!-- 子块将通过关系定义连接，此处应为空 -->
     </statement>
+    <!-- <next> ... </next>  (通常loop后紧跟statement内的return, 或者loop是末端) -->
   </block>
 </xml>

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xml xmlns="https://developers.google.com/blockly/xml">
-  <block type="loop" id="block_uuid_5" data-blockNo="5">
-    <statement name="DO">
-      <!-- Child blocks will be connected via relation definitions -->
-    </statement>
-  </block>
-</xml>

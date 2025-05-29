@@ -24,7 +24,7 @@ files_to_download = ["flow.xml"]
 # 完整 SMB 用户凭证，格式为 'DOMAIN\\username%password'
 # smb_credentials = f"{smb_user_domain}\\\\{smb_username}%{smb_password}" # 旧方式，注释掉
 smb_user_pass = f"{smb_username}%{smb_password}" # 新方式：用户名%密码
-smb_base_url = f"//{smb_host}/{smb_share}"
+smb_base_url = f"//{smb_host}/{smb_share_flow}"
 
 def download_files():
     # 创建本地目录（如果不存在）

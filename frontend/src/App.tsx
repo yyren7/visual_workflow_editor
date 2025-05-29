@@ -2,7 +2,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Container, Box, CircularProgress, Typography } from '@mui/material';
-import FlowEditorWrapper from './components/FlowEditor';
 import FlowLoader from './components/FlowLoader';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
@@ -13,7 +12,6 @@ import Register from './components/Register';
 import Login from './components/Login';
 import Submit from './components/Submit';
 import ProtectedRoute from './components/ProtectedRoute';
-import NavBar from './components/NavBar';
 import SelectPage from './components/SelectPage';
 // 导入认证上下文
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -34,7 +32,6 @@ const darkTheme = createTheme({
 // 分离路由逻辑以便使用useAuth
 const AppRoutes: React.FC = () => {
   // 使用直接访问i18n而非useTranslation
-  const t = (key: string) => i18n.t(key);
   const { isAuthenticated, isLoading } = useAuth();
 
   // 当认证状态正在加载时，显示加载内容
@@ -101,13 +98,12 @@ const AppRoutes: React.FC = () => {
 
 const App: React.FC = () => {
   // 使用i18n直接访问
-  const t = (key: string) => i18n.t(key);
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <FlowProvider>
               <Container
