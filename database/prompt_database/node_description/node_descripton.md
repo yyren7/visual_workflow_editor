@@ -1,30 +1,30 @@
-connect_external_io: 连接和管理外部输入输出设备。
-controls_if: 根据指定条件判断，执行不同的操作分支。
-create_event: 创建新的事件。
-external_io: 用于控制机器人与外部设备进行输入/输出交互。
-logic_boolean: 处理布尔（真/假）逻辑值，用于执行逻辑运算或作为条件判断。
-logic_compare: 比较两个输入值，并根据设定的比较条件输出逻辑结果。
-logic_custom_flag: 设置自定义逻辑标志位。
-logic_operation: 执行布尔逻辑运算，如与、或、非等。
-loop: 根据指定次数或条件，重复执行一个指令块。
-math_custom_number: 定义一个自定义数值。
-math_number: 表示一个数值，可用于数学计算或作为参数。
-moveL: 控制机器人进行线性移动到指定点位。
-moveP: 控制机器人进行点对点移动到指定点位。
-procedures_callnoreturn: 执行一个不返回任何结果的程序。
-procedures_defnoreturn: 定义一个不返回任何值的子程序或过程。
-return: 结束当前子程序，并将控制权返回给调用者。
-robot_io: 控制或读取机器人I/O端口的状态。
-select_robot: 选择或指定当前要控制的机器人。
-set_external_io_output_during: 在指定动作执行期间，设置并保持外部IO输出的状态。
-set_external_io_output_upon: 根据指定条件或事件，设置外部I/O输出。
-set_motor: 设置机器人电机参数或运行状态。
-set_number: 设置一个数字类型变量的值。
-set_output: 设置指定输出的状态或值。
-set_speed: 设置机器人运动的执行速度。
-start_thread: 启动一个新的执行线程。
-stop_robot_upon: 当满足指定条件时，停止机器人运行。
-wait_block: 使程序暂停指定时间。
-wait_external_io_input: 等待外部I/O输入达到指定状态。
-wait_input: 暂停机器人操作，直到接收到指定的外部输入或信号。
-wait_timer: 控制机器人等待指定时长。
+connect_external_io: Connects to an external I/O device/unit. Precautions: Use in conjunction with blocks like "set external io output" or "wait external io input".
+controls_if: Branch the enclosed operation blocks according to the condition. Precautions: The maximum number of conditional branches is 10. Other blocks cannot be connected below the "if" block. If multiple conditions are met simultaneously, the process described in the first (topmost) met condition is prioritized. (Mapped to "if" block from draft)
+create_event: Perform parallel processing of operations according to the set conditions. Precautions: Other blocks cannot be connected below the "start thread" block. (Note: The precaution mentions "start thread" block, which might be an error in the source document. It likely implies that the main flow does not continue directly after this block, and its logic is self-contained or triggered by events.)
+external_io: Return the external device I/O status as a logical value. Precautions: Define the I/O device with the "connect external io" block before using.
+logic_boolean: Return the set logical value (true/false). Precautions: Use together with blocks like "start thread". (Mapped to "logic flag" block from draft)
+logic_compare: Return the result of the set comparison operation (e.g., =, <, >) as a logical value. Precautions: Use together with blocks like "start thread".
+logic_custom_flag: Return the logical value of a defined flag variable. Precautions: Use together with blocks like "set flag".
+logic_operation: Performs a logical operation (AND/OR) between two logical values and returns the result. Precautions: Use together with blocks like "start thread".
+loop: Perform loop processing of the enclosed block operations. Precautions: Nesting "loop" blocks (placing one inside another) may cause unintended behavior. Other blocks cannot be connected below the "loop" block. Use the "return" block to complete the loop iteration and go back to the start of the loop.
+math_custom_number: Specify and return the value of a numerical variable. Precautions: Use together with blocks like "set number".
+math_number: Return a specified numerical value. Precautions: Use together with blocks like "set number".
+moveL: Move the robot in an absolute linear motion along all axes. Precautions: Define the robot with the "select robot" block before using. Use after turning ON the servo power with the "set motor" block. For 4-axis robots, Rz becomes R (=0 rotation) (Ry and Rx are invalid).
+moveP: Move the robot in an absolute PTP (Point-to-Point) motion along all axes. Precautions: Define the robot with the "select robot" block before using. Use after turning ON the servo power with the "set motor" block. For 4-axis robots, Rz becomes R (= rotation) (Ry and Rx are invalid).
+procedures_callnoreturn: Call a previously defined function. Precautions: Define the function using the "define function" block before using this block to call it. (Mapped to "call function" from draft)
+procedures_defnoreturn: Define a function with a given name. Precautions: Use in conjunction with the "call function" block. If the "define function" block is deleted, "call function" blocks with the same name will also be deleted. (Mapped to "define function" from draft)
+return: Return to the beginning of the loop process. Precautions: Use together with the "loop" block.
+robot_io: Return the robot I/O status as a logical value. Precautions: Define the robot with the "select robot" block before using.
+select_robot: Select the robot to which commands will be sent. Precautions: Can only be placed at the beginning of the flow. Placing two or more in the same workspace may cause unintended behavior.
+set_external_io_output_during: Operate the output of an external device I/O for a specified time. Precautions: Define the I/O device with the "connect external io" block before using.
+set_external_io_output_upon: Operate the output of external device I/O when the set condition is met. Precautions: Define the I/O device with the "connect external io" block before using. Use inside a "create event trigger" block.
+set_motor: Operate the robot's servo motor power supply. Precautions: Place it before using "move" blocks.
+set_number: Assign a numerical value to a variable. Precautions: Define variables in the variable table before storing values in them.
+set_output: Operate the robot I/O output. Precautions: Define the robot with the "select robot" block before using.
+set_speed: Sets the robot's operational speed. Precautions: Define the robot with the "select robot" block before using. Ensure motor power is ON if applicable before movement commands that use this speed. The speed value is typically a percentage or a specific unit (e.g., mm/s); check robot documentation for specifics.
+start_thread: Start the enclosed block operation according to the condition. Precautions: Other blocks cannot be connected below the "start thread" block.
+stop_robot_upon: The robot stops when the set condition is met. Precautions: Use inside a "create event trigger" block.
+wait_block: Wait until the operating condition of the connected block is met. Precautions: Only blocks from the "Logic" category can be connected as operating conditions.
+wait_external_io_input: Wait until the input of the external device I/O meets the specified condition. Precautions: Define the I/O device with the "connect external io" block before using.
+wait_input: Wait until the robot I/O input meets the specified condition. Precautions: Define the robot with the "select robot" block before using.
+wait_timer: Wait for a specified amount of time. Precautions: Time can only be set in milliseconds (msec).

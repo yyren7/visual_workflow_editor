@@ -108,8 +108,51 @@ async def main():
         # For now, we'll proceed but log saving might fail
 
     # Initial user request that might require clarification
-    initial_user_input = "mg400に点2、3、1の順で運動させ、その後、点4、5、6の順で循環運動させてください。"
-    initial_user_input_zh = "让mg400以点231的顺序运动，然后按照点456的顺序循环运动。" 
+    initial_user_input_simple = "mg400に点b、c、aの順で運動させ、その後、点a、b、cの順で循環運動させてください。"
+    initial_user_input = """We need to generate a task flow for a robot or automation system. This flow is primarily implemented using specific Blockly XML block types, covering the following aspects:
+
+Initialization and Event Handling:
+Use the `start_thread` block to initiate a parallel thread (typically, the condition is set to always true, e.g., using a `logic_boolean` block set to TRUE).
+Within the `DO` statement of this thread, first use the `connect_external_io` block to connect to an external I/O device named "DIO000" (e.g., io_no: 1).
+Next, use multiple `create_event` blocks to define event-driven logic:
+
+- For external output control (e.g., controlling the on/off state of pins 13, 14): Within the `EVENT` statement of the `create_event` block, use the `set_external_io_output_upon` block. Its condition is typically provided by a `logic_custom_flag` block (e.g., F481, F482), specifying `io_no`, `output_pin_name`, `out_state`, and `trigger_condition`.
+- For robot stop: Within the `EVENT` statement of the `create_event` block, use the `stop_robot_upon` block. Its condition can be formed by a `logic_compare` block (comparing the state of a pin read by `external_io` with a `logic_boolean` value).
+
+Subroutine Definition:
+Use the `procedures_defnoreturn` block to define a series of reusable subroutines (e.g., specifying the name via the `NAME` field). The `STACK` statement within the subroutine contains a series of operation blocks:
+
+- `BRG_Get_BRG`: Get bearing from the bearing supply. May internally contain multiple `moveP` blocks for robot movement, and call gripper control subroutines via `procedures_callnoreturn`.
+- `CNV_Get_BH`: Get bushing from the conveyor belt. Similarly, includes `moveP` movements and gripper operation calls.
+- `Open_BH_Crump` / `Close_BH_Crump`: Open/close bushing gripper. Such subroutines typically use the robot's own I/O for control, for example, by using the `set_output` block (specifying `output_pin_name` and `out_state`) to operate the gripper, in conjunction with the `wait_input` block to wait for gripper sensor signals, and may also use the `wait_timer` block for delays. **Note: `set_output` should be used to operate robot I/O, not `set_external_io_output_during` or `set_external_io_output_upon`.**
+- `Open_BRG&PLT_Crump` / `Close_BRG&PLT_Crump`: Open/close bearing and pallet gripper. Implementation is similar to the bushing gripper, using `set_output`, `wait_input`, `wait_timer`.
+- `RMC_Put_BH&BRG`: Place bushing and bearing onto the rotary machining center. Includes `moveP` movements and gripper operation calls.
+- `RMC_Get_BH`: Get bushing from the rotary machining center. Includes `moveP` movements and gripper operation calls.
+- `LMC_Put_BH`: Place bushing onto the linear machining center. Includes `moveP` movements and gripper operation calls.
+- `CNV_Get_PLT`: Get pallet from the conveyor belt. Includes `moveP` movements and gripper operation calls.
+- `CNV_Put_PLT`: Place pallet onto the conveyor belt. Includes `moveP` movements and gripper operation calls.
+- `LMC_Get_BH`: Get bushing from the linear machining center. Includes `moveP` movements and gripper operation calls.
+- `CNV_Put_BH`: Place bushing onto the conveyor belt. Includes `moveP` movements and gripper operation calls.
+
+Main Control Flow:
+First, use the `select_robot` block to select the robot named "fairino_FR".
+Then, use the `set_motor` block to set the servo motor state to "on".
+Use the `set_number` block (in conjunction with a `math_number` block to provide the value) to set the initial value of variable N5 to 2.
+Use the `loop` block to construct the main loop. Within the `DO` statement of the loop:
+
+- The `controls_if` block can be used for conditional judgment, with conditions potentially formed by `logic_compare` (e.g., comparing a `math_custom_number` type variable N5 with a `math_number` constant).
+- Robot Movement: The `moveP` block must be used (not `moveL`) for point-to-point movement to preset positions (P1, P11-P17, P20-P26, P31-P43, etc.), ensuring all necessary motion control parameters (such as `point_name_list`, `control_x`, etc.) are provided.
+- Call Subroutine: Use the `procedures_callnoreturn` block to call defined subroutines to complete tasks such as pick and place operations.
+- Wait Conditions:
+  - Use the `wait_external_io_input` block to wait for external I/O signals.
+  - Use the `wait_input` block to wait for robot I/O signals.
+  - Use the `wait_block` block (whose condition is typically formed by logic blocks like `logic_operation` or `logic_compare`) to wait for internal conditions to be met.
+- Robot Gripper Control: Use the `set_output` block (specifying `output_pin_name` and `out_state`) to control the opening and closing of the robot gripper.
+- Speed Setting: The `set_speed` block can be used to set the robot's operating speed.
+  This flow involves transporting bearings (BRG), bushings (BH), and pallets (PLT) between different workstations (such as bearing supply, conveyor belt, Rotary Machining Center RMC, Linear Machining Center LMC) using `moveP`.
+  The continuation of the loop is managed by the `loop` block itself. The end of a subroutine or a specific logic segment might use a `return` block (e.g., at the end of the `CNV_Put_BH` subroutine, returning to the main flow or the calling loop level).
+
+In summary, this file describes a complex automated assembly or material handling task where the robot, through precise `moveP` movements and I/O control based on specific Blockly blocks (such as `set_output`, `wait_input`, `set_external_io_output_upon`, etc.), coordinates a series of pick-and-place operations between multiple workstations."""
     # initial_user_input = "机器人: mg400\n工作流程：\n1. 打开夹爪.\n2. 移动到 P10 点 (快速模式).\n3. 关闭夹爪.\n4. 移动到 P20 点 (慢速精定位模式)." # For testing direct processing
 
     # Initialize current_state as a RobotFlowAgentState Pydantic model instance

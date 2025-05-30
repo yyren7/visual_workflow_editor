@@ -20,7 +20,6 @@ class RobotFlowAgentState(BaseModel):
     
     user_input: Optional[str] = Field(None, description="The latest input from the user, consumed after processing by a node.")
     raw_user_request: Optional[str] = Field(None, description="The initial, un-enriched user request that started the current flow or sub-flow.")
-    robot_model: Optional[str] = Field(None, description="The confirmed robot model to be used.")
     active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be raw_user_request or a revised plan after user feedback).")
 
     dialog_state: Literal[
@@ -46,15 +45,14 @@ class RobotFlowAgentState(BaseModel):
     
     # Outputs from Step 1 (understand_input_node)
     parsed_flow_steps: Optional[List[Dict[str, Any]]] = Field(None, description="The structured representation of the flow steps, parsed from the enriched input text. Each item is a dict matching ParsedStep.")
-    parsed_robot_name: Optional[str] = Field(None, description="Robot name as parsed directly from the enriched text in Step 1.")
 
     # --- Outputs from Step 2 (generate_individual_xmls_node) ---
     generated_node_xmls: Optional[List[GeneratedXmlFile]] = Field(default_factory=list, description="Information about each generated individual XML node file.")
     # --- End of Step 2 outputs ---
 
     # Outputs from Step 3 (generate_relation_xml_node)
-    relation_xml_content: Optional[str] = Field(None, description="The content of the generated relation.xml file.")
-    relation_xml_path: Optional[str] = Field(None, description="Path to the saved relation.xml file.")
+    relation_xml_content: str = Field(default="", description="The content of the generated relation.xml file.")
+    relation_xml_path: str = Field(default="", description="Path to the saved relation.xml file.")
 
     # Outputs from Step 4 (generate_final_flow_xml_node)
     final_flow_xml_content: Optional[str] = None
@@ -64,6 +62,8 @@ class RobotFlowAgentState(BaseModel):
     error_message: Optional[str] = Field(None, description="A message describing an error if one occurred.")
     upload_status: Optional[str] = None # To track file upload status e.g. "success", "remote_address_offline"
     is_error: bool = False
+
+    language: str = Field("zh", description="The language setting for user interactions, e.g., 'zh' or 'en'.")
 
     subgraph_completion_status: Optional[Literal["completed_success", "completed_partial", "needs_clarification", "error"]] = Field(None, description="Indicates how the robot_flow_subgraph concluded its execution for the current call.")
 

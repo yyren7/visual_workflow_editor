@@ -64,7 +64,9 @@ def visualize_langgraph(graph_to_visualize, output_filename="langgraph_visualiza
         return
 
     try:
-        image_bytes = graph_to_visualize.get_graph().draw_mermaid_png()
+        # Attempt to get a more detailed graph view using xray=1
+        # This might reveal subgraphs or more internal structure.
+        image_bytes = graph_to_visualize.get_graph(xray=1).draw_mermaid_png()
         with open(output_filename, "wb") as f:
             f.write(image_bytes)
         print(f"Graph visualization saved to {output_filename}")

@@ -672,6 +672,9 @@ async def _process_and_publish_chat_events(
                     output = event_data.get("output")
                     if output and isinstance(output, AIMessage) and output.content:
                         logger.info(f"[Chat {chat_id}] LLM End from '{run_name}'. Full output (for verification): '{output.content[:100]}...'")
+                        # This check might be too strict if streaming involves minor post-processing.
+                        # Consider if the primary source of truth for final_reply_accumulator should be this on_llm_end if available.
+                        # For now, it just logs a warning.
                         if final_reply_accumulator != output.content and not final_reply_accumulator.endswith(output.content):
                             logger.warning(f"[Chat {chat_id}] Discrepancy between accumulated stream and on_llm_end output from '{run_name}'. Accum: '{final_reply_accumulator[:100]}...', Output: '{output.content[:100]}...'")
                     elif output:
@@ -695,19 +698,46 @@ async def _process_and_publish_chat_events(
                 elif event_name == "on_chain_end": 
                     outputs_from_chain = event_data.get("output", {})
                     logger.info(f"[Chat {chat_id}] Chain End: '{run_name}'. Output keys: {list(outputs_from_chain.keys()) if isinstance(outputs_from_chain, dict) else 'Not a dict'}")
+                    
+                    # Special handling for the end of the main graph execution
                     if run_name == compiled_graph.name or run_name == "__graph__":
                         final_state = outputs_from_chain
-                        logger.info(f"[Chat {chat_id}] Graph run '{run_name}' ended. Final state (output): {str(final_state)[:200]}...")
+                        logger.info(f"[Chat {chat_id}] Main Graph run '{run_name}' ended. Final state: {str(final_state)[:300]}...")
+
+                        latest_ai_message_from_state: Optional[str] = None
                         if isinstance(final_state, dict) and "messages" in final_state and isinstance(final_state["messages"], list):
-                                for msg_state in reversed(final_state["messages"]):
-                                    if isinstance(msg_state, AIMessage) and hasattr(msg_state, 'content') and msg_state.content:
-                                        if not final_reply_accumulator:
-                                            logger.info(f"[Chat {chat_id}] Using AIMessage from final graph state as fallback: {msg_state.content[:100]}...")
-                                            final_reply_accumulator = msg_state.content
-                                            await event_queue.put({"type": "token", "data": msg_state.content})
-                                        elif final_reply_accumulator != msg_state.content:
-                                            logger.warning(f"[Chat {chat_id}] Final accumulated reply ('{final_reply_accumulator[:100]}...') differs from final graph state AIMessage ('{msg_state.content[:100]}...'). Preferring accumulated.")
-                                        break 
+                            for msg_state in reversed(final_state["messages"]):
+                                if isinstance(msg_state, AIMessage) and hasattr(msg_state, 'content') and msg_state.content:
+                                    # Check if content is not None and not just whitespace
+                                    content_candidate = str(msg_state.content)
+                                    if content_candidate.strip():
+                                        latest_ai_message_from_state = content_candidate
+                                        logger.info(f"[Chat {chat_id}] Found latest AIMessage in final graph state: '{latest_ai_message_from_state[:100]}...'")
+                                    else:
+                                        logger.info(f"[Chat {chat_id}] Found AIMessage in final state, but content is empty/whitespace. Original: '{msg_state.content}'")
+                                    break # Process only the most recent AIMessage
+                        
+                        if latest_ai_message_from_state:
+                            if not final_reply_accumulator:
+                                logger.info(f"[Chat {chat_id}] No prior stream. Using AIMessage from final graph state as the reply: '{latest_ai_message_from_state[:100]}...'")
+                                final_reply_accumulator = latest_ai_message_from_state
+                                await event_queue.put({"type": "token", "data": latest_ai_message_from_state})
+                            elif final_reply_accumulator != latest_ai_message_from_state:
+                                logger.warning(f"[Chat {chat_id}] Accumulated stream reply ('{final_reply_accumulator[:100]}...') differs from final graph state AIMessage ('{latest_ai_message_from_state[:100]}...').")
+                                logger.info(f"[Chat {chat_id}] Overwriting accumulated stream with final AIMessage from graph state for frontend and saving.")
+                                final_reply_accumulator = latest_ai_message_from_state
+                                # Send this authoritative message. If frontend simply appends tokens, this might lead to duplication
+                                # or mixed messages if not handled carefully by client.
+                                # A more robust solution might involve a special event type e.g., "final_message" or "replace_content".
+                                # For now, sending as "token" to ensure it's displayed.
+                                await event_queue.put({"type": "token", "data": latest_ai_message_from_state})
+                            # If final_reply_accumulator == latest_ai_message_from_state, it means stream matched final state, no action needed.
+                        else: # No valid AIMessage found in final_state
+                            if final_reply_accumulator:
+                                logger.info(f"[Chat {chat_id}] Graph ended. No new AIMessage in final state. Using previously accumulated stream as final reply: '{final_reply_accumulator[:100]}...'")
+                            else:
+                                logger.warning(f"[Chat {chat_id}] Graph ended. No AIMessage in final state and no accumulated stream. Reply will be empty/null if no default is set later.")
+                                # final_reply_accumulator remains empty or None.
                 
                 elif event_name == "on_chain_error" or event_name == "on_llm_error" or event_name == "on_tool_error":
                     error_content = str(event_data.get("error", "Unknown error"))

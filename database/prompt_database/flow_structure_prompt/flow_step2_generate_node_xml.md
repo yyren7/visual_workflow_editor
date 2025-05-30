@@ -11,7 +11,7 @@
     - 所有在模板中定义的 `<field name="xxx">...</field>` 标签都应存在于你的输出中。
     - `<block type="xxx">` 中的 `type` 必须与 `{{CURRENT_NODE_TYPE}}` 一致。
 2.  **参数填充**:
-    - 使用 `{{CURRENT_NODE_PARAMETERS_JSON}}` (一个 JSON 字符串，你需要解析它) 中提供的参数值来填充模板中的相应 `<field>` 标签。
+    - 参考 `{{CURRENT_NODE_PARAMETERS_JSON}}` (一个包含初步提取参数的 JSON 字符串，你需要解析它) 以及 `{{CURRENT_NODE_DESCRIPTION}}` (自然语言描述)，智能地将参数值填充到 `{{NODE_TEMPLATE_XML_CONTENT_AS_STRING}}` (节点模板) 中的相应 `<field>` 标签。
     - 如果模板中的某个 `<field>` 在 `{{CURRENT_NODE_PARAMETERS_JSON}}` 中找不到对应的参数：
       - 首先检查模板中该字段是否有默认值或常见用法，并据此填充。
       - 如果上下文中没有明确指示，且字段看起来是可选的，则可以保留模板中的默认值或将其设置为空字符串 `""` (如果适用)。**不要随意省略字段，除非模板本身表明它是完全可选的。**

@@ -117,21 +117,45 @@ def route_after_functional_node(state: AgentState) -> str:
     subgraph_status = state.get("subgraph_completion_status")
 
     if subgraph_status == "needs_clarification":
-        logger.info("Functional node/subgraph needs clarification. Routing to input_handler to await user input.")
-        # task_route_decision 和 user_request_for_router 应该已被 invoker_node 保留
-        # subgraph_completion_status 也保留，以便 input_handler 或后续节点知道上下文
-        return "input_handler"
+        logger.info("Functional node/subgraph needs clarification. Ending current graph invocation to await user input.")
+        # task_route_decision 和 user_request_for_router 应该已被 invoker_node 保留 (或在 AgentState 中持久化)
+        # subgraph_completion_status 也保留，以便下一轮图执行时 input_handler 或 task_router 能知道上下文。
+        # 主图的当前执行轮次结束，等待前端的下一次输入触发新的图执行。
+        return END # <--- 修改点：返回 END，让图结束当前轮次
     elif subgraph_status in ["completed_success", "error"]:
-        logger.info(f"Subgraph completed with status: {subgraph_status}. Resetting task context and routing to input_handler for new cycle.")
+        logger.info(f"Subgraph completed with status: {subgraph_status}. Resetting task context and routing to END for new cycle.")
+        # 清理特定于此子任务的状态，为下一个独立的用户请求做准备。
+        # 注意：messages 历史通常应该保留。
+        current_messages = list(state.get("messages", []))
+        new_state_after_subgraph_completion = {
+            "messages": current_messages, # 保留消息历史
+            "input": None, # 清除旧的输入
+            "input_processed": False,
+            "task_route_decision": None,
+            "user_request_for_router": None,
+            "subgraph_completion_status": None, # 清除子图状态
+            "clarification_question": None, # 清除可能残留的澄清问题
+            # 其他特定于任务的状态字段也可能需要在这里重置
+            # "flow_context": state.get("flow_context"), # flow_context 可能需要保留或按需更新
+            # "current_flow_id": state.get("current_flow_id") # current_flow_id 通常需要保留
+        }
+        # 更新状态。LangGraph 的 StateGraph 会处理这个返回字典的更新。
+        # 我们不能直接修改 state 然后返回 END，因为路由函数只决定下一个节点。
+        # 更新应该由一个节点完成，或者在这里通过返回一个特殊的节点名，该节点执行状态重置然后到 END。
+        # 然而，更简单的做法是，如果图因为 END 而终止，调用者 (chat.py) 在下一次调用图之前，
+        # 应该准备一个新的、干净的初始状态 (除了 messages 和长期上下文)。
+        # 所以，这里仅清除 task_route_decision, user_request_for_router, subgraph_completion_status
+        # 并依赖于调用者在下一轮正确设置 state。
         state["task_route_decision"] = None
         state["user_request_for_router"] = None
-        state["subgraph_completion_status"] = None # 清除状态
-        return "input_handler"
-    else: # subgraph_status is None (it was a simple functional node like teaching/other_assistant)
+        state["subgraph_completion_status"] = None
+        return END 
+    else: # subgraph_status is None (it was a simple functional node like teaching/other_assistant that doesn't set this status)
         logger.info(f"Simple functional node completed (status: {subgraph_status}). Resetting task context and routing to END to signify turn completion.")
-        state["task_route_decision"] = None # Task is done for this turn.
-        state["user_request_for_router"] = None # Request was processed.
-        state["subgraph_completion_status"] = None # Ensure it's cleared.
+        # 对于这些简单节点，它们通常不涉及多轮澄清，完成后就结束当前回合。
+        state["task_route_decision"] = None 
+        state["user_request_for_router"] = None 
+        state["subgraph_completion_status"] = None 
         return END
 
 # Graph compilation

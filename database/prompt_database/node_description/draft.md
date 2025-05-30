@@ -80,45 +80,53 @@
 - **Precautions for Use**:
   - Use inside a "create event trigger" block. [cite: 38] _(The document refers to "create_event" block, image shows "create event trigger" context)_
 
+### 13. set speed
+
+- **Description**: Sets the robot's operational speed.
+- **Precautions for Use**:
+  - Define the robot with the "select robot" block before using.
+  - Ensure motor power is ON if applicable before movement commands that use this speed.
+  - The speed value is typically a percentage or a specific unit (e.g., mm/s); check robot documentation for specifics.
+
 ## External I/O Category
 
-### 13. connect external io
+### 14. connect external io
 
 - **Description**: Connects to an external I/O device/unit. (The provided description "Operate the output of external device I/O" [cite: 14] seems to better fit "set external io output"; this description is inferred from block name and usage context.)
 - **Precautions for Use**:
   - Use in conjunction with blocks like "set external io output" or "wait external io input". [cite: 41]
 
-### 14. wait external io input
+### 15. wait external io input
 
 - **Description**: Wait until the input of the external device I/O meets the specified condition. [cite: 41]
 - **Precautions for Use**:
   - Define the I/O device with the "connect external io" block before using. [cite: 44]
 
-### 15. set external io output
+### 16. set external io output
 
 - **Description**: Operate the output of an external device I/O. [cite: 16]
 - **Precautions for Use**:
   - Define the I/O device with the "connect external io" block before using. [cite: 48]
 
-### 16. set external io output during
+### 17. set external io output during
 
 - **Description**: Operate the output of an external device I/O for a specified time. [cite: 48]
 - **Precautions for Use**:
   - Define the I/O device with the "connect external io" block before using. [cite: 51]
 
-### 17. set external io output until
+### 18. set external io output until
 
 - **Description**: Continue operating the specified pin until the input of the external device I/O meets the specified condition. [cite: 51]
 - **Precautions for Use**:
   - Define the I/O device with the "connect external io" block before using. [cite: 53]
 
-### 18. external io
+### 19. external io
 
 - **Description**: Return the external device I/O status as a logical value. [cite: 53]
 - **Precautions for Use**:
   - Define the I/O device with the "connect external io" block before using. [cite: 56]
 
-### 19. set external io output upon
+### 20. set external io output upon
 
 - **Description**: Operate the output of external device I/O when the set condition is met. [cite: 57]
 - **Precautions for Use**:
@@ -127,7 +135,7 @@
 
 ## Control Category
 
-### 20. loop
+### 21. loop
 
 - **Description**: Perform loop processing of the enclosed block operations. [cite: 63]
 - **Precautions for Use**:
@@ -135,25 +143,25 @@
   - Other blocks cannot be connected below the "loop" block. [cite: 63]
   - Use the "return" block to complete the loop iteration and go back to the start of the loop. [cite: 63]
 
-### 21. return
+### 22. return
 
 - **Description**: Return to the beginning of the loop process. [cite: 64]
 - **Precautions for Use**:
   - Use together with the "loop" block. [cite: 64]
 
-### 22. wait timer
+### 23. wait timer
 
 - **Description**: Wait for a specified amount of time. [cite: 64]
 - **Precautions for Use**:
   - Time can only be set in milliseconds (msec). [cite: 66]
 
-### 23. wait ready
+### 24. wait ready
 
 - **Description**: Wait until the Ready button is pressed. [cite: 67]
 - **Precautions for Use**:
   - None. [cite: 67]
 
-### 24. wait run
+### 25. wait run
 
 - **Description**: Wait until the Run button is pressed. [cite: 67]
 - **Precautions for Use**:
@@ -161,7 +169,7 @@
 
 ## Logic Category
 
-### 25. if
+### 26. if
 
 - **Description**: Branch the enclosed operation blocks according to the condition. [cite: 69]
 - **Precautions for Use**:
@@ -169,67 +177,67 @@
   - Other blocks cannot be connected below the "if" block. [cite: 71]
   - If multiple conditions are met simultaneously, the process described in the first (topmost) met condition is prioritized. [cite: 71]
 
-### 26. start thread
+### 27. start thread
 
 - **Description**: Start the enclosed block operation according to the condition. [cite: 71]
 - **Precautions for Use**:
   - Other blocks cannot be connected below the "start thread" block. [cite: 73]
 
-### 27. create event
+### 28. create event
 
 - **Description**: Perform parallel processing of operations according to the set conditions.
 - **Precautions for Use**:
   - Other blocks cannot be connected below the "start thread" block. [cite: 73] _(Note: The precaution mentions "start thread" block, which might be an error in the source document. It likely implies that the main flow does not continue directly after this block, and its logic is self-contained or triggered by events.)_
 
-### 28. wait block
+### 29. wait block
 
 - **Description**: Wait until the operating condition of the connected block is met.
 - **Precautions for Use**:
   - Only blocks from the "Logic" category can be connected as operating conditions. [cite: 75]
 
-### 29. set flag
+### 30. set flag
 
 - **Description**: Assign a logical value to a variable. [cite: 75]
 - **Precautions for Use**:
   - Define variables in the variable table before storing values in them. [cite: 78]
 
-### 30. logic flag
+### 31. logic flag
 
 - **Description**: Return the set logical value (true/false). [cite: 78]
 - **Precautions for Use**:
   - Use together with blocks like "start thread". [cite: 80]
 
-### 31. logic custom flag
+### 32. logic custom flag
 
 - **Description**: Return the logical value of a defined flag variable. [cite: 80]
 - **Precautions for Use**:
   - Use together with blocks like "set flag". [cite: 82]
 
-### 32. logic block
+### 33. logic block
 
 - **Description**: Return the status (e.g., start/stop) of a set block as a logical value. [cite: 82]
 - **Precautions for Use**:
   - Use together with blocks like "wait block". [cite: 85]
 
-### 33. logic negate
+### 34. logic negate
 
 - **Description**: Return the negation (NOT) of the set logical value. [cite: 85]
 - **Precautions for Use**:
   - None. [cite: 88]
 
-### 34. logic compare
+### 35. logic compare
 
 - **Description**: Return the result of the set comparison operation (e.g., =, <, >) as a logical value. [cite: 88]
 - **Precautions for Use**:
   - Use together with blocks like "start thread". [cite: 91]
 
-### 35. logic operation
+### 36. logic operation
 
 - **Description**: Performs a logical operation (AND/OR) between two logical values and returns the result. (The provided description "Return the result of the set comparison operation as a logical value" [cite: 92] is similar to `logic compare`; this description is based on typical AND/OR block functionality).
 - **Precautions for Use**:
   - Use together with blocks like "start thread". [cite: 93]
 
-### 36. set flag upon
+### 37. set flag upon
 
 - **Description**: Assign a logical value to a variable when the set condition is met. [cite: 93]
 - **Precautions for Use**:
@@ -237,31 +245,31 @@
 
 ## Math Category
 
-### 37. set number
+### 38. set number
 
 - **Description**: Assign a numerical value to a variable. [cite: 97]
 - **Precautions for Use**:
   - Define variables in the variable table before storing values in them. [cite: 100]
 
-### 38. math number
+### 39. math number
 
 - **Description**: Return a specified numerical value. [cite: 100]
 - **Precautions for Use**:
   - Use together with blocks like "set number". [cite: 102]
 
-### 39. math custom number
+### 40. math custom number
 
 - **Description**: Specify and return the value of a numerical variable. [cite: 102]
 - **Precautions for Use**:
   - Use together with blocks like "set number". [cite: 104]
 
-### 40. math arithmetic
+### 41. math arithmetic
 
 - **Description**: Performs an arithmetic operation (+, -, \*, /, ^) between two numerical values and returns the result. (The provided description "Assign a value to a variable" [cite: 105] is for `set number`; this description is based on arithmetic block functionality).
 - **Precautions for Use**:
   - Define variables in the variable table before storing values in them (if results are to be stored or variables are used as operands). [cite: 106]
 
-### 41. set number upon
+### 42. set number upon
 
 - **Description**: Assign a numerical value to a variable when the set condition is met. [cite: 106]
 - **Precautions for Use**:
@@ -269,13 +277,13 @@
 
 ## Error Category
 
-### 42. raise error
+### 43. raise error
 
 - **Description**: The set error occurs immediately. [cite: 110]
 - **Precautions for Use**:
   - Only alphabetic characters can be set as error messages. [cite: 114]
 
-### 43. raise error upon
+### 44. raise error upon
 
 - **Description**: An error occurs when the set condition is met. [cite: 114]
 - **Precautions for Use**:
@@ -284,19 +292,19 @@
 
 ## Pallet Category
 
-### 44. set pallet
+### 45. set pallet
 
 - **Description**: Set the pallet's configuration (rows, columns, corner points, usage). [cite: 119]
 - **Precautions for Use**:
   - To set the pallet offset in "moveL" or "moveP" blocks, select the pallet No. in those move blocks. [cite: 124]
 
-### 45. move next pallet
+### 46. move next pallet
 
 - **Description**: Advance the current position on the pallet to the next one according to the defined sequence. [cite: 124]
 - **Precautions for Use**:
   - Use in conjunction with the "set pallet" block. [cite: 127]
 
-### 46. reset pallet
+### 47. reset pallet
 
 - **Description**: Return the current position of the pallet to the starting point (Point A). [cite: 127]
 - **Precautions for Use**:
@@ -304,13 +312,13 @@
 
 ## Camera Category
 
-### 47. connect camera
+### 48. connect camera
 
 - **Description**: Connect to the camera PC using IP address and port number. [cite: 131]
 - **Precautions for Use**:
   - Use in conjunction with blocks like "run camera wait" or "run camera". [cite: 135]
 
-### 48. run camera wait
+### 49. run camera wait
 
 - **Description**: Send an execution command to the camera PC and wait until the result is obtained. [cite: 135]
 - **Precautions for Use**:
@@ -320,7 +328,7 @@
   - Camera operation command is sent via TCP as a string: "Identification header, program number, config number, model number, position number CRLF". Example: TR1,1,0,0,0\r\n. Only the program number can be changed from the block. [cite: 139]
   - Camera result is received via TCP as a string: "Identification header, judgment result (OK:1, NG:2, ERR:3), x-coordinate [mm], y-coordinate, z-coordinate, judgment content (text) CRLF". Example: TR1,1,0,0,0,0,no work,\r\n. [cite: 139, 140]
 
-### 49. run camera
+### 50. run camera
 
 - **Description**: Send an execution command to the camera PC (does not wait for completion). [cite: 140]
 - **Precautions for Use**:
@@ -329,7 +337,7 @@
   - For details, please check the documentation of the vision system you are using. [cite: 144]
   - Camera operation command is sent via TCP as a string: "Identification header, program number, config number, model number, position number CRLF". Example: TR1,1,0,0,0\r\n. Only the program number can be changed from the block. [cite: 144]
 
-### 50. wait camera
+### 51. wait camera
 
 - **Description**: Wait until the result is obtained from the camera PC (used after a "run camera" block). [cite: 145]
 - **Precautions for Use**:
@@ -337,43 +345,43 @@
 
 ## PLC Category
 
-### 51. connect plc
+### 52. connect plc
 
 - **Description**: Connect to a PLC using maker, IP address, and port number. [cite: 147]
 - **Precautions for Use**:
   - Use in conjunction with blocks like "plc bit" or "set plc bit". [cite: 150]
 
-### 52. plc bit
+### 53. plc bit
 
 - **Description**: Return the status (ON/OFF) of a PLC's bit device as a logical value. [cite: 150]
 - **Precautions for Use**:
   - Use in conjunction with the "connect plc" block. [cite: 153]
 
-### 53. plc word
+### 54. plc word
 
 - **Description**: Return the value of a PLC's word device as a numerical value. [cite: 153]
 - **Precautions for Use**:
   - Use in conjunction with the "connect plc" block. [cite: 156]
 
-### 54. set plc bit
+### 55. set plc bit
 
 - **Description**: Set the value (ON/OFF) of a PLC's bit device. [cite: 156]
 - **Precautions for Use**:
   - Use in conjunction with the "connect plc" block. [cite: 158]
 
-### 55. set plc bit during
+### 56. set plc bit during
 
 - **Description**: Set the value (ON/OFF) of a PLC's bit device for a specified duration. [cite: 158]
 - **Precautions for Use**:
   - Use in conjunction with the "connect plc" block. [cite: 161]
 
-### 56. set plc bit until
+### 57. set plc bit until
 
 - **Description**: Set the value of a PLC's output bit device (ON/OFF) until a specified PLC input bit device meets a certain condition. [cite: 161]
 - **Precautions for Use**:
   - Use in conjunction with the "connect plc" block. [cite: 164]
 
-### 57. set plc word
+### 58. set plc word
 
 - **Description**: Set the numerical value of a PLC's word device. (The provided description "Operate the value of the PLC's bit device" [cite: 164] is incorrect; this is for word devices based on example and context).
 - **Precautions for Use**:
@@ -381,14 +389,14 @@
 
 ## Function Category
 
-### 58. define function
+### 59. define function
 
 - **Description**: Define a function with a given name. [cite: 167]
 - **Precautions for Use**:
   - Use in conjunction with the "call function" block. [cite: 170]
   - If the "define function" block is deleted, "call function" blocks with the same name will also be deleted. [cite: 170]
 
-### 59. call function
+### 60. call function
 
 - **Description**: Call a previously defined function. [cite: 170]
 - **Precautions for Use**:

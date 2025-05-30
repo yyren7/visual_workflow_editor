@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from langchain_core.messages import HumanMessage, BaseMessage
 from ..agent_state import AgentState # Adjusted relative import for AgentState
 
@@ -18,58 +18,105 @@ async def input_handler_node(state: AgentState, **kwargs) -> Dict[str, Any]:
     input_str = state.get("input")
     input_already_processed = state.get("input_processed", False)
 
-    # This will be the dictionary returned to update the state.
-    # Start by ensuring user_request_for_router is part of what we might update.
     updated_state_dict: Dict[str, Any] = {}
+    new_human_message_to_add: Optional[HumanMessage] = None
 
-    current_user_request: str | None = None
+    current_user_request_for_router: str | None = None
     subgraph_clarification_mode = state.get("subgraph_completion_status") == "needs_clarification"
 
     if subgraph_clarification_mode:
-        current_user_request = state.get("user_request_for_router") # Presumed to be set by user's clarification input mechanism
-        logger.info(
-            f"Input Handler: In subgraph clarification mode. "
-            f"Using user_request_for_router from state: '{current_user_request[:100] if current_user_request else 'None'}'"
-        )
-    elif current_messages_from_state and isinstance(current_messages_from_state[-1], HumanMessage):
-        current_user_request = current_messages_from_state[-1].content.strip()
-        logger.info(
-            f"Input Handler: New turn or HumanMessage. Determined user_request_for_router: '{current_user_request[:100]}...'"
-        )
-    else:
-        current_user_request = state.get("user_request_for_router") # Fallback, could be None
-        logger.warning(
-            f"Input Handler: No new HumanMessage and not in subgraph clarification. Fallback user_request_for_router: '{current_user_request[:100] if current_user_request else 'None'}'"
-        )
-    
-    # Always update the user_request_for_router in the state based on the determination above.
-    updated_state_dict["user_request_for_router"] = current_user_request
-
-    # Process state["input"] to add it as a HumanMessage to state.messages if it's new.
-    if input_str and not input_already_processed:
-        logger.info(f"Input handler: Processing new state['input']: '{input_str}'")
-        new_human_message = HumanMessage(content=input_str)
-
-        should_add_new_message = False
-        if (not current_messages_from_state or
-            not (isinstance(current_messages_from_state[-1], HumanMessage) and
-                 current_messages_from_state[-1].content == input_str)):
-            should_add_new_message = True
-
-        if should_add_new_message:
-            # If new_human_message is to be added, include it in the messages update.
-            # Note: The graph typically uses operator.add for messages, so we return a list with the new message.
-            updated_state_dict["messages"] = [new_human_message]
-            logger.info(f"Input handler: Adding new HumanMessage to state.messages: '{input_str}'")
+        # If in clarification mode, the new input_str IS the user's clarification.
+        # This should become the user_request_for_router for the task_router.
+        if input_str:
+            logger.info(f"Input Handler: In subgraph clarification mode. Using new input '{input_str}' as user_request_for_router.")
+            current_user_request_for_router = input_str
+            # Also, this new input should be added as a HumanMessage if it's not already the last one.
+            if (not current_messages_from_state or 
+                not (isinstance(current_messages_from_state[-1], HumanMessage) and 
+                     current_messages_from_state[-1].content == input_str)):
+                new_human_message_to_add = HumanMessage(content=input_str)
+            # Mark input as processed for this cycle.
+            updated_state_dict["input_processed"] = True 
+            updated_state_dict["input"] = None # Clear state["input"] as it's now captured
         else:
-            logger.info("Input handler: state['input'] matches last HumanMessage; not adding to state.messages again.")
+            # No new input provided in this cycle, but still in clarification mode.
+            # Fallback to existing user_request_for_router if any (e.g. original intent summary).
+            # This case might lead to re-prompting if task_router finds this insufficient.
+            current_user_request_for_router = state.get("user_request_for_router")
+            logger.info(
+                f"Input Handler: In subgraph clarification mode but no new input string. "
+                f"Using existing user_request_for_router: '{current_user_request_for_router[:100] if current_user_request_for_router else 'None'}'"
+            )
+    elif current_messages_from_state and isinstance(current_messages_from_state[-1], HumanMessage):
+        # This typically means a new turn, not a clarification response within a sub-graph loop.
+        # The last human message content is taken as the basis for routing.
+        if isinstance(current_messages_from_state[-1].content, str):
+            current_user_request_for_router = current_messages_from_state[-1].content.strip()
+        # else: handle list content if necessary, though task_router likely expects string.
+        logger.info(
+            f"Input Handler: New turn or HumanMessage. Determined user_request_for_router: '{current_user_request_for_router[:100] if current_user_request_for_router else '...'}'"
+        )
+        # If input_str also exists and is DIFFERENT from the last human message, it needs to be added.
+        if input_str and input_str != current_user_request_for_router and not input_already_processed:
+            if (not current_messages_from_state or # Redundant check if we are in this elif block
+                not (isinstance(current_messages_from_state[-1], HumanMessage) and 
+                     current_messages_from_state[-1].content == input_str)):
+                 new_human_message_to_add = HumanMessage(content=input_str) 
+            updated_state_dict["input_processed"] = True
+            updated_state_dict["input"] = None
+    else:
+        # Fallback if no HumanMessage is last and not in clarification (e.g. initial call with input_str)
+        if input_str and not input_already_processed:
+            current_user_request_for_router = input_str
+            new_human_message_to_add = HumanMessage(content=input_str)
+            updated_state_dict["input_processed"] = True
+            updated_state_dict["input"] = None
+            logger.info(f"Input Handler: Fallback - using input_str for user_request_for_router: '{input_str[:100]}...'")
+        else:
+            current_user_request_for_router = state.get("user_request_for_router") # Last resort
+            logger.warning(
+                f"Input Handler: No new HumanMessage, not in clarification, and no new input_str. Fallback user_request_for_router: '{current_user_request_for_router[:100] if current_user_request_for_router else 'None'}'"
+            )
+    
+    updated_state_dict["user_request_for_router"] = current_user_request_for_router
 
+    # Add the new human message if one was determined necessary
+    if new_human_message_to_add:
+        updated_state_dict["messages"] = [new_human_message_to_add] # operator.add will handle appending
+        logger.info(f"Input handler: Adding new HumanMessage to state.messages: '{new_human_message_to_add.content}'")
+
+    # This part handles input_str if it wasn't handled by the clarification logic or new turn logic above
+    # Typically, if clarification mode used input_str, input_processed is already true.
+    if input_str and not updated_state_dict.get("input_processed"):
+        logger.info(f"Input handler: Processing state['input']: '{input_str}' (was not handled by clarification/new turn logic)")
+        # This path should be less common if the logic above is comprehensive.
+        if not new_human_message_to_add: # Avoid double-adding if already decided
+            if (not current_messages_from_state or
+                not (isinstance(current_messages_from_state[-1], HumanMessage) and
+                     current_messages_from_state[-1].content == input_str)):
+                # Add as message if truly new and not captured yet
+                new_human_message_to_add_fallback = HumanMessage(content=input_str)
+                if "messages" in updated_state_dict:
+                    # This implies a message was already staged, which is unlikely here.
+                    # Handle carefully if this case is possible.
+                    logger.warning("Input Handler: 'messages' already in updated_state_dict in fallback input processing. This is unexpected.")
+                else:
+                    updated_state_dict["messages"] = [new_human_message_to_add_fallback]
+                logger.info(f"Input handler: Adding new HumanMessage (fallback) to state.messages: '{input_str}'")
+            else:
+                logger.info("Input handler: state['input'] (fallback) matches last HumanMessage; not adding to state.messages again.")
+        
         updated_state_dict["input_processed"] = True
         updated_state_dict["input"] = None # Clear state["input"] after processing
-        logger.info("Input handler: state['input'] processed, flag set, field cleared.")
-
-    elif input_str and input_already_processed:
-        logger.info(f"Input handler: state['input'] '{input_str}' found but already marked processed. Clearing input field.")
-        updated_state_dict["input"] = None # Still ensure input is cleared
+        logger.info("Input handler: state['input'] (fallback) processed, flag set, field cleared.")
+    elif input_str and updated_state_dict.get("input_processed") and updated_state_dict.get("input") is None:
+        # This means input_str was processed (e.g. by clarification path), and input field was cleared.
+        # No further action on input_str needed.
+        pass 
+    elif input_str and not updated_state_dict.get("input_processed") and input_already_processed:
+        # input_str exists, was not processed in this cycle by earlier logic, but state says it was processed in a *previous* cycle.
+        # This implies stale input_str that wasn't cleared. Clear it now.
+        logger.info(f"Input handler: state['input'] '{input_str}' found, not processed this cycle, but state.input_already_processed is True. Clearing stale input field.")
+        updated_state_dict["input"] = None
     
     return updated_state_dict 

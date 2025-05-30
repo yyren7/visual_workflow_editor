@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph # Not used directly here, but for context
@@ -85,54 +85,100 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> dict
     logger.info(f"Invoking robot_flow_subgraph with initial input containing {len(current_main_messages)} messages and user_input: '{raw_user_request_for_subgraph[:100]}...'")
     
     # 4. 执行子图
-    # LangGraph 的 .ainvoke() 方法接受一个字典作为输入。
-    # 我们需要确保 initial_subgraph_state 符合 RobotFlowAgentState 的结构。
     final_subgraph_state_dict = None
-    try:
-        # .astream() 返回一个异步生成器，我们需要迭代以获取最终状态
-        async for event_output in robot_flow_subgraph.astream(initial_subgraph_input, {"recursion_limit": 5}):
-            # event_output 是一个字典，键是节点名，值是该节点的输出
-            # 我们关心的是最终的累积状态，这通常在最后一个事件中，或者需要从事件流中推断
-            # LangGraph 的 stream 事件会给出每个节点的输出。
-            # 我们需要最后一次输出的完整状态。
-            # 对于 .ainvoke，它直接返回最终状态。
-            # 对于 .astream，最后一个事件通常包含所有累积的状态。
-            # 我们取最后一个事件的最后一个节点的状态（通常是 __end__ 之前的那个）
-            # 或者，更简单地，如果 create_robot_flow_graph 返回的是编译后的图，
-            # 它的 ainvoke 应该返回最终状态字典。
-            # `create_robot_flow_graph` 返回 `workflow.compile().ainvoke`
-            # 所以这里可以直接 ainvoke
-            pass # Astreaming to completion
-        
-        # After streaming, get the final state
-        # The `RobotFlowAgentState` is a TypedDict. The compiled graph's `ainvoke`
-        # or the final result of `astream_events` (if processed correctly) will give this TypedDict.
-        # For simplicity, let's assume ainvoke provides the final state directly if create_robot_flow_graph returns a compiled graph.
-        # If create_robot_flow_graph returns a callable that internally calls astream, we need to adjust.
-        # The type hint for create_robot_flow_graph is `Callable[[Dict[str, Any]], Any]`
-        # This implies it's ready to be called.
+    last_event_output = None # To store the last event from astream
 
-        final_subgraph_state_dict = await robot_flow_subgraph.ainvoke(initial_subgraph_input, {"recursion_limit": 5})
+    try:
+        async for event in robot_flow_subgraph.astream_events(initial_subgraph_input, {"recursion_limit": 10}, version="v2"):
+            # astream_events v2 yields events with data about the graph execution
+            # We are interested in the final state when the graph ends or is interrupted.
+            # An event with name="end" and tag="__end__" signifies the graph has finished.
+            # The output of the graph is in event["data"]["output"]
+            if event["event"] == "on_chain_end" and event["name"] == "LangGraph": # Check for the end of the entire graph stream
+                # The final output of the graph is typically in the last event data
+                # For a compiled graph, the output of astream_events for the graph itself
+                # should be the final state.
+                if isinstance(event["data"], dict) and "output" in event["data"]:
+                    final_subgraph_state_dict = event["data"]["output"]
+                    logger.info(f"Subgraph astream_events ended. Final state keys: {final_subgraph_state_dict.keys() if isinstance(final_subgraph_state_dict, dict) else 'Not a dict'}")
+                else:
+                    logger.warning(f"Subgraph astream_events ended but final output format is unexpected: {event['data']}")
+                break # Exit loop once graph end event is received
+            elif event["event"] == "on_chain_stream" and event["name"] == "LangGraph":
+                # This event contains the full state output chunk by chunk.
+                # The last such event before "on_chain_end" would contain the final state.
+                # However, relying on on_chain_end is cleaner.
+                pass
 
         if final_subgraph_state_dict is None:
-             raise ValueError("Robot flow subgraph did not return a final state.")
-        
-        logger.info("Robot flow subgraph execution completed.")
+            # This might happen if astream_events finishes without a clear "on_chain_end" event for "LangGraph"
+            # or if the loop was exited prematurely. This should ideally not occur.
+            logger.error("Robot flow subgraph astream_events completed, but final_subgraph_state_dict was not captured correctly.")
+            # Attempt to get state via a non-streaming invoke as a last resort, though this deviates from streaming intent.
+            # This path should ideally not be hit if astream_events is handled correctly.
+            # Given the prior recursion error, it's better to rely on astream_events correctly yielding the final state or an error.
+            # For now, raise an error if state is not captured.
+            raise ValueError("Failed to capture final state from robot_flow_subgraph astream_events.")
 
+        logger.info("Robot flow subgraph execution via astream_events completed.")
+
+    except GraphRecursionError as gre: # Specific catch for recursion errors
+        logger.error(f"GraphRecursionError during robot_flow_subgraph.astream_events: {gre}", exc_info=True)
+        error_message_content = f"Error: Robot flow planning module encountered a recursion limit. Details: {str(gre)}"
+        # Ensure messages is a list, even if current_main_messages was None or empty
+        messages_to_return = list(current_main_messages or []) + [AIMessage(content=error_message_content)]
+        return {
+            "messages": messages_to_return,
+            "subgraph_completion_status": "error",
+            "is_error": True, # Explicitly flag error in the main graph state
+            "error_message": error_message_content
+        }
     except Exception as e:
-        logger.error(f"Error during robot_flow_subgraph execution: {e}", exc_info=True)
-        error_message = AIMessage(content=f"Error: An issue occurred while interacting with the robot flow planning module. Details: {e}")
-        # Preserve original messages and add error
-        return {"messages": current_main_messages + [error_message]}
+        logger.error(f"Error during robot_flow_subgraph.astream_events execution: {e}", exc_info=True)
+        error_message_content = f"Error: An issue occurred while interacting with the robot flow planning module. Details: {str(e)}"
+        messages_to_return = list(current_main_messages or []) + [AIMessage(content=error_message_content)]
+        return {
+            "messages": messages_to_return,
+            "subgraph_completion_status": "error",
+            "is_error": True,
+            "error_message": error_message_content
+        }
 
     # 5. 从子图的最终状态提取消息历史
-    # 假设子图的最终状态是一个字典，并且包含 'messages' 键
-    subgraph_final_messages: List[BaseMessage] = final_subgraph_state_dict.get("messages", [])
+    # Ensure final_subgraph_state_dict is a dictionary before calling .get()
+    subgraph_final_messages: List[BaseMessage] = []
+    completion_status: Optional[str] = None
     
-    if not subgraph_final_messages:
+    if isinstance(final_subgraph_state_dict, dict):
+        subgraph_final_messages = final_subgraph_state_dict.get("messages", [])
+        completion_status = final_subgraph_state_dict.get("subgraph_completion_status")
+        logger.info(f"Extracted from final_subgraph_state_dict: {len(subgraph_final_messages)} messages, status: {completion_status}")
+    elif final_subgraph_state_dict is RobotFlowAgentState:
+        # If it's already a RobotFlowAgentState Pydantic model instance (less likely from astream_events raw output)
+        logger.info("final_subgraph_state_dict is a RobotFlowAgentState Pydantic model instance.")
+        subgraph_final_messages = final_subgraph_state_dict.messages
+        completion_status = final_subgraph_state_dict.subgraph_completion_status
+    else:
+        logger.error(f"final_subgraph_state_dict is not a dictionary or RobotFlowAgentState instance. Type: {type(final_subgraph_state_dict)}. Cannot extract messages or status.")
+        # This case implies a problem with how final_subgraph_state_dict was obtained or its structure.
+        # We should return an error state for the main graph.
+        error_message_content = "Internal error: Subgraph returned an unexpected final state format."
+        messages_to_return = list(current_main_messages or []) + [AIMessage(content=error_message_content)]
+        return {
+            "messages": messages_to_return,
+            "subgraph_completion_status": "error",
+            "is_error": True,
+            "error_message": error_message_content
+        }
+
+    if not subgraph_final_messages and completion_status != "needs_clarification": # Allow no messages if only needs_clarification
         logger.warning("Robot flow subgraph did not return any messages. Main history will not be updated by subgraph.")
         # 仍然返回原始消息，可能子图通过其他方式指示了完成或错误
         # 但通常我们期望子图通过消息进行通信
+        return {
+            "messages": current_main_messages,
+            "subgraph_completion_status": completion_status,
+        }
 
     # 6. 更新主图的状态
     # 我们将子图的完整消息历史替换主图的消息历史，或者追加。
@@ -140,8 +186,6 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> dict
     # 所以直接使用子图的 messages 是合适的。
     logger.info(f"Robot flow subgraph returned {len(subgraph_final_messages)} messages. Updating main graph state.")
 
-    completion_status = final_subgraph_state_dict.get("subgraph_completion_status")
-    
     # 主 AgentState 的其他字段保持不变，除非子图明确要修改它们（不常见）
     # 我们只更新 messages 和 subgraph_completion_status。
     # task_route_decision 和 user_request_for_router 的清除是有条件的。

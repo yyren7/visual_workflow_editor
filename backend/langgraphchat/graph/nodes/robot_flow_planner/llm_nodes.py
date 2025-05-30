@@ -54,8 +54,6 @@ USER_INTERACTION_TEXTS_ZH = {
     "GENERAL_FEEDBACK_GUIDANCE": "抱歉，我未能完全理解您的反馈。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。",
     "ERROR_INTENT_VALIDATION_FAILED": "抱歉，我未能准确解析您的反馈意图。我只能支持'同意'、'修改机器人'或'修改流程'这三种行为。请您重新表述您的意思。",
     "INFO_AFFIRM_PLAN_CONFIRMED": "已根据您的反馈确认为同意当前计划。",
-    "INFO_ROBOT_MODEL_CHANGED_TEMPLATE": "好的，机器人型号已更改为 {suggested_model}。我将基于当前最新计划（或您的原始请求）使用新机器人重新规划。",
-    "PROMPT_ROBOT_MODEL_UNCLEAR_TEMPLATE": "您建议更换机器人，但型号 '{suggested_model}' 不太明确或不在已知列表 ({known_models_str}) 中。您能提供一个准确的型号吗？或者我们继续使用原机器人 '{robot_model}' 进行计划修订？",
     "INFO_TREATING_FEEDBACK_AS_NEW_REQUEST_TEMPLATE": "由于未找到之前的计划，我将您的反馈 '{user_feedback_for_revision}' 作为新的请求来处理。",
     "ERROR_REVISE_PLAN_LLM_FAILED_MESSAGE_TEMPLATE": "尝试根据您的反馈 '{user_feedback_for_revision}' 修改流程时遇到问题：LLM未能生成有效修订。错误: {error_details}",
     "PROMPT_CLARIFY_REVISION_FEEDBACK_AFTER_ERROR": "您能否更清晰地说明您的修改意见，或者重新描述您的请求？",
@@ -66,17 +64,11 @@ USER_INTERACTION_TEXTS_ZH = {
         "```text\\n{revised_text_proposal}\\n```\\n\\n"
         "您是否同意按此更新后的流程继续？ (请输入 'yes' 或 'no'，或者提供进一步的修改意见)"
     ),
-    "PROMPT_ASK_ROBOT_MODEL_TEMPLATE": "请问您使用的是什么型号的机器人？例如：{known_models_str}",
-    "PROMPT_ASK_FOR_TASK_AFTER_MODEL_CONFIRMATION_TEMPLATE": "机器人型号已确认为 {robot_model}。请告诉我您想执行的具体任务或流程。",
     "PROMPT_INPUT_NEEDS_CLARIFICATION_FROM_LLM": "I couldn't fully understand your request or it needs more details for enrichment. Could you please rephrase or add more information?",
     "PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE": (
-        "根据您的机器人型号 '{robot_model}' 和请求 '{current_raw_user_request}', 我生成的初步流程如下:\\n\\n"
+        "根据您的请求 '{current_raw_user_request}', 我生成的初步流程如下:\\n\\n"
         "```text\\n{enriched_text_proposal}\\n```\\n\\n"
         "您是否同意按此流程继续？ (请输入 'yes' 或 'no'，或者提供修改意见)"
-    ),
-    "PROMPT_ROBOT_MODEL_NOT_RECOGNIZED_TEMPLATE": (
-        "Sorry, I couldn't recognize '{user_input}' or normalize it to a known model. "
-        "Known models: {known_models_str}. Please provide a valid robot model name."
     )
 }
 
@@ -206,10 +198,13 @@ async def invoke_llm_for_json_output(
 
 # --- Node 0: Preprocess and Enrich Input ---
 async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: BaseChatModel) -> Dict[str, Any]: # Ensure return type is Dict
-    logger.info(f"--- Entering Preprocess & Enrich (dialog_state: {state.dialog_state}, user_input: '{state.user_input}') ---")
+    logger.info(f"--- Entering Preprocess & Enrich (dialog_state: {state.dialog_state}, user_input: '{state.user_input}', language: '{state.language}') ---")
 
     current_user_input_for_this_cycle = state.user_input
     state.user_input = None # Consume user_input at the beginning
+
+    # Select language for interaction texts
+    active_texts = USER_INTERACTION_TEXTS_ZH if state.language == "zh" else USER_INTERACTION_TEXTS
 
     # Helper to add AIMessage if not already the last message or similar
     def add_ai_message_if_needed(content: str):
@@ -217,68 +212,14 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             state.messages = state.messages + [AIMessage(content=content)] # Use .messages for direct list modification
 
     # 1. Handle specific AWAITING states first if there's user input for them
-    if state.dialog_state == "awaiting_robot_model_input":
-        if not current_user_input_for_this_cycle:
-            logger.info("Still awaiting robot model input from user. Clarification question should be in messages.")
-            # Ensure question is there if we are awaiting
-            if not state.clarification_question and not any("什么型号的机器人" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-                 known_models_str = ", ".join(KNOWN_ROBOT_MODELS)
-                 clarify_msg = USER_INTERACTION_TEXTS_ZH["PROMPT_ASK_ROBOT_MODEL_TEMPLATE"].format(known_models_str=known_models_str)
-                 add_ai_message_if_needed(clarify_msg)
-                 state.clarification_question = clarify_msg
-                 state.subgraph_completion_status = "needs_clarification"
-            return state.dict(exclude_none=True)
-
-        logger.info(f"Processing user response for robot model: '{current_user_input_for_this_cycle}'")
-        state.messages = state.messages + [HumanMessage(content=current_user_input_for_this_cycle)]
-        
-        normalize_prompt = (
-            f"User provided robot model: '{current_user_input_for_this_cycle}'. "
-            f"Known official models are: {', '.join(KNOWN_ROBOT_MODELS)}. "
-            "Respond with the closest matching official model name from the list. "
-            "If no close match, respond with 'unknown_model'. Output only the model name or 'unknown_model'."
-        )
-        norm_response = await invoke_llm_for_text_output(
-            llm,
-            system_prompt_content="You are a robot model normalization assistant.",
-            user_message_content=normalize_prompt
-        )
-
-        if "error" in norm_response or not norm_response.get("text_output"):
-            logger.error(f"Robot model normalization LLM call failed: {norm_response.get('error')}")
-            add_ai_message_if_needed("抱歉，我在识别机器人型号时遇到了问题。请您再说一次。")
-            state.dialog_state = "awaiting_robot_model_input" # Stay in this state
-        else:
-            normalized_model = norm_response["text_output"].strip()
-            if normalized_model != "unknown_model" and normalized_model in KNOWN_ROBOT_MODELS:
-                state.robot_model = normalized_model
-                state.clarification_question = None
-                confirm_msg = USER_INTERACTION_TEXTS_ZH["PROMPT_ASK_FOR_TASK_AFTER_MODEL_CONFIRMATION_TEMPLATE"].format(robot_model=state.robot_model)
-                add_ai_message_if_needed(confirm_msg)
-                logger.info(f"Robot model confirmed: {state.robot_model}. Original raw_user_request: '{state.raw_user_request}'")
-                if state.raw_user_request: # If there was an initial request before model query
-                    state.active_plan_basis = state.raw_user_request # Use the original request
-                    state.dialog_state = "processing_user_input" # Proceed to enrich this original request
-                else:
-                    state.dialog_state = "awaiting_user_input" # No prior request, wait for task description
-            else:
-                logger.warning(f"Robot model '{current_user_input_for_this_cycle}' (normalized to '{normalized_model}') not recognized or unclear.")
-                known_models_str = ", ".join(KNOWN_ROBOT_MODELS)
-                clarify_msg = USER_INTERACTION_TEXTS_ZH["PROMPT_ROBOT_MODEL_NOT_RECOGNIZED_TEMPLATE"].format(user_input=current_user_input_for_this_cycle, known_models_str=known_models_str)
-                add_ai_message_if_needed(clarify_msg)
-                state.clarification_question = clarify_msg
-                state.dialog_state = "awaiting_robot_model_input" # Stay in this state
-        return state.dict(exclude_none=True)
-
     if state.dialog_state == "awaiting_enrichment_confirmation":
         if not current_user_input_for_this_cycle:
             logger.info("Still awaiting enrichment confirmation from user. Clarification question should be in messages.")
             if not state.clarification_question and not state.proposed_enriched_text:
-                 add_ai_message_if_needed("发生了一个内部错误：正在等待浓缩确认，但没有找到待确认的计划。请重新描述您的流程。")
+                 add_ai_message_if_needed(active_texts.get("ERROR_INTERNAL_NO_PLAN_TO_CONFIRM", "发生了一个内部错误：正在等待浓缩确认，但没有找到待确认的计划。请重新描述您的流程。") if state.language == "zh" else active_texts.get("ERROR_INTERNAL_NO_PLAN_TO_CONFIRM", "An internal error occurred: Awaiting enrichment confirmation, but no plan found to confirm. Please describe your flow again."))
                  state.dialog_state = "awaiting_user_input"
             elif not state.clarification_question and state.proposed_enriched_text: # Make sure question is there
-                confirm_prompt = USER_INTERACTION_TEXTS_ZH["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(
-                    robot_model=state.robot_model, 
+                confirm_prompt = active_texts["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(
                     current_raw_user_request=state.raw_user_request, # or active_plan_basis if multi-turn revision
                     enriched_text_proposal=state.proposed_enriched_text
                 )
@@ -299,23 +240,20 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             state.proposed_enriched_text = None
             state.clarification_question = None
             state.dialog_state = "input_understood_ready_for_xml"
-            add_ai_message_if_needed(USER_INTERACTION_TEXTS_ZH["INFO_AFFIRM_PLAN_CONFIRMED"])
+            add_ai_message_if_needed(active_texts["INFO_AFFIRM_PLAN_CONFIRMED"])
         elif "no" in user_feedback_lower or "修改" in user_feedback_lower or "不" in user_feedback_lower:
             logger.info("User wants to modify the enriched plan. Treating feedback as new plan basis.")
-            add_ai_message_if_needed("好的，请告诉我您希望如何修改，或者提供一个全新的流程描述。")
-            # User's feedback becomes the new basis for planning.
-            # If they only say "no", they need to provide more info.
-            # If they say "no, change X to Y", that's the new basis.
-            state.active_plan_basis = current_user_input_for_this_cycle # Or a more structured extraction of the modification
-            state.raw_user_request = current_user_input_for_this_cycle # Update raw request to the modification
+            add_ai_message_if_needed(active_texts.get("PROMPT_ASK_FOR_MODIFICATION_OR_NEW_PLAN", "好的，请告诉我您希望如何修改，或者提供一个全新的流程描述。") if state.language == "zh" else active_texts.get("PROMPT_ASK_FOR_MODIFICATION_OR_NEW_PLAN", "Okay, please tell me how you'd like to modify it, or provide a completely new flow description."))
+            state.active_plan_basis = current_user_input_for_this_cycle 
+            state.raw_user_request = current_user_input_for_this_cycle 
             state.enriched_structured_text = None
             state.proposed_enriched_text = None
             state.clarification_question = None
-            state.dialog_state = "processing_user_input" # Re-process this new basis
+            state.dialog_state = "processing_user_input" 
             state.subgraph_completion_status = "needs_clarification"
         else: # Unclear feedback
             logger.info("User feedback on enriched plan is unclear.")
-            add_ai_message_if_needed(USER_INTERACTION_TEXTS_ZH["GENERAL_FEEDBACK_GUIDANCE"])
+            add_ai_message_if_needed(active_texts["GENERAL_FEEDBACK_GUIDANCE"])
             state.dialog_state = "awaiting_enrichment_confirmation" # Stay and re-ask
             state.subgraph_completion_status = "needs_clarification"
         return state.dict(exclude_none=True)
@@ -324,10 +262,9 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
     if state.dialog_state == "generation_failed":
         if not current_user_input_for_this_cycle:
             logger.info("Still awaiting user input after previous generation failure. Error message should be in messages.")
-            # Ensure error prompt is there
-            if not any("生成XML时遇到问题" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-                add_ai_message_if_needed(f"抱歉，上次生成XML时遇到问题: {state.error_message or '未知错误'}。请修改您的指令或提供新的流程描述。")
-            state.dialog_state = 'awaiting_user_input' # General wait state
+            if not any("生成XML时遇到问题" in msg.content or "problem generating XML" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+                add_ai_message_if_needed( (active_texts.get("PROMPT_RETRY_AFTER_GENERATION_FAILURE_TEMPLATE", "抱歉，上次生成XML时遇到问题: {error_message}。请修改您的指令或提供新的流程描述。") if state.language == "zh" else active_texts.get("PROMPT_RETRY_AFTER_GENERATION_FAILURE_TEMPLATE", "Sorry, there was a problem generating the XML last time: {error_message}. Please modify your instructions or provide a new flow description.")).format(error_message=state.error_message or ('未知错误' if state.language == "zh" else 'Unknown error')) )
+            state.dialog_state = 'awaiting_user_input' 
             state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
         
@@ -337,126 +274,104 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
         state.active_plan_basis = current_user_input_for_this_cycle
         state.enriched_structured_text = None
         state.parsed_flow_steps = None
-        state.generated_node_xmls = [] # Reset
+        state.generated_node_xmls = [] 
         state.relation_xml_content = None
         state.final_flow_xml_content = None
-        state.is_error = False # Reset error flag
+        state.is_error = False 
         state.error_message = None
         state.clarification_question = None
-        state.dialog_state = "processing_user_input" # Proceed to process this new input
+        state.dialog_state = "processing_user_input"
 
     # 3. Handle 'initial' or 'awaiting_user_input' states when new input is provided
     if state.dialog_state in ["initial", "awaiting_user_input"]:
         if not current_user_input_for_this_cycle:
             logger.info(f"Dialog state is '{state.dialog_state}' but no user_input. Awaiting next cycle with input.")
-            if state.dialog_state == "initial" and not state.messages: # Only add welcome if truly initial and no messages yet
-                 add_ai_message_if_needed("您好！我是机器人流程设计助手。请输入您的流程描述。")
-            # Stay in 'awaiting_user_input'
+            if state.dialog_state == "initial" and not state.messages: 
+                 welcome_msg = active_texts.get("PROMPT_WELCOME_MESSAGE", "您好！我是机器人流程设计助手。请输入您的流程描述。") if state.language == "zh" else active_texts.get("PROMPT_WELCOME_MESSAGE", "Hello! I am your robot flow design assistant. Please enter your flow description.")
+                 add_ai_message_if_needed(welcome_msg)
+                 state.clarification_question = welcome_msg 
+            
+            if state.dialog_state == "awaiting_user_input" and not state.clarification_question:
+                logger.warning("In 'awaiting_user_input' with no current_user_input and no existing clarification_question. Setting a generic one.")
+                generic_prompt_msg = active_texts.get("PROMPT_GENERAL_ASK_FOR_INPUT", "请提供您的机器人流程描述或您希望进行的下一步操作。") if state.language == "zh" else active_texts.get("PROMPT_GENERAL_ASK_FOR_INPUT", "Please provide your robot flow description or the next action you'd like to take.")
+                add_ai_message_if_needed(generic_prompt_msg)
+                state.clarification_question = generic_prompt_msg
+            
             state.dialog_state = 'awaiting_user_input'
-            state.subgraph_completion_status = "needs_clarification"
+            state.subgraph_completion_status = "needs_clarification" 
             return state.dict(exclude_none=True)
 
         logger.info(f"Received new user input in '{state.dialog_state}' state: '{current_user_input_for_this_cycle}'")
         state.messages = state.messages + [HumanMessage(content=current_user_input_for_this_cycle)]
-        state.raw_user_request = current_user_input_for_this_cycle # This is the start of a new flow/attempt
+        state.raw_user_request = current_user_input_for_this_cycle
         state.active_plan_basis = current_user_input_for_this_cycle
-        # Reset potentially stale data from previous attempts if any
         state.enriched_structured_text = None
         state.proposed_enriched_text = None
         state.parsed_flow_steps = None
         state.generated_node_xmls = []
         state.relation_xml_content = None
         state.final_flow_xml_content = None
-        state.is_error = False # Reset error flag
+        state.is_error = False 
         state.error_message = None
         state.clarification_question = None
         state.dialog_state = "processing_user_input"
 
-    # 4. Core 'processing_user_input' logic (enrichment, or asking for robot model if unknown)
+    # 4. Core 'processing_user_input' logic (enrichment)
     if state.dialog_state == "processing_user_input":
         logger.info(f"Processing user input. Active plan basis: '{state.active_plan_basis[:200]}...'")
         
-        # Attempt to auto-detect robot model from raw_user_request if not already set
-        if not state.robot_model and state.raw_user_request:
-            logger.info(f"Attempting to auto-detect robot model from raw_user_request: '{state.raw_user_request}'")
-            known_models_str = ", ".join(KNOWN_ROBOT_MODELS)
-            
-            auto_detect_prompt = (
-                f"The user's request is: '{state.raw_user_request}'. "
-                f"Known official robot models are: [{known_models_str}]. "
-                "Based on the user's request, identify if one of these known models is mentioned or clearly implied. "
-                "Respond with the matching official model name from the list if a clear match is found. "
-                "If no clear match or if it's ambiguous, respond with 'unknown_model'. "
-                "Output only the single model name or 'unknown_model'."
-            )
-            
-            norm_response = await invoke_llm_for_text_output(
-                llm,
-                system_prompt_content="You are a robot model identification assistant. Your task is to identify a robot model from the user's text based on a known list.",
-                user_message_content=auto_detect_prompt
-            )
+        # REMOVED: Attempt to auto-detect robot model 
+        # REMOVED: Asking user for robot model
 
-            if "error" in norm_response or not norm_response.get("text_output"):
-                logger.warning(f"LLM call for auto-detecting robot model failed or returned no output. Error: {norm_response.get('error')}")
-                # Proceed without auto-detected model, will ask user later if still not set.
-            else:
-                potential_model = norm_response["text_output"].strip()
-                if potential_model != "unknown_model" and potential_model in KNOWN_ROBOT_MODELS:
-                    state.robot_model = potential_model
-                    logger.info(f"Robot model '{state.robot_model}' auto-detected by LLM from initial user request.")
-                else:
-                    logger.info(f"LLM auto-detection did not identify a known robot model from the request (response: '{potential_model}'). Will proceed to ask user if necessary.")
-
-        if not state.active_plan_basis: # Should not happen if logic above is correct
+        if not state.active_plan_basis: 
             logger.warning("Reached 'processing_user_input' but active_plan_basis is empty. Reverting to awaiting_user_input.")
-            add_ai_message_if_needed("请输入有效的流程描述。")
+            add_ai_message_if_needed(active_texts.get("ERROR_EMPTY_PLAN_BASIS", "请输入有效的流程描述。") if state.language == "zh" else active_texts.get("ERROR_EMPTY_PLAN_BASIS", "Please enter a valid flow description."))
             state.dialog_state = "awaiting_user_input"
             state.subgraph_completion_status = "needs_clarification"
             return state.dict(exclude_none=True)
 
-        # 4a. Check for robot model if not yet set
-        if not state.robot_model:
-            logger.info("Robot model not set (even after attempting auto-detection). Asking user for robot model.")
-            known_models_str = ", ".join(KNOWN_ROBOT_MODELS)
-            question = USER_INTERACTION_TEXTS_ZH["PROMPT_ASK_ROBOT_MODEL_TEMPLATE"].format(known_models_str=known_models_str)
-            add_ai_message_if_needed(question)
-            state.clarification_question = question
-            state.dialog_state = "awaiting_robot_model_input"
-            state.subgraph_completion_status = "needs_clarification"
-            return state.dict(exclude_none=True)
-
-        # 4b. Robot model is known, proceed with plan enrichment
-        logger.info(f"Robot model is known: {state.robot_model}. Proceeding to enrich plan based on: '{state.active_plan_basis}'.")
+        # Proceed with plan enrichment
+        logger.info(f"Proceeding to enrich plan based on: '{state.active_plan_basis}'.")
         
-        # Dynamically load block types and their descriptions
         available_node_types_with_descriptions_str = "没有可用的节点类型信息。"
         node_template_dir = state.config.get("NODE_TEMPLATE_DIR_PATH")
         if node_template_dir and os.path.isdir(node_template_dir):
             try:
-                all_block_types = sorted([
-                    os.path.splitext(f)[0]
-                    for f in os.listdir(node_template_dir)
-                    if os.path.isfile(os.path.join(node_template_dir, f)) and f.endswith((".xml", ".json", ".py"))
+                all_block_files = sorted([
+                    f for f in os.listdir(node_template_dir)
+                    if os.path.isfile(os.path.join(node_template_dir, f)) and f.endswith((".xml")) # Only process .xml files for templates
                 ])
-                if all_block_types:
-                    logger.info(f"Found {len(all_block_types)} block types: {all_block_types}")
+                if all_block_files:
+                    logger.info(f"Found {len(all_block_files)} block template files: {all_block_files}")
                     existing_descriptions = load_node_descriptions()
-                    descriptions_for_prompt = ["可用节点类型及其功能:"]
+                    descriptions_for_prompt = ["可用节点类型及其功能和XML模板:"]
                     
-                    for block_type in all_block_types:
+                    for block_file in all_block_files:
+                        block_type = os.path.splitext(block_file)[0]
                         description_to_use = existing_descriptions.get(block_type)
                         if description_to_use is None:
                             logger.info(f"Description for block type '{block_type}' not found in existing descriptions. Using default.")
-                            description_to_use = "该节点类型的描述当前不可用。" # Default message for missing descriptions
-                        descriptions_for_prompt.append(f"- {block_type}: {description_to_use}")
+                            description_to_use = "该节点类型的描述当前不可用。"
+                        
+                        xml_template_content = "XML模板无法加载。"
+                        try:
+                            template_file_path = Path(node_template_dir) / block_file
+                            with open(template_file_path, 'r', encoding='utf-8') as f:
+                                xml_template_content = f.read().strip()
+                        except Exception as e_xml:
+                            logger.error(f"Error loading XML template for {block_type} from {template_file_path}: {e_xml}")
+
+                        descriptions_for_prompt.append(f"- 类型: {block_type}")
+                        descriptions_for_prompt.append(f"  描述: {description_to_use}")
+                        descriptions_for_prompt.append(f"  模板:\\n```xml\\n{xml_template_content}\\n```")
                     
-                    if len(descriptions_for_prompt) > 1: # More than just the header
-                        available_node_types_with_descriptions_str = "\n".join(descriptions_for_prompt)
+                    if len(descriptions_for_prompt) > 1: 
+                        available_node_types_with_descriptions_str = "\\n\\n".join(descriptions_for_prompt)
                     else:
-                        available_node_types_with_descriptions_str = "未能加载任何节点类型或其描述。"
+                        available_node_types_with_descriptions_str = "未能加载任何节点类型、描述或其XML模板。"
                 else:
-                    logger.warning(f"No block type files found in {node_template_dir}")
-                    available_node_types_with_descriptions_str = "在配置的路径中未找到任何节点模板文件。"
+                    logger.warning(f"No .xml block type files found in {node_template_dir}")
+                    available_node_types_with_descriptions_str = "在配置的路径中未找到任何XML节点模板文件。"
             except Exception as e:
                 logger.error(f"Error loading block types or descriptions: {e}", exc_info=True)
                 available_node_types_with_descriptions_str = f"加载节点类型信息时出错: {e}"
@@ -464,10 +379,8 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
             logger.warning(f"NODE_TEMPLATE_DIR_PATH '{node_template_dir}' is not configured or not a directory.")
             available_node_types_with_descriptions_str = "节点模板目录未正确配置。"
 
-        # Attempt to enrich the plan using an LLM call
         enrich_prompt_name = "flow_step0_enrich_input.md"
         enrich_placeholders = {
-            "robot_model": state.robot_model,
             "user_core_request": state.active_plan_basis,
             "AVAILABLE_NODE_TYPES_WITH_DESCRIPTIONS": available_node_types_with_descriptions_str
         }
@@ -476,35 +389,27 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
 
         if not filled_enrich_prompt_content:
             logger.error(f"Failed to load or fill enrichment prompt: {enrich_prompt_name}. Skipping enrichment.")
-            # Fallback: use active_plan_basis directly if prompt fails, and ask for confirmation
             state.proposed_enriched_text = state.active_plan_basis 
         else:
             enriched_result = await invoke_llm_for_text_output(
                 llm,
-                # The system prompt for enrichment should ideally be part of the .md file itself,
-                # or a generic one could be used here if invoke_llm_for_text_output's system_prompt_content is designed to be general.
-                # For now, let's assume flow_step0_enrich_input.md contains the full instruction set for the LLM.
-                # If flow_step0_enrich_input.md is just a user message template, a system prompt is needed.
-                # Let's use a generic system prompt for now.
-                system_prompt_content="You are a helpful assistant that refines user requests into a structured, step-by-step robot plan.", # Generic system prompt
-                user_message_content=filled_enrich_prompt_content # The content from flow_step0_enrich_input.md
+                system_prompt_content="You are a helpful assistant that refines user requests into a structured, step-by-step robot plan.", 
+                user_message_content=filled_enrich_prompt_content
             )
             if "error" in enriched_result or not enriched_result.get("text_output"):
                 logger.error(f"Enrichment LLM call failed: {enriched_result.get('error')}. Using raw plan for confirmation.")
-                add_ai_message_if_needed("抱歉，我在理解和优化您的流程描述时遇到初步问题。我们将基于您的原始输入进行确认。")
-                state.proposed_enriched_text = state.active_plan_basis # Fallback to raw plan
+                add_ai_message_if_needed(active_texts.get("INFO_ENRICHMENT_FAILED_USING_RAW", "抱歉，我在理解和优化您的流程描述时遇到初步问题。我们将基于您的原始输入进行确认。") if state.language == "zh" else active_texts.get("INFO_ENRICHMENT_FAILED_USING_RAW", "Sorry, I encountered an initial issue understanding and optimizing your flow description. We will proceed with confirmation based on your original input."))
+                state.proposed_enriched_text = state.active_plan_basis
             else:
                 logger.info("Successfully enriched the plan with LLM.")
                 state.proposed_enriched_text = enriched_result["text_output"].strip()
         
-        # Always require user confirmation for the (potentially) enriched plan
         logger.info(f"Proposing enriched plan for confirmation: {state.proposed_enriched_text}")
         current_raw_request_for_prompt = state.raw_user_request if state.raw_user_request else state.active_plan_basis
         
-        state.clarification_question = USER_INTERACTION_TEXTS_ZH["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(
-            robot_model=state.robot_model, 
-            current_raw_user_request=str(current_raw_request_for_prompt), # Ensure it's a string
-            enriched_text_proposal=str(state.proposed_enriched_text) # Ensure it's a string
+        state.clarification_question = active_texts["PROMPT_CONFIRM_INITIAL_ENRICHED_PLAN_TEMPLATE"].format(
+            current_raw_user_request=str(current_raw_request_for_prompt), 
+            enriched_text_proposal=str(state.proposed_enriched_text) 
         )
         add_ai_message_if_needed(state.clarification_question)
         state.dialog_state = "awaiting_enrichment_confirmation"
@@ -515,8 +420,7 @@ async def preprocess_and_enrich_input_node(state: RobotFlowAgentState, llm: Base
         f"Exiting P&E Node. dialog_state: {state.dialog_state}, "
         f"raw_user_request: '{state.raw_user_request}', "
         f"active_plan_basis: '{state.active_plan_basis}', "
-        f"enriched_structured_text: '{state.enriched_structured_text}', "
-        f"robot_model: '{state.robot_model}'"
+        f"enriched_structured_text: '{state.enriched_structured_text}'"
     )
     logger.info(f"--- Exiting Preprocess & Enrich (new dialog_state: {state.dialog_state}) ---")
     return state.dict(exclude_none=True)
@@ -527,12 +431,11 @@ class ParsedStep(BaseModel):
     id_suggestion: str = Field(description="A suggested unique ID for this operation block, e.g., 'movel_P1_Z_on'.")
     type: str = Field(description="The type of operation, e.g., 'select_robot', 'set_motor', 'moveL', 'loop', 'return'.")
     description: str = Field(description="A brief natural language description of this specific step.")
-    # parameters: Dict[str, Any] = Field(description="A dictionary of parameters for this operation, e.g., {'robotName': 'dobot_mg400'} or {'point_name_list': 'P1', 'control_z': 'enable'.}")
+    parameters: Dict[str, Any] = Field(description="A dictionary of parameters for this operation, e.g., {'robotName': 'dobot_mg400'} or {'point_name_list': 'P1', 'control_z': 'enable'.}")
     has_sub_steps: bool = Field(False, description="Whether this step contains nested sub-steps.")
     sub_step_descriptions: List[str] = Field(default_factory=list, description="List of description strings for nested operations, to avoid deep recursion.")
 
 class UnderstandInputSchema(BaseModel):
-    robot: Optional[str] = Field(None, description="The name or model of the robot as explicitly stated in the parsed text, e.g., 'dobot_mg400'. This should match the robot name from the input text.")
     operations: List[ParsedStep] = Field(description="An ordered list of operations identified from the user input text.")
 
 async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) -> RobotFlowAgentState:
@@ -585,16 +488,11 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
     # Ensure all expected placeholders by the prompt are present in config or added here.
     placeholder_values_for_prompt = config.copy() # Start with existing config
     placeholder_values_for_prompt["KNOWN_NODE_TYPES_LIST_STR"] = ", ".join(known_node_types_list) if known_node_types_list else "(dynamic list not available)"
-    # Add other default/example placeholders if not already in config and are used by this specific prompt
     placeholder_values_for_prompt.setdefault("GENERAL_INSTRUCTION_INTRO", "Please analyze the following robot workflow.")
-    placeholder_values_for_prompt.setdefault("ROBOT_NAME_EXAMPLE", "example_robot_CoppeliaSim")
-    placeholder_values_for_prompt.setdefault("POINT_NAME_EXAMPLE_1", "P1")
-    placeholder_values_for_prompt.setdefault("POINT_NAME_EXAMPLE_2", "P2")
-    placeholder_values_for_prompt.setdefault("POINT_NAME_EXAMPLE_3", "P3")
 
     user_message_for_llm = (
         f"Parse the following robot workflow description into a structured format. "
-        f"Identify the robot name (it must be explicitly stated in the text to be parsed, typically at the beginning like '机器人: model_name') and each distinct operation. " # Removed "with its parameters"
+        f"Identify each distinct operation. " # Removed robot name identification
         f"Pay close attention to control flow structures like loops and their nested operations.\\n\\n"
         f"Workflow Description to Parse:\\n```text\\n{enriched_input_text}\\n```"
     )
@@ -612,11 +510,41 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         error_msg_detail = f"Step 1 Failed: {parsed_output.get('error')}. Details: {parsed_output.get('details')}"
         logger.error(error_msg_detail)
         raw_out = parsed_output.get('raw_output', '')
+        # ---- START: Added for debugging ----
+        print("\nERROR: LLM output for UnderstandInputSchema caused an error.")
+        print(f"LLM Raw Output (json.loads might be needed if it is a string):\n{raw_out}\n")
+        print(f"Full parsed_output from LLM call before Pydantic validation:\n{json.dumps(parsed_output, indent=2, ensure_ascii=False)}\n")
+        # ---- END: Added for debugging ----
         state.is_error = True
         state.error_message = f"Step 1: Failed to understand input. LLM Error: {error_msg_detail}. Raw: {str(raw_out)[:500]}"
-        state.dialog_state = "error"
+        state.dialog_state = "generation_failed" # Corrected: Use a valid Literal state
         state.subgraph_completion_status = "error"
         return state
+
+    # Pre-process parameters to ensure they are dicts
+    if isinstance(parsed_output, dict) and "operations" in parsed_output and isinstance(parsed_output["operations"], list):
+        for operation in parsed_output["operations"]:
+            if isinstance(operation, dict) and "parameters" in operation:
+                params = operation["parameters"]
+                if isinstance(params, str):
+                    try:
+                        operation["parameters"] = json.loads(params)
+                    except json.JSONDecodeError as e:
+                        logger.warning(f"Failed to json.loads parameters string for operation {operation.get('id_suggestion', 'N/A')}: {params}. Error: {e}. Leaving as string, Pydantic validation might fail.")
+                elif not isinstance(params, dict):
+                    logger.warning(f"Operation {operation.get('id_suggestion', 'N/A')} parameters is not a dict or string: {type(params)}. Pydantic validation might fail.")
+    elif isinstance(parsed_output, UnderstandInputSchema): # If it's already a Pydantic model (less likely path if error occurred before)
+        for operation_model in parsed_output.operations:
+            if isinstance(operation_model.parameters, str): # This check is less likely to be hit if conversion already happened
+                try:
+                    # Pydantic models are generally immutable after creation without specific config,
+                    # so direct assignment might not work as intended here.
+                    # This branch indicates a deeper issue if parameters are strings *after* Pydantic parsing.
+                    # For now, logging this scenario.
+                    logger.warning(f"Operation {operation_model.id_suggestion} parameters is a string *after* initial Pydantic parsing attempt. This is unusual. String: {operation_model.parameters}")
+                except Exception as e:
+                     logger.warning(f"Could not process parameters for {operation_model.id_suggestion} after noticing it's a string post-Pydantic attempt: {e}")
+
 
     # Manual validation of operation types BEFORE Pydantic parsing, if known_node_types_list is available
     if known_node_types_list and parsed_output.get("operations"):
@@ -643,20 +571,32 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
             return state
 
     try:
-        validated_data = UnderstandInputSchema(**parsed_output)
-        logger.info(f"Step 1 Succeeded. Parsed robot from text: {validated_data.robot}, Operations: {len(validated_data.operations)}")
+        # If parsed_output is already a Pydantic model instance from invoke_llm_for_json_output,
+        # this re-validation might be redundant unless pre-processing was needed.
+        # If pre-processing occurred on a dict, this is the main validation.
+        if isinstance(parsed_output, UnderstandInputSchema):
+            validated_data = parsed_output # Already validated if it's the correct type
+        else:
+            validated_data = UnderstandInputSchema(**parsed_output)
+
+        logger.info(f"Step 1 Succeeded. Parsed operations: {len(validated_data.operations)}")
         
+        # Validate operation types (excluding sub-steps for now)
+        # ... (rest of type validation)
+
         state.parsed_flow_steps = [op.dict(exclude_none=True) for op in validated_data.operations]
         state.parsed_robot_name = validated_data.robot 
         state.error_message = None
-        state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Robot: {validated_data.robot}. Steps: {len(validated_data.operations)}")]
+        state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Robot: {state.parsed_robot_name}. Steps: {len(state.parsed_flow_steps)}")]
         state.subgraph_completion_status = None
         return state
     except Exception as e: 
-        logger.error(f"Step 1 Failed: Output validation error. Error: {e}. Raw Output: {parsed_output}", exc_info=True)
+        logger.error(f"Step 1 Failed: Pydantic validation error for UnderstandInputSchema or subsequent validation. Error: {e}. Raw Output from LLM: {json.dumps(parsed_output, indent=2, ensure_ascii=False)}", exc_info=True)
+        print("\\nERROR: Pydantic validation failed for UnderstandInputSchema or subsequent validation.")
+        print(f"LLM's Parsed Output that failed validation:\\n{json.dumps(parsed_output, indent=2, ensure_ascii=False)}\\n")
         state.is_error = True
         state.error_message = f"Step 1: Output validation error. Details: {e}. Parsed: {str(parsed_output)[:500]}"
-        state.dialog_state = "error"
+        state.dialog_state = "generation_failed"
         state.subgraph_completion_status = "error"
         return state
 
@@ -690,7 +630,7 @@ def _collect_all_operations_for_xml_generation(
         op_info_for_llm = {
             "type": op_data_from_step1['type'],
             "description": full_description,
-            # "parameters_json": json.dumps(op_data_from_step1.get('parameters', {})), # Ensure parameters exist
+            "parameters_json": json.dumps(op_data_from_step1.get('parameters', {})), # Ensure parameters exist
             "id_suggestion_from_step1": op_data_from_step1.get('id_suggestion', ''),
             
             "target_xml_block_id": xml_block_id, 
@@ -726,7 +666,7 @@ async def _generate_one_xml_for_operation_task(
     logger = logging.getLogger(__name__) # Get logger instance
     config = state.config
     node_template_dir = config.get("NODE_TEMPLATE_DIR_PATH")
-    robot_model_from_state = state.robot_model if state.robot_model else "unknown_robot"
+    robot_model_from_state = "unknown_robot" # Keep a default value or remove if placeholder not used
 
     if not node_template_dir:
         error_msg = "NODE_TEMPLATE_DIR_PATH is not configured."
@@ -769,11 +709,10 @@ async def _generate_one_xml_for_operation_task(
         **config, # General config like OUTPUT_DIR_PATH, BLOCK_ID_PREFIX_EXAMPLE
         "CURRENT_NODE_TYPE": op_info_for_llm["type"],
         "CURRENT_NODE_DESCRIPTION": op_info_for_llm["description"],
-        # "CURRENT_NODE_PARAMETERS_JSON": op_info_for_llm["parameters_json"],
+        "CURRENT_NODE_PARAMETERS_JSON": op_info_for_llm["parameters_json"],
         "CURRENT_NODE_ID_SUGGESTION_FROM_STEP1": op_info_for_llm["id_suggestion_from_step1"],
         "TARGET_XML_BLOCK_ID": op_info_for_llm["target_xml_block_id"],
         "TARGET_XML_DATA_BLOCK_NO": op_info_for_llm["target_xml_data_block_no"],
-        "ROBOT_MODEL_NAME_FROM_STATE": robot_model_from_state,
         "NODE_TEMPLATE_XML_CONTENT_AS_STRING": node_template_xml_content_as_string,
         # Ensure all placeholders used by flow_step2_generate_node_xml.md are here
         # Example: ROBOT_NAME_EXAMPLE, POINT_NAME_EXAMPLE_1, etc. if still used directly by step2 prompt

@@ -20,22 +20,18 @@ Please determine which of the following categories the user's intent belongs to:
 
 1.  `affirm`: The user expresses agreement or basic agreement with the preliminary process plan and wishes to proceed.
     Examples: "Okay", "Alright", "Let's do it this way", "No problem, continue", "Hmm, looks okay".
-2.  `change_robot`: The user explicitly or strongly implies a desire to change the currently used robot model.
-    Examples: "I want to use MG400 for this", "Can we switch to dobot_cr5?", "This process is for hitbot".
-3.  `modify_plan`: The user proposes modifications, additions, deletions, or adjustments to the process plan. Or is dissatisfied with previous modifications.
+2.  `modify_plan`: The user proposes modifications, additions, deletions, or adjustments to the process plan. Or is dissatisfied with previous modifications.
     Examples: "Remove the step of moving to P1", "Add a 3-second wait after the second step", "P2's speed should be slower", "I want you to move steps 4, 5, 6 to the end, not just step 6".
-4.  `unclear`: The user's feedback intent is unclear, cannot be clearly classified into the above three categories, or the feedback content is irrelevant to the process.
+3.  `unclear`: The user's feedback intent is unclear, cannot be clearly classified into the above three categories, or the feedback content is irrelevant to the process.
     Examples: "What is this?", "I'm not sure", "Let me think about it".
 
-If the intent is `change_robot`, please try to extract the suggested new robot model from the user feedback.
 If the intent is `modify_plan`, please extract the core feedback from the user that will guide subsequent plan revisions. If the feedback itself is a clear revision instruction, use the feedback directly.
 
 You must strictly follow the JSON format of the Pydantic model below, without adding any extra explanations or descriptive text:
 
 ```json
 {
-  "intent": "...", // Must be one of "affirm", "change_robot", "modify_plan", "unclear"
-  "robot_model_suggestion": "...", // Provide only if intent is "change_robot", otherwise null
+  "intent": "...", // Must be one of "affirm", "modify_plan", "unclear"
   "revision_feedback": "..." // Provide only if intent is "modify_plan", otherwise null
 }
 ```

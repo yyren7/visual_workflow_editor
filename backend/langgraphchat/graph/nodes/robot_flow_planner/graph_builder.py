@@ -18,28 +18,14 @@ from .llm_nodes import (
     preprocess_and_enrich_input_node,
     understand_input_node,
     generate_individual_xmls_node,
-    generate_relation_xml_node
 )
 from .xml_tools import WriteXmlFileTool
 from ....tools.file_share_tool import upload_file
+from .prompt_loader import DEFAULT_CONFIG
 
 logger = logging.getLogger(__name__)
 
 load_dotenv() # 加载 .env 文件中的环境变量
-
-DEFAULT_CONFIG = {
-    "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
-    "ROBOT_NAME_EXAMPLE": "dobot_mg400",
-    "POINT_NAME_EXAMPLE_1": "P3",
-    "POINT_NAME_EXAMPLE_2": "P1",
-    "POINT_NAME_EXAMPLE_3": "P2",
-    "NODE_TEMPLATE_DIR_PATH": os.getenv("NODE_TEMPLATE_DIR_PATH", "/workspace/database/node_database/quick-fcpr-new"), # 从环境变量读取，如果未设置则使用默认值
-    "OUTPUT_DIR_PATH": "/workspace/database/flow_database/result/example_run/",
-    "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml",
-    "BLOCK_ID_PREFIX_EXAMPLE": "block_uuid",
-    "RELATION_FILE_NAME_ACTUAL": "relation.xml",
-    "FINAL_FLOW_FILE_NAME_ACTUAL": "flow.xml"
-}
 
 # Node name constants for clarity in graph definition
 INITIALIZE_STATE = "initialize_state"
@@ -53,6 +39,7 @@ UPLOAD_FINAL_XML_NODE = "upload_final_xml_node" # If you have this node for uplo
 
 # Define a new end state for clarification
 END_FOR_CLARIFICATION = "end_for_clarification"
+BLOCKLY_NS = "https://developers.google.com/blockly/xml" # Define globally for this module
 
 def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     logger.info("--- Initializing Agent State (Robot Flow Subgraph) ---")
@@ -66,6 +53,124 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     # Ensure user_input from invoker is preserved if dialog_state is initial
     # preprocess_and_enrich_input_node will consume it.
     logger.info(f"Agent state initialized. Dialog state: {state.dialog_state}, Initial User Input: '{state.user_input}', Using NODE_TEMPLATE_DIR_PATH: {state.config.get('NODE_TEMPLATE_DIR_PATH')}")
+    return state.dict(exclude_none=True)
+
+def _generate_relation_xml_content_from_steps_py(
+    parsed_steps: Optional[List[Dict[str, Any]]],
+    generated_xmls: Optional[List[GeneratedXmlFile]],
+    config: Dict[str, Any] # For logging and potential future use
+) -> str:
+    logger.info("--- Generating Relation XML (Python Logic) ---")
+
+    if not parsed_steps or not generated_xmls:
+        logger.warning("Parsed steps or generated XMLs are empty. Generating empty relation XML.")
+        return f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+
+    relation_root = ET.Element(f"{{{BLOCKLY_NS}}}xml")
+
+    valid_block_data: List[Dict[str, str]] = [] # Store dicts with "id" and "type"
+
+    for i, step_info in enumerate(parsed_steps):
+        if i < len(generated_xmls):
+            xml_file_info = generated_xmls[i]
+            if xml_file_info.status == "success" and xml_file_info.block_id and xml_file_info.type:
+                valid_block_data.append({"id": xml_file_info.block_id, "type": xml_file_info.type})
+            else:
+                desc = step_info.get('description', f'step_{i}')
+                logger.warning(f"Skipping step '{desc}' for relation.xml as its individual XML generation failed or block_id/type is missing.")
+        else:
+            logger.error(f"Mismatch: parsed_step {i} has no corresponding entry in generated_xmls.")
+
+    if not valid_block_data:
+        logger.warning("No successfully generated blocks with IDs and types found. Generating empty relation XML.")
+        return f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+
+    current_xml_element_in_relation: Optional[ET.Element] = None
+    for block_info in valid_block_data:
+        block_id = block_info["id"]
+        block_type = block_info["type"]
+
+        new_block_relation_element = ET.Element("block")
+        new_block_relation_element.set("type", block_type)
+        new_block_relation_element.set("id", block_id)
+
+        if current_xml_element_in_relation is None:
+            relation_root.append(new_block_relation_element)
+        else:
+            next_element = ET.SubElement(current_xml_element_in_relation, "next")
+            next_element.append(new_block_relation_element)
+        
+        current_xml_element_in_relation = new_block_relation_element
+        
+        # Basic loop handling: If a block type ends with '_start' or is known as a loop type,
+        # and the next block type is its corresponding '_end', then nest subsequent blocks.
+        # This is a placeholder for more robust loop/statement handling.
+        # For now, we primarily support linear flows. More complex nesting requires
+        # analyzing parsed_steps' has_sub_steps and sub_step_descriptions,
+        # or a dedicated recursive structure builder.
+
+    try:
+        if hasattr(ET, 'indent'): ET.indent(relation_root, space="  ")
+        xml_string = ET.tostring(relation_root, encoding="unicode", xml_declaration=False)
+        final_xml_string = f'<?xml version="1.0" encoding="UTF-8"?>\\n{xml_string}'
+        logger.info(f"Successfully generated relation.xml content (Python Logic). Preview: {final_xml_string[:250]}...")
+        return final_xml_string
+    except Exception as e:
+        logger.error(f"Error serializing relation XML (Python Logic): {e}", exc_info=True)
+        # Fallback to empty XML on serialization error
+        return f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+
+def generate_relation_xml_node_py(state: RobotFlowAgentState) -> Dict[str, Any]:
+    logger.info("--- Running Step 3: Generate Node Relation XML (Python Implementation) ---")
+    state.current_step_description = "Generating node relation XML file (Python)"
+    state.is_error = False 
+
+    config = state.config
+    parsed_steps = state.parsed_flow_steps
+    generated_node_xmls_list = state.generated_node_xmls if state.generated_node_xmls is not None else []
+
+    if not parsed_steps:
+        logger.warning("Parsed flow steps are missing for relation XML generation. Generating empty relation.xml.")
+        state.relation_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+        # Attempt to save this empty relation.xml
+    else:
+        try:
+            state.relation_xml_content = _generate_relation_xml_content_from_steps_py(
+                parsed_steps,
+                generated_node_xmls_list,
+                config
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error in _generate_relation_xml_content_from_steps_py: {e}", exc_info=True)
+            state.is_error = True
+            state.error_message = f"内部错误：生成关系XML时发生意外: {e}"
+            state.relation_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>' # Fallback
+            state.subgraph_completion_status = "error"
+
+    output_dir = Path(config.get("OUTPUT_DIR_PATH", "/tmp"))
+    relation_file_name = config.get("RELATION_FILE_NAME_ACTUAL", "relation.xml")
+    relation_file_path = output_dir / relation_file_name
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+        with open(relation_file_path, "w", encoding="utf-8") as f:
+            f.write(state.relation_xml_content)
+        state.relation_xml_path = str(relation_file_path)
+        logger.info(f"Successfully wrote relation XML to {relation_file_path}.")
+    except IOError as e:
+        logger.error(f"Failed to write relation XML to {relation_file_path}: {e}", exc_info=True)
+        state.is_error = True # Mark as error if file write fails
+        state.error_message = (state.error_message or "") + f" 保存关系文件失败: {e}"
+        state.subgraph_completion_status = "error"
+        # relation_xml_content remains in state for potential debugging
+
+    if not state.is_error:
+        state.dialog_state = "generating_xml_final"
+        state.subgraph_completion_status = None 
+    else: # if an error occurred either during generation or saving
+        state.dialog_state = "error" # Or route back to core for retry/clarification
+        if not any( state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+             state.messages = state.messages + [AIMessage(content=f"生成关系XML时出错: {state.error_message}")]
+
     return state.dict(exclude_none=True)
 
 async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> Dict[str, Any]:
@@ -92,7 +197,6 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
 
     # ... (rest of the existing XML merging logic from the original file) ...
     # Ensure BLOCKLY_NS is defined or imported
-    BLOCKLY_NS = "https://developers.google.com/blockly/xml"
     block_element_map: Dict[str, ET.Element] = {}
     if individual_xmls_info: 
         for gf in individual_xmls_info:
@@ -248,7 +352,6 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
         f"raw_user_request: '{state.raw_user_request}', "
         f"active_plan_basis: '{state.active_plan_basis}', "
         f"enriched_structured_text: '{state.enriched_structured_text}', "
-        f"robot_model: '{state.robot_model}', "
         f"is_error: {state.is_error}"
     )
     logger.info(f"--- Routing after Core Interaction (dialog_state: '{state.dialog_state}', is_error: {state.is_error}) ---")
@@ -262,8 +365,6 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
         state.dialog_state = 'awaiting_user_input' # Prepare for new user input
         state.user_input = None # Crucial: Clear stale user_input to prevent re-processing old data if core node failed.
         state.clarification_question = None # Clear any pending questions from core node
-        # If core node itself errored, it might need to end to report error or go back to itself if it can self-correct with new input.
-        # For now, let's assume it should go back to itself to await new input if it set an error.
         return CORE_INTERACTION_NODE
 
     current_dialog_state = state.dialog_state
@@ -271,10 +372,9 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     # If a clarification question has been set by CORE_INTERACTION_NODE, 
     # and it's waiting for input, it should end the current graph run.
     if state.clarification_question and current_dialog_state in [
-        "awaiting_robot_model_input", 
         "awaiting_enrichment_confirmation", 
         "awaiting_user_input", # If CORE_INTERACTION_NODE decided to ask a question and transitioned to this state
-        "initial" # If it asked a question right from the initial state (e.g. asking for robot model)
+        "initial" # If it asked a question right from the initial state
     ]:
         logger.info(f"Clarification question is pending ('{state.clarification_question}'). Dialog state: {current_dialog_state}. Ending graph invocation to get user input.")
         state.subgraph_completion_status = "needs_clarification" # Indicate why it's ending
@@ -291,31 +391,13 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
             state.dialog_state = "awaiting_user_input"
             state.user_input = None # Clear stale input
             return CORE_INTERACTION_NODE
-    elif current_dialog_state in ["awaiting_robot_model_input", "awaiting_enrichment_confirmation", "awaiting_user_input", "processing_user_input", "generation_failed"]:
+    elif current_dialog_state in ["awaiting_enrichment_confirmation", "awaiting_user_input", "processing_user_input", "generation_failed"]:
         # If CORE_INTERACTION_NODE (preprocess_and_enrich_input_node) has set one of these states, 
         # it means it's either waiting for a specific user reply (e.g. to a clarification_question),
         # actively processing, or has just handled a generation failure by setting state to await input.
         # In all these cases, the graph should loop back to CORE_INTERACTION_NODE.
-        # If it's awaiting specific input (e.g. robot model), state.user_input should ideally be None 
-        # (consumed by preprocess_and_enrich_input_node in the current cycle if it was a response to a question, 
-        # or will be None if it just set a question and is waiting for the *next* graph invocation).
-        # The invoker node is responsible for providing new user_input in the next cycle if required.
         logger.info(f"Staying in CORE_INTERACTION_NODE. Dialog_state: {current_dialog_state}. This node will await next invocation or process further.")
         return CORE_INTERACTION_NODE
-    # else:
-        # This 'else' block is removed because this function should ONLY route based on the outcome of CORE_INTERACTION_NODE.
-        # Other states like 'generating_xml_individual' are outcomes of *other* nodes, and routing from those
-        # is handled by route_xml_generation_step or decide_after_final_xml_generation.
-        # If CORE_INTERACTION_NODE produces an unexpected dialog_state not covered above, 
-        # it's an internal logic error in preprocess_and_enrich_input_node.
-        # logger.error(f"Unexpected dialog_state '{current_dialog_state}' set by CORE_INTERACTION_NODE. Defaulting to CORE_INTERACTION_NODE to reset.")
-        # if not any(f"系统遇到意外的内部状态 ({current_dialog_state})" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-        #     state.messages = state.messages + [AIMessage(content=f"系统遇到意外的内部状态 ({current_dialog_state})，请尝试重新描述您的请求。" )]
-        # state.dialog_state = "awaiting_user_input"
-        # state.user_input = None 
-        # state.is_error = True 
-        # state.error_message = f"系统遇到由核心交互节点设置的意外内部状态 ({current_dialog_state})，已重置到等待用户输入。"
-        # return CORE_INTERACTION_NODE
     
     # Fallback: If no conditions above are met (which should be rare if preprocess_and_enrich_input_node behaves as expected)
     # this indicates an unexpected state produced by CORE_INTERACTION_NODE itself.
@@ -329,15 +411,20 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     state.clarification_question = None
     return CORE_INTERACTION_NODE
 
-def route_xml_generation_step(state: RobotFlowAgentState, next_step_if_ok: str, current_step_name_for_log: str) -> str:
-    logger.info(f"--- Routing after XML Gen Step: '{current_step_name_for_log}' (is_error: {state.is_error}) ---")
-    if state.is_error:
+def route_xml_generation_or_python_step(state: RobotFlowAgentState, next_step_if_ok: str, current_step_name_for_log: str) -> str:
+    """Generic router for steps that can set state.is_error."""
+    logger.info(f"--- Routing after Step: '{current_step_name_for_log}' (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
+    if state.is_error or state.dialog_state == "error": # Check dialog_state as well, as some python nodes might set it
         logger.warning(f"Error during '{current_step_name_for_log}'. Routing to core_interaction_node.")
-        # Ensure error message is in messages for the user
         if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            # Ensure the error_message from the state is added to AIMessages if not already present by the node itself
             state.messages = state.messages + [AIMessage(content=f"在 '{current_step_name_for_log}' 步骤中发生错误: {state.error_message}")]
-        state.dialog_state = 'generation_failed'
-        state.user_input = None # Clear to signify waiting for new input
+        
+        # Reset relevant state fields before going back to core interaction
+        state.dialog_state = 'generation_failed' # A specific state to indicate failure and need for new input/correction
+        state.user_input = None 
+        # state.is_error should remain True as set by the failing node
+        state.subgraph_completion_status = "error" # Mark subgraph as errored
         return CORE_INTERACTION_NODE
     else:
         logger.info(f"'{current_step_name_for_log}' successful. Routing to {next_step_if_ok}.")
@@ -350,16 +437,20 @@ def decide_after_final_xml_generation(state: RobotFlowAgentState) -> str:
         if not any("流程XML已成功生成" in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
              state.messages = state.messages + [AIMessage(content=f"流程XML已成功生成。您可以在路径 {state.final_flow_xml_path or '未保存到文件'} 查看，或在聊天记录中查看内容.")]
         state.dialog_state = 'final_xml_generated_success'
+        state.subgraph_completion_status = "completed_success" # Mark as fully successful
         return END
     else:
         logger.warning("Final XML generation failed or produced no content. Routing back to core_interaction_node.")
-        if not state.is_error:
+        if not state.is_error: # If is_error wasn't set but content is missing
             state.is_error = True
             state.error_message = state.error_message or "最终XML内容为空或生成失败。"
+        
         if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
             state.messages = state.messages + [AIMessage(content=f"生成最终XML时遇到问题: {state.error_message}。请修改您的指令。" )]
+        
         state.dialog_state = 'generation_failed'
         state.user_input = None
+        state.subgraph_completion_status = "error"
         return CORE_INTERACTION_NODE
 
 # Simple error handler node logic (optional, could be merged into routing)
@@ -384,8 +475,7 @@ def create_robot_flow_graph(
     workflow.add_node(CORE_INTERACTION_NODE, functools.partial(preprocess_and_enrich_input_node, llm=llm))
     workflow.add_node(UNDERSTAND_INPUT, functools.partial(understand_input_node, llm=llm))
     workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
-    workflow.add_node(GENERATE_RELATION_XML, functools.partial(generate_relation_xml_node, llm=llm))
-    # generate_final_flow_xml_node is in this file, needs llm passed if its signature requires, currently Optional
+    workflow.add_node(GENERATE_RELATION_XML, generate_relation_xml_node_py)
     workflow.add_node(GENERATE_FINAL_XML, functools.partial(generate_final_flow_xml_node, llm=llm))
     # workflow.add_node(ERROR_HANDLER, error_handler_node) # Optional: if a separate error logging node is desired.
 
@@ -407,17 +497,17 @@ def create_robot_flow_graph(
     # XML Generation Chain with error handling routing back to Core Interaction
     workflow.add_conditional_edges(
         UNDERSTAND_INPUT, 
-        functools.partial(route_xml_generation_step, next_step_if_ok=GENERATE_INDIVIDUAL_XMLS, current_step_name_for_log="Understand Input"),
+        functools.partial(route_xml_generation_or_python_step, next_step_if_ok=GENERATE_INDIVIDUAL_XMLS, current_step_name_for_log="Understand Input"),
         {CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, GENERATE_INDIVIDUAL_XMLS: GENERATE_INDIVIDUAL_XMLS}
     )
     workflow.add_conditional_edges(
         GENERATE_INDIVIDUAL_XMLS, 
-        functools.partial(route_xml_generation_step, next_step_if_ok=GENERATE_RELATION_XML, current_step_name_for_log="Generate Individual XMLs"),
+        functools.partial(route_xml_generation_or_python_step, next_step_if_ok=GENERATE_RELATION_XML, current_step_name_for_log="Generate Individual XMLs"),
         {CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, GENERATE_RELATION_XML: GENERATE_RELATION_XML}
     )
     workflow.add_conditional_edges(
         GENERATE_RELATION_XML, 
-        functools.partial(route_xml_generation_step, next_step_if_ok=GENERATE_FINAL_XML, current_step_name_for_log="Generate Relation XML"),
+        functools.partial(route_xml_generation_or_python_step, next_step_if_ok=GENERATE_FINAL_XML, current_step_name_for_log="Generate Relation XML (Python)"),
         {CORE_INTERACTION_NODE: CORE_INTERACTION_NODE, GENERATE_FINAL_XML: GENERATE_FINAL_XML}
     )
     workflow.add_conditional_edges(
@@ -429,7 +519,7 @@ def create_robot_flow_graph(
     # If using a separate ERROR_HANDLER node that gets routed to from various error points:
     # workflow.add_edge(ERROR_HANDLER, CORE_INTERACTION_NODE) 
 
-    logger.info("Robot Flow Subgraph (循环版) compiled.")
+    logger.info("Robot Flow Subgraph (Python relation.xml version) compiled.")
     app = workflow.compile()
     logger.info("Robot flow subgraph compilation complete.")
     return app
@@ -483,3 +573,71 @@ def create_robot_flow_graph(
 #         logger.info("Flow completed up to understanding input. Further steps need implementation or are placeholders.")
 #     else:
 #         logger.info("Flow completed, but no specific output path found. Check logs for details.") 
+
+async def main_test_run():
+    from langchain_openai import ChatOpenAI
+    import json
+
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Ensure OPENAI_API_KEY is set in your environment or .env file
+    # For DeepSeek, ensure appropriate API key and base URL are set if not using OpenAI models
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0) 
+    # Or for Deepseek:
+    # llm = ChatOpenAI(
+    #     model_name="deepseek-chat", 
+    #     openai_api_key="YOUR_DEEPSEEK_API_KEY", # Replace with your actual key
+    #     openai_api_base="https://api.deepseek.com/v1", # Or your specific endpoint
+    #     temperature=0
+    # )
+
+    robot_flow_app = create_robot_flow_graph(llm=llm)
+
+    initial_input_state = {
+        "messages": [], 
+        "user_input": "机器人: dobot_mg400\\n工作流程：\\n1. 将电机状态设置为 on。\\n2. 线性移动到点 P1。Z 轴启用,其余禁用。\\n3. 线性移动到点 P2。X 轴启用,其余禁用。",
+        "config": {
+            "OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_py_relation",
+            "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new/" # Ensure this path is correct
+            } 
+    }
+    
+    # More complex input for testing loops (if supported by templates and prompts)
+    # initial_input_state_loop = {
+    #     "messages": [],
+    #     "user_input": "机器人: dobot_mg400\\n工作流程：\\n1. 电机打开\\n2. 循环3次：\\n   a. 移动到P1点\\n   b. 移动到P2点\\n3. 电机关闭",
+    #     "config": {"OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_loop_py_relation"}
+    # }
+
+    logger.info(f"Invoking graph with initial input: {initial_input_state}")
+    
+    # final_state = {}
+    # async for event in robot_flow_app.astream(initial_input_state, {"recursion_limit": 15}):
+    #     logger.info(f"Event keys: {event.keys()}")
+    #     for key, value in event.items():
+    #         logger.info(f"  Node: {key}")
+    #         # logger.info(f"    Value: {json.dumps(value, indent=2, ensure_ascii=False)}")
+    #         if isinstance(value, dict) and "messages" in value:
+    #             logger.info(f"    Last Message: {value['messages'][-1] if value['messages'] else 'No messages'}")
+    #         final_state = value # Keep the last state
+    #     print("---")
+
+    final_state = await robot_flow_app.ainvoke(initial_input_state, {"recursion_limit": 15}) # Increased recursion limit
+
+    logger.info(f"\nFinal State: {json.dumps(final_state, indent=2, ensure_ascii=False)}")
+
+    if final_state.get('is_error'):
+        logger.error(f"Flow completed with an error: {final_state.get('error_message')}")
+    elif final_state.get('final_flow_xml_path'):
+        logger.info(f"Flow completed successfully. Final XML at: {final_state.get('final_flow_xml_path')}")
+        logger.info("Content of relation.xml:")
+        try:
+            with open(final_state.get('relation_xml_path', ''), 'r') as f:
+                print(f.read())
+        except Exception as e:
+            logger.error(f"Could not read relation.xml: {e}")
+    else:
+        logger.info("Flow completed, but no specific output path found. Check logs for details.")
+
+if __name__ == '__main__':
+    asyncio.run(main_test_run()) 
