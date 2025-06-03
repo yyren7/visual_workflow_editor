@@ -14,6 +14,8 @@ load_dotenv() # Load environment variables from .env file at the start
 from langchain_deepseek import ChatDeepSeek
 # Import Google Gemini LLM client
 from langchain_google_genai import ChatGoogleGenerativeAI
+# Import message types
+from langchain_core.messages import HumanMessage, AIMessageChunk # Added AIMessageChunk
 
 from backend.langgraphchat.graph.nodes.robot_flow_planner.graph_builder import create_robot_flow_graph 
 from backend.langgraphchat.graph.nodes.robot_flow_planner.state import RobotFlowAgentState # Import the state model
@@ -187,29 +189,69 @@ In summary, this file describes a complex automated assembly or material handlin
         turn_count += 1
         logging.info(f"\n--- Agent Turn {turn_count} ---")
         current_user_input_for_log = current_state.user_input # Access attribute directly
-        logging.info(f"Invoking graph with current state (user_input: '{current_user_input_for_log}', dialog_state: '{current_state.dialog_state}')")
+        # logging.info(f"Invoking graph with current state (user_input: '{current_user_input_for_log}', dialog_state: '{current_state.dialog_state}')") # Old log
         
         # Save user input for this turn (if not the initial one, which is saved before loop)
         if turn_count > 1 or (turn_count == 1 and current_user_input_for_log != initial_user_input): # handle cases where initial input might be directly processed or re-fed
              save_to_md(os.path.join(session_log_dir, f"turn_{turn_count:02d}_user_input.md"), str(current_user_input_for_log), f"Turn {turn_count} User Input")
 
         try:
-            # Ensure recursion_limit is high enough for potential internal retries or complex paths
-            # Pass the Pydantic model instance directly to ainvoke
-            final_state_output = await robot_flow_app.ainvoke(current_state, {"recursion_limit": 20})
-            
-            # Check if the output is a dict and re-instantiate if necessary, 
-            # or if it's already a RobotFlowAgentState instance, use it directly.
-            if isinstance(final_state_output, dict):
-                current_state = RobotFlowAgentState(**final_state_output)
-            elif isinstance(final_state_output, RobotFlowAgentState):
-                current_state = final_state_output
-            else:
-                # Handle unexpected type if necessary, for now, log and attempt to treat as dict
-                logging.warning(f"Unexpected type from ainvoke: {type(final_state_output)}. Attempting to process as dict.")
-                current_state = RobotFlowAgentState(**final_state_output) # May fail if not a dict
+            final_state_output_dict = None
+            logging.info(f"Invoking graph with current state (user_input: '{current_user_input_for_log[:100]}...', dialog_state: '{current_state.dialog_state}') using astream_events")
 
-            logging.info(f"Graph turn completed. Dialog state: {current_state.dialog_state}")
+            async for event in robot_flow_app.astream_events(current_state, {"recursion_limit": 20}, version="v2"):
+                event_type = event["event"]
+                
+                if event_type == "on_chain_stream":
+                    # This event contains chunks from streaming runnables within the subgraph.
+                    # The chunk is in event["data"]["chunk"].
+                    # Based on robot_flow_invoker_node.py, this chunk is expected to be a dict like:
+                    # {"node_name_in_subgraph": {"messages": [AIMessageChunk(...)]}}
+                    chunk_from_event_data = event.get("data", {}).get("chunk")
+                    if isinstance(chunk_from_event_data, dict):
+                        for internal_node_name, internal_node_output_dict in chunk_from_event_data.items():
+                            if isinstance(internal_node_output_dict, dict) and "messages" in internal_node_output_dict:
+                                messages_in_chunk = internal_node_output_dict["messages"]
+                                if messages_in_chunk and isinstance(messages_in_chunk[-1], AIMessageChunk):
+                                    logging.info(f"Streaming AIMessageChunk from internal node '{internal_node_name}': {messages_in_chunk[-1].content[:100]}...")
+                                    # Test script logs the chunk; invoker_node would yield it.
+            
+                elif event_type == "on_chain_end" and event.get("name") == "LangGraph": 
+                    # This event signifies the end of the graph's execution.
+                    # The final output of the graph is in event["data"]["output"].
+                    if isinstance(event.get("data"), dict) and "output" in event["data"]:
+                        final_state_output_dict = event["data"]["output"]
+                        logging.info(f"Subgraph astream_events ended. Final state output captured from 'LangGraph' event.")
+                    else:
+                        logging.warning(f"Subgraph astream_events 'LangGraph' ended but final output format is unexpected or missing: {event.get('data')}")
+                    break # Crucial: Exit the event loop once the graph execution is complete.
+
+            if final_state_output_dict is None:
+                logging.error("Graph astream_events completed, but final_state_output_dict was not captured.")
+                # Set error state or raise an exception
+                current_state.is_error = True
+                current_state.error_message = "Failed to capture final state from robot_flow_subgraph astream_events."
+                # Break from the while loop for turns if this happens
+                save_to_md(os.path.join(session_log_dir, f"turn_{turn_count:02d}_system_error.md"), "Failed to capture final state from astream_events.", f"Turn {turn_count} System Error")
+                break 
+            
+            # Process the final state output to update current_state
+            if isinstance(final_state_output_dict, dict):
+                current_state = RobotFlowAgentState(**final_state_output_dict)
+            elif isinstance(final_state_output_dict, RobotFlowAgentState): # Should be dict from astream_events 'output'
+                current_state = final_state_output_dict 
+            else:
+                logging.warning(f"Unexpected type for final_state_output_dict: {type(final_state_output_dict)}. Attempting to process as dict.")
+                try:
+                    current_state = RobotFlowAgentState(**final_state_output_dict) # This might fail if not a dict
+                except Exception as e_conv:
+                    logging.error(f"Could not convert final_state_output_dict to RobotFlowAgentState: {e_conv}", exc_info=True)
+                    current_state.is_error = True
+                    current_state.error_message = f"Failed to convert final state from astream_events: {e_conv}"
+                    save_to_md(os.path.join(session_log_dir, f"turn_{turn_count:02d}_system_error.md"), f"Failed to convert final state: {e_conv}", f"Turn {turn_count} System Error")
+                    break # Break from the while loop for turns
+
+            logging.info(f"Graph turn completed via astream_events. Dialog state: {current_state.dialog_state}")
 
             assistant_response_for_log = ""
             if current_state.clarification_question:

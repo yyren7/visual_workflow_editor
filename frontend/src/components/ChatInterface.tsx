@@ -618,7 +618,9 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>((
         messageToSend,
         handleChatEvent,
         handleChatError,
-        handleChatClose
+        handleChatClose,
+        'user',
+        userMessage.timestamp
       );
     } else {
       console.error("Cannot send message, activeChatId is null");
@@ -959,6 +961,20 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>((
     };
     
     if (activeChatId) { 
+        // 新增检查：如果 originalMessageTimestampToEdit 是一个原始的客户端临时ID，则阻止编辑
+        if (originalMessageTimestampToEdit && originalMessageTimestampToEdit.startsWith('user-') && !originalMessageTimestampToEdit.startsWith('user-edited-')) {
+            console.error("[ChatInterface] CRITICAL: Attempting to edit message with a client-side temporary ID that has not been confirmed by the server yet:", originalMessageTimestampToEdit);
+            setError("消息尚未完全保存，请稍后再试。"); // Inform user
+            setIsSending(false);
+            // Clear the optimistic assistant message placeholder if it exists
+            const assistantMsgId = streamingAssistantMsgIdRef.current;
+            if (assistantMsgId) {
+                 setMessages(prev => prev.filter(msg => msg.timestamp !== assistantMsgId));
+            }
+            streamingAssistantMsgIdRef.current = null;
+            return;
+        }
+
         if (originalMessageTimestampToEdit && originalMessageTimestampToEdit.startsWith('user-edited-')) {
             console.error("[ChatInterface] CRITICAL: Attempting to call editUserMessage with a temporary UI timestamp:", originalMessageTimestampToEdit);
             setError("编辑错误：内部时间戳问题，请重试。");

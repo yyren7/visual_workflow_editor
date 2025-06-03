@@ -702,20 +702,31 @@ async def _process_and_publish_chat_events(
                     # Special handling for the end of the main graph execution
                     if run_name == compiled_graph.name or run_name == "__graph__":
                         final_state = outputs_from_chain
-                        logger.info(f"[Chat {chat_id}] Main Graph run '{run_name}' ended. Final state: {str(final_state)[:300]}...")
+                        logger.info(f"[Chat {chat_id}] Main Graph run '{run_name}' ended. Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Final state content: {str(final_state)[:500]}...") # More detailed log for final_state
 
                         latest_ai_message_from_state: Optional[str] = None
                         if isinstance(final_state, dict) and "messages" in final_state and isinstance(final_state["messages"], list):
-                            for msg_state in reversed(final_state["messages"]):
-                                if isinstance(msg_state, AIMessage) and hasattr(msg_state, 'content') and msg_state.content:
-                                    # Check if content is not None and not just whitespace
-                                    content_candidate = str(msg_state.content)
-                                    if content_candidate.strip():
+                            
+                            for msg_state in reversed(final_state["messages"]): # Original loop
+                                content_candidate: Optional[str] = None
+                                is_ai_message = False
+
+                                if isinstance(msg_state, AIMessage):
+                                    is_ai_message = True
+                                    if hasattr(msg_state, 'content'):
+                                        content_candidate = msg_state.content
+                                elif isinstance(msg_state, dict) and msg_state.get("type") == "ai":
+                                    is_ai_message = True
+                                    content_candidate = msg_state.get("content")
+                                
+                                if is_ai_message:
+                                    if content_candidate is not None and isinstance(content_candidate, str) and content_candidate.strip():
                                         latest_ai_message_from_state = content_candidate
-                                        logger.info(f"[Chat {chat_id}] Found latest AIMessage in final graph state: '{latest_ai_message_from_state[:100]}...'")
+                                        logger.info(f"[Chat {chat_id}] Found latest AI message (type: {type(msg_state)}) in final graph state: '{latest_ai_message_from_state[:100]}...'")
                                     else:
-                                        logger.info(f"[Chat {chat_id}] Found AIMessage in final state, but content is empty/whitespace. Original: '{msg_state.content}'")
-                                    break # Process only the most recent AIMessage
+                                        logger.info(f"[Chat {chat_id}] Found AI-like message (type: {type(msg_state)}) in final state, but content is None, not string, or empty/whitespace. Original content: '{str(content_candidate)[:100]}...'")
+                                    break # Found the latest AI-like message, break from loop
+                                # If not an AI message, continue to the next older message
                         
                         if latest_ai_message_from_state:
                             if not final_reply_accumulator:

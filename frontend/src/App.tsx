@@ -22,6 +22,30 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark',
   },
+  typography: {
+    fontFamily: [
+      'Inter',
+      'system-ui',
+      '-apple-system',
+      // 'BlinkMacSystemFont', // Redundant with -apple-system and system-ui covers modern systems
+      'Segoe UI',
+      'Roboto',
+      'Helvetica Neue',
+      'Arial',
+      'sans-serif',
+      // '"Apple Color Emoji"', // Usually not needed for primary text font
+      // '"Segoe UI Emoji"',
+      // '"Segoe UI Symbol"',
+    ].join(','),
+    // You can still define specific styles for h1, body1, etc. if needed
+    // For example, to make body text slightly lighter if Inter appears too bold by default:
+    // body1: {
+    //   fontWeight: 400, // Inter's regular weight
+    // },
+    // button: {
+    //   fontWeight: 500, // Inter's medium weight for buttons
+    // }
+  }
 });
 
 /**

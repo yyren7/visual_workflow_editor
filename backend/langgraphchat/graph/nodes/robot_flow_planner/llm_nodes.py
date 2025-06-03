@@ -95,10 +95,13 @@ async def invoke_llm_for_text_output( # Renamed for clarity, as it's now primari
     logger.info(f"Invoking LLM for raw text output.")
     
     # Check if LLM is ChatDeepSeek and streaming is enabled
-    is_streaming_deepseek = isinstance(llm, BaseChatModel) and hasattr(llm, 'streaming') and llm.streaming and "deepseek" in llm.model_name.lower()
+    # New logic to determine if streaming should be used for Gemini or configured DeepSeek
+    stream_for_gemini = "gemini" in getattr(llm, 'model_name', '').lower()
+    stream_for_deepseek = hasattr(llm, 'streaming') and llm.streaming and "deepseek" in getattr(llm, 'model_name', '').lower()
+    should_stream_llm = stream_for_gemini or stream_for_deepseek
 
-    if is_streaming_deepseek:
-        logger.info("Using streaming for ChatDeepSeek text output.")
+    if should_stream_llm: # Modified condition
+        logger.info(f"Using streaming for LLM text output (Gemini: {stream_for_gemini}, DeepSeek: {stream_for_deepseek}).")
         full_response_content = ""
         try:
             # Langchain's stream() method is synchronous, astream() is asynchronous

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import {
-  Box, Paper, Typography, CircularProgress, Button, IconButton, Tooltip
+  Box, Paper, Typography, CircularProgress, Button, IconButton, Tooltip, Grow
 } from '@mui/material';
 import {
     Edit as EditIcon,
@@ -79,7 +79,7 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }
 
     if (message.type === 'error') {
-        return <Typography color="error">{message.content}</Typography>;
+        return <Typography color="error" sx={{ fontWeight: 400 }}>{message.content}</Typography>;
     }
 
     // Editing UI is NOT part of this initial ChatMessageArea. 
@@ -99,13 +99,13 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   size="small"
                   variant="text"
                   onClick={() => onNodeSelect(nodeId)}
-                  sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline', textTransform: 'none', display: 'inline', lineHeight: 'inherit' }}
+                  sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline', textTransform: 'none', display: 'inline', lineHeight: 'inherit', fontWeight: 400 }}
                 >
                   (Node: {nodeId})
                 </Button>
               );
             }
-            return <span key={index} style={{ whiteSpace: 'pre-wrap'}}>{part}</span>;
+            return <span key={index} style={{ whiteSpace: 'pre-wrap', fontWeight: 400 }}>{part}</span>;
           })}
           {message.isStreaming && message.type === 'text' && <CircularProgress size={12} sx={{ ml: 1, verticalAlign: 'middle' }} />}
         </>
@@ -116,14 +116,16 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
 
   return (
     <Paper
-      elevation={2}
+      elevation={0}
       sx={{
         flex: 1,
         overflow: 'auto',
         p: 2,
         mb: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f3f4f6',
         position: 'relative',
+        scrollBehavior: 'smooth',
+        overscrollBehaviorY: 'contain',
         ...(!hasActiveChat && {
           opacity: 0.6,
         }),
@@ -136,77 +138,88 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       )}
       {!isLoadingChat && !hasActiveChat && (
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', textAlign: 'center', p: 2 }}>
-          <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>请选择或创建聊天</Typography>
-          <Typography color="black">从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: 'black', fontWeight: 600 }}>请选择或创建聊天</Typography>
+          <Typography sx={{ color: '#4b5563', fontWeight: 300 }}>从左侧侧边栏选择一个聊天，或点击"新建聊天"开始。</Typography>
         </Box>
       )}
       {!isLoadingChat && hasActiveChat && messages.length === 0 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-          <Typography color="black">开始对话吧！</Typography>
+          <Typography sx={{ color: '#4b5563', fontWeight: 300 }}>开始对话吧！</Typography>
         </Box>
       )}
-      {!isLoadingChat && messages.length > 0 && messages.map((message) => (
-        <Box
-          key={message.timestamp}
-          id={`message-${message.timestamp}`} // Keep ID for potential scrolling to edited message
-          sx={{
-            display: 'flex',
-            justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-            mb: 1.5,
-            // Add a specific class or style for user messages if needed for edit icon positioning
-            ...(message.role === 'user' && { position: 'relative' }) 
-          }}
-        >
-          <Paper
-            elevation={1}
+      {!isLoadingChat && messages.length > 0 && messages.map((message, index) => (
+        <Grow in={true} key={`grow-${message.timestamp}`} timeout={500}>
+          <Box
+            key={message.timestamp}
+            id={`message-${message.timestamp}`}
             sx={{
-              p: 1.5,
-              borderRadius: '10px',
-              bgcolor: message.role === 'user' ? 'primary.light' : 'grey.200',
-              color: message.role === 'user' ? 'primary.contrastText' : 'black',
-              maxWidth: '80%',
-              wordWrap: 'break-word',
-              whiteSpace: 'pre-wrap',
-              position: 'relative', // Keep for potential absolute positioned elements within (like edit icon)
+              display: 'flex',
+              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              mb: 1.5,
+              ...(message.role === 'user' && { position: 'relative' }) 
             }}
           >
-            {editingMessageTimestamp === message.timestamp && message.role === 'user' ? (
-              <EditMessageForm
-                editingMessageContent={editingMessageContent}
-                isSending={isSending}
-                onContentChange={onEditingContentChange}
-                onConfirmEdit={onConfirmEditMessage}
-                onCancelEdit={onCancelEditMessage}
-              />
-            ) : (
-              internalRenderMessageContent(message)
-            )}
-            {message.role === 'user' && 
-             message.timestamp && 
-             !message.timestamp.startsWith('user-edited-') &&
-             editingMessageTimestamp !== message.timestamp && // Condition to hide edit icon when this specific message is being edited
-             (
-              <Tooltip title="编辑此消息">
-                <IconButton 
-                  size="small"
-                  onClick={() => onStartEditMessage(message)}
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    color: 'primary.contrastText',
-                    backgroundColor: 'rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0,0,0,0.2)',
-                    }
-                  }}
-                >
-                  <EditIcon fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Paper>
-        </Box>
+            <Paper
+              elevation={0}
+              sx={{
+                paddingTop: 1.5,
+                paddingBottom: 1.5,
+                paddingLeft: 1.5,
+                paddingRight: message.role === 'user' ? 4.5 : 1.5,
+                borderRadius: '16px',
+                background: message.role === 'user' 
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                  : '#ffffff',
+                color: message.role === 'user' ? 'white' : 'black',
+                boxShadow: message.role === 'user' 
+                  ? '0 2px 8px rgba(37, 99, 235, 0.3)' 
+                  : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                maxWidth: '80%',
+                wordWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+                position: 'relative',
+              }}
+            >
+              {editingMessageTimestamp === message.timestamp && message.role === 'user' ? (
+                <EditMessageForm
+                  editingMessageContent={editingMessageContent}
+                  isSending={isSending}
+                  onContentChange={onEditingContentChange}
+                  onConfirmEdit={onConfirmEditMessage}
+                  onCancelEdit={onCancelEditMessage}
+                />
+              ) : (
+                internalRenderMessageContent(message)
+              )}
+              {message.role === 'user' && 
+               message.timestamp && 
+               !message.timestamp.startsWith('user-edited-') &&
+               editingMessageTimestamp !== message.timestamp &&
+               (
+                <Tooltip title="编辑此消息">
+                  <IconButton
+                    size="small"
+                    onClick={() => onStartEditMessage(message)}
+                    sx={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '4px',
+                      width: 24,
+                      height: 24,
+                      color: 'primary.contrastText',
+                      backgroundColor: 'rgba(0,0,0,0.1)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0,0,0,0.2)',
+                      }
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Paper>
+          </Box>
+        </Grow>
       ))}
       <div ref={messagesEndRef} />
     </Paper>

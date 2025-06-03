@@ -384,11 +384,19 @@ export const chatApi = {
     onEvent: OnChatEventCallback,
     onError: OnChatErrorCallback,
     onClose: OnChatCloseCallback,
-    role: string = 'user'
+    role: string = 'user',
+    clientMessageId?: string
   ): (() => void) => {
     const postUrl = `${API_BASE_URL}/chats/${chatId}/messages`;
     const eventUrl = `${API_BASE_URL}/chats/${chatId}/events`;
-    const requestBody = { content, role };
+    const requestBody: { content: string; role: string; client_message_id?: string } = { 
+      content, 
+      role 
+    };
+    if (clientMessageId) {
+      requestBody.client_message_id = clientMessageId;
+    }
+
     let eventSource: EventSource | null = null;
 
     const startStreaming = async () => {

@@ -165,12 +165,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         width: `${panelWidth}px`,
         height: '100%',
         zIndex: 5,
-        bgcolor: '#282c34',
+        background: 'linear-gradient(180deg, #232a38 0%, #1a202c 100%)',
         color: 'white',
         display: isOpen ? 'flex' : 'none',
         flexDirection: 'column',
-        borderLeft: '1px solid #333',
-        boxShadow: '-2px 0 5px rgba(0,0,0,0.1)',
+        borderLeft: '1px solid #2d3748',
+        boxShadow: '-3px 0 8px rgba(0,0,0,0.2)',
       }}
     >
       <Box
