@@ -23,18 +23,18 @@ class RobotFlowAgentState(BaseModel):
     active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be raw_user_request or a revised plan after user feedback).")
 
     dialog_state: Literal[
-        "initial",                             #刚进入子图的初始状态
-        "awaiting_robot_model_input",          #已询问机器人型号，等待用户回复
-        "awaiting_enrichment_confirmation",    #已提出浓缩计划，等待用户确认
-        "awaiting_user_input",                 #通用的等待用户提供新流程描述或修正的状态
-        "processing_user_input",               #正在积极处理用户提供的最新输入（例如，调用LLM进行浓缩或解析）
-        "input_understood_ready_for_xml",      #用户输入已处理完毕，准备开始生成XML各项具体步骤
-        "generating_xml_individual",           #正在生成单独的XML节点 (细化状态)
-        "generating_xml_relation",             #正在生成关系XML (细化状态)
-        "generating_xml_final",                #正在生成最终的flow XML (细化状态)
-        "generation_failed",                   #任何XML生成步骤失败，等待用户修正
-        "final_xml_generated_success",         #最终XML已成功生成，准备退出子图
-        "sub_flow_cancelled_by_user"           #用户主动表示要取消当前流程编辑 (未来可添加)
+        "initial",                             #Initial state upon entering the subgraph
+        "awaiting_robot_model_input",          #Robot model has been queried, awaiting user reply
+        "awaiting_enrichment_confirmation",    #Enriched plan has been proposed, awaiting user confirmation
+        "awaiting_user_input",                 #General state of waiting for user to provide new flow description or corrections
+        "processing_user_input",               #Actively processing the latest user input (e.g., calling LLM for enrichment or parsing)
+        "input_understood_ready_for_xml",      #User input processed, ready to start generating specific XML steps
+        "generating_xml_individual",           #Generating individual XML nodes (detailed state)
+        "generating_xml_relation",             #Generating relation XML (detailed state)
+        "generating_xml_final",                #Generating final flow XML (detailed state)
+        "generation_failed",                   #Any XML generation step failed, awaiting user correction
+        "final_xml_generated_success",         #Final XML successfully generated, ready to exit subgraph
+        "sub_flow_cancelled_by_user"           #User has indicated to cancel current flow editing (can be added in the future)
     ] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
     
     clarification_question: Optional[str] = Field(None, description="A question posed to the user for clarification (e.g. about robot model, or ambiguous request).")

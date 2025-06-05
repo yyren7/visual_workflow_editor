@@ -1,0 +1,59 @@
+{
+  "run_id": "fdcfd2fc-0bfc-42cd-a9cf-118f4c46dac0",
+  "name": "LangGraph",
+  "status": "success",
+  "error_message": null,
+  "start_time": "2025-06-05T01:50:58.460723",
+  "end_time": null,
+  "total_duration_seconds": null,
+  "inputs": {
+    "messages": [],
+    "user_input": "この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。ロボットはまず、初期位置からベアリングとベアリングハウジングを取得します。その後、これら 2 つの部品を右側のマシニングセンター（RMC）に順次配置し、ここで圧入または組み立て操作を行うと予定です。組み立て後、ロボットは RMC から組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管または後続処理を行います。次に、ロボットは空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。最後に、ロボットは LMC から以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。",
+    "config": {
+      "OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_py_relation",
+      "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new/"
+    }
+  },
+  "nodes": [
+    {
+      "node_id": "54b17b57-c3c6-44d5-9175-df96fbdb7c29",
+      "name": "initialize_state",
+      "status": "success",
+      "error_message": null,
+      "start_time": "2025-06-05T01:50:58.469108",
+      "end_time": "2025-06-05T01:50:58.470277",
+      "duration_seconds": 0.001169,
+      "run_type": "chain"
+    },
+    {
+      "node_id": "bd6b1cb8-3395-4b11-938a-9a4e40bcb775",
+      "name": "sas_user_input_to_process",
+      "status": "success",
+      "error_message": null,
+      "start_time": "2025-06-05T01:50:58.471343",
+      "end_time": "2025-06-05T01:51:21.198324",
+      "duration_seconds": 22.726981,
+      "run_type": "chain"
+    },
+    {
+      "node_id": "9c43f6c1-084a-4dff-8c7c-fa6b21d7cb6c",
+      "name": "route_after_sas_step1",
+      "status": "success",
+      "error_message": null,
+      "start_time": "2025-06-05T01:51:21.194468",
+      "end_time": "2025-06-05T01:51:21.197066",
+      "duration_seconds": 0.002598,
+      "run_type": "chain"
+    },
+    {
+      "node_id": "240f8d10-9403-40f6-81d2-5608a265d39d",
+      "name": "sas_process_to_module_steps",
+      "status": "success",
+      "error_message": null,
+      "start_time": "2025-06-05T01:51:21.201487",
+      "end_time": "2025-06-05T01:51:51.292494",
+      "duration_seconds": 30.091007,
+      "run_type": "chain"
+    }
+  ]
+}

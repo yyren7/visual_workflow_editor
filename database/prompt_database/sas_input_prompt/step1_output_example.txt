@@ -1,0 +1,117 @@
+I. Main Program Process Description
+
+    - Select robot model (e.g., "dobot_mg400").
+    - Start robot motors.
+    - Initialize necessary process control variables (e.g., `start_condition = 2`).
+    - Robot moves to **initial/safe point (e.g., "P_Home")**.
+    - Main Loop start
+    - Loop condition: `start_condition = 2` (or an infinite loop for continuous operation).
+    - **(Optional/Disabled Logic)** Wait for external start signal (e.g., external IO input `Start_Signal_IN`).
+    - Call sub-program `BRG_Get_BRG` (Get Bearing).
+    - Call sub-program `Get_BH_InitialPos` (Get Bearing Housing from Initial Position).
+    - Robot moves to **initial/safe point (e.g., "P_Home")**.
+    - Wait for signal that machining center (RMC) is ready (`RMC_Ready_IN`).
+    - Call sub-program `RMC_Put_BH&BRG` (Place Bearing Housing and Bearing into RMC).
+    - Wait for RMC machining complete signal (`RMC_Done_IN`).
+    - Send signal to notify RMC that part has been taken or is ready to be taken (`RMC_PartTaken_OUT`).
+    - Wait for RMC confirmation signal (`RMC_Confirm_IN`).
+    - Call sub-program `RMC_Get_BH_Assembled` (Get Assembled Part from RMC).
+    - Robot moves to **initial/safe point (e.g., "P_Home")**.
+    - Call sub-program `LMC_Put_BH_Temp` (Place Part into LMC for Temporary Storage).
+    - Robot moves to **initial/safe point (e.g., "P_Home")**.
+    - Call sub-program `CNV_Get_PLT` (Get Pallet from Conveyor).
+    - Call sub-program `CNV_Put_PLT` (Place Pallet onto Conveyor).
+    - Robot moves to **initial/safe point (e.g., "P_Home")**.
+    - Call sub-program `LMC_Get_BH_Stored` (Get Stored Part from LMC).
+    - Robot moves to **initial/safe point (e.g., "P_Home")**.
+    - Call sub-program `CNV_Put_BH_On_PLT` (Place Part onto Pallet on Conveyor).
+    - **(Optional/Disabled Logic)** Send task complete signal to external system (`Task_Complete_OUT`).
+    - Return to start of loop
+
+II. Sub-programs and Their Functional Descriptions
+
+1.  **`BRG_Get_BRG` (Get Bearing)**:
+
+    - Function: The robot retrieves a bearing from a specified initial position (e.g., material rack).
+    - Core Logic: Move to bearing standby point -> Move above bearing -> Open bearing clamp -> Descend to bearing precise grasping point -> Close bearing clamp -> Ascend -> Move to departure point -> Return to safe/initial point.
+    - Clamp Involved: `BRG&PLT_Crump` (clamp for operating bearings and pallets).
+
+2.  **`Get_BH_InitialPos` (Get Bearing Housing from Initial Position)**:
+
+    - Function: The robot retrieves a bearing housing from a specified initial position.
+    - Core Logic: Move to bearing housing standby point -> Move above bearing housing -> Open bearing housing clamp -> Descend to bearing housing precise grasping point -> Close bearing housing clamp -> Ascend -> Return to safe/initial point.
+    - Clamp Involved: `BH_Crump` (clamp for operating bearing housings).
+
+3.  **`RMC_Put_BH&BRG` (Place Bearing Housing and Bearing into Right Machining Center)**:
+
+    - Function: The robot sequentially places the previously retrieved bearing housing and bearing into the designated station of the right machining center (RMC).
+    - Core Logic:
+      - Move to RMC standby point.
+      - Place Bearing Housing: Move above RMC bearing housing placement point -> Precisely move to placement point -> Open bearing housing clamp -> Ascend.
+      - Place Bearing: Move above RMC bearing placement point -> Precisely move to placement point -> Open bearing clamp -> Ascend.
+      - Move to RMC departure point.
+    - Clamps Involved: `BH_Crump`, `BRG&PLT_Crump`.
+    - Note: Speed may need to be reduced during placement to ensure accuracy.
+
+4.  **`RMC_Get_BH_Assembled` (Get Assembled Part from Right Machining Center)**:
+
+    - Function: The robot retrieves the assembled (or processed) bearing housing from the right machining center (RMC) (at this point, it may already be assembled with the bearing).
+    - Core Logic: Move to RMC standby point -> Move above assembled part -> Open bearing housing clamp (if previously open, this step is to prepare for grasping) -> Descend to precise grasping point -> Close bearing housing clamp -> Ascend -> Move to departure point.
+    - Clamp Involved: `BH_Crump`.
+
+5.  **`LMC_Put_BH_Temp` (Place Part into Left Machining Center for Temporary Storage)**:
+
+    - Function: The robot places the part retrieved from RMC into the left machining center (LMC) for temporary storage or subsequent processing.
+    - Core Logic: Move to LMC standby point -> Move above LMC placement point -> Precisely move to placement point -> Open bearing housing clamp -> Ascend -> Return to safe/initial point.
+    - Clamp Involved: `BH_Crump`.
+
+6.  **`CNV_Get_PLT` (Get Pallet from Conveyor)**:
+
+    - Function: The robot retrieves an empty pallet from a specified location (possibly another area of the conveyor).
+    - Core Logic: Move to pallet standby point -> Move above pallet -> (Possibly low speed) Precisely move to grasping point -> Close pallet clamp -> Ascend -> Return to safe/initial point.
+    - Clamp Involved: `BRG&PLT_Crump`.
+
+7.  **`CNV_Put_PLT` (Place Pallet onto Conveyor)**:
+
+    - Function: The robot places the retrieved empty pallet onto the designated station of the conveyor.
+    - Core Logic: Move above conveyor pallet placement point -> Precisely move to placement point -> Open pallet clamp -> Ascend -> Return to safe/initial point.
+    - Clamp Involved: `BRG&PLT_Crump`.
+
+8.  **`LMC_Get_BH_Stored` (Get Stored Part from Left Machining Center)**:
+
+    - Function: The robot retrieves the previously stored part from the left machining center (LMC).
+    - Core Logic: Move to LMC standby point -> Move above part -> Precisely move to grasping point -> Close bearing housing clamp -> Ascend -> Return to safe/initial point.
+    - Clamp Involved: `BH_Crump`.
+
+9.  **`CNV_Put_BH_On_PLT` (Place Part onto Pallet on Conveyor)**:
+
+    - Function: The robot accurately places the part retrieved from LMC into the pre-placed pallet on the conveyor.
+    - Core Logic: Move above conveyor pallet (with loaded part) -> Precisely move to designated placement point within pallet -> Open bearing housing clamp -> Ascend -> Return to safe/initial point.
+    - Clamp Involved: `BH_Crump`.
+
+10. **`Open_BH_Crump` (Open Bearing Housing Clamp)**:
+
+    - Function: Controls the robot end-effector to open the clamp used for holding the bearing housing.
+    - Core Logic: Send open signal, wait for clamp in-position feedback.
+
+11. **`Close_BH_Crump` (Close Bearing Housing Clamp)**:
+
+    - Function: Controls the robot end-effector to close the clamp used for holding the bearing housing.
+    - Core Logic: Send close signal, wait for clamp in-position feedback.
+
+12. **`Open_BRG&PLT_Crump` (Open Bearing/Pallet Clamp)**:
+
+    - Function: Controls the robot end-effector to open the clamp used for holding bearings or pallets.
+    - Core Logic: Send open signal, wait for clamp in-position feedback.
+
+13. **`Close_BRG&PLT_Crump` (Close Bearing/Pallet Clamp)**:
+    - Function: Controls the robot end-effector to close the clamp used for holding bearings or pallets.
+    - Core Logic: Send close signal, wait for clamp in-position feedback.
+
+III. Modularization and Reuse Explanation
+
+- **Clamp Operations**: `Open/Close_BH_Crump` and `Open/Close_BRG&PLT_Crump` are designed as independent, reusable sub-programs. They encapsulate the specific control logic for each clamp type and are called by various material handling sub-programs (`BRG_Get_BRG`, `Get_BH_InitialPos`, `RMC_Put_BH&BRG`, etc.). This promotes consistency and simplifies maintenance.
+- **Standard Movement Sequences**: Most pick and place sub-programs (`BRG_Get_BRG`, `Get_BH_InitialPos`, `CNV_Get_PLT`, etc.) follow a common "approach target -> precise positioning -> execute action (grasp/release) -> depart target -> return to safe position" movement pattern. This logic can be abstracted and reused, potentially through parameterized functions for different target locations.
+- **Speed Control**: For operations requiring high precision or delicate handling (e.g., `RMC_Put_BH&BRG`, `CNV_Get_PLT`), the core logic explicitly mentions the need for reduced speed during critical phases. This can be implemented via a parameter or a dedicated low-speed movement function.
+- **External Interaction and Synchronization**: The main process incorporates multiple points for synchronization with external devices (RMC, LMC, conveyor). This is achieved by waiting for specific input signals (`RMC_Ready_IN`, `RMC_Done_IN`) and sending output signals (`RMC_PartTaken_OUT`, `Task_Complete_OUT`). This modular approach ensures robust interaction with the surrounding environment.
+- **Optional Logic**: Features like waiting for an external start signal or sending a task complete signal are marked as optional. This allows for flexible deployment, where these features can be enabled or disabled based on the specific system integration requirements without altering the core process flow.

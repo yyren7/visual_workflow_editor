@@ -5,12 +5,12 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG = {
-    "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:", # "作为一个为创建机器人过程文件的智能代理，你需要执行以下多步骤过程，根据上下文和用户最新的自然语言输入，生成机器人控制XML文件："
+    "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
     "ROBOT_NAME_EXAMPLE": "dobot_mg400",
     "POINT_NAME_EXAMPLE_1": "P3",
     "POINT_NAME_EXAMPLE_2": "P1",
     "POINT_NAME_EXAMPLE_3": "P2",
-    "NODE_TEMPLATE_DIR_PATH": os.getenv("NODE_TEMPLATE_DIR_PATH", "/workspace/database/node_database/quick-fcpr-new"), # Read from environment variable, use default value if not set # 从环境变量读取，如果未设置则使用默认值
+    "NODE_TEMPLATE_DIR_PATH": os.getenv("NODE_TEMPLATE_DIR_PATH", "/workspace/database/node_database/quick-fcpr-new"), # Read from environment variable, use default value if not set
     "OUTPUT_DIR_PATH": "/workspace/database/flow_database/result/example_run/",
     "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml",
     "BLOCK_ID_PREFIX_EXAMPLE": "block_uuid",

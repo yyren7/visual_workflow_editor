@@ -1,0 +1,11 @@
+{
+  "points": {
+    "(block type: `procedures_callnoreturn`) 1.5. ptp move to **precise grasping point of bearing": "P7",
+    "(block type: `procedures_callnoreturn`) 1.7. ptp move to **lift point after bearing grasping": "P10"
+  },
+  "numbers": {
+    "N482": "N101",
+    "N5": "N102"
+  },
+  "flags": {}
+}

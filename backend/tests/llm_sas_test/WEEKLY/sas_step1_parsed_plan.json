@@ -1,0 +1,251 @@
+[
+    {
+        "section_title": "I. Main Program Process Description",
+        "content": [
+            "-   Connect to external I/O device/unit. (Block Type: `connect_external_io`)",
+            "-   Select robot model (e.g., \"dobot_mg400\"). (Block Type: `select_robot`)",
+            "-   Start robot motors. (Block Type: `set_motor`)",
+            "-   Initialize necessary process control variables (e.g., `start_condition = 2`). (Block Type: `set_number`)",
+            "-   Robot moves to **initial/safe point (e.g., \"P_Home\")**. (Block Type: `moveP`)",
+            "-   Main Loop start (Block Type: `loop`)",
+            "-   Check condition: `start_condition = 2` (or an infinite loop for continuous operation). (Block Type: `controls_if`)",
+            "-   **(Optional/Disabled Logic)** Wait for external start signal (e.g., external IO input `Start_Signal_IN`). (Block Type: `wait_external_io_input`)",
+            "-   Call sub-program `BRG_Get_BRG` (Get Bearing). (Block Type: `procedures_callnoreturn`)",
+            "-   Call sub-program `Get_BH_InitialPos` (Get Bearing Housing from Initial Position). (Block Type: `procedures_callnoreturn`)",
+            "-   Robot moves to **initial/safe point (e.g., \"P_Home\")**. (Block Type: `moveP`)",
+            "-   Wait for signal that machining center (RMC) is ready (`RMC_Ready_IN`). (Block Type: `wait_external_io_input`)",
+            "-   Call sub-program `RMC_Put_BH&BRG` (Place Bearing Housing and Bearing into RMC). (Block Type: `procedures_callnoreturn`)",
+            "-   Wait for RMC machining complete signal (`RMC_Done_IN`). (Block Type: `wait_external_io_input`)",
+            "-   Send signal to notify RMC that part has been taken or is ready to be taken (`RMC_PartTaken_OUT`). (Block Type: `set_output`)",
+            "-   Wait for RMC confirmation signal (`RMC_Confirm_IN`). (Block Type: `wait_external_io_input`)",
+            "-   Call sub-program `RMC_Get_BH_Assembled` (Get Assembled Part from RMC). (Block Type: `procedures_callnoreturn`)",
+            "-   Robot moves to **initial/safe point (e.g., \"P_Home\")**. (Block Type: `moveP`)",
+            "-   Call sub-program `LMC_Put_BH_Temp` (Place Part into LMC for Temporary Storage). (Block Type: `procedures_callnoreturn`)",
+            "-   Robot moves to **initial/safe point (e.g., \"P_Home\")**. (Block Type: `moveP`)",
+            "-   Call sub-program `CNV_Get_PLT` (Get Pallet from Conveyor). (Block Type: `procedures_callnoreturn`)",
+            "-   Call sub-program `CNV_Put_PLT` (Place Pallet onto Conveyor). (Block Type: `procedures_callnoreturn`)",
+            "-   Robot moves to **initial/safe point (e.g., \"P_Home\")**. (Block Type: `moveP`)",
+            "-   Call sub-program `LMC_Get_BH_Stored` (Get Stored Part from LMC). (Block Type: `procedures_callnoreturn`)",
+            "-   Robot moves to **initial/safe point (e.g., \"P_Home\")**. (Block Type: `moveP`)",
+            "-   Call sub-program `CNV_Put_BH_On_PLT` (Place Part onto Pallet on Conveyor). (Block Type: `procedures_callnoreturn`)",
+            "-   **(Optional/Disabled Logic)** Send task complete signal to external system (`Task_Complete_OUT`). (Block Type: `set_output`)",
+            "-   Return to start of loop (Block Type: `return`)"
+        ]
+    },
+    {
+        "section_title": "II. Sub-programs and Their Functional Descriptions",
+        "sub_sections": [
+            {
+                "item_number": "1",
+                "title": "**`BRG_Get_BRG` (Get Bearing)**:",
+                "function": "The robot retrieves a bearing from a specified initial position (e.g., material rack).",
+                "clamp_involved": "`BRG&PLT_Crump` (clamp for operating bearings and pallets).",
+                "core_logic": [
+                    "Define function `BRG_Get_BRG`. (Block Type: `procedures_defnoreturn`)",
+                    "Move to bearing pick-up standby point (e.g., \"P21\") (Block Type: `moveP`)",
+                    "Move above bearing for pick-up (e.g., \"P22\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BRG&PLT_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Descend to bearing precise grasping point (e.g., \"P23\") (Block Type: `moveP`)",
+                    "Call sub-program `Close_BRG&PLT_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Ascend with bearing (e.g., \"P25\") (Block Type: `moveP`)",
+                    "Move to bearing pick-up departure point (e.g., \"P26\") (Block Type: `moveP`)",
+                    "Return to bearing pick-up standby point (e.g., \"P21\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "2",
+                "title": "**`Get_BH_InitialPos` (Get Bearing Housing from Initial Position)**:",
+                "function": "The robot retrieves a bearing housing from a specified initial position.",
+                "clamp_involved": "`BH_Crump` (clamp for operating bearing housings).",
+                "core_logic": [
+                    "Define function `Get_BH_InitialPos`. (Block Type: `procedures_defnoreturn`)",
+                    "Move to bearing housing pick-up standby point (e.g., \"P31\") (Block Type: `moveP`)",
+                    "Move above bearing housing for pick-up (e.g., \"P32\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Descend to bearing housing precise grasping point (e.g., \"P33\") (Block Type: `moveP`)",
+                    "Call sub-program `Close_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Ascend with bearing housing (e.g., \"P32\") (Block Type: `moveP`)",
+                    "Return to bearing housing pick-up standby point (e.g., \"P31\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "3",
+                "title": "**`RMC_Put_BH&BRG` (Place Bearing Housing and Bearing into Right Machining Center)**:",
+                "function": "The robot sequentially places the previously retrieved bearing housing and bearing into the designated station of the right machining center (RMC).",
+                "clamp_involved": "`BH_Crump`, `BRG&PLT_Crump`.",
+                "core_logic": [
+                    "Define function `RMC_Put_BH&BRG`. (Block Type: `procedures_defnoreturn`)",
+                    "RMC transition/travel point (e.g., \"P20\") (Block Type: `moveP`)",
+                    "Move to RMC standby point for BH placement (e.g., \"P11\") (Block Type: `moveP`)",
+                    "RMC intermediate/transfer point (e.g., \"P12\") (Block Type: `moveP`)",
+                    "RMC BH interaction/access point (e.g., \"P14\") (Block Type: `moveP`)",
+                    "RMC BH grasp/release point (e.g., \"P15\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Set speed to 10 (Block Type: `set_speed`)",
+                    "RMC BH interaction/access point (e.g., \"P14\") (Block Type: `moveP`)",
+                    "Set speed to 100 (Block Type: `set_speed`)",
+                    "Move to RMC standby for BRG placement (e.g., \"P13\") (Block Type: `moveP`)",
+                    "RMC BRG hover/access point (e.g., \"P16\") (Block Type: `moveP`)",
+                    "Move to RMC BRG precise placement point (e.g., \"P17\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BRG&PLT_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Set speed to 10 (Block Type: `set_speed`)",
+                    "RMC BRG hover/access point (e.g., \"P16\") (Block Type: `moveP`)",
+                    "Set speed to 100 (Block Type: `set_speed`)",
+                    "RMC intermediate/transfer point (e.g., \"P12\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "4",
+                "title": "**`RMC_Get_BH_Assembled` (Get Assembled Part from Right Machining Center)**:",
+                "function": "The robot retrieves the assembled (or processed) bearing housing from the right machining center (RMC).",
+                "clamp_involved": "`BH_Crump`.",
+                "core_logic": [
+                    "Define function `RMC_Get_BH_Assembled`. (Block Type: `procedures_defnoreturn`)",
+                    "Move to RMC standby point for assembled part pick-up (e.g., \"P11\") (Block Type: `moveP`)",
+                    "RMC intermediate/transfer point (e.g., \"P12\") (Block Type: `moveP`)",
+                    "RMC BH interaction/access point (e.g., \"P14\") (Block Type: `moveP`)",
+                    "RMC BH grasp/release point (e.g., \"P15\") (Block Type: `moveP`)",
+                    "Call sub-program `Close_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "RMC BH interaction/access point (e.g., \"P14\") (Block Type: `moveP`)",
+                    "RMC intermediate/transfer point (e.g., \"P12\") (Block Type: `moveP`)",
+                    "Move to RMC departure point with part (e.g., \"P11\") (Block Type: `moveP`)",
+                    "RMC transition/travel point (e.g., \"P20\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "5",
+                "title": "**`LMC_Put_BH_Temp` (Place Part into Left Machining Center for Temporary Storage)**:",
+                "function": "The robot places the part retrieved from RMC into the left machining center (LMC) for temporary storage or subsequent processing.",
+                "clamp_involved": "`BH_Crump`.",
+                "core_logic": [
+                    "Define function `LMC_Put_BH_Temp`. (Block Type: `procedures_defnoreturn`)",
+                    "LMC transfer/standby point (e.g., \"P41\") (Block Type: `moveP`)",
+                    "LMC hover/access point (e.g., \"P42\") (Block Type: `moveP`)",
+                    "LMC grasp/release point (e.g., \"P43\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "LMC hover/access point (e.g., \"P42\") (Block Type: `moveP`)",
+                    "LMC transfer/standby point (e.g., \"P41\") (Block Type: `moveP`)",
+                    "Return to main safe/initial point (e.g., \"P1\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "6",
+                "title": "**`CNV_Get_PLT` (Get Pallet from Conveyor)**:",
+                "function": "The robot retrieves an empty pallet from a specified location (possibly another area of the conveyor).",
+                "clamp_involved": "`BRG&PLT_Crump`.",
+                "core_logic": [
+                    "Define function `CNV_Get_PLT`. (Block Type: `procedures_defnoreturn`)",
+                    "Pallet handling standby point (e.g., \"P34\") (Block Type: `moveP`)",
+                    "Pallet pickup hover/ascent point (e.g., \"P35\") (Block Type: `moveP`)",
+                    "Set speed to 10 (Block Type: `set_speed`)",
+                    "Descend to pallet precise grasping point (e.g., \"P36\") (Block Type: `moveP`)",
+                    "Call sub-program `Close_BRG&PLT_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "Pallet pickup hover/ascent point (e.g., \"P35\") (Block Type: `moveP`)",
+                    "Set speed to 100 (Block Type: `set_speed`)",
+                    "Pallet handling standby point (e.g., \"P34\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "7",
+                "title": "**`CNV_Put_PLT` (Place Pallet onto Conveyor)**:",
+                "function": "The robot places the retrieved empty pallet onto the designated station of the conveyor.",
+                "clamp_involved": "`BRG&PLT_Crump`.",
+                "core_logic": [
+                    "Define function `CNV_Put_PLT`. (Block Type: `procedures_defnoreturn`)",
+                    "CNV pallet placement hover/ascent point (e.g., \"P37\") (Block Type: `moveP`)",
+                    "Move to pallet precise placement point on conveyor (e.g., \"P38\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BRG&PLT_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "CNV pallet placement hover/ascent point (e.g., \"P37\") (Block Type: `moveP`)",
+                    "Pallet handling standby point (e.g., \"P34\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "8",
+                "title": "**`LMC_Get_BH_Stored` (Get Stored Part from Left Machining Center)**:",
+                "function": "The robot retrieves the previously stored part from the left machining center (LMC).",
+                "clamp_involved": "`BH_Crump`.",
+                "core_logic": [
+                    "Define function `LMC_Get_BH_Stored`. (Block Type: `procedures_defnoreturn`)",
+                    "LMC transfer/standby point (e.g., \"P41\") (Block Type: `moveP`)",
+                    "LMC hover/access point (e.g., \"P42\") (Block Type: `moveP`)",
+                    "LMC grasp/release point (e.g., \"P43\") (Block Type: `moveP`)",
+                    "Call sub-program `Close_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "LMC hover/access point (e.g., \"P42\") (Block Type: `moveP`)",
+                    "LMC transfer/standby point (e.g., \"P41\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "9",
+                "title": "**`CNV_Put_BH_On_PLT` (Place Part onto Pallet on Conveyor)**:",
+                "function": "The robot accurately places the part retrieved from LMC into the pre-placed pallet on the conveyor.",
+                "clamp_involved": "`BH_Crump`.",
+                "core_logic": [
+                    "Define function `CNV_Put_BH_On_PLT`. (Block Type: `procedures_defnoreturn`)",
+                    "CNV part-on-pallet hover/ascent point (e.g., \"P39\") (Block Type: `moveP`)",
+                    "Move to precise part placement point on pallet (e.g., \"P40\") (Block Type: `moveP`)",
+                    "Call sub-program `Open_BH_Crump` (Block Type: `procedures_callnoreturn`)",
+                    "CNV part-on-pallet hover/ascent point (e.g., \"P39\") (Block Type: `moveP`)",
+                    "Return to main safe/initial point (e.g., \"P1\") (Block Type: `moveP`)"
+                ]
+            },
+            {
+                "item_number": "10",
+                "title": "**`Open_BH_Crump` (Open Bearing Housing Clamp)**:",
+                "function": "Controls the robot end-effector to open the clamp used for holding the bearing housing.",
+                "clamp_involved": "",
+                "core_logic": [
+                    "Define function `Open_BH_Crump`. (Block Type: `procedures_defnoreturn`)",
+                    "Wait for a predefined delay for clamp operation (e.g., timer \"N483\") (Block Type: `wait_timer`)",
+                    "Send signal to open bearing housing clamp (e.g., set output pin 1 to on) (Block Type: `set_output`)",
+                    "Wait for feedback confirming bearing housing clamp is open (e.g., wait for input pin 0 to be on) (Block Type: `wait_input`)"
+                ]
+            },
+            {
+                "item_number": "11",
+                "title": "**`Close_BH_Crump` (Close Bearing Housing Clamp)**:",
+                "function": "Controls the robot end-effector to close the clamp used for holding the bearing housing.",
+                "clamp_involved": "",
+                "core_logic": [
+                    "Define function `Close_BH_Crump`. (Block Type: `procedures_defnoreturn`)",
+                    "Wait for a predefined delay for clamp operation (e.g., timer \"N482\") (Block Type: `wait_timer`)",
+                    "Send signal to close bearing housing clamp (e.g., set output pin 1 to off) (Block Type: `set_output`)",
+                    "Wait for feedback confirming bearing housing clamp is closed (e.g., wait for input pin 1 to be on) (Block Type: `wait_input`)"
+                ]
+            },
+            {
+                "item_number": "12",
+                "title": "**`Open_BRG&PLT_Crump` (Open Bearing/Pallet Clamp)**:",
+                "function": "Controls the robot end-effector to open the clamp used for holding bearings or pallets.",
+                "clamp_involved": "",
+                "core_logic": [
+                    "Define function `Open_BRG&PLT_Crump`. (Block Type: `procedures_defnoreturn`)",
+                    "Wait for a predefined delay for clamp operation (e.g., timer \"N482\") (Block Type: `wait_timer`)",
+                    "Send signal to open bearing/pallet clamp (e.g., set output pin 2 to on) (Block Type: `set_output`)",
+                    "Wait for feedback confirming bearing/pallet clamp is open (e.g., wait for input pin 2 to be on) (Block Type: `wait_input`)"
+                ]
+            },
+            {
+                "item_number": "13",
+                "title": "**`Close_BRG&PLT_Crump` (Close Bearing/Pallet Clamp)**:",
+                "function": "Controls the robot end-effector to close the clamp used for holding bearings or pallets.",
+                "clamp_involved": "",
+                "core_logic": [
+                    "Define function `Close_BRG&PLT_Crump`. (Block Type: `procedures_defnoreturn`)",
+                    "Wait for a predefined delay for clamp operation (e.g., timer \"N482\") (Block Type: `wait_timer`)",
+                    "Send signal to close bearing/pallet clamp (e.g., set output pin 2 to off) (Block Type: `set_output`)",
+                    "Wait for feedback confirming bearing/pallet clamp is closed (e.g., wait for input pin 3 to be on) (Block Type: `wait_input`)"
+                ]
+            }
+        ]
+    },
+    {
+        "section_title": "III. Modularization and Reuse Explanation",
+        "content": [
+            "-   **Clamp Operations**: `Open/Close_BH_Crump` and `Open/Close_BRG&PLT_Crump` are designed as independent, reusable sub-programs. They encapsulate the specific control logic for each clamp type and are called by various material handling sub-programs (`BRG_Get_BRG`, `Get_BH_InitialPos`, `RMC_Put_BH&BRG`, etc.). This promotes consistency and simplifies maintenance.",
+            "-   **Standard Movement Sequences**: Most pick and place sub-programs (`BRG_Get_BRG`, `Get_BH_InitialPos`, `CNV_Get_PLT`, etc.) follow a common \"approach target -> precise positioning -> execute action (grasp/release) -> depart target -> return to safe position\" movement pattern. This logic can be abstracted and reused, potentially through parameterized functions for different target locations.",
+            "-   **Speed Control**: For operations requiring high precision or delicate handling (e.g., `RMC_Put_BH&BRG`, `CNV_Get_PLT`), the core logic explicitly mentions the need for reduced speed during critical phases. This can be implemented via the `set_speed` block before precise movements and restored afterwards.",
+            "-   **External Interaction and Synchronization**: The main process incorporates multiple points for synchronization with external devices (RMC, LMC, conveyor). This is achieved by waiting for specific input signals (`RMC_Ready_IN`, `RMC_Done_IN`) using `wait_external_io_input` and sending output signals (`RMC_PartTaken_OUT`, `Task_Complete_OUT`) using `set_output`. This modular approach ensures robust interaction with the surrounding environment. The `connect_external_io` block is used at the start to establish the connection.",
+            "-   **Optional Logic**: Features like waiting for an external start signal or sending a task complete signal are marked as optional. This allows for flexible deployment, where these features can be enabled or disabled based on the specific system integration requirements without altering the core process flow."
+        ]
+    }
+]
