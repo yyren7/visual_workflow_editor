@@ -29,22 +29,18 @@ import json
 from langgraph.graph import StateGraph, END
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import Client as LangSmithClient
 from langsmith.utils import tracing_is_enabled as langsmith_tracing_is_enabled
 from langchain_core.callbacks import BaseCallbackHandler
 
 from .state import RobotFlowAgentState, GeneratedXmlFile
-from .llm_nodes import (
-    preprocess_and_enrich_input_node,
-    understand_input_node,
-    generate_individual_xmls_node,
-    user_input_to_process_node
-)
 from .nodes import (
     process_description_to_module_steps_node,
-    parameter_mapping_node
+    parameter_mapping_node,
+    user_input_to_task_list_node,
+    review_and_refine_node
 )
 from .xml_tools import WriteXmlFileTool
 from ....tools.file_share_tool import upload_file
@@ -65,13 +61,14 @@ ERROR_HANDLER = "error_handler" # General error logging node, if needed beyond i
 UPLOAD_FINAL_XML_NODE = "upload_final_xml_node" # If you have this node for uploading
 
 # Define a new end state for clarification
-END_FOR_CLARIFICATION = "end_for_clarification"
+# END_FOR_CLARIFICATION = "end_for_clarification" # Removed if not a node
 BLOCKLY_NS = "https://developers.google.com/blockly/xml" # Define globally for this module
 
 # New node names for SAS refactoring
-SAS_USER_INPUT_TO_PROCESS = "sas_user_input_to_process"
+SAS_USER_INPUT_TO_TASK_LIST = "sas_user_input_to_task_list"
 SAS_PROCESS_TO_MODULE_STEPS = "sas_process_to_module_steps"
 SAS_PARAMETER_MAPPING = "sas_parameter_mapping"
+SAS_REVIEW_AND_REFINE = "sas_review_and_refine"
 
 def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     logger.info("--- Initializing Agent State (Robot Flow Subgraph) ---")
@@ -86,35 +83,78 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     run_specific_dir_name = f"run_{timestamp}"
     run_output_dir = base_output_dir / run_specific_dir_name
+    json_cache_file_path = None # Initialize
     try:
         run_output_dir.mkdir(parents=True, exist_ok=True)
         state.run_output_directory = str(run_output_dir.resolve())
         logger.info(f"Created run-specific output directory: {state.run_output_directory}")
-
-        # Create a JSON file for caching step outputs within the run-specific directory
         json_cache_filename = "step_outputs.json"
-        # run_output_dir is already a Path object here
         json_cache_file_path = run_output_dir / json_cache_filename
-        try:
-            with open(json_cache_file_path, "w", encoding="utf-8") as f:
-                json.dump({}, f) # Initialize with an empty JSON object
-            logger.info(f"Successfully created step output cache file: {json_cache_file_path}")
-        except IOError as e_json: # More specific exception for file I/O
-            logger.error(f"Failed to create step output cache file '{json_cache_filename}' in '{state.run_output_directory}': {e_json}", exc_info=True)
-            # This failure is logged but doesn't make the overall initialization fail for now.
-
-    except Exception as e_dir: # This catches errors from mkdir or path resolution for run_output_dir
+        # Further handling of json_cache_file_path (creation/initialization) is done below
+    except Exception as e_dir: 
         logger.error(f"Failed to create run-specific output directory at {run_output_dir}: {e_dir}", exc_info=True)
-        # Decide if this error should prevent further execution
-        # For now, log and continue; the parser node will handle missing dir
-        state.run_output_directory = None # Explicitly set to None on failure
+        state.run_output_directory = None 
+
+    # Initialize current_user_request, step_outputs.json, and related fields
+    # This logic replaces the previous raw_user_request handling and initial json cache creation
+    if state.current_user_request is None and state.user_input:
+        logger.info(f"Initializing current_user_request from initial user_input: '{state.user_input[:100]}...'")
+        state.current_user_request = state.user_input
+        state.active_plan_basis = state.user_input  # Set active plan basis from the first input
+        state.revision_iteration = 0 # Initialize revision counter
+
+        if state.run_output_directory and json_cache_file_path: # json_cache_file_path should be set if run_output_directory succeeded
+            initial_step_output_data = {
+                "user_requests": [state.current_user_request],
+                "task_list_generations": []
+            }
+            try:
+                with open(json_cache_file_path, "w", encoding="utf-8") as f:
+                    json.dump(initial_step_output_data, f, indent=2, ensure_ascii=False)
+                logger.info(f"Successfully initialized step output cache file: {json_cache_file_path} with initial request.")
+            except IOError as e_json:
+                logger.error(f"Failed to initialize step output cache file '{json_cache_file_path.name}' in '{state.run_output_directory}': {e_json}", exc_info=True)
+        
+        # Add current_user_request as the first HumanMessage if messages list is empty
+        # This helps ensure the very first request is part of the message history from the start.
+        # user_input_to_task_list_node will also add the input it processes to messages,
+        # so we need to be careful about duplicates if it also uses current_user_request.
+        # If initialize_state_node clears state.user_input, then user_input_to_task_list_node
+        # should explicitly use state.current_user_request and add that to history if needed.
+        if not state.messages:
+            state.messages = [HumanMessage(content=state.current_user_request)]
+            logger.info("Added current_user_request as the first HumanMessage because messages list was empty.")
+        
+        logger.info(f"Initial user_input '{state.user_input[:100]}...' moved to current_user_request. Clearing user_input for subsequent nodes.")
+        state.user_input = None # Clear user_input as it has been processed into current_user_request
+
+    elif state.run_output_directory and json_cache_file_path: # Not initial input, but ensure json cache file exists
+        if not json_cache_file_path.exists():
+            logger.warning(f"step_outputs.json was expected but not found at {json_cache_file_path}. Creating an empty one as fallback.")
+            try:
+                with open(json_cache_file_path, "w", encoding="utf-8") as f:
+                    json.dump({"user_requests": [], "task_list_generations": []}, f, indent=2, ensure_ascii=False)
+            except IOError as e_json:
+                logger.error(f"Failed to create fallback step_outputs.json: {e_json}", exc_info=True)
+    
+    # If state.user_input was somehow set to the same as state.current_user_request by an external call,
+    # and it wasn't the initial processing, clear it to prevent reprocessing.
+    # This case is less likely if the flow is: input -> initialize_state (processes to current_user_request, clears input) -> other nodes.
+    elif state.user_input is not None and state.user_input == state.current_user_request:
+        logger.info(f"state.user_input ('{state.user_input[:50]}...') matches state.current_user_request and was not initial. Clearing state.user_input.")
+        state.user_input = None
 
     if state.dialog_state is None: state.dialog_state = "initial"
     state.current_step_description = "Initialized Robot Flow Subgraph"
-    # Ensure user_input from invoker is preserved if dialog_state is initial
-    # preprocess_and_enrich_input_node will consume it.
-    logger.info(f"Agent state initialized. Dialog state: {state.dialog_state}, Initial User Input: '{state.user_input}', Using NODE_TEMPLATE_DIR_PATH: {state.config.get('NODE_TEMPLATE_DIR_PATH')}")
-    return state.model_dump(exclude_none=True)
+    
+    logger.info(
+        f"Agent state initialized. Dialog state: {state.dialog_state}, "
+        f"User Input (transient, should be None if processed by this node): '{state.user_input[:100] if state.user_input else 'None'}', "
+        f"Current User Request (active base for generation): '{state.current_user_request[:100] if state.current_user_request else 'None'}', "
+        f"NODE_TEMPLATE_DIR_PATH: {state.config.get('NODE_TEMPLATE_DIR_PATH')}"
+    )
+    logger.info(f"FINAL user_input in initialize_state_node before return: '{state.user_input}'")
+    return state.model_dump()
 
 def _generate_relation_xml_content_from_steps_py(
     parsed_steps: Optional[List[Dict[str, Any]]],
@@ -439,7 +479,7 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     ]:
         logger.info(f"Clarification question is pending ('{state.clarification_question}'). Dialog state: {current_dialog_state}. Ending graph invocation to get user input.")
         state.subgraph_completion_status = "needs_clarification" # Indicate why it's ending
-        return END_FOR_CLARIFICATION
+        return END
 
     if current_dialog_state == "input_understood_ready_for_xml":
         if state.enriched_structured_text:
@@ -516,25 +556,64 @@ def decide_after_final_xml_generation(state: RobotFlowAgentState) -> str:
 
 # New routing function for SAS Step 1
 def route_after_sas_step1(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after SAS Step 1: User Input to Process Description (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
+    logger.info(f"--- Routing after SAS Step 1: User Input to Task List Generation (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
     if state.is_error or state.dialog_state == "error":
-        logger.warning(f"Error during SAS Step 1. Error message: {state.error_message}")
-        # state.subgraph_completion_status is likely already set to "error" by the node
+        logger.warning(f"Error during SAS Step 1 (Task List Generation). Error message: {state.error_message}")
         if not state.error_message:
-             state.error_message = "Unknown error after SAS Step 1."
+             state.error_message = "Unknown error after SAS Step 1 (Task List Generation)."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 1 Failed: {state.error_message}")]
-        return END # End the graph on error for now
-    elif state.dialog_state == "sas_step1_completed":
-        logger.info("SAS Step 1 (User Input to Process Description) completed successfully. Routing to Step 2.")
-        # state.subgraph_completion_status is likely "completed_partial" by the node
-        return SAS_PROCESS_TO_MODULE_STEPS
-    else:
-        logger.warning(f"Unexpected state after SAS Step 1: {state.dialog_state}. Routing to END.")
+            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 1 (Task List Generation) Failed: {state.error_message}")]
+        state.subgraph_completion_status = "error" 
+        return END 
+    elif state.dialog_state == "sas_step1_tasks_generated":
+        logger.info("SAS Step 1 (User Input to Task List Generation) completed successfully. Routing to SAS_REVIEW_AND_REFINE.")
+        state.task_list_accepted = False 
+        return SAS_REVIEW_AND_REFINE 
+    elif state.dialog_state == "sas_step1_completed": 
+        logger.warning(f"Unexpected old state 'sas_step1_completed' after SAS Step 1. Expected 'sas_step1_tasks_generated'. Routing to END as an error.")
         state.subgraph_completion_status = "error"
-        state.error_message = f"Unexpected state ({state.dialog_state}) after SAS Step 1."
+        state.error_message = f"Unexpected legacy state ('sas_step1_completed') after SAS Step 1. Task list generation might have failed to set the correct new state."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+        return END
+    else:
+        logger.warning(f"Unexpected dialog state after SAS Step 1 (Task List Generation): {state.dialog_state}. Routing to END.")
+        state.subgraph_completion_status = "error"
+        state.error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 1 (Task List Generation)."
+        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+        return END
+
+# New routing function for SAS Review and Refine Task List
+def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Routing after SAS Review and Refine (is_error: {state.is_error}, dialog_state: '{state.dialog_state}', task_list_accepted: {state.task_list_accepted}) ---")
+    if state.is_error: 
+        logger.warning(f"Error during SAS Review/Refine. Error message: {state.error_message}")
+        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Review/Refine Failed: {state.error_message}")]
+        state.subgraph_completion_status = "error"
+        return END
+
+    if state.task_list_accepted:
+        logger.info("Task list accepted by user. Routing to SAS_PROCESS_TO_MODULE_STEPS.")
+        state.dialog_state = "sas_step1_tasks_generated" # Or a more appropriate state indicating acceptance and readiness for step 2
+        state.subgraph_completion_status = "completed_partial" # Mark as partially complete, moving to next SAS step
+        return SAS_PROCESS_TO_MODULE_STEPS
+    elif state.dialog_state == "sas_description_updated_for_regeneration":
+        logger.info("User description revised. Routing back to SAS_USER_INPUT_TO_TASK_LIST for regeneration.")
+        state.subgraph_completion_status = "processing" # Still processing
+        # state.user_input should already contain the revised description from the review_and_refine_node
+        return SAS_USER_INPUT_TO_TASK_LIST
+    elif state.dialog_state == "sas_awaiting_task_list_review":
+        logger.info("Awaiting user feedback on the task list. Ending graph run for clarification.")
+        state.subgraph_completion_status = "needs_clarification"
+        # The review_and_refine_node should have set the clarification question.
+        return END
+    else:
+        logger.warning(f"Unexpected state after SAS Review/Refine: dialog_state='{state.dialog_state}', task_list_accepted={state.task_list_accepted}. Defaulting to END graph run for clarification.")
+        state.subgraph_completion_status = "needs_clarification" # Or error, depending on how strict this should be
+        if not state.clarification_question and not any("Please review the task list" in msg.content for msg in state.messages if isinstance(msg, AIMessage)): # Generic message if no specific question
+             state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during task list review. Please try providing your feedback again.")]
         return END
 
 # New routing function for SAS Step 2
@@ -546,9 +625,11 @@ def route_after_sas_step2(state: RobotFlowAgentState) -> str:
              state.error_message = "Unknown error after SAS Step 2."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 2 Failed: {state.error_message}")]
+        state.subgraph_completion_status = "error"
         return END
     elif state.dialog_state == "sas_step2_completed":
         logger.info("SAS Step 2 (Process Description to Module Steps) completed successfully. Routing to Step 3.")
+        state.subgraph_completion_status = "completed_partial"
         return SAS_PARAMETER_MAPPING
     else:
         logger.warning(f"Unexpected state after SAS Step 2: {state.dialog_state}. Routing to END.")
@@ -567,10 +648,10 @@ def route_after_sas_step3(state: RobotFlowAgentState) -> str:
              state.error_message = "Unknown error after SAS Step 3."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 3 Failed: {state.error_message}")]
+        state.subgraph_completion_status = "error"
         return END
     elif state.dialog_state == "sas_step3_completed":
         logger.info("SAS Step 3 (Parameter Mapping) completed successfully. All SAS steps complete.")
-        # Mark as fully completed
         state.subgraph_completion_status = "completed_success"
         return END
     else:
@@ -581,6 +662,33 @@ def route_after_sas_step3(state: RobotFlowAgentState) -> str:
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         return END
 
+# New routing function after INITIALIZE_STATE
+def route_after_initialize_state(state: RobotFlowAgentState) -> str:
+    logger.info(
+        f"--- Routing after Initialize State. "
+        f"Dialog state: {state.dialog_state}, "
+        f"Subgraph status: {state.subgraph_completion_status}, "
+        f"User input available: {bool(state.user_input)}, "
+        f"Clarification question: {state.clarification_question}, "
+        f"Task list accepted: {state.task_list_accepted}, "
+        f"Generated tasks exist: {bool(state.sas_step1_generated_tasks)}"
+    )
+
+    # If dialog_state is "sas_awaiting_task_list_review", it means the graph previously exited
+    # from review_and_refine_node to get user feedback. Now that the graph is re-entered,
+    # (and user's feedback should be in state.user_input, preserved by initialize_state_node),
+    # we should go directly to SAS_REVIEW_AND_REFINE_TASK_LIST to process that feedback.
+    if state.dialog_state == "sas_awaiting_task_list_review":
+        logger.info("Dialog state is 'sas_awaiting_task_list_review'. Routing to SAS_REVIEW_AND_REFINE.")
+        return SAS_REVIEW_AND_REFINE
+    else:
+        # For all other cases:
+        # - Initial run (dialog_state will be 'initial' or None, then set to 'initial' by initialize_state_node)
+        # - After an error that routes back to start for a fresh attempt
+        # - If the flow logic somehow leads back to the start without being in a review cycle
+        logger.info(f"Dialog state is '{state.dialog_state}'. Routing to SAS_USER_INPUT_TO_TASK_LIST for new task generation.")
+        return SAS_USER_INPUT_TO_TASK_LIST
+
 # create_robot_flow_graph function (original was L344, this is a rewrite for the new flow)
 def create_robot_flow_graph(
     llm: BaseChatModel,
@@ -590,7 +698,8 @@ def create_robot_flow_graph(
 
     # Node Binding (using functools.partial for llm where needed)
     workflow.add_node(INITIALIZE_STATE, initialize_state_node)
-    workflow.add_node(SAS_USER_INPUT_TO_PROCESS, functools.partial(user_input_to_process_node, llm=llm))
+    workflow.add_node(SAS_USER_INPUT_TO_TASK_LIST, functools.partial(user_input_to_task_list_node, llm=llm))
+    workflow.add_node(SAS_REVIEW_AND_REFINE, functools.partial(review_and_refine_node, llm=llm))
     workflow.add_node(SAS_PROCESS_TO_MODULE_STEPS, functools.partial(process_description_to_module_steps_node, llm=llm))
     workflow.add_node(SAS_PARAMETER_MAPPING, parameter_mapping_node)
 
@@ -604,14 +713,31 @@ def create_robot_flow_graph(
 
     # --- Define Graph Edges ---
     workflow.set_entry_point(INITIALIZE_STATE)
-    # New flow for SAS refactoring: INITIALIZE_STATE -> SAS_USER_INPUT_TO_PROCESS -> SAS_PROCESS_TO_MODULE_STEPS -> SAS_PARAMETER_MAPPING -> END
-    workflow.add_edge(INITIALIZE_STATE, SAS_USER_INPUT_TO_PROCESS)
+    # New flow for SAS refactoring: INITIALIZE_STATE -> SAS_USER_INPUT_TO_TASK_LIST -> SAS_PROCESS_TO_MODULE_STEPS -> SAS_PARAMETER_MAPPING -> END
+    workflow.add_conditional_edges(
+        INITIALIZE_STATE,
+        route_after_initialize_state,
+        {
+            SAS_USER_INPUT_TO_TASK_LIST: SAS_USER_INPUT_TO_TASK_LIST,
+            SAS_REVIEW_AND_REFINE: SAS_REVIEW_AND_REFINE,
+        }
+    )
 
     workflow.add_conditional_edges(
-        SAS_USER_INPUT_TO_PROCESS,
+        SAS_USER_INPUT_TO_TASK_LIST,
         route_after_sas_step1,
         {
+            SAS_REVIEW_AND_REFINE: SAS_REVIEW_AND_REFINE,
+            END: END
+        }
+    )
+
+    workflow.add_conditional_edges(
+        SAS_REVIEW_AND_REFINE,
+        route_after_sas_review_and_refine,
+        {
             SAS_PROCESS_TO_MODULE_STEPS: SAS_PROCESS_TO_MODULE_STEPS,
+            SAS_USER_INPUT_TO_TASK_LIST: SAS_USER_INPUT_TO_TASK_LIST,
             END: END
         }
     )
@@ -698,8 +824,12 @@ class RootRunIDCollector(BaseCallbackHandler):
     ) -> None:
         if parent_run_id is None: # This is a root run
             self.root_run_id = run_id
-        # Store basic info, could be expanded if needed during streaming
-        self.run_map[run_id] = {"id": run_id, "name": serialized.get("name", "Unknown"), "inputs": inputs}
+        
+        node_name = "Unknown Chain"
+        if serialized: # Added check for None
+            node_name = serialized.get("name", "Unknown Chain")
+        
+        self.run_map[run_id] = {"id": run_id, "name": node_name, "inputs": inputs}
 
 
     def on_llm_start(
@@ -707,7 +837,12 @@ class RootRunIDCollector(BaseCallbackHandler):
     ) -> None:
         if parent_run_id is None and self.root_run_id is None : # This is a root run (if an LLM is a root)
              self.root_run_id = run_id
-        self.run_map[run_id] = {"id": run_id, "name": serialized.get("name", prompts[0][:30] if prompts else "Unknown LLM"), "inputs": {"prompts": prompts}}
+        
+        node_name = prompts[0][:30] if prompts else "Unknown LLM Call"
+        if serialized: # Added check for None
+            node_name = serialized.get("name", node_name) # Use prompt-derived name as fallback
+            
+        self.run_map[run_id] = {"id": run_id, "name": node_name, "inputs": {"prompts": prompts}}
 
 
     def on_tool_start(
@@ -715,7 +850,12 @@ class RootRunIDCollector(BaseCallbackHandler):
     ) -> None:
         if parent_run_id is None and self.root_run_id is None:
             self.root_run_id = run_id
-        self.run_map[run_id] = {"id": run_id, "name": serialized.get("name", "Unknown Tool"), "inputs": {"input_str": input_str}}
+            
+        node_name = "Unknown Tool"
+        if serialized: # Added check for None
+            node_name = serialized.get("name", "Unknown Tool")
+            
+        self.run_map[run_id] = {"id": run_id, "name": node_name, "inputs": {"input_str": input_str}}
 
 
 async def main_test_run():
@@ -746,7 +886,7 @@ async def main_test_run():
 
     initial_input_state = {
         "messages": [], 
-        "user_input":  """この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。ロボットはまず、初期位置からベアリングとベアリングハウジングを取得します。その後、これら 2 つの部品を右側のマシニングセンター（RMC）に順次配置し、ここで圧入または組み立て操作を行うと予定です。組み立て後、ロボットは RMC から組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管または後続処理を行います。次に、ロボットは空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。最後に、ロボットは LMC から以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。"""
+        "user_input":  """この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。ロボットはまず、ベアリング（BRG）とパレット（PLT）で共用するクランプと、ベアリングハウジング（BH）と組み立て後の部品で共用するクランプを使用して、初期位置からベアリングとベアリングハウジングを取得します。その後、ベアリングを右側のマシニングセンター（RMC）に配置します。次に、ベアリングハウジング用のクランプを用いてベアリングハウジングをRMC内のベアリングに被せるように配置し、圧入組み立て操作を行います。組み立て後、ロボットは RMC から組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管します。次に、ロボットはベアリングと共用するクランプを用いて空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。最後に、ロボットは LMC から以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。 2 つの部品を右側のマシニングセンター（RMC）に順次配置し、ここで圧入または組み立て操作を行うと予定です。組み立て後、ロボットは RMC から組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管または後続処理を行います。次に、ロボットは空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。最後に、ロボットは LMC から以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。"""
 ,
         "config": {
             "OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_py_relation",
@@ -778,29 +918,67 @@ async def main_test_run():
 
     graph_config = {"recursion_limit": 15, "callbacks": [root_run_id_collector]}
 
-    async for event in robot_flow_app.astream(initial_input_state, config=graph_config):
-        logger.info(f"Streaming Event Keys: {list(event.keys())}") # Log which node's event this is
-        for key, value in event.items():
-            # logger.info(f"  Node '{key}' output: {json.dumps(value, indent=2, ensure_ascii=False)}") # This can be very verbose
-            logger.info(f"  State from Node '{key}':")
-            if isinstance(value, dict):
-                # Print a summary or specific parts of the state
-                if "messages" in value and value["messages"]:
-                    logger.info(f"    Last Message: {value['messages'][-1]}")
-                if "current_step_description" in value:
-                    logger.info(f"    Current Step: {value['current_step_description']}")
-                if "dialog_state" in value:
-                    logger.info(f"    Dialog State: {value['dialog_state']}")
-            else:
-                 logger.info(f"    Value: {str(value)[:500]}...") # Print a snippet if not a dict
-            final_state = value # Capture the entire state from the last processed part of the event
-        logger.info("--- Next Streaming Event ---")
+    logger.info("--- Starting Interactive Robot Flow Test ---")
+    
+    # Use a copy of the initial state for the first run
+    current_state = initial_input_state.copy()
+    # Ensure 'messages' is part of the state if graph expects it
+    if "messages" not in current_state or current_state["messages"] is None:
+        current_state["messages"] = []
 
-    # final_state = await robot_flow_app.ainvoke(initial_input_state, {"recursion_limit": 15}) # Increased recursion limit
-    # The line below was causing TypeError: Object of type async_generator is not JSON serializable OR TypeError: object async_generator can't be used in 'await' expression
-    # final_state = robot_flow_app.astream(initial_input_state, {"recursion_limit": 15}) # Increased recursion limit
+    loop_count = 0
+    max_loops = 20 # Safety break for very long unintended loops
 
-    logger.info(f"\nFinal Accumulated State after Stream: {json.dumps(final_state, indent=2, ensure_ascii=False)}")
+    while loop_count < max_loops:
+        loop_count += 1
+        logger.info(f"--- Interaction Loop: {loop_count} ---")
+
+        # Invoke the graph with the current state
+        # The first invocation will use the initial_user_input from initial_input_state
+        # Subsequent invocations will use user_input collected in the loop
+        returned_state = await robot_flow_app.ainvoke(current_state, config=graph_config)
+        
+        logger.info(f"\nState after invocation: {json.dumps(returned_state, indent=2, ensure_ascii=False)}")
+
+        # Update current_state with the returned state for the next iteration
+        current_state = returned_state.copy() # Important to copy
+
+        # Check for clarification question
+        clarification_question = current_state.get("clarification_question")
+        dialog_state = current_state.get("dialog_state")
+        subgraph_status = current_state.get("subgraph_completion_status")
+
+        if clarification_question:
+            print("\n----------------------------------------------------")
+            print(f"AI: {clarification_question}")
+            print("----------------------------------------------------")
+            try:
+                user_response = input("Your response: ")
+            except EOFError: # Happens if input stream is closed (e.g. piping from a file)
+                logger.warning("EOFError received, exiting loop.")
+                break
+            current_state["user_input"] = user_response
+            # Add user message to history for the graph to see
+            current_state["messages"] = (current_state.get("messages") or []) + [HumanMessage(content=user_response)]
+        elif subgraph_status == "completed_success":
+            logger.info("--- Flow COMPLETED SUCCESSFULLY ---")
+            break
+        elif subgraph_status == "error":
+            logger.error(f"--- Flow FAILED with error: {current_state.get('error_message')} ---")
+            break
+        elif dialog_state in ["final_xml_generated_success", "sas_step3_completed"]: # other potential success states
+            logger.info(f"--- Flow appears to have reached a successful end state ({dialog_state}) ---")
+            break
+        else:
+            logger.info("No clarification question, and not a recognized completion/error state. Ending loop.")
+            logger.info(f"Final Dialog State: {dialog_state}, Subgraph Status: {subgraph_status}")
+            break # Fallback to prevent infinite loop if state is unclear
+
+    if loop_count >= max_loops:
+        logger.warning(f"Reached maximum loop iteration ({max_loops}). Exiting.")
+
+    final_state = current_state # The state after the last interaction
+    logger.info(f"\nFinal Accumulated State from Interactive Loop: {json.dumps(final_state, indent=2, ensure_ascii=False)}")
 
     run_output_directory = final_state.get('run_output_directory')
     if not run_output_directory:

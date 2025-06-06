@@ -114,7 +114,26 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     # Check if we have the process description from step 1
     process_description = state.sas_step1_process_description_plan
     if not process_description:
-        logger.error("Process description from SAS Step 1 is missing.")
+        logger.warning("Process description from SAS Step 1 (sas_step1_process_description_plan) is missing. Attempting to build from sas_step1_generated_tasks.")
+        if state.sas_step1_generated_tasks:
+            task_descriptions = []
+            for i, task in enumerate(state.sas_step1_generated_tasks):
+                # Assuming task is a Pydantic model or dict with 'name' and 'description'
+                task_name = getattr(task, 'name', f"Task {i+1}")
+                task_desc = getattr(task, 'description', "No description provided.")
+                task_type = getattr(task, 'type', "UnknownType")
+                task_descriptions.append(f"Task {i+1}: {task_name} (Type: {task_type})\nDescription: {task_desc}")
+            
+            if task_descriptions:
+                process_description = "\n\n".join(task_descriptions)
+                logger.info(f"Successfully built process description from {len(state.sas_step1_generated_tasks)} tasks.")
+            else:
+                logger.error("sas_step1_generated_tasks was found, but it was empty or tasks lacked descriptions. Cannot build process description.")
+        else:
+            logger.error("sas_step1_generated_tasks is also missing. Cannot build process description.")
+
+    if not process_description:
+        logger.error("Process description from SAS Step 1 is missing and could not be built from tasks.")
         state.is_error = True
         state.error_message = "Process description from SAS Step 1 is required but was not found."
         state.dialog_state = "error"

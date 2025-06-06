@@ -4,11 +4,23 @@
 
 This Prompt aims to guide you in transforming a user's natural language robot task description (typically in Markdown format) into a structured **Task List**. This Task List will serve as an intermediate representation, outlining the main task and its constituent sub-tasks with their types, targets, and hierarchical relationships. This structured list will then be parsed and used as input for Stage 2, where detailed process steps are generated. The process should ideally support streaming generation of the task list, followed by a parsing step to ensure structural correctness.
 
-## Input Materials
+## Contextual Information for Task List Generation
 
-1.  **User Robot Task Description (.md or text)**: Contains natural language descriptions of the overall task the robot is expected to complete, sub-tasks, and objects of operation.
-2.  **Task Type Descriptions (Provided Separately)**: Definitions and characteristics of different task types (e.g., Main Task, Grasp Task, Place Task, Open Clamp Task, Close Clamp Task).
-3.  **Allowed Block Types (Provided Separately)**: A list and description of robot control blocks that can be ultimately used to implement the tasks. While not directly used for block mapping in this stage, awareness of these limitations helps in defining feasible tasks.
+You will be provided with the following information to help you generate the Task List from the User Robot Task Description:
+
+### 1. Task Type Descriptions
+
+This section contains definitions and characteristics of different task types you must use when classifying tasks.
+
+{{TASK_TYPE_DESCRIPTIONS}}
+
+### 2. Allowed Block Types (for context and feasibility assessment)
+
+This section lists underlying robot control blocks and their descriptions. While you are not mapping directly to these blocks in this stage, awareness of their capabilities is crucial for defining feasible and implementable tasks. The tasks you define should ultimately be implementable using combinations of these blocks.
+
+{{ALLOWED_BLOCK_TYPES}}
+
+---
 
 ## Generation Guidelines and Requirements for Task List
 
@@ -26,9 +38,8 @@ Please follow these guidelines to generate a structured Task List:
     - Each task in the list should have the following attributes:
         - **`name`**: A concise and descriptive name for the task (e.g., `Get_Bearing_From_Rack`, `Open_Gripper_A`). Abbreviations used in the original prompt (e.g., BRG, PLT, CNV) should be preserved or logically inferred if beneficial for clarity and conciseness.
         - **`type`**: The category of the task. Must be one of the predefined task types (e.g., "MainTask", "GraspTask", "PlaceTask", "OpenClampTask", "CloseClampTask", "SubTask_Sequential", "SubTask_Parallel").
-        - **`target`**: The primary object or location the task operates on or relates to (e.g., "Bearing", "Position_A", "Gripper_A").
         - **`sub_tasks`**: A list of names of other tasks that are nested within or executed as part of this task. For simple tasks, this can be empty.
-        - **`description`**: (Optional) A brief natural language description of the task's purpose.
+        - **`description`**: A brief natural language description of the task's purpose.
 
 ### 3. Generating the Task List
 
@@ -49,21 +60,18 @@ Please follow these guidelines to generate a structured Task List:
   {
     "name": "Main_Assembly_Process",
     "type": "MainTask",
-    "target": "Final_Product",
-    "sub_tasks": ["Get_Bearing_BRG", "Get_Housing_BH", "Assemble_Parts_In_RMC", ...],
+    "sub_tasks": ["Get_Bearing_BRG", "Get_Housing_BH", ...],
     "description": "Main process for assembling and handling parts."
   },
   {
     "name": "Get_Bearing_BRG",
     "type": "GraspTask",
-    "target": "Bearing",
-    "sub_tasks": ["Open_BRG_PLT_Clamp", "Move_To_Bearing_P23", "Close_BRG_PLT_Clamp", "Move_To_Safe_P21"],
+    "sub_tasks": ["Open_BRG_PLT_Clamp", "Close_BRG_PLT_Clamp"],
     "description": "Retrieve a bearing from its initial position."
   },
   {
     "name": "Open_BRG_PLT_Clamp",
     "type": "OpenClampTask",
-    "target": "BRG&PLT_Clamp",
     "sub_tasks": [],
     "description": "Open the clamp for bearings and pallets."
   },

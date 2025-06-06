@@ -12,6 +12,13 @@ class GeneratedXmlFile(BaseModel):
     xml_content: Optional[str] = Field(None, description="The generated XML content. Primarily for debugging or intermediate use.")
     error_message: Optional[str] = Field(None, description="Error message if generation failed.")
 
+class TaskDefinition(BaseModel):
+    name: str = Field(description="A concise and descriptive name for the task.")
+    type: str = Field(description="The category of the task (e.g., MainTask, GraspTask).")
+    target: Optional[str] = Field(None, description="The primary object or location the task operates on or relates to.")
+    sub_tasks: List[str] = Field(default_factory=list, description="A list of names of other tasks that are nested within or executed as part of this task.")
+    description: Optional[str] = Field(None, description="A brief natural language description of the task's purpose.")
+
 class RobotFlowAgentState(BaseModel):
     """
     Represents the state of the Robot Flow Agent.
@@ -19,8 +26,9 @@ class RobotFlowAgentState(BaseModel):
     messages: List[BaseMessage] = Field(default_factory=list, description="The history of messages in the conversation.")
     
     user_input: Optional[str] = Field(None, description="The latest input from the user, consumed after processing by a node.")
-    raw_user_request: Optional[str] = Field(None, description="The initial, un-enriched user request that started the current flow or sub-flow.")
-    active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be raw_user_request or a revised plan after user feedback).")
+    current_user_request: Optional[str] = Field(None, description="The active user request (initialized from first user_input, then revised by feedback) that serves as the basis for the current flow or sub-flow.")
+    user_advice: Optional[str] = Field(None, description="User's feedback/advice for revising the current task description.")
+    active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be current_user_request or a revised plan after user feedback).")
 
     dialog_state: Literal[
         "initial",                             #Initial state upon entering the subgraph
@@ -35,9 +43,12 @@ class RobotFlowAgentState(BaseModel):
         "generation_failed",                   #Any XML generation step failed, awaiting user correction
         "final_xml_generated_success",         #Final XML successfully generated, ready to exit subgraph
         "sub_flow_cancelled_by_user",           #User has indicated to cancel current flow editing (can be added in the future)
-        "sas_step1_completed",                 # SAS step 1 (user_input_to_process) completed successfully
+        "sas_step1_tasks_generated",           # SAS step 1 (user_input_to_task_list) completed successfully
+        "sas_step1_completed",                 # SAS step 1 (user_input_to_process) completed successfully - to be deprecated or renamed
         "sas_step2_completed",                 # SAS step 2 (process_description_to_module_steps) completed successfully
-        "sas_step3_completed"                  # SAS step 3 (parameter_mapping) completed successfully
+        "sas_step3_completed",                  # SAS step 3 (parameter_mapping) completed successfully
+        "sas_awaiting_task_list_review",        # SAS: System has presented the task list and is awaiting user acceptance or feedback.
+        "sas_description_updated_for_regeneration" # SAS: User description has been updated and is ready for regeneration of tasks.
     ] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
     
     clarification_question: Optional[str] = Field(None, description="A question posed to the user for clarification (e.g. about robot model, or ambiguous request).")
@@ -62,7 +73,8 @@ class RobotFlowAgentState(BaseModel):
     final_flow_xml_path: Optional[str] = None
     
     # SAS Step 1 outputs
-    sas_step1_process_description_plan: Optional[str] = Field(None, description="The detailed process description plan generated from user input by SAS step 1.")
+    sas_step1_process_description_plan: Optional[str] = Field(None, description="The detailed process description plan generated from user input by SAS step 1. This may be deprecated in favor of sas_step1_generated_tasks.")
+    sas_step1_generated_tasks: Optional[List[TaskDefinition]] = Field(None, description="The structured list of tasks generated from user input by SAS step 1.")
     
     # SAS Step 2 outputs  
     sas_step2_module_steps: Optional[str] = Field(None, description="The specific, executable module steps generated from the process description by SAS step 2.")
@@ -72,6 +84,9 @@ class RobotFlowAgentState(BaseModel):
     sas_step3_mapping_report: Optional[str] = Field(None, description="Human-readable report of the parameter mapping process and results from SAS step 3.")
 
     run_output_directory: Optional[str] = Field(None, description="The directory path for saving outputs for the current run.")
+
+    task_list_accepted: bool = Field(False, description="Flag indicating if the user has accepted the current task list.")
+    revision_iteration: int = Field(default=0, description="Counter for revision cycles.")
 
     current_step_description: Optional[str] = Field(None, description="A human-readable description of the current processing step.")
     error_message: Optional[str] = Field(None, description="A message describing an error if one occurred.")

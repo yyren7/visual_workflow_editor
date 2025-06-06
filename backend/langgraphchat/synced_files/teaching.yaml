@@ -12,123 +12,12 @@ P1:
   x_pos: 250.0
   y_pos: 10.0
   z_pos: 50.0
-P2:
-  acc: 100.0
-  dec: 100.0
-  dist: 0.1
-  name: b
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: -22.643
-  stime: 0.0
-  tool: 0.0
-  vel: 100.0
-  x_pos: 237.146
-  y_pos: 0.0
-  z_pos: 52.285
-P3:
-  acc: 100.0
-  dec: 100.0
-  dist: 0.1
-  name: c
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: -32.643
-  stime: 0.0
-  tool: 0.0
-  vel: 100.0
-  x_pos: 247.146
-  y_pos: 10.0
-  z_pos: 42.285
-P4:
-  acc: 100.0
-  dec: 100.0
-  dist: 0.1
-  name: d
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: -32.643
-  stime: 0.0
-  tool: 0.0
-  vel: 100.0
-  x_pos: 247.146
-  y_pos: 10.0
-  z_pos: 42.285
-P5:
-  acc: 100.0
-  dec: 100.0
-  dist: 0.1
-  name: b_copy
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: -22.643
-  stime: 0.0
-  tool: 0.0
-  vel: 100.0
-  x_pos: 237.146
-  y_pos: 0.0
-  z_pos: 52.285
-P6:
-  acc: 100.0
-  dec: 100.0
-  dist: 0.1
-  name: b_copy_2
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: -22.643
-  stime: 0.0
-  tool: 0.0
-  vel: 100.0
-  x_pos: 237.146
-  y_pos: 0.0
-  z_pos: 52.285
-P7:
-  acc: 0.0
-  dec: 0
-  dist: 0.0
-  name: ""
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: 0.0
-  stime: 0.0
-  tool: 0.0
-  vel: 0
-  x_pos: 0.0
-  y_pos: 0.0
-  z_pos: 0.0
-P8:
-  acc: 0.0
-  dec: 0
-  dist: 0.0
-  name: ""
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: 0.0
-  stime: 0.0
-  tool: 0.0
-  vel: 0
-  x_pos: 0.0
-  y_pos: 0.0
-  z_pos: 0.0
-P9:
-  acc: 0.0
-  dec: 0
-  dist: 0.0
-  name: ""
-  rx_pos: 0.0
-  ry_pos: 0.0
-  rz_pos: 0.0
-  stime: 0.0
-  tool: 0.0
-  vel: 0
-  x_pos: 0.0
-  y_pos: 0.0
-  z_pos: 0.0
 P10:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: '(block type: `procedures_callnoreturn`) 10.7. ptp move to **lift point after
+    grasp (e.g.,'
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -138,6 +27,20 @@ P10:
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
+P100:
+  acc: 0
+  dec: 0
+  dist: 0
+  name: ''
+  rx_pos: 0
+  ry_pos: 0
+  rz_pos: 0
+  stime: 0
+  tool: null
+  vel: 0
+  x_pos: 0
+  y_pos: 0
+  z_pos: 0
 P11:
   acc: 0.0
   dec: 0
@@ -240,7 +143,7 @@ P18:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -254,7 +157,7 @@ P19:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -264,6 +167,20 @@ P19:
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
+P2:
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
+  name: b
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: -22.643
+  stime: 0.0
+  tool: 0.0
+  vel: 100.0
+  x_pos: 237.146
+  y_pos: 0.0
+  z_pos: 52.285
 P20:
   acc: 0.0
   dec: 0
@@ -324,7 +241,7 @@ P24:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -366,7 +283,7 @@ P27:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -380,7 +297,7 @@ P28:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -394,7 +311,7 @@ P29:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -404,11 +321,25 @@ P29:
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
+P3:
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
+  name: c
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: -32.643
+  stime: 0.0
+  tool: 0.0
+  vel: 100.0
+  x_pos: 247.146
+  y_pos: 10.0
+  z_pos: 42.285
 P30:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -544,6 +475,20 @@ P39:
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
+P4:
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
+  name: d
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: -32.643
+  stime: 0.0
+  tool: 0.0
+  vel: 100.0
+  x_pos: 247.146
+  y_pos: 10.0
+  z_pos: 42.285
 P40:
   acc: 0.0
   dec: 0
@@ -604,7 +549,7 @@ P44:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -618,7 +563,7 @@ P45:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -632,7 +577,7 @@ P46:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -646,7 +591,7 @@ P47:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -660,7 +605,7 @@ P48:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -674,7 +619,7 @@ P49:
   acc: 0.0
   dec: 0.0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -684,11 +629,25 @@ P49:
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
+P5:
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
+  name: b_copy
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: -22.643
+  stime: 0.0
+  tool: 0.0
+  vel: 100.0
+  x_pos: 237.146
+  y_pos: 0.0
+  z_pos: 52.285
 P50:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -702,7 +661,7 @@ P51:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -716,7 +675,7 @@ P52:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -730,7 +689,7 @@ P53:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -744,7 +703,7 @@ P54:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -758,7 +717,7 @@ P55:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -772,7 +731,7 @@ P56:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -786,7 +745,7 @@ P57:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -800,7 +759,7 @@ P58:
   acc: 0.0
   dec: 0
   dist: 0.0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -814,7 +773,7 @@ P59:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -824,11 +783,25 @@ P59:
   x_pos: 0.0
   y_pos: 0.0
   z_pos: 0.0
+P6:
+  acc: 100.0
+  dec: 100.0
+  dist: 0.1
+  name: b_copy_2
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: -22.643
+  stime: 0.0
+  tool: 0.0
+  vel: 100.0
+  x_pos: 237.146
+  y_pos: 0.0
+  z_pos: 52.285
 P60:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0.0
   ry_pos: 0.0
   rz_pos: 0.0
@@ -842,7 +815,7 @@ P61:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -856,7 +829,7 @@ P62:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -870,7 +843,7 @@ P63:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -884,7 +857,7 @@ P64:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -898,7 +871,7 @@ P65:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -912,7 +885,7 @@ P66:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -926,7 +899,7 @@ P67:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -940,7 +913,7 @@ P68:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -954,7 +927,7 @@ P69:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -964,11 +937,26 @@ P69:
   x_pos: 0
   y_pos: 0
   z_pos: 0
+P7:
+  acc: 0.0
+  dec: 0
+  dist: 0.0
+  name: '(block type: `procedures_callnoreturn`) 1.5. ptp move to **precise grasp
+    point of bearing (e.g.,'
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: 0.0
+  stime: 0.0
+  tool: 0.0
+  vel: 0
+  x_pos: 0.0
+  y_pos: 0.0
+  z_pos: 0.0
 P70:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -982,7 +970,7 @@ P71:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -996,7 +984,7 @@ P72:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1010,7 +998,7 @@ P73:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1024,7 +1012,7 @@ P74:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1038,7 +1026,7 @@ P75:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1052,7 +1040,7 @@ P76:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1066,7 +1054,7 @@ P77:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1080,7 +1068,7 @@ P78:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1094,7 +1082,7 @@ P79:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1104,11 +1092,25 @@ P79:
   x_pos: 0
   y_pos: 0
   z_pos: 0
+P8:
+  acc: 0.0
+  dec: 0
+  dist: 0.0
+  name: ''
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: 0.0
+  stime: 0.0
+  tool: 0.0
+  vel: 0
+  x_pos: 0.0
+  y_pos: 0.0
+  z_pos: 0.0
 P80:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1122,7 +1124,7 @@ P81:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1136,7 +1138,7 @@ P82:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1150,7 +1152,7 @@ P83:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1164,7 +1166,7 @@ P84:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1178,7 +1180,7 @@ P85:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1192,7 +1194,7 @@ P86:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1206,7 +1208,7 @@ P87:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1220,7 +1222,7 @@ P88:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1234,7 +1236,7 @@ P89:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1244,11 +1246,25 @@ P89:
   x_pos: 0
   y_pos: 0
   z_pos: 0
+P9:
+  acc: 0.0
+  dec: 0
+  dist: 0.0
+  name: ''
+  rx_pos: 0.0
+  ry_pos: 0.0
+  rz_pos: 0.0
+  stime: 0.0
+  tool: 0.0
+  vel: 0
+  x_pos: 0.0
+  y_pos: 0.0
+  z_pos: 0.0
 P90:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1262,7 +1278,7 @@ P91:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1276,7 +1292,7 @@ P92:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1290,7 +1306,7 @@ P93:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1304,7 +1320,7 @@ P94:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1318,7 +1334,7 @@ P95:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1332,7 +1348,7 @@ P96:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1346,7 +1362,7 @@ P97:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1360,7 +1376,7 @@ P98:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
@@ -1374,26 +1390,12 @@ P99:
   acc: 0
   dec: 0
   dist: 0
-  name: ""
+  name: ''
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0
   stime: 0
   tool: 0
-  vel: 0
-  x_pos: 0
-  y_pos: 0
-  z_pos: 0
-P100:
-  acc: 0
-  dec: 0
-  dist: 0
-  name: ""
-  rx_pos: 0
-  ry_pos: 0
-  rz_pos: 0
-  stime: 0
-  tool: null
   vel: 0
   x_pos: 0
   y_pos: 0

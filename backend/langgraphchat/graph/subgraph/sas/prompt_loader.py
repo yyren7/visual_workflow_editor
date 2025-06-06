@@ -6,10 +6,6 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG = {
     "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
-    "ROBOT_NAME_EXAMPLE": "dobot_mg400",
-    "POINT_NAME_EXAMPLE_1": "P3",
-    "POINT_NAME_EXAMPLE_2": "P1",
-    "POINT_NAME_EXAMPLE_3": "P2",
     "NODE_TEMPLATE_DIR_PATH": os.getenv("NODE_TEMPLATE_DIR_PATH", "/workspace/database/node_database/quick-fcpr-new"), # Read from environment variable, use default value if not set
     "OUTPUT_DIR_PATH": "/workspace/database/flow_database/result/example_run/",
     "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml",
@@ -21,6 +17,10 @@ DEFAULT_CONFIG = {
 PROMPT_DIR = "/workspace/database/prompt_database/flow_structure_prompt/"
 NODE_DESCRIPTION_FILE_PATH = "/workspace/database/prompt_database/node_description/node_descripton.md"
 SAS_STEP1_PROMPT_FILE_PATH = "/workspace/database/prompt_database/sas_input_prompt/step1_user_input_to_process_description_prompt_en.md"
+# Path for the new prompt template
+SAS_STEP1_TASK_LIST_PROMPT_PATH = "/workspace/database/prompt_database/task_based_prompt/step1_user_input_to_task_list_prompt_en.md"
+TASK_LIST_DEFINITION_DIR_PATH = "/workspace/database/prompt_database/task_based_prompt/task_list/"
+BLOCK_DESCRIPTION_FILE_PATH = "/workspace/database/prompt_database/node_description/block_descripton.md" # Renamed for clarity
 
 def load_prompt_template(template_file_name: str) -> Optional[str]:
     """Loads a prompt template from the specified file in the PROMPT_DIR."""
@@ -169,6 +169,90 @@ Please generate your detailed process description plan now:
 """
     
     return modified_prompt + formatted_user_input
+
+def get_sas_step1_task_list_generation_prompt(user_task_description: str, language: str = "en") -> Optional[str]:
+    """
+    Loads the SAS Step 1 task list generation prompt and formats it with task type descriptions,
+    block descriptions, and the user's task description.
+    """
+    # Determine the correct prompt file based on language (though only EN is specified for now)
+    # This could be expanded if other languages are added for step1_user_input_to_task_list_prompt
+    base_prompt_content = load_raw_prompt_file(SAS_STEP1_TASK_LIST_PROMPT_PATH)
+    if not base_prompt_content:
+        logger.error(f"Failed to load task list generation prompt: {SAS_STEP1_TASK_LIST_PROMPT_PATH}")
+        return None
+
+    # 1. Load Task Type Descriptions
+    task_type_descriptions_content = ""
+    try:
+        if os.path.exists(TASK_LIST_DEFINITION_DIR_PATH) and os.path.isdir(TASK_LIST_DEFINITION_DIR_PATH):
+            for filename in sorted(os.listdir(TASK_LIST_DEFINITION_DIR_PATH)):
+                if filename.endswith(".md"):
+                    file_path = os.path.join(TASK_LIST_DEFINITION_DIR_PATH, filename)
+                    task_desc = load_raw_prompt_file(file_path)
+                    if task_desc:
+                        task_type_descriptions_content += f"\n\n---\n### From file: {filename}\n---\n{task_desc}"
+                    else:
+                        logger.warning(f"Could not read task description file: {file_path}")
+            if not task_type_descriptions_content:
+                 logger.warning(f"No .md files found or read in {TASK_LIST_DEFINITION_DIR_PATH}")
+                 task_type_descriptions_content = "No task type descriptions were loaded. Please ensure they are correctly placed."
+        else:
+            logger.error(f"Task list definition directory not found: {TASK_LIST_DEFINITION_DIR_PATH}")
+            task_type_descriptions_content = "Error: Task type descriptions directory not found."
+    except Exception as e:
+        logger.error(f"Error loading task type descriptions from {TASK_LIST_DEFINITION_DIR_PATH}: {e}", exc_info=True)
+        task_type_descriptions_content = f"Error loading task type descriptions: {e}"
+
+    # 2. Load Allowed Block Types
+    block_descriptions_content = load_raw_prompt_file(BLOCK_DESCRIPTION_FILE_PATH)
+    if not block_descriptions_content:
+        logger.warning(f"Block description file not found: {BLOCK_DESCRIPTION_FILE_PATH}. Using placeholder text.")
+        block_descriptions_content = "No block descriptions were loaded. Feasibility assessment will be based on general knowledge."
+    
+    # 3. Fill placeholders in the base prompt
+    placeholders = {
+        "TASK_TYPE_DESCRIPTIONS": task_type_descriptions_content,
+        "ALLOWED_BLOCK_TYPES": block_descriptions_content
+    }
+    
+    prompt_with_context = fill_placeholders(base_prompt_content, placeholders)
+
+    # 4. Append the user's task description
+    # The prompt already has a section for the user's input, so we append it in a structured way.
+    # Based on the modified prompt, the user input section is marked by:
+    # "(User Robot Task Description will be appended here by the system)"
+    # We can replace this line or append after it.
+    # For simplicity, we'll append it after the main content of the prompt template.
+
+    formatted_user_input_section = f"""
+
+## User Robot Task Description (Process this to generate the Task List)
+
+```text
+{user_task_description}
+```
+
+## Generated Task List (JSON format as described in guidelines)
+
+**IMPORTANT REMINDER**: 
+- Analyze the user's description carefully.
+- Identify the Main Task and decompose it into sub-tasks.
+- Use ONLY the Task Types defined in the "Task Type Descriptions" section.
+- Refer to the "Allowed Block Types" for contextual understanding of robot capabilities to ensure tasks are feasible.
+- Ensure the output is a valid JSON list of task objects, following the structure specified in the guidelines (name, type, target, sub_tasks, description).
+- Pay attention to hierarchical relationships and the order of tasks.
+
+```json
+[
+  // Your generated JSON task list starts here
+]
+```
+"""
+    
+    final_prompt = prompt_with_context + formatted_user_input_section
+    logger.debug(f"Generated Step 1 Task List Prompt:\n{final_prompt[:1000]}...") # Log a snippet
+    return final_prompt
 
 # Example usage (for testing purposes, can be removed or commented out)
 # if __name__ == '__main__':
