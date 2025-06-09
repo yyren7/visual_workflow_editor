@@ -124,28 +124,21 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
             state.subgraph_completion_status = "completed_partial" # Or "processing" if more steps are guaranteed
 
             if state.run_output_directory:
-                step_outputs_file_path = Path(state.run_output_directory) / "step_outputs.json"
+                # Create a specific filename for this iteration's task list
+                iteration_tasks_filename = f"sas_step1_tasks_iter{state.revision_iteration}.json"
+                iteration_tasks_file_path = Path(state.run_output_directory) / iteration_tasks_filename
+                
                 try:
-                    step_outputs_data = {"user_requests": [], "task_list_generations": []} # Default structure
-                    if step_outputs_file_path.exists():
-                        with open(step_outputs_file_path, "r", encoding="utf-8") as f_read:
-                            step_outputs_data = json.load(f_read)
+                    # The content will just be the list of tasks for this iteration
+                    tasks_to_save = [task.model_dump() for task in generated_tasks]
                     
-                    # Ensure keys exist
-                    if "user_requests" not in step_outputs_data: step_outputs_data["user_requests"] = []
-                    if "task_list_generations" not in step_outputs_data: step_outputs_data["task_list_generations"] = []
-                        
-                    step_outputs_data["task_list_generations"].append(
-                        {"iteration": state.revision_iteration, "tasks": [task.model_dump() for task in generated_tasks]}
-                    )
-                    
-                    with open(step_outputs_file_path, "w", encoding="utf-8") as f_write:
-                        json.dump(step_outputs_data, f_write, indent=2, ensure_ascii=False)
-                    logger.info(f"Successfully appended generated task list (Iteration {state.revision_iteration}) to: {step_outputs_file_path}")
+                    with open(iteration_tasks_file_path, "w", encoding="utf-8") as f_write:
+                        json.dump(tasks_to_save, f_write, indent=2, ensure_ascii=False)
+                    logger.info(f"Successfully saved generated task list (Iteration {state.revision_iteration}) to: {iteration_tasks_file_path}")
                 except Exception as e:
-                    logger.error(f"Failed to update step_outputs.json at {step_outputs_file_path}. Error: {e}", exc_info=True)
+                    logger.error(f"Failed to save task list for Iteration {state.revision_iteration} to {iteration_tasks_file_path}. Error: {e}", exc_info=True)
             else:
-                logger.warning("state.run_output_directory is not set. Skipping saving/updating of step_outputs.json.")
+                logger.warning("state.run_output_directory is not set. Skipping saving of iteration-specific task list.")
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode LLM JSON output for task list: {e}. Output: {raw_json_output}", exc_info=True)

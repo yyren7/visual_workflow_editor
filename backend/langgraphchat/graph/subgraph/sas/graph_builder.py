@@ -72,49 +72,81 @@ SAS_REVIEW_AND_REFINE = "sas_review_and_refine"
 
 def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     logger.info("--- Initializing Agent State (Robot Flow Subgraph) ---")
+    
+    # Log the initial state of relevant config values
+    logger.info(f"Initial state.config before merge: {state.config}")
+    initial_output_dir_from_config = state.config.get("OUTPUT_DIR_PATH") if state.config else None
+    logger.info(f"Initial OUTPUT_DIR_PATH from state.config: {initial_output_dir_from_config}")
+    
     merged_config = DEFAULT_CONFIG.copy()
     if state.config is None: state.config = {}
     merged_config.update(state.config)
-    state.config = merged_config
+    state.config = merged_config # state.config is now merged_config
     
-    # Create a run-specific output directory
-    base_output_dir_str = merged_config.get("RUN_BASE_OUTPUT_DIR", "backend/tests/llm_sas_test")
-    base_output_dir = Path(base_output_dir_str)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    run_specific_dir_name = f"run_{timestamp}"
-    run_output_dir = base_output_dir / run_specific_dir_name
-    json_cache_file_path = None # Initialize
-    try:
-        run_output_dir.mkdir(parents=True, exist_ok=True)
-        state.run_output_directory = str(run_output_dir.resolve())
-        logger.info(f"Created run-specific output directory: {state.run_output_directory}")
-        json_cache_filename = "step_outputs.json"
-        json_cache_file_path = run_output_dir / json_cache_filename
-        # Further handling of json_cache_file_path (creation/initialization) is done below
-    except Exception as e_dir: 
-        logger.error(f"Failed to create run-specific output directory at {run_output_dir}: {e_dir}", exc_info=True)
-        state.run_output_directory = None 
+    logger.info(f"state.config after merge with DEFAULT_CONFIG: {state.config}")
+    
+    # Try to use the existing OUTPUT_DIR_PATH from the main graph's config
+    provided_output_dir_str = merged_config.get("OUTPUT_DIR_PATH")
+    logger.info(f"Value of 'OUTPUT_DIR_PATH' from merged_config: '{provided_output_dir_str}'")
+    
+    run_output_directory_set = False
+    if provided_output_dir_str:
+        provided_path_obj = Path(provided_output_dir_str)
+        logger.info(f"Checking provided_output_dir_str: '{provided_output_dir_str}'")
+        logger.info(f"Path('{provided_output_dir_str}').exists(): {provided_path_obj.exists()}")
+        logger.info(f"Path('{provided_output_dir_str}').is_dir(): {provided_path_obj.is_dir()}")
+        
+        if provided_path_obj.is_dir():
+            run_output_dir = provided_path_obj
+            try:
+                run_output_dir.mkdir(parents=True, exist_ok=True) # Ensure it still exists and we have perms
+                state.run_output_directory = str(run_output_dir.resolve())
+                logger.info(f"SUCCESS: Using provided output directory: {state.run_output_directory}")
+                run_output_directory_set = True
+            except Exception as e_dir:
+                logger.error(f"Error trying to mkdir on already existing provided_output_dir_str '{run_output_dir}': {e_dir}", exc_info=True)
+                # Fallback to creating a new one if ensuring fails
+        elif provided_path_obj.exists() and not provided_path_obj.is_dir():
+            logger.warning(f"Provided OUTPUT_DIR_PATH '{provided_output_dir_str}' exists but is NOT a directory. Will fallback.")
+        else: # Path does not exist
+            logger.info(f"Provided OUTPUT_DIR_PATH '{provided_output_dir_str}' does NOT exist. Attempting to create it.")
+            try:
+                provided_path_obj.mkdir(parents=True, exist_ok=True)
+                state.run_output_directory = str(provided_path_obj.resolve())
+                logger.info(f"SUCCESS: Created and using provided output directory: {state.run_output_directory}")
+                run_output_directory_set = True
+            except Exception as e_create:
+                logger.error(f"Failed to CREATE directory from provided_output_dir_str '{provided_output_dir_str}': {e_create}", exc_info=True)
+    else:
+        logger.info("'OUTPUT_DIR_PATH' was not found in merged_config or was empty. Will fallback.")
 
-    # Initialize current_user_request, step_outputs.json, and related fields
-    # This logic replaces the previous raw_user_request handling and initial json cache creation
+    if not run_output_directory_set:
+        base_output_dir_str = merged_config.get("RUN_BASE_OUTPUT_DIR", "backend/tests/llm_sas_test") # Original fallback base
+        effective_base_output_dir = Path(base_output_dir_str)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        run_specific_dir_name = f"run_sas_subgraph_{timestamp}"
+        run_output_dir = effective_base_output_dir / run_specific_dir_name
+        
+        logger.warning(f"FALLBACK: 'OUTPUT_DIR_PATH' ('{provided_output_dir_str}') was not valid or usable. Creating new run-specific directory in fallback location: {run_output_dir}")
+        try:
+            run_output_dir.mkdir(parents=True, exist_ok=True)
+            state.run_output_directory = str(run_output_dir.resolve())
+            logger.info(f"FALLBACK: Created new run-specific output directory: {state.run_output_directory}")
+        except Exception as e_dir: 
+            logger.error(f"FALLBACK: Failed to create run-specific output directory at {run_output_dir}: {e_dir}", exc_info=True)
+            state.run_output_directory = None # Critical failure
+    
+    # Ensure other necessary paths from DEFAULT_CONFIG are also correctly set up in state.config
+    # For example, NODE_TEMPLATE_DIR_PATH, etc.
+    # The current merged_config should already be in state.config
+    
+    # Initialize other SAS-specific state variables
     if state.current_user_request is None and state.user_input:
         logger.info(f"Initializing current_user_request from initial user_input: '{state.user_input[:100]}...'")
         state.current_user_request = state.user_input
         state.active_plan_basis = state.user_input  # Set active plan basis from the first input
         state.revision_iteration = 0 # Initialize revision counter
 
-        if state.run_output_directory and json_cache_file_path: # json_cache_file_path should be set if run_output_directory succeeded
-            initial_step_output_data = {
-                "user_requests": [state.current_user_request],
-                "task_list_generations": []
-            }
-            try:
-                with open(json_cache_file_path, "w", encoding="utf-8") as f:
-                    json.dump(initial_step_output_data, f, indent=2, ensure_ascii=False)
-                logger.info(f"Successfully initialized step output cache file: {json_cache_file_path} with initial request.")
-            except IOError as e_json:
-                logger.error(f"Failed to initialize step output cache file '{json_cache_file_path.name}' in '{state.run_output_directory}': {e_json}", exc_info=True)
-        
         # Add current_user_request as the first HumanMessage if messages list is empty
         # This helps ensure the very first request is part of the message history from the start.
         # user_input_to_task_list_node will also add the input it processes to messages,
@@ -128,18 +160,6 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         logger.info(f"Initial user_input '{state.user_input[:100]}...' moved to current_user_request. Clearing user_input for subsequent nodes.")
         state.user_input = None # Clear user_input as it has been processed into current_user_request
 
-    elif state.run_output_directory and json_cache_file_path: # Not initial input, but ensure json cache file exists
-        if not json_cache_file_path.exists():
-            logger.warning(f"step_outputs.json was expected but not found at {json_cache_file_path}. Creating an empty one as fallback.")
-            try:
-                with open(json_cache_file_path, "w", encoding="utf-8") as f:
-                    json.dump({"user_requests": [], "task_list_generations": []}, f, indent=2, ensure_ascii=False)
-            except IOError as e_json:
-                logger.error(f"Failed to create fallback step_outputs.json: {e_json}", exc_info=True)
-    
-    # If state.user_input was somehow set to the same as state.current_user_request by an external call,
-    # and it wasn't the initial processing, clear it to prevent reprocessing.
-    # This case is less likely if the flow is: input -> initialize_state (processes to current_user_request, clears input) -> other nodes.
     elif state.user_input is not None and state.user_input == state.current_user_request:
         logger.info(f"state.user_input ('{state.user_input[:50]}...') matches state.current_user_request and was not initial. Clearing state.user_input.")
         state.user_input = None
@@ -862,6 +882,8 @@ async def main_test_run():
     # from langchain_openai import ChatOpenAI # Commented out OpenAI import
     import json
     import os # Ensure os is imported for getenv
+    from pathlib import Path # Ensure Path is imported
+    from datetime import datetime # Ensure datetime is imported
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
@@ -884,12 +906,38 @@ async def main_test_run():
 
     robot_flow_app = create_robot_flow_graph(llm=llm)
 
+    # Define the base directory for test runs
+    base_dir_for_runs_str = "backend/tests/llm_sas_test"
+    base_dir_for_runs = Path(base_dir_for_runs_str)
+    
+    # Create a unique sub-directory for this specific run using a timestamp
+    current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    current_run_specific_dir_name = f"run_{current_timestamp}"
+    current_run_output_dir = base_dir_for_runs / current_run_specific_dir_name
+
+    try:
+        current_run_output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Successfully created run-specific output directory for this test: {current_run_output_dir}")
+    except Exception as e:
+        logger.error(f"Failed to create run-specific output directory {current_run_output_dir}: {e}. Check permissions.", exc_info=True)
+        # Fallback to a temporary directory or handle error as appropriate
+        # For this example, we'll set it to a default that might exist or fail later in a more visible way.
+        current_run_output_dir = Path("/tmp/sas_test_fallback_output") 
+        current_run_output_dir.mkdir(parents=True, exist_ok=True) # Try to make a fallback
+        logger.warning(f"Using fallback output directory: {current_run_output_dir}")
+
     initial_input_state = {
         "messages": [], 
-        "user_input":  """この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。ロボットはまず、ベアリング（BRG）とパレット（PLT）で共用するクランプと、ベアリングハウジング（BH）と組み立て後の部品で共用するクランプを使用して、初期位置からベアリングとベアリングハウジングを取得します。その後、ベアリングを右側のマシニングセンター（RMC）に配置します。次に、ベアリングハウジング用のクランプを用いてベアリングハウジングをRMC内のベアリングに被せるように配置し、圧入組み立て操作を行います。組み立て後、ロボットは RMC から組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管します。次に、ロボットはベアリングと共用するクランプを用いて空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。最後に、ロボットは LMC から以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。 2 つの部品を右側のマシニングセンター（RMC）に順次配置し、ここで圧入または組み立て操作を行うと予定です。組み立て後、ロボットは RMC から組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管または後続処理を行います。次に、ロボットは空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。最後に、ロボットは LMC から以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。"""
-,
+        "user_input":  """この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。
+ロボットはまず、初期位置からベアリング（BRG）とベアリングハウジング（BH）を同時に取得します。
+このとき、ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。
+その後、ロボットはまずベアリングハウジング（BH）を右側のマシニングセンター（RMC）に配置します。
+続いて、そのベアリングハウジング（BH）にベアリング（BRG）をはめ込む形で配置し、圧入組み立て操作を行います。
+組み立て後、ロボットはRMCから組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管します。
+次に、ロボットはベアリングと共用するクランプを用いて空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。
+最後に、ロボットはLMCから以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。""",
         "config": {
-            "OUTPUT_DIR_PATH": "/workspace/test_robot_flow_output_py_relation",
+            "OUTPUT_DIR_PATH": str(current_run_output_dir), # Pass the path to the unique run-specific directory
             "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new/" # Ensure this path is correct
             } 
     }
@@ -983,16 +1031,19 @@ async def main_test_run():
     run_output_directory = final_state.get('run_output_directory')
     if not run_output_directory:
         # Fallback if not in state, though initialize_state_node should set it
-        base_output_dir_str = initial_input_state.get("config", {}).get("RUN_BASE_OUTPUT_DIR", "backend/tests/llm_sas_test")
-        base_output_dir = Path(base_output_dir_str)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        run_output_directory = str(base_output_dir / f"run_{timestamp}_fallback")
-        try:
-            Path(run_output_directory).mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            logger.error(f"Fallback directory creation failed: {run_output_directory}, error: {e}")
-            run_output_directory = None # Cannot save metrics
-        logger.warning(f"run_output_directory not found in final_state, using fallback: {run_output_directory}")
+        # This fallback logic might not be strictly necessary anymore if current_run_output_dir is robustly set above
+        # and passed via config, as initialize_state_node will use it.
+        # However, keeping it for safety or if the graph somehow loses run_output_directory from state.
+        logger.warning("run_output_directory was not found in final_state. Attempting to use the one created by main_test_run.")
+        run_output_directory = str(current_run_output_dir) # Use the one created at the start of main_test_run
+        # Ensure it is an absolute path if it wasn't already
+        if not Path(run_output_directory).is_absolute():
+             run_output_directory = str(Path(run_output_directory).resolve())
+        
+        # Re-check if this fallback directory exists, though it should have been created.
+        if not Path(run_output_directory).exists():
+            logger.error(f"Critical: Fallback run_output_directory '{run_output_directory}' does not exist. Metrics cannot be saved.")
+            run_output_directory = None # Prevent trying to save metrics to a non-existent dir
 
 
     if langsmith_client and root_run_id_collector.root_run_id and run_output_directory:
@@ -1013,7 +1064,7 @@ async def main_test_run():
                 "start_time": root_run.start_time.isoformat() if root_run.start_time else None,
                 "end_time": root_run.end_time.isoformat() if root_run.end_time else None,
                 "total_duration_seconds": (root_run.end_time - root_run.start_time).total_seconds() if root_run.start_time and root_run.end_time else None,
-                "inputs": root_run.inputs,
+                "inputs_summary": f"Input type: {type(root_run.inputs)}, Keys: {list(root_run.inputs.keys()) if isinstance(root_run.inputs, dict) else 'N/A'}", # Add a brief summary instead
                 "nodes": []
             }
 
@@ -1037,17 +1088,24 @@ async def main_test_run():
                 }
 
                 if node_run.run_type == "llm":
+                    logger.info(f"LLM Node found: {node_run.name}, ID: {node_run.id}") # DEBUG LOG
+                    logger.info(f"Raw node_run.extra: {node_run.extra}") # DEBUG LOG
                     llm_metrics = {}
                     ttfb_seconds = None
                     
                     if node_run.extra and 'metadata' in node_run.extra and isinstance(node_run.extra['metadata'], dict):
+                        logger.info(f"Metadata found: {node_run.extra['metadata']}") # DEBUG LOG
                         ttfb_ms = node_run.extra['metadata'].get('time_to_first_token_ms')
+                        logger.info(f"Extracted ttfb_ms: {ttfb_ms}") # DEBUG LOG
                         if ttfb_ms is not None: # Check for None explicitly
                             try:
                                 ttfb_seconds = float(ttfb_ms) / 1000.0
                                 llm_metrics["time_to_first_token_seconds"] = ttfb_seconds
+                                logger.info(f"Calculated ttfb_seconds: {ttfb_seconds}") # DEBUG LOG
                             except (ValueError, TypeError) as e:
-                                logger.warning(f"Could not parse TTFB from metadata ('{ttfb_ms}') for node {node_run.name}: {e}")
+                                logger.warning(f"Could not parse TTFB from metadata (\\'{ttfb_ms}\\') for node {node_run.name}: {e}")
+                    else: # DEBUG LOG
+                        logger.warning(f"No metadata or metadata not a dict for LLM node {node_run.name}. node_run.extra: {node_run.extra}") # DEBUG LOG
                     
                     completion_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("completion_tokens") if node_run.outputs else None
                     prompt_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("prompt_tokens") if node_run.outputs else None
@@ -1058,12 +1116,13 @@ async def main_test_run():
                     if hasattr(node_run, 'prompt_tokens') and node_run.prompt_tokens is not None:
                          prompt_tokens = node_run.prompt_tokens
                     
-                    if completion_tokens is not None: llm_metrics["completion_tokens"] = completion_tokens
-                    if prompt_tokens is not None: llm_metrics["prompt_tokens"] = prompt_tokens
-                    if completion_tokens is not None and prompt_tokens is not None:
+                    # Make sure we only add integers or serializable values
+                    if isinstance(completion_tokens, int): llm_metrics["completion_tokens"] = completion_tokens
+                    if isinstance(prompt_tokens, int): llm_metrics["prompt_tokens"] = prompt_tokens
+                    if isinstance(completion_tokens, int) and isinstance(prompt_tokens, int):
                         llm_metrics["total_tokens"] = completion_tokens + prompt_tokens
                     
-                    if completion_tokens and node_run.start_time and node_run.end_time:
+                    if isinstance(completion_tokens, int) and node_run.start_time and node_run.end_time:
                         effective_latency_seconds = (node_run.end_time - node_run.start_time).total_seconds()
                         if effective_latency_seconds > 0: # Avoid division by zero
                             if ttfb_seconds is not None and effective_latency_seconds > ttfb_seconds:
