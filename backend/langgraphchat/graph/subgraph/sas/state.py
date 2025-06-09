@@ -15,7 +15,7 @@ class GeneratedXmlFile(BaseModel):
 class TaskDefinition(BaseModel):
     name: str = Field(description="A concise and descriptive name for the task.")
     type: str = Field(description="The category of the task (e.g., MainTask, GraspTask).")
-    target: Optional[str] = Field(None, description="The primary object or location the task operates on or relates to.")
+    details: List[str] = Field(default_factory=list, description="Detailed module steps generated for this task by SAS Step 2, as a list of strings, or other relevant details.")
     sub_tasks: List[str] = Field(default_factory=list, description="A list of names of other tasks that are nested within or executed as part of this task.")
     description: Optional[str] = Field(None, description="A brief natural language description of the task's purpose.")
 
@@ -45,9 +45,12 @@ class RobotFlowAgentState(BaseModel):
         "sub_flow_cancelled_by_user",           #User has indicated to cancel current flow editing (can be added in the future)
         "sas_step1_tasks_generated",           # SAS step 1 (user_input_to_task_list) completed successfully
         "sas_step1_completed",                 # SAS step 1 (user_input_to_process) completed successfully - to be deprecated or renamed
+        "sas_step2_module_steps_generated_for_review", # SAS step 2 generated module steps, awaiting review
         "sas_step2_completed",                 # SAS step 2 (process_description_to_module_steps) completed successfully
+        "sas_module_steps_accepted_proceeding", # SAS: Module steps reviewed and accepted, ready for next step (e.g. param mapping)
         "sas_step3_completed",                  # SAS step 3 (parameter_mapping) completed successfully
         "sas_awaiting_task_list_review",        # SAS: System has presented the task list and is awaiting user acceptance or feedback.
+        "sas_awaiting_module_steps_review",     # SAS: System has presented the module steps and is awaiting user acceptance or feedback.
         "sas_description_updated_for_regeneration" # SAS: User description has been updated and is ready for regeneration of tasks.
     ] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
     
@@ -73,7 +76,6 @@ class RobotFlowAgentState(BaseModel):
     final_flow_xml_path: Optional[str] = None
     
     # SAS Step 1 outputs
-    sas_step1_process_description_plan: Optional[str] = Field(None, description="The detailed process description plan generated from user input by SAS step 1. This may be deprecated in favor of sas_step1_generated_tasks.")
     sas_step1_generated_tasks: Optional[List[TaskDefinition]] = Field(None, description="The structured list of tasks generated from user input by SAS step 1.")
     
     # SAS Step 2 outputs  
@@ -86,6 +88,7 @@ class RobotFlowAgentState(BaseModel):
     run_output_directory: Optional[str] = Field(None, description="The directory path for saving outputs for the current run.")
 
     task_list_accepted: bool = Field(False, description="Flag indicating if the user has accepted the current task list.")
+    module_steps_accepted: bool = Field(False, description="Flag indicating if the user has accepted the module steps generated in Step 2.")
     revision_iteration: int = Field(default=0, description="Counter for revision cycles.")
 
     current_step_description: Optional[str] = Field(None, description="A human-readable description of the current processing step.")

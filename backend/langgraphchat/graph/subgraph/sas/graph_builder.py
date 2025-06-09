@@ -606,55 +606,90 @@ def route_after_sas_step1(state: RobotFlowAgentState) -> str:
 
 # New routing function for SAS Review and Refine Task List
 def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after SAS Review and Refine (is_error: {state.is_error}, dialog_state: '{state.dialog_state}', task_list_accepted: {state.task_list_accepted}) ---")
+    logger.info(f"--- Routing after SAS Review/Refine Node ---")
+    logger.info(f"    is_error: {state.is_error}")
+    logger.info(f"    dialog_state: '{state.dialog_state}'")
+    logger.info(f"    task_list_accepted: {state.task_list_accepted}")
+    logger.info(f"    module_steps_accepted: {state.module_steps_accepted}")
+
     if state.is_error: 
-        logger.warning(f"Error during SAS Review/Refine. Error message: {state.error_message}")
+        logger.warning(f"Error flag is set after Review/Refine node. Error message: {state.error_message}")
         if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Review/Refine Failed: {state.error_message}")]
+            state.messages = (state.messages or []) + [AIMessage(content=f"Error during review/refinement: {state.error_message}")]
         state.subgraph_completion_status = "error"
+        return END # Or a dedicated error handling node if desired
+
+    # Priority 1: Handling states indicating the node is waiting for external user input
+    if state.dialog_state == "sas_awaiting_task_list_review":
+        logger.info("Awaiting user feedback on the TASK LIST. Ending graph run for clarification.")
+        state.subgraph_completion_status = "needs_clarification"
+        return END
+    elif state.dialog_state == "sas_awaiting_module_steps_review":
+        logger.info("Awaiting user feedback on the MODULE STEPS. Ending graph run for clarification.")
+        state.subgraph_completion_status = "needs_clarification"
         return END
 
-    if state.task_list_accepted:
-        logger.info("Task list accepted by user. Routing to SAS_PROCESS_TO_MODULE_STEPS.")
-        state.dialog_state = "sas_step1_tasks_generated" # Or a more appropriate state indicating acceptance and readiness for step 2
-        state.subgraph_completion_status = "completed_partial" # Mark as partially complete, moving to next SAS step
-        return SAS_PROCESS_TO_MODULE_STEPS
-    elif state.dialog_state == "sas_description_updated_for_regeneration":
-        logger.info("User description revised. Routing back to SAS_USER_INPUT_TO_TASK_LIST for regeneration.")
-        state.subgraph_completion_status = "processing" # Still processing
-        # state.user_input should already contain the revised description from the review_and_refine_node
+    # Priority 2: Handling successful acceptance of module steps
+    if state.module_steps_accepted and state.dialog_state == "sas_module_steps_accepted_proceeding":
+        logger.info("Module steps accepted by user. Routing to SAS_PARAMETER_MAPPING.")
+        state.subgraph_completion_status = "completed_partial" # Moving to the next major step
+        return SAS_PARAMETER_MAPPING
+
+    # Priority 3: Handling successful acceptance of task list (and module steps not yet reviewed/accepted)
+    if state.task_list_accepted and not state.module_steps_accepted:
+        # This implies task list was accepted, and we are now either proceeding to generate module steps
+        # or have just generated them and are going to review them.
+        # The review_and_refine_node itself would set sas_step1_tasks_generated if only task list accepted.
+        if state.dialog_state == "sas_step1_tasks_generated": # Set by review_and_refine if task list accepted
+            logger.info("Task list accepted by user. Routing to SAS_PROCESS_TO_MODULE_STEPS.")
+            state.subgraph_completion_status = "completed_partial"
+            return SAS_PROCESS_TO_MODULE_STEPS
+    
+    # Priority 4: Handling regeneration/re-review loops initiated by review_and_refine_node
+    if state.dialog_state == "sas_description_updated_for_regeneration": # For task list regen
+        logger.info("User description revised for task list. Routing back to SAS_USER_INPUT_TO_TASK_LIST for regeneration.")
+        state.subgraph_completion_status = "processing"
         return SAS_USER_INPUT_TO_TASK_LIST
-    elif state.dialog_state == "sas_awaiting_task_list_review":
-        logger.info("Awaiting user feedback on the task list. Ending graph run for clarification.")
-        state.subgraph_completion_status = "needs_clarification"
-        # The review_and_refine_node should have set the clarification question.
-        return END
-    else:
-        logger.warning(f"Unexpected state after SAS Review/Refine: dialog_state='{state.dialog_state}', task_list_accepted={state.task_list_accepted}. Defaulting to END graph run for clarification.")
-        state.subgraph_completion_status = "needs_clarification" # Or error, depending on how strict this should be
-        if not state.clarification_question and not any("Please review the task list" in msg.content for msg in state.messages if isinstance(msg, AIMessage)): # Generic message if no specific question
-             state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during task list review. Please try providing your feedback again.")]
-        return END
+    
+    if state.dialog_state == "sas_step2_module_steps_generated_for_review": # For module steps re-review after modification
+        logger.info("Module steps were modified. Routing back to SAS_REVIEW_AND_REFINE for re-review.")
+        state.subgraph_completion_status = "processing"
+        return SAS_REVIEW_AND_REFINE
+
+    # Fallback / Unexpected states
+    logger.warning(f"Unexpected state combination after SAS Review/Refine: dialog_state='{state.dialog_state}', task_list_accepted={state.task_list_accepted}, module_steps_accepted={state.module_steps_accepted}. Defaulting to END graph run for clarification or error.")
+    state.subgraph_completion_status = "needs_clarification" # Or "error"
+    if not state.clarification_question and not any("An unexpected state was reached" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+         state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during the review process. Please try providing your feedback again or restart.")]
+    return END
 
 # New routing function for SAS Step 2
 def route_after_sas_step2(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after SAS Step 2: Process Description to Module Steps (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
+    logger.info(f"--- Routing after SAS Step 2: Module Steps Generation (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
     if state.is_error or state.dialog_state == "error":
         logger.warning(f"Error during SAS Step 2. Error message: {state.error_message}")
         if not state.error_message:
-             state.error_message = "Unknown error after SAS Step 2."
+             state.error_message = "Unknown error after SAS Step 2 (Module Steps Generation)."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 2 Failed: {state.error_message}")]
+            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 2 (Module Steps Generation) Failed: {state.error_message}")]
         state.subgraph_completion_status = "error"
         return END
-    elif state.dialog_state == "sas_step2_completed":
-        logger.info("SAS Step 2 (Process Description to Module Steps) completed successfully. Routing to Step 3.")
+    elif state.dialog_state == "sas_step2_module_steps_generated_for_review":
+        logger.info("SAS Step 2 (Module Steps Generation) completed. Routing to SAS_REVIEW_AND_REFINE for module steps review.")
+        state.subgraph_completion_status = "completed_partial" # Still partial, awaiting review
+        # Reset task_list_accepted as we are entering a new review phase for different content
+        # However, module_steps_accepted will be a new flag for this phase.
+        # For clarity, let's ensure we don't mix up acceptance flags.
+        # The review_and_refine_node will handle its own logic based on the incoming dialog_state.
+        return SAS_REVIEW_AND_REFINE
+    elif state.dialog_state == "sas_step2_completed": # Keep old state for now as a fallback during transition, but should be deprecated.
+        logger.warning(f"DEPRECATED ROUTE: SAS Step 2 reached 'sas_step2_completed'. Consider transitioning fully to 'sas_step2_module_steps_generated_for_review'. Routing to SAS_PARAMETER_MAPPING for now.")
         state.subgraph_completion_status = "completed_partial"
-        return SAS_PARAMETER_MAPPING
+        return SAS_PARAMETER_MAPPING # This path should ideally be removed once review cycle for step 2 is robust.
     else:
-        logger.warning(f"Unexpected state after SAS Step 2: {state.dialog_state}. Routing to END.")
+        logger.warning(f"Unexpected state after SAS Step 2 (Module Steps Generation): {state.dialog_state}. Routing to END as error.")
         state.subgraph_completion_status = "error"
-        state.error_message = f"Unexpected state ({state.dialog_state}) after SAS Step 2."
+        state.error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 2 (Module Steps Generation)."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         return END
@@ -767,6 +802,7 @@ def create_robot_flow_graph(
         route_after_sas_step2,
         {
             SAS_PARAMETER_MAPPING: SAS_PARAMETER_MAPPING,
+            SAS_REVIEW_AND_REFINE: SAS_REVIEW_AND_REFINE,
             END: END
         }
     )

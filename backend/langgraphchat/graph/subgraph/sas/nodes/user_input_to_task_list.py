@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from ..state import RobotFlowAgentState, TaskDefinition
 from ..prompt_loader import get_sas_step1_task_list_generation_prompt
 from ..llm_utils import invoke_llm_for_text_output
+from ...tools.iteration_data_saver import save_iteration_data_as_json
 
 logger = logging.getLogger(__name__)
 
@@ -123,22 +124,16 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
                 state.messages = (state.messages or []) + [AIMessage(content=success_message_content)]
             state.subgraph_completion_status = "completed_partial" # Or "processing" if more steps are guaranteed
 
-            if state.run_output_directory:
-                # Create a specific filename for this iteration's task list
-                iteration_tasks_filename = f"sas_step1_tasks_iter{state.revision_iteration}.json"
-                iteration_tasks_file_path = Path(state.run_output_directory) / iteration_tasks_filename
-                
-                try:
-                    # The content will just be the list of tasks for this iteration
-                    tasks_to_save = [task.model_dump() for task in generated_tasks]
-                    
-                    with open(iteration_tasks_file_path, "w", encoding="utf-8") as f_write:
-                        json.dump(tasks_to_save, f_write, indent=2, ensure_ascii=False)
-                    logger.info(f"Successfully saved generated task list (Iteration {state.revision_iteration}) to: {iteration_tasks_file_path}")
-                except Exception as e:
-                    logger.error(f"Failed to save task list for Iteration {state.revision_iteration} to {iteration_tasks_file_path}. Error: {e}", exc_info=True)
-            else:
-                logger.warning("state.run_output_directory is not set. Skipping saving of iteration-specific task list.")
+            # MODIFIED: Use the new utility function to save iteration data
+            tasks_to_save = [task.model_dump() for task in generated_tasks]
+            save_iteration_data_as_json(
+                run_output_directory=state.run_output_directory,
+                revision_iteration=state.revision_iteration,
+                data_to_save=tasks_to_save,
+                base_filename_prefix="sas_step1_tasks",
+                file_description="SAS Step 1 generated task list"
+            )
+            # End of MODIFIED block
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode LLM JSON output for task list: {e}. Output: {raw_json_output}", exc_info=True)

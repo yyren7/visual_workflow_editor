@@ -15,12 +15,12 @@ DEFAULT_CONFIG = {
 }
 
 PROMPT_DIR = "/workspace/database/prompt_database/flow_structure_prompt/"
-NODE_DESCRIPTION_FILE_PATH = "/workspace/database/prompt_database/node_description/node_descripton.md"
+NODE_DESCRIPTION_FILE_PATH = "/workspace/database/prompt_database/node_description/block_description.md"
 SAS_STEP1_PROMPT_FILE_PATH = "/workspace/database/prompt_database/sas_input_prompt/step1_user_input_to_process_description_prompt_en.md"
 # Path for the new prompt template
 SAS_STEP1_TASK_LIST_PROMPT_PATH = "/workspace/database/prompt_database/task_based_prompt/step1_user_input_to_task_list_prompt_en.md"
 TASK_LIST_DEFINITION_DIR_PATH = "/workspace/database/prompt_database/task_based_prompt/task_list/"
-BLOCK_DESCRIPTION_FILE_PATH = "/workspace/database/prompt_database/node_description/block_descripton.md" # Renamed for clarity
+BLOCK_DESCRIPTION_FILE_PATH = "/workspace/database/prompt_database/node_description/block_description.md" # Renamed for clarity
 
 def load_prompt_template(template_file_name: str) -> Optional[str]:
     """Loads a prompt template from the specified file in the PROMPT_DIR."""

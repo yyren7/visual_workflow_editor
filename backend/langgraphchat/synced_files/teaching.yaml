@@ -31,7 +31,8 @@ P100:
   acc: 0
   dec: 0
   dist: 0
-  name: ''
+  name: '(block type: `procedures_callnoreturn`) 13. ptp move to **initial/safe point
+    (e.g.,'
   rx_pos: 0
   ry_pos: 0
   rz_pos: 0

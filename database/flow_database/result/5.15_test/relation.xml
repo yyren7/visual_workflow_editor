@@ -22,7 +22,8 @@
                                         <next>
                                           <block type="moveL" id="block_uuid_5f">
                                             <next>
-                                              <block type="return" id="block_uuid_5g"></block>
+                                              <block type="return" id="block_uuid_5g">
+                                              </block>
                                             </next>
                                           </block>
                                         </next>
