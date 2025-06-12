@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="wait_block" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="-1"></mutation>
+    <!-- timeout (タイムアウト): 等待超时时间。flow.xml示例为-1, quickfcpr.md中单位为ms, 范围0~300000 (0为无限)。 -->
+    <!-- 若遵循quickfcpr.md, timeout应为毫秒值, e.g., timeout="0" for 无限等待 or timeout="5000" for 5s -->
+    <!-- 此处采用 flow.xml 的 -1 形式，可能代表无限或默认。 -->
+    <!-- 有效范围(ms): 0 ~ 300000 -->
+    <!-- 初期値(ms): 0 -->
+    <!-- 示例(xml): -1 -->
+    <value name="condition">
+      <!-- condition (判定条件): 等待满足的逻辑条件，连接一个逻辑块。 -->
+      <!-- 有效范围: 逻辑值输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="logic_operation">...</block> -->
+      <block type="logic_operation" id="GENERATED_ID_CONDITION">
+        <field name="OP">AND</field>
+        <value name="A">
+          <block type="logic_boolean" id="GENERATED_ID_A">
+            <field name="BOOL">TRUE</field>
+          </block>
+        </value>
+        <value name="B">
+          <block type="logic_boolean" id="GENERATED_ID_B">
+            <field name="BOOL">TRUE</field>
+          </block>
+        </value>
+      </block>
+    </value>
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

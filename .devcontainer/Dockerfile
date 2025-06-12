@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     tmux \
     graphviz-dev \
+    smbclient \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Node.js 22（与前端 Dockerfile 保持一致）

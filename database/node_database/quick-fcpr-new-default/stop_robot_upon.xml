@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="stop_robot_upon" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="-1"></mutation>
+    <!-- timeout属性存在于flow.xml示例中，具体含义需参照文档或实际行为，-1可能表示无限等待或默认超时 -->
+    <field name="trigger_condition">rising</field>
+    <!-- trigger_condition (トリガー条件): 触发机器人停止的条件类型。 -->
+    <!-- 有效范围: rising (上升沿), falling (下降沿), steady (电平符合) -->
+    <!-- 初期値: rising -->
+    <!-- 示例: rising -->
+    <value name="condition">
+      <!-- condition (判定条件): 触发机器人停止的逻辑条件，连接一个逻辑块。 -->
+      <!-- 有效范围: 逻辑值输出块 -->
+      <!-- 初期値: 无 (必须连接) -->
+      <!-- 示例: 连接一个 <block type="logic_compare">...</block> -->
+      <block type="logic_compare" id="GENERATED_ID_CONDITION">
+        <field name="OP">EQ</field>
+        <value name="A">
+          <block type="math_number" id="GENERATED_ID_A">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+        <value name="B">
+          <block type="math_number" id="GENERATED_ID_B">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+      </block>
+    </value>
+    <!-- 该块通常在 create_event 块内部使用，不直接连接 next -->
+  </block>
+</xml> 

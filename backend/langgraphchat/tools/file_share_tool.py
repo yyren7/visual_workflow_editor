@@ -144,13 +144,13 @@ def upload_file(local_file_path, remote_file_name):
         return False # Added return
 
 if __name__ == "__main__":
-    print("Starting file download process...")
-    download_files()
-    print("File download process finished.")
+    # print("Starting file download process...")
+    # download_files()
+    # print("File download process finished.")
 
     # Example usage for upload, ensure these variables are defined if you uncomment
-    # local_file_to_upload = "/path/to/your/local/file.xml"
-    # remote_file_name_for_upload = "uploaded_flow.xml"
-    # print("\nStarting file upload process...")
-    # upload_file(local_file_to_upload, remote_file_name_for_upload)
-    # print("File upload process finished.") 
+    local_file_to_upload = "/workspace/backend/tests/llm_sas_test/specific_clamp_output/01_Open_BRG_PLT_Clamp_flow.xml"
+    remote_file_name_for_upload = "01_Open_BRG_PLT_Clamp_flow.xml"
+    print("\nStarting file upload process...")
+    upload_file(local_file_to_upload, remote_file_name_for_upload)
+    print("File upload process finished.") 

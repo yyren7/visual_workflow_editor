@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="moveP" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="60000000"></mutation>
+    <!-- timeout (タイムアウト): 动作超时时间 (单位: 微秒 μs)。 -->
+    <!-- 有效范围: 0 ~ 300000000 (0 表示无限等待) -->
+    <!-- 初期値: 60000000 (60秒) -->
+    <!-- 示例: 60000000 -->
+    <field name="point_name_list">P1</field>
+    <!-- point_name_list (点名): 目标点位名称。 -->
+    <!-- 有效范围: 在示教点列表中已定义的点位名称 (例如 P1 ~ P100) -->
+    <!-- 初期値: P1 -->
+    <!-- 示例: P21 -->
+    <field name="control_x">enable</field>
+    <!-- control_x (X方向補正): X轴方向是否启用修正。 -->
+    <!-- 有效范围: enable (有效), disable (无效) -->
+    <!-- 初期値: enable -->
+    <!-- 示例: enable -->
+    <field name="control_y">enable</field>
+    <!-- control_y (Y方向補正): Y轴方向是否启用修正。 -->
+    <!-- 有效范围: enable (有效), disable (无效) -->
+    <!-- 初期値: enable -->
+    <!-- 示例: enable -->
+    <field name="control_z">enable</field>
+    <!-- control_z (Z方向補正): Z轴方向是否启用修正。 -->
+    <!-- 有效范围: enable (有效), disable (无效) -->
+    <!-- 初期値: enable -->
+    <!-- 示例: enable -->
+    <field name="control_rx">enable</field>
+    <!-- control_rx (RX方向補正): RX轴姿态是否启用修正。 -->
+    <!-- 有效范围: enable (有效), disable (无效) -->
+    <!-- 初期値: enable -->
+    <!-- 示例: enable -->
+    <field name="control_ry">enable</field>
+    <!-- control_ry (RY方向補正): RY轴姿态是否启用修正。 -->
+    <!-- 有效范围: enable (有效), disable (无效) -->
+    <!-- 初期値: enable -->
+    <!-- 示例: enable -->
+    <field name="control_rz">enable</field>
+    <!-- control_rz (RZ方向補正): RZ轴姿态是否启用修正。 -->
+    <!-- 有效范围: enable (有效), disable (无效) -->
+    <!-- 初期値: enable -->
+    <!-- 示例: enable -->
+    <field name="pallet_list">none</field>
+    <!-- pallet_list (パレット名): 使用的托盘名称。 -->
+    <!-- 有效范围: 已定义的托盘名称, 或 "none" (不使用托盘) -->
+    <!-- 初期値: none -->
+    <!-- 示例: none -->
+    <field name="camera_list">none</field>
+    <!-- camera_list (カメラ名): 使用的相机名称。 -->
+    <!-- 有效范围: 已定义的相机名称, 或 "none" (不使用相机) -->
+    <!-- 初期値: none -->
+    <!-- 示例: none -->
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

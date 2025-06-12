@@ -30,20 +30,39 @@ logger = logging.getLogger(__name__)
 
 # Removed _prepare_data_for_relation_prompt as it was for LLM prompting
 
-def _extract_block_type_from_detail(detail_string: str) -> Tuple[Optional[str], bool]:
+def _extract_block_info_from_detail(detail_string: str) -> Tuple[Optional[str], bool, Optional[str]]:
     """
-    Extracts block type from a detail string and checks if it's disabled.
+    Extracts block type, disabled status, and mutation name if applicable for procedures_callnoreturn.
     Example: "1. Select robot (Block Type: `select_robot`)"
     Example disabled: "2. Wait for I/O (Block Type: `wait_io`) (This block is disabled)"
+    Example call: "3. Call Procedure XYZ (Block Type: `procedures_callnoreturn`, Mutation Name: `XYZ`)"
     """
     disabled = "(This block is disabled)" in detail_string
+    block_type = None
+    mutation_name = None # For procedures_callnoreturn
+
+    # Regex for block type
+    type_match = re.search(r"(Block Type: `([^`]+)`)", detail_string) # Group 2 is the type
+    if type_match:
+        block_type = type_match.group(2)
     
-    # Corrected regex: removed extra backslash before ( and )
-    match = re.search(r"(Block Type: `([^`]+)`)", detail_string)
-    if match:
-        # The first group is the whole match "(Block Type: `type`)", the second group is the `type` itself
-        return match.group(2), disabled 
-    return None, disabled
+    if block_type == "procedures_callnoreturn":
+        # Priority 1: Match "Call sub-program \"PROC_NAME\""
+        call_sub_program_match = re.search(r"Call sub-program \"([^\"]+)\"", detail_string)
+        if call_sub_program_match:
+            mutation_name = call_sub_program_match.group(1)
+            # XML escaping for characters like '&' to '&amp;' is handled by ET.SubElement for attribute values
+            logger.debug(f"Extracted mutation name (from Call sub-program): {mutation_name} for call block.")
+        else:
+            # Priority 2: Match "(Mutation Name: `PROC_NAME`)" or "(Calls: `PROC_NAME`)"
+            legacy_mutation_match = re.search(r"\((?:Mutation Name|Calls): `([^`]+)`\)", detail_string)
+            if legacy_mutation_match:
+                mutation_name = legacy_mutation_match.group(1)
+                logger.debug(f"Extracted mutation name (from legacy pattern): {mutation_name} for call block.")
+            else:
+                logger.warning(f"Could not extract mutation name for procedures_callnoreturn from detail: {detail_string}")
+    
+    return block_type, disabled, mutation_name
 
 def _format_xml(elem: ET.Element) -> str:
     """Return a pretty-printed XML string for the Element."""
@@ -61,130 +80,208 @@ def _format_xml(elem: ET.Element) -> str:
 
 async def generate_relation_xml_node(state: RobotFlowAgentState, llm: Any = None) -> RobotFlowAgentState: # llm parameter is no longer used
     logger.info("--- Running Step 3: Generate Node Relation XML (Rule-based) ---")
-    state.current_step_description = "Generating node relation XML file (Rule-based)"
+    state.current_step_description = "Generating node relation XML file(s) (Rule-based)"
     state.is_error = False
+    # The line 'state.generated_relation_files: List[GeneratedXmlFile] = []' is intentionally removed here.
 
     config = state.config
-    parsed_flow_steps = state.parsed_flow_steps # This is the list of task dicts
+    parsed_flow_steps = state.parsed_flow_steps
 
     if not parsed_flow_steps:
-        logger.error("Parsed flow steps are missing for relation XML generation.")
-        state.is_error = True
-        state.error_message = "Parsed flow steps are missing for relation XML."
-        state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
-        return state
+        logger.warning("Parsed flow steps are missing. Generating a single empty relation XML.")
+        empty_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
+        state.relation_xml_content = empty_xml_content
+        state.relation_xml_path = None # Path will be set if file is successfully written
 
-    # --- Select the main task to process ---
-    main_task_to_process = None
-    if parsed_flow_steps:
-        main_task_to_process = parsed_flow_steps[0] # Default to the first task
-        for task_data in parsed_flow_steps:
-            if task_data.get("type") == "MainTask":
-                main_task_to_process = task_data
-                break
-    
-    if not main_task_to_process:
-        logger.warning("No suitable main task found to generate relation XML. Generating empty relation XML.")
-        state.relation_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
-    else:
-        logger.info(f"Processing task: {main_task_to_process.get('name', 'Unnamed Task')} for relation XML.")
-        task_details = main_task_to_process.get("details", [])
-
-        if not task_details:
-            logger.warning(f"Task '{main_task_to_process.get('name', 'Unnamed Task')}' has no details. Generating empty relation XML.")
-            state.relation_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
-        else:
-            logger.info(f"Starting XML generation for task: {main_task_to_process.get('name')}. Total details: {len(task_details)}")
-            xml_root = ET.Element("xml", xmlns="https://developers.google.com/blockly/xml")
+        output_dir = Path(config.get("OUTPUT_DIR_PATH", "/tmp"))
+        # This will be the name for the single empty XML if parsed_flow_steps is empty.
+        relation_file_name = config.get("RELATION_FILE_NAME_ACTUAL", "relation.xml") 
+        relation_file_path = output_dir / relation_file_name
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            with open(relation_file_path, "w", encoding="utf-8") as f:
+                f.write(empty_xml_content)
             
-            parent_stack: List[ET.Element] = [xml_root] 
-            last_block_at_depth: Dict[int, Optional[ET.Element]] = {0: None}
-            current_depth = 0
-            block_id_counter = 1
+            state.relation_xml_path = str(relation_file_path) 
+            logger.info(f"Successfully wrote empty relation XML to {relation_file_path}")
 
-            for idx, detail_str in enumerate(task_details):
-                logger.debug(f"Processing detail [{idx+1}/{len(task_details)}]: '{detail_str}'")
-                block_type, is_disabled = _extract_block_type_from_detail(detail_str)
-                logger.debug(f"  Extracted block_type: '{block_type}', is_disabled: {is_disabled}")
+        except IOError as e:
+            logger.error(f"Failed to write empty relation XML to {relation_file_path}: {e}", exc_info=True)
+            state.is_error = True
+            state.error_message = f"Failed to write empty relation XML: {e}"
+            state.dialog_state = "error"
+            state.subgraph_completion_status = "error"
+            # Error state will be returned at the end of the function
+    else:
+        num_tasks = len(parsed_flow_steps)
+        processed_at_least_one_file_successfully = False
+        for task_index, current_task_data in enumerate(parsed_flow_steps):
+            task_name = current_task_data.get('name', f'Task_{task_index + 1}')
+            logger.info(f"Processing task [{task_index + 1}/{num_tasks}]: '{task_name}' for relation XML.")
+            task_details = current_task_data.get("details", [])
+            
+            current_task_xml_content: str
+            xml_doc_root = ET.Element("xml", xmlns="https://developers.google.com/blockly/xml")
+            block_id_counter = 1 # IDs for blocks start from 1 for each task file.
 
-                if not block_type:
-                    logger.debug(f"  Skipping detail: No block type found.")
-                    continue
-                if is_disabled:
-                    logger.debug(f"  Skipping detail: Block is disabled.")
-                    continue
+            parent_for_block_sequence: ET.Element # Will be set differently based on task type and logic
+            is_main_task_type = current_task_data.get("type") == "MainTask"
 
-                block_id = f"sas_rel_block_{block_id_counter}"
-                block_id_counter += 1
-                
-                current_xml_element = ET.Element("block", type=block_type, id=block_id)
-                logger.debug(f"  Created XML element: <block type='{block_type}' id='{block_id}'>")
-                
-                attach_to_parent_element = parent_stack[-1]
-                logger.debug(f"  Current parent stack element: {attach_to_parent_element.tag} (name: {attach_to_parent_element.get('name', 'N/A')}) at depth {current_depth}")
-                
-                previous_block_at_this_depth = last_block_at_depth.get(current_depth)
+            # For sub-tasks, this will store the identified definition block once found in details
+            proc_def_block_identified_for_sub_task: Optional[ET.Element] = None
+            
+            # Initialize parent_stack. For sub-tasks, it's initially empty until definition is found.
+            parent_stack: List[ET.Element]
+            if is_main_task_type:
+                logger.info(f"Task '{task_name}' is MAIN TASK type. Blocks will be children of <xml>.")
+                parent_stack = [xml_doc_root]
+            else: # Sub-procedure
+                logger.info(f"Task '{task_name}' is SUB-PROCEDURE type. Definition expected from details.")
+                parent_stack = [] # Will be populated once proc_def_block_identified_for_sub_task is set
+            
+            if not task_details:
+                if is_main_task_type:
+                    logger.warning(f"Main task '{task_name}' has no details. XML will be <xml />.")
+                else: # sub-procedure - without details, it won't have a definition from details
+                    logger.warning(f"Sub-procedure '{task_name}' has no details. It will likely result in an empty <xml /> or an error if definition is mandatory.")
+                    # If a sub-procedure has no details, it effectively cannot be defined by this new logic.
+                    # We might need a default empty proc_def here, or ensure details are never empty for sub-procs that need definition.
+                    # For now, it will result in an empty xml_doc_root if not handled later.
+                current_task_xml_content = _format_xml(xml_doc_root)
+            else:
+                # parent_stack is initialized above.
+                # last_block_at_depth keys are 0-based depth relative to the start of parent_stack[-1].
+                last_block_at_depth: Dict[int, Optional[ET.Element]] = {0: None} 
+                current_processing_relative_depth = 0 # Depth relative to the initial parent_for_block_sequence
 
-                if previous_block_at_this_depth is not None:
-                    logger.debug(f"  Attaching to <next> of previous block: {previous_block_at_this_depth.tag} id '{previous_block_at_this_depth.get('id')}'")
-                    next_tag = ET.SubElement(previous_block_at_this_depth, "next")
-                    next_tag.append(current_xml_element)
-                else:
-                    logger.debug(f"  Attaching directly to parent element: {attach_to_parent_element.tag}")
-                    attach_to_parent_element.append(current_xml_element)
-                
-                last_block_at_depth[current_depth] = current_xml_element
+                for idx, detail_str in enumerate(task_details):
+                    block_type, is_disabled, mutation_name = _extract_block_info_from_detail(detail_str)
+                    if not block_type or is_disabled:
+                        logger.debug(f"  Skipping detail for task '{task_name}': No block type ('{block_type}') or disabled ({is_disabled}).")
+                        continue
 
-                if block_type == "loop":
-                    logger.debug(f"  Encountered 'loop' block. Creating <statement name='DO'> and increasing depth.")
-                    statement_tag = ET.SubElement(current_xml_element, "statement", name="DO")
-                    parent_stack.append(statement_tag)
-                    current_depth += 1
-                    last_block_at_depth[current_depth] = None 
-                    logger.debug(f"  New depth: {current_depth}. Parent stack size: {len(parent_stack)}")
-                elif block_type == "controls_if": 
-                    logger.debug(f"  Encountered 'controls_if' block. Creating <statement name='DO0'> and increasing depth.")
-                    statement_tag = ET.SubElement(current_xml_element, "statement", name="DO0")
-                    parent_stack.append(statement_tag)
-                    current_depth += 1
-                    last_block_at_depth[current_depth] = None
-                    logger.debug(f"  New depth: {current_depth}. Parent stack size: {len(parent_stack)}")
-                elif block_type == "return":
-                    logger.debug(f"  Encountered 'return' block.")
-                    if current_depth > 0: 
-                        parent_stack.pop()
-                        del last_block_at_depth[current_depth]
-                        current_depth -= 1
-                        logger.debug(f"  Closing scope. New depth: {current_depth}. Parent stack size: {len(parent_stack)}. Last block at new depth: {last_block_at_depth.get(current_depth).get('id') if last_block_at_depth.get(current_depth) is not None else 'None'}")
+                    current_block_id = f"sas_rel_block_{block_id_counter}"
+                    # block_id_counter will be incremented after this block is potentially created.
+
+                    # New logic for handling procedures_defnoreturn from details for SUB-TASKS
+                    if not is_main_task_type and block_type == "procedures_defnoreturn":
+                        if proc_def_block_identified_for_sub_task is None:
+                            logger.info(f"  Task '{task_name}': Found defining 'procedures_defnoreturn' detail: \"{detail_str}\"")
+                            # This detail IS the definition block
+                            current_xml_element = ET.Element("block", type="procedures_defnoreturn", id=current_block_id)
+                            ET.SubElement(current_xml_element, "field", name="NAME").text = task_name
+                            xml_doc_root.append(current_xml_element) # Definition is child of <xml>
+                            proc_def_block_identified_for_sub_task = current_xml_element
+                            
+                            # Create its STACK and set up parent_stack for its contents
+                            statement_for_def = ET.SubElement(proc_def_block_identified_for_sub_task, "statement", name="STACK")
+                            parent_stack = [statement_for_def]
+                            current_processing_relative_depth = 0
+                            last_block_at_depth = {0: None} # Reset for the new STACK
+                            block_id_counter += 1 # ID consumed by the definition block
+                            continue # Move to the next detail, which should be the first step IN this STACK
+                        else:
+                            logger.warning(
+                                f"  Task '{task_name}': Encountered a subsequent 'procedures_defnoreturn' detail: \"{detail_str}\". "
+                                f"Skipping as a definition is already identified."
+                            )
+                            continue
+                    
+                    # Check if parent_stack is valid for adding blocks, especially for sub-tasks
+                    if not parent_stack: # Handles sub-tasks before their definition is found
+                        if not is_main_task_type:
+                            logger.error(
+                                f"  Task '{task_name}' (Sub-procedure): Trying to process step \"{detail_str}\" "
+                                f"but its 'procedures_defnoreturn' definition has not been identified from details yet. Skipping this step."
+                            )
+                            continue
+                        else: # Should not happen for MainTask as parent_stack is initialized
+                            logger.error(f"  Task '{task_name}' (MainTask): parent_stack is unexpectedly empty. Skipping step \"{detail_str}\".")
+                            continue
+                            
+                    # Create the current block if it's not a definitional procedures_defnoreturn handled above
+                    current_xml_element = ET.Element("block", type=block_type, id=current_block_id)
+                    block_id_counter += 1
+
+                    if block_type == "procedures_callnoreturn" and mutation_name:
+                        ET.SubElement(current_xml_element, "mutation", name=mutation_name)
+                    
+                    # Determine where to attach current_xml_element
+                    active_parent_statement_or_root = parent_stack[-1] 
+                    
+                    previous_block_this_level = last_block_at_depth.get(current_processing_relative_depth)
+
+                    if previous_block_this_level is not None:
+                        next_tag = ET.SubElement(previous_block_this_level, "next")
+                        next_tag.append(current_xml_element)
                     else:
-                        logger.debug("  'return' block at root level (depth 0). No scope change.")
+                        # First block in active_parent_statement_or_root or first block in a new (e.g. loop's) statement
+                        active_parent_statement_or_root.append(current_xml_element)
+                    
+                    last_block_at_depth[current_processing_relative_depth] = current_xml_element
 
-            logger.info(f"Finished processing details. Final XML content generation.")
-            state.relation_xml_content = _format_xml(xml_root)
+                    # Handle blocks that introduce new scopes and thus new <statement> tags
+                    if block_type == "loop":
+                        statement_tag = ET.SubElement(current_xml_element, "statement", name="DO")
+                        parent_stack.append(statement_tag)
+                        current_processing_relative_depth += 1
+                        last_block_at_depth[current_processing_relative_depth] = None # Reset for the new scope
+                    elif block_type == "controls_if": 
+                        # Assuming only DO0, no ELSE/ELSEIF from current details
+                        statement_tag = ET.SubElement(current_xml_element, "statement", name="DO0")
+                        parent_stack.append(statement_tag)
+                        current_processing_relative_depth += 1
+                        last_block_at_depth[current_processing_relative_depth] = None # Reset for the new scope
+                    # Removed the specific stack pop logic for block_type == "return"
+                
+                current_task_xml_content = _format_xml(xml_doc_root)
 
-    # --- Save the generated XML content to file (reusing existing logic) ---
-    output_dir = Path(config.get("OUTPUT_DIR_PATH", "/tmp"))
-    relation_file_name = config.get("RELATION_FILE_NAME_ACTUAL", "relation.xml")
-    relation_file_path = output_dir / relation_file_name
-    try:
-        os.makedirs(output_dir, exist_ok=True)
-        with open(relation_file_path, "w", encoding="utf-8") as f:
-            f.write(state.relation_xml_content)
-        state.relation_xml_path = str(relation_file_path)
-        logger.info(f"Successfully wrote relation XML to {relation_file_path}. Content head: {state.relation_xml_content[:200]}...")
-    except IOError as e:
-        logger.error(f"Failed to write relation XML to {relation_file_path}: {e}", exc_info=True)
-        state.is_error = True
-        state.error_message = f"Failed to write relation XML: {e}"
-        state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
-        return state
+            output_dir = Path(config.get("OUTPUT_DIR_PATH", "/tmp"))
+            base_relation_file_name = config.get("RELATION_FILE_NAME_ACTUAL", "relation.xml")
+            
+            name_part, ext_part = os.path.splitext(base_relation_file_name)
+            sanitized_task_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', task_name) 
+            task_specific_file_name = f"{name_part}_{sanitized_task_name}_taskidx{task_index}{ext_part if ext_part else '.xml'}"
+            
+            relation_file_path_for_task = output_dir / task_specific_file_name
+            
+            try:
+                os.makedirs(output_dir, exist_ok=True)
+                with open(relation_file_path_for_task, "w", encoding="utf-8") as f:
+                    f.write(current_task_xml_content)
+                
+                logger.info(f"Successfully wrote relation XML for task '{task_name}' to {relation_file_path_for_task}.")
+                
+                # Update state to reflect the latest successfully written file
+                state.relation_xml_content = current_task_xml_content
+                state.relation_xml_path = str(relation_file_path_for_task)
+                processed_at_least_one_file_successfully = True
 
-    # Final state updates
+            except IOError as e:
+                logger.error(f"Failed to write relation XML for task '{task_name}' to {relation_file_path_for_task}: {e}", exc_info=True)
+                state.is_error = True
+                state.error_message = f"Failed to write relation XML for task '{task_name}': {e}"
+                state.dialog_state = "error"
+                state.subgraph_completion_status = "error"
+                return state # Exit immediately if a file write fails in the loop
+        
+        if not processed_at_least_one_file_successfully and parsed_flow_steps:
+             logger.warning("Loop over tasks completed, but no files were successfully processed/written.")
+             # Set to default empty if no file was processed, even if there were tasks
+             state.relation_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
+             state.relation_xml_path = None
+
+    # Final state updates based on whether an error occurred anywhere
     if not state.is_error: 
         state.dialog_state = "generating_xml_final"
-        state.subgraph_completion_status = None 
+        state.subgraph_completion_status = None # Explicitly None if no error
+    else:
+        # Ensure dialog_state and subgraph_completion_status reflect error if not already set by specific error points
+        if state.dialog_state != "error": # Avoid overwriting more specific error states if already set
+             state.dialog_state = "error"
+        if state.subgraph_completion_status != "error":
+             state.subgraph_completion_status = "error"
+             
     return state 
 
 
@@ -202,90 +299,137 @@ if __name__ == "__main__":
             self.error_message: Optional[str] = None
             self.dialog_state: Optional[str] = None
             self.subgraph_completion_status: Optional[str] = None
-            self.relation_xml_content: Optional[str] = None
-            self.relation_xml_path: Optional[str] = None
-            # Add any other fields that generate_relation_xml_node might try to set/read
-            # For example, if it reads generated_node_xmls, it should be initialized.
-            self.generated_node_xmls: Optional[List[Any]] = [] # Assuming it might be checked
+            self.relation_xml_content: Optional[str] = None 
+            self.relation_xml_path: Optional[str] = None    
+            # The field 'self.generated_relation_files' is intentionally removed here.
+            self.generated_node_xmls: Optional[List[Any]] = [] 
+            # Add pydantic BaseModel for proper model_dump if tasks are TaskDefinition instances
+            # from pydantic import BaseModel # Already imported globally for RobotFlowAgentState
 
     async def main_test():
-        # Path to your test JSON file
-        # Ensure this path is correct relative to where you run the script from, or use an absolute path.
-        # For robustness in different execution contexts, constructing path from __file__ is better.
+        from pydantic import BaseModel # Required if TaskDefinition objects are used and need model_dump
+
         script_dir = Path(__file__).parent.resolve()
-        # Adjust the relative path to your test JSON file from the script's location
-        # The script is in /workspace/backend/langgraphchat/graph/subgraph/sas/nodes/
-        # The test file is in /workspace/backend/tests/llm_sas_test/run_20250609_071825_821008/
-        test_json_path = script_dir.parent.parent.parent.parent.parent / "tests" / "llm_sas_test" / "run_20250609_071825_821008" / "sas_step2_module_steps_iter2.json"
+        # Path to the test JSON file that contains a dictionary, where tasks are in "parsed_flow_steps"
+        # test_json_path = script_dir.parent.parent.parent.parent.parent / "tests" / "llm_sas_test" / "run_20250609_071825_821008" / "sas_step2_module_steps_iter2.json"
+        # Updated test path as per user request
+        project_root_dir = script_dir.parents[5] # backend/langgraphchat/graph/subgraph/sas/nodes -> /workspace
+        test_json_path = project_root_dir / "backend" / "tests" / "llm_sas_test" / "1_sample" / "step2_output_sample.json"
+
 
         if not test_json_path.exists():
             logger.error(f"Test JSON file not found at: {test_json_path}")
             print(f"Error: Test JSON file not found at: {test_json_path}")
             return
 
-        with open(test_json_path, 'r', encoding='utf-8') as f:
-            test_data_json = json.load(f)
+        try:
+            with open(test_json_path, 'r', encoding='utf-8') as f:
+                test_data_from_file = json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to decode JSON from {test_json_path}: {e}")
+            print(f"Error: Failed to decode JSON from {test_json_path}: {e}")
+            return
         
-        # Define the fixed output directory
-        fixed_output_dir_str = "backend/tests/llm_sas_test/1_sample"
-        # Construct the output path relative to the project root determined by the preamble
-        # Assuming _project_root_for_preamble is defined as in the preamble for direct execution
-        # If _project_root_for_preamble is not available here, we might need to re-calculate it
-        # or assume a fixed structure from where the script is run.
-        # For this case, let's assume the preamble sets up paths correctly so Path() works from workspace root.
-        output_dir = Path(fixed_output_dir_str) # This will be relative to workspace if script is run from workspace
+        test_data_json_list: List[Dict[str, Any]] = []
+        if isinstance(test_data_from_file, list):
+            logger.info("Test JSON is a direct list of tasks.")
+            test_data_json_list = test_data_from_file
+        elif isinstance(test_data_from_file, dict):
+            logger.info("Test JSON is a dictionary. Looking for task list under known keys.")
+            if "parsed_flow_steps" in test_data_from_file and isinstance(test_data_from_file["parsed_flow_steps"], list):
+                test_data_json_list = test_data_from_file["parsed_flow_steps"]
+                logger.info(f"Found {len(test_data_json_list)} tasks under 'parsed_flow_steps'.")
+            elif "sas_step1_generated_tasks" in test_data_from_file and isinstance(test_data_from_file["sas_step1_generated_tasks"], list):
+                logger.info("Found tasks under 'sas_step1_generated_tasks'. Converting to dicts if they are Pydantic models.")
+                # Assuming TaskDefinition is a Pydantic model, use model_dump()
+                # If it's already a dict, this will handle it.
+                processed_tasks = []
+                for task_item in test_data_from_file["sas_step1_generated_tasks"]:
+                    if hasattr(task_item, 'model_dump') and callable(getattr(task_item, 'model_dump')): # Check if it's a Pydantic model
+                        processed_tasks.append(task_item.model_dump())
+                    elif isinstance(task_item, dict):
+                        processed_tasks.append(task_item)
+                    else:
+                        logger.warning(f"Skipping an item in 'sas_step1_generated_tasks' as it is not a Pydantic model or dict: {type(task_item)}")
+                test_data_json_list = processed_tasks
+                logger.info(f"Processed {len(test_data_json_list)} tasks from 'sas_step1_generated_tasks'.")
+            elif "name" in test_data_from_file and "details" in test_data_from_file: # Heuristic for single task dict not in a list
+                 logger.info("Test JSON seems to be a single task object (not in a list); wrapping it.")
+                 test_data_json_list = [test_data_from_file]
+            else:
+                logger.error(f"Test JSON (dict) at {test_json_path} does not have a known task list key (e.g., 'parsed_flow_steps', 'sas_step1_generated_tasks'). Found keys: {list(test_data_from_file.keys())}")
+                print(f"Error: Test JSON (dict) at {test_json_path} is not in a recognized list-of-tasks format.")
+                return 
+        else:
+            logger.error(f"Test JSON data at {test_json_path} is not a list or a recognized dict structure. Type: {type(test_data_from_file)}")
+            print(f"Error: Test JSON data at {test_json_path} is not a list or recognized dict.")
+            return
+        
+        if not test_data_json_list: # Check after all processing
+            logger.warning(f"After processing, test_data_json_list from {test_json_path} is empty. Test might not produce new files if it relies on these tasks.")
 
-        # Ensure the output directory exists
+        # Using a new directory for this test iteration
+        fixed_output_dir_str = "backend/tests/llm_sas_test/1_sample_multi_relation_v2"
+        output_dir = Path(fixed_output_dir_str) 
+
         try:
             os.makedirs(output_dir, exist_ok=True)
-            logger.info(f"Test output will be saved in: {output_dir.resolve()}")
+            # Optional: Clean up old files in the directory for a fresh test run
+            # for item in output_dir.iterdir():
+            #     if item.is_file() and item.name.startswith(os.path.splitext(mock_config["RELATION_FILE_NAME_ACTUAL"])[0]):
+            #         item.unlink()
+            logger.info(f"Test output will be saved in: {output_dir.resolve()} (relative to script: {output_dir})") # Added relative path for clarity
             print(f"Test output directory: {output_dir.resolve()}")
         except OSError as e:
             logger.error(f"Could not create output directory {output_dir}: {e}")
             print(f"Error: Could not create output directory {output_dir}: {e}")
             return
 
-        # Prepare a mock config
         mock_config = {
-            "OUTPUT_DIR_PATH": str(output_dir), # Use the Path object converted to string
-            "RELATION_FILE_NAME_ACTUAL": "test_relation.xml",
-            # Add other config values if your function expects them
+            "OUTPUT_DIR_PATH": str(output_dir), 
+            "RELATION_FILE_NAME_ACTUAL": "relation_base.xml", # Base name for generated files
         }
 
-        # Initialize the mock state
         initial_state = MockRobotFlowAgentState(
-            parsed_flow_steps=test_data_json, 
+            parsed_flow_steps=test_data_json_list, 
             config=mock_config
         )
 
-        # Configure logging for the test run to see output
-        logging.basicConfig(level=logging.DEBUG) # Changed to DEBUG to see detailed logs
-        # Suppress other loggers if they are too verbose for the test
-        # logging.getLogger("some_other_module").setLevel(logging.WARNING)
-
-        logger.info("Starting test run for generate_relation_xml_node...")
+        logging.basicConfig(level=logging.INFO) # Set to DEBUG for more verbose XML block processing logs
+        logger.info(f"Starting test run for generate_relation_xml_node (multi-task file output) with {len(initial_state.parsed_flow_steps)} task(s) queued...")
         
-        # Run the node function
-        # The second argument to generate_relation_xml_node (llm) is optional and defaults to None in the modified function
         final_state = await generate_relation_xml_node(initial_state)
 
         if final_state.is_error:
             logger.error(f"Test run failed. Error: {final_state.error_message}")
             print(f"Test run failed. Error: {final_state.error_message}")
-            if final_state.relation_xml_content:
-                print("--- Partial/Error XML Content ---")
+            if final_state.relation_xml_content: 
+                print("--- XML Content (Last Attempted or Error Placeholder) ---")
                 print(final_state.relation_xml_content)
-                print("---------------------------------")
+                print("------------------------------------------------------")
         else:
-            logger.info(f"Test run successful. Relation XML generated at: {final_state.relation_xml_path}")
-            print(f"Test run successful. Relation XML generated at: {final_state.relation_xml_path}")
-            if final_state.relation_xml_content:
-                print("--- Generated XML Content ---")
-                print(final_state.relation_xml_content)
-                print("-----------------------------")
-        
-        # print(f"Reminder: Test output (if any) is in {temp_output_dir}. You might want to delete it manually.") # No longer a temp dir
-        logger.info(f"Test output saved to {final_state.relation_xml_path if final_state else 'N/A'}")
+            logger.info(f"Test run completed. Output files should be in: {mock_config['OUTPUT_DIR_PATH']}")
+            print(f"Test run completed. Output files should be in: {mock_config['OUTPUT_DIR_PATH']}")
+            if final_state.relation_xml_path:
+                logger.info(f"  Last generated relation XML path: {final_state.relation_xml_path}")
+                print(f"  Last generated relation XML path: {final_state.relation_xml_path}")
+                # Optionally print content of the last file
+                # print("  --- Content of Last Generated XML ---")
+                # print(final_state.relation_xml_content)
+                # print("  -----------------------------------")
+            else:
+                logger.warning("  No specific relation_xml_path was set in the final state. This is expected if parsed_flow_steps was empty, or if all tasks resulted in empty/no XML output and no files were written.")
+            
+            print(f"Please check the directory '{output_dir.resolve()}' for generated files.")
+            try:
+                base_name_for_check = os.path.splitext(mock_config["RELATION_FILE_NAME_ACTUAL"])[0]
+                created_files = [name for name in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, name)) and name.startswith(base_name_for_check)]
+                num_files_created = len(created_files)
+                logger.info(f"Found {num_files_created} file(s) matching base name '{base_name_for_check}' in output directory: {created_files}")
+                print(f"Found {num_files_created} file(s) matching base name '{base_name_for_check}' in output directory.")
+            except Exception as e:
+                logger.error(f"Could not list or count files in output directory: {e}")
 
-    # Run the async main_test function
+        logger.info(f"Test output (if any) saved to directory: {mock_config['OUTPUT_DIR_PATH']}")
+
     asyncio.run(main_test()) 

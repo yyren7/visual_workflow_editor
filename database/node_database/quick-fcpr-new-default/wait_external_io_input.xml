@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="wait_external_io_input" id="GENERATED_ID" data-blockNo="1">
+    <mutation timeout="-1"></mutation>
+    <!-- timeout (タイムアウト): 等待超时时间 (单位: 微秒 μs)。-1可能表示无限等待或默认。 -->
+    <!-- quickfcpr.md 中此块的 timeout 单位为 ms，范围 0~300000。需确认模板中应遵循 flow.xml 的μs还是quickfcpr.md的ms。此处暂按 flow.xml 示例的 timeout 格式，但注释其来源。 -->
+    <!-- 若 quickfcpr.md 优先，则 timeout 应为毫秒值，例如 timeout="300000" -->
+    <field name="io_no">1</field>
+    <!-- io_no (IO番号): IO模块的编号。 -->
+    <!-- 有效范围: 1 ~ 10 -->
+    <!-- 初期値: 1 -->
+    <!-- 示例: 1 -->
+    <field name="input_pin_name">0</field>
+    <!-- input_pin_name (入力ポート名): 等待的输入端口的名称或编号。 -->
+    <!-- 有效范围: 参照各IO模块的规格 (例如 0 ~ 15) -->
+    <!-- 初期値: 0 -->
+    <!-- 示例: 0 -->
+    <field name="in_state">on</field>
+    <!-- in_state (入力状態): 等待的输入状态。 -->
+    <!-- 有效范围: on (输入ON), off (输入OFF) -->
+    <!-- 初期値: on -->
+    <!-- 示例: on -->
+    <!-- <next> ... </next> -->
+  </block>
+</xml> 

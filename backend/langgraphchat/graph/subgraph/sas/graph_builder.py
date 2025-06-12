@@ -631,9 +631,11 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
 
     # Priority 2: Handling successful acceptance of module steps
     if state.module_steps_accepted and state.dialog_state == "sas_module_steps_accepted_proceeding":
-        logger.info("Module steps accepted by user. Routing to SAS_PARAMETER_MAPPING.")
-        state.subgraph_completion_status = "completed_partial" # Moving to the next major step
-        return SAS_PARAMETER_MAPPING
+        logger.info("Module steps accepted by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
+        state.current_step_description = "Module steps accepted, preparing to generate individual XMLs."
+        state.dialog_state = "sas_generating_individual_xmls" # New dialog state
+        state.subgraph_completion_status = "processing" 
+        return GENERATE_INDIVIDUAL_XMLS # Changed target
 
     # Priority 3: Handling successful acceptance of task list (and module steps not yet reviewed/accepted)
     if state.task_list_accepted and not state.module_steps_accepted:
@@ -758,10 +760,12 @@ def create_robot_flow_graph(
     workflow.add_node(SAS_PROCESS_TO_MODULE_STEPS, functools.partial(process_description_to_module_steps_node, llm=llm))
     workflow.add_node(SAS_PARAMETER_MAPPING, parameter_mapping_node)
 
+    # --- Add the GENERATE_INDIVIDUAL_XMLS node ---
+    workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
+
     # --- Original Nodes (Commented out for SAS refactoring) ---
     # workflow.add_node(CORE_INTERACTION_NODE, functools.partial(preprocess_and_enrich_input_node, llm=llm))
     # workflow.add_node(UNDERSTAND_INPUT, functools.partial(understand_input_node, llm=llm))
-    # workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
     # workflow.add_node(GENERATE_RELATION_XML, generate_relation_xml_node_py) # generate_relation_xml_node_py is python only
     # workflow.add_node(GENERATE_FINAL_XML, functools.partial(generate_final_flow_xml_node, llm=llm))
     # workflow.add_node(ERROR_HANDLER, error_handler_node) # Optional: if a separate error logging node is desired.
@@ -793,6 +797,7 @@ def create_robot_flow_graph(
         {
             SAS_PROCESS_TO_MODULE_STEPS: SAS_PROCESS_TO_MODULE_STEPS,
             SAS_USER_INPUT_TO_TASK_LIST: SAS_USER_INPUT_TO_TASK_LIST,
+            GENERATE_INDIVIDUAL_XMLS: GENERATE_INDIVIDUAL_XMLS, # Added new route from review
             END: END
         }
     )
@@ -811,6 +816,16 @@ def create_robot_flow_graph(
         SAS_PARAMETER_MAPPING,
         route_after_sas_step3,
         {
+            END: END
+        }
+    )
+
+    # Add edge from GENERATE_INDIVIDUAL_XMLS
+    workflow.add_conditional_edges(
+        GENERATE_INDIVIDUAL_XMLS,
+        route_after_generate_individual_xmls,
+        {
+            SAS_PARAMETER_MAPPING: SAS_PARAMETER_MAPPING,
             END: END
         }
     )

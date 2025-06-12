@@ -1,6 +1,6 @@
-from .preprocess_and_enrich_input import preprocess_and_enrich_input_node
+from .merge_xml import preprocess_and_enrich_input_node
 from .understand_input import understand_input_node, ParsedStep, UnderstandInputSchema
-from .generate_individual_xmls import generate_individual_xmls_node
+from .generate_individual_xmls_llm import generate_individual_xmls_node
 from .generate_relation_xml import generate_relation_xml_node
 from .user_input_to_task_list import user_input_to_task_list_node
 from .process_description_to_module_steps import process_description_to_module_steps_node
