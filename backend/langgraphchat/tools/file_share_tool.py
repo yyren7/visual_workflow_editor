@@ -149,8 +149,32 @@ if __name__ == "__main__":
     # print("File download process finished.")
 
     # Example usage for upload, ensure these variables are defined if you uncomment
-    local_file_to_upload = "/workspace/backend/tests/llm_sas_test/specific_clamp_output/01_Open_BRG_PLT_Clamp_flow.xml"
-    remote_file_name_for_upload = "01_Open_BRG_PLT_Clamp_flow.xml"
+    local_file_to_upload = "/workspace/backend/tests/llm_sas_test/concatenated_output/concatenated_flow.xml"
+    remote_file_name_for_upload = "concatenated_flow.xml"
     print("\nStarting file upload process...")
     upload_file(local_file_to_upload, remote_file_name_for_upload)
-    print("File upload process finished.") 
+    print("File upload process finished.")
+
+    # print("\nStarting batch file upload process...")
+    # source_directory = "/workspace/backend/tests/llm_sas_test/specific_clamp_output"
+    # if not os.path.isdir(source_directory):
+    #     print(f"Error: Source directory '{source_directory}' does not exist or is not a directory.")
+    # else:
+    #     files_to_upload_in_dir = [f for f in os.listdir(source_directory) if os.path.isfile(os.path.join(source_directory, f))]
+    #     if not files_to_upload_in_dir:
+    #         print(f"No files found in directory '{source_directory}'.")
+    #     else:
+    #         successful_uploads = 0
+    #         failed_uploads = 0
+    #         for file_name in files_to_upload_in_dir:
+    #             local_file_path = os.path.join(source_directory, file_name)
+    #             remote_file_name = file_name # Use the same name for the remote file
+    #             print(f"--- Attempting to upload: {file_name} ---")
+    #             if upload_file(local_file_path, remote_file_name):
+    #                 successful_uploads += 1
+    #             else:
+    #                 failed_uploads += 1
+    #             print(f"--- Finished attempting to upload: {file_name} ---")
+            
+    #         print("\nBatch file upload process finished.")
+    #         print(f"Summary: {successful_uploads} files uploaded successfully, {failed_uploads} files failed to upload.") 
