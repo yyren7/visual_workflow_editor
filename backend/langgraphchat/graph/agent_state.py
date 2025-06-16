@@ -39,6 +39,7 @@ class AgentState(TypedDict):
         user_request_for_router: Optional[str] # 新增：专门用于task_router处理的用户请求内容
         rephrase_count: int # 新增：用于跟踪 rephrase 的次数，默认为0
         subgraph_completion_status: Optional[str] # 子图完成状态，例如 "completed_success", "needs_clarification", "error"
+        sas_planner_subgraph_state: Optional[dict] # 新增: 用于存储SAS Planner子图的内部状态
     """
     input: str
     messages: Annotated[List[BaseMessage], operator.add]
@@ -48,4 +49,5 @@ class AgentState(TypedDict):
     task_route_decision: Optional[RouteDecision]
     user_request_for_router: Optional[str] # 新增 
     rephrase_count: int # 新增字段 
-    subgraph_completion_status: Optional[str] # 子图完成状态，例如 "completed_success", "needs_clarification", "error" 
+    subgraph_completion_status: Optional[str] # 子图完成状态，例如 "completed_success", "needs_clarification", "error"
+    sas_planner_subgraph_state: Optional[dict] # 新增 

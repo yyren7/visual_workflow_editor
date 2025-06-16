@@ -1,7 +1,7 @@
 import logging
 import json
 import asyncio
-from typing import List, Optional, Dict, Any, Type
+from typing import List, Optional, Dict, Any, Type, AsyncIterator
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import SystemMessage, HumanMessage, BaseMessage
@@ -12,49 +12,59 @@ from .prompt_loader import get_filled_prompt
 
 logger = logging.getLogger(__name__)
 
+# --- BEGIN TEMP DEBUG LOGGING CONFIG FOR THIS MODULE ---
+if not logger.handlers:
+    _debug_console_handler = logging.StreamHandler()
+    _debug_console_handler.setLevel(logging.DEBUG)
+    _debug_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - [SAS LLM_UTILS DEBUG] - %(message)s')
+    _debug_console_handler.setFormatter(_debug_formatter)
+    logger.addHandler(_debug_console_handler)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False # Prevent double logging if parent is also configured, FOR DEBUG ONLY
+    logger.info("Temporary debug logging configured for sas.llm_utils.")
+# --- END TEMP DEBUG LOGGING CONFIG FOR THIS MODULE ---
+
 async def invoke_llm_for_text_output(
     llm: BaseChatModel,
     system_prompt_content: str,
     user_message_content: str,
     message_history: Optional[List[BaseMessage]] = None,
-) -> Dict[str, Any]:
+) -> AsyncIterator[str]:
     messages: List[BaseMessage] = [SystemMessage(content=system_prompt_content)]
     if message_history:
         messages.extend(message_history)
     messages.append(HumanMessage(content=user_message_content))
 
-    logger.info(f"Invoking LLM for raw text output.")
+    logger.info("Invoking LLM for raw text output (streaming enabled).")
     
     stream_for_gemini = "gemini" in getattr(llm, 'model', '').lower()
     stream_for_deepseek = hasattr(llm, 'streaming') and llm.streaming and "deepseek" in getattr(llm, 'model', '').lower()
     should_stream_llm = stream_for_gemini or stream_for_deepseek
 
     if should_stream_llm:
-        logger.info(f"Using streaming for LLM text output (Gemini: {stream_for_gemini}, DeepSeek: {stream_for_deepseek}).")
-        full_response_content = ""
+        logger.info(f"LLM UTILS: Using streaming for LLM text output (Gemini: {stream_for_gemini}, DeepSeek: {stream_for_deepseek}).")
+        chunk_count = 0
         try:
             async for chunk in llm.astream(messages):
-                if hasattr(chunk, 'content'):
-                    # Ensure chunk.content is not None before concatenation
-                    chunk_text = chunk.content if chunk.content is not None else ""
-                    print(chunk_text, end="", flush=True)
-                    full_response_content += chunk_text
-            print() 
-            return {"text_output": full_response_content}
+                chunk_count += 1
+                chunk_text = ""
+                if hasattr(chunk, 'content') and chunk.content is not None:
+                    chunk_text = chunk.content
+                
+                logger.info(f"LLM UTILS STREAM CHUNK [{chunk_count}]: Type={type(chunk)}, Content='{chunk_text[:100]}...'")
+                yield chunk_text
+            logger.info(f"LLM UTILS STREAM: Finished iterating. Total chunks received: {chunk_count}")
         except Exception as e:
             logger.error(f"LLM streaming call for string output failed. Error: {e}", exc_info=True)
-            if full_response_content:
-                 print("\\n<Streaming incomplete due to error>", flush=True)
-                 return {"text_output": full_response_content, "error": "LLM streaming failed partially.", "details": str(e)}
-            return {"error": "LLM streaming call for string output failed.", "details": str(e)}
+            raise
     else:
         chain = llm | StrOutputParser()
         try:
             ai_response_content = await chain.ainvoke(messages)
-            return {"text_output": ai_response_content}
+            yield ai_response_content
         except Exception as e:
-            logger.error(f"LLM call for string output failed. Error: {e}", exc_info=True)
-            return {"error": "LLM call for string output failed.", "details": str(e)}
+            logger.error(f"LLM call for string output (non-streaming) failed. Error: {e}", exc_info=True)
+            raise
 
 async def invoke_llm_for_json_output(
     llm: BaseChatModel,

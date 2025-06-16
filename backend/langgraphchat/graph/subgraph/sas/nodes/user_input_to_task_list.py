@@ -1,10 +1,11 @@
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 from pathlib import Path
+import uuid
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 from pydantic import ValidationError
 
 from ..state import RobotFlowAgentState, TaskDefinition
@@ -75,26 +76,77 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
         "Ensure the JSON is well-formed and complete."
     )
 
-    llm_response_text = await invoke_llm_for_text_output(
-        llm=llm,
-        system_prompt_content=system_prompt,
-        user_message_content=formatted_prompt,
-        message_history=None # Assuming messages in state are for overall history, not direct LLM context for this specific call
-    )
+    full_response_content = ""
+    stream_id = f"sas_step1_llm_stream_{uuid.uuid4()}"
+    streaming_message_index = -1  # Index of the streaming AIMessageChunk in state.messages
+    stream_error_occurred = False
 
-    if "error" in llm_response_text or not llm_response_text.get("text_output"):
-        error_detail = llm_response_text.get('error', 'Unknown LLM error')
-        error_msg_detail = llm_response_text.get('details', 'N/A')
-        logger.error(f"LLM call for SAS Step 1 (Task List) failed. Error: {error_detail}, Details: {error_msg_detail}")
+    try:
+        async for chunk_text in invoke_llm_for_text_output(
+            llm=llm,
+            system_prompt_content=system_prompt,
+            user_message_content=formatted_prompt,
+            message_history=None 
+        ):
+            if not chunk_text:
+                continue
+            
+            full_response_content += chunk_text
+            new_chunk_part = AIMessageChunk(content=chunk_text, id=stream_id)
+
+            if streaming_message_index == -1: # First chunk
+                state.messages = (state.messages or []) + [new_chunk_part]
+                streaming_message_index = len(state.messages) - 1
+            else: # Subsequent chunks, update existing AIMessageChunk
+                if streaming_message_index < len(state.messages or []) and \
+                   isinstance(state.messages[streaming_message_index], AIMessageChunk) and \
+                   state.messages[streaming_message_index].id == stream_id:
+                    state.messages[streaming_message_index] = state.messages[streaming_message_index] + new_chunk_part
+                else: # Fallback if message list was unexpectedly changed
+                    logger.warning(f"Streaming message at index {streaming_message_index} was not the expected AIMessageChunk for stream {stream_id}. Appending new chunk.")
+                    state.messages = (state.messages or []) + [new_chunk_part]
+                    streaming_message_index = len(state.messages) - 1
+        
+        logger.info(f"LLM streaming finished for stream {stream_id}. Accumulated {len(full_response_content)} characters.")
+
+    except Exception as e:
+        logger.error(f"Error streaming LLM output in user_input_to_task_list_node for stream {stream_id}: {e}", exc_info=True)
+        error_message_content = f"LLM streaming failed: {e}. "
+        if full_response_content:
+            error_message_content += f"Partial content: \'{full_response_content[:100]}...\'"
+        else:
+            error_message_content += "No content received before error."
+        
         state.is_error = True
-        state.error_message = f"LLM failed to generate task list: {error_detail}. Details: {error_msg_detail}"
+        state.error_message = error_message_content 
         state.dialog_state = "generation_failed"
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         state.subgraph_completion_status = "error"
-    else:
-        raw_json_output = llm_response_text["text_output"].strip()
-        logger.debug(f"Raw LLM output for task list: {raw_json_output}")
+        stream_error_occurred = True
+    
+    # After streaming loop (successful or with error)
+
+    final_message_content_for_this_node: Optional[str] = None
+    final_message_is_error = False
+
+    if stream_error_occurred:
+        if not full_response_content: # Complete failure, error message already set in state.error_message
+            final_message_content_for_this_node = state.error_message 
+            final_message_is_error = True
+        else: # Stream errored but got some content, try to parse it. If parsing fails, use stream error.
+            pass # Fall through to parsing, error_message is already set as a fallback
+
+    if not full_response_content and not state.is_error: # Stream finished with no error, but no content
+        logger.error(f"LLM returned no content after streaming successfully for stream {stream_id}.")
+        state.is_error = True
+        state.error_message = "LLM returned no content."
+        final_message_content_for_this_node = state.error_message
+        final_message_is_error = True
+        state.dialog_state = "generation_failed"
+        state.subgraph_completion_status = "error"
+
+    if final_message_content_for_this_node is None: # Means no prior critical error, or stream error with partial content
+        raw_json_output = full_response_content.strip()
+        logger.debug(f"Aggregated raw LLM output for task list (stream {stream_id}): {raw_json_output}")
         
         try:
             if raw_json_output.startswith("```json"):
@@ -105,26 +157,26 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
             parsed_tasks_json = json.loads(raw_json_output)
             
             if not isinstance(parsed_tasks_json, list):
-                raise ValueError("LLM output is not a JSON list.")
+                # Use a more specific error that will be user-facing
+                raise ValueError("LLM output should be a JSON list of tasks, but it was not.")
 
             generated_tasks: List[TaskDefinition] = []
             for task_data in parsed_tasks_json:
                 generated_tasks.append(TaskDefinition(**task_data))
             
             state.sas_step1_generated_tasks = generated_tasks
-            logger.info(f"SAS Step 1 (Task List Generation) completed successfully. {len(generated_tasks)} tasks generated for request iteration {state.revision_iteration}.")
+            logger.info(f"SAS Step 1 (Task List Generation) completed successfully for stream {stream_id}. {len(generated_tasks)} tasks generated for request iteration {state.revision_iteration}.")
             task_names = [task.name for task in generated_tasks]
             logger.info(f"Generated task names: {task_names}")
 
             state.dialog_state = "sas_step1_tasks_generated"
             state.current_step_description = f"SAS Step 1: Structured task list generated successfully (Iteration {state.revision_iteration})."
             
-            success_message_content = f"成功为请求 (迭代 {state.revision_iteration}) 生成了包含 {len(generated_tasks)} 个任务的任务列表: {', '.join(task_names[:3])}{'...' if len(task_names) > 3 else ''}."
-            if not any(msg.content == success_message_content for msg in state.messages if isinstance(msg, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=success_message_content)]
-            state.subgraph_completion_status = "completed_partial" # Or "processing" if more steps are guaranteed
+            final_message_content_for_this_node = f"成功为请求 (迭代 {state.revision_iteration}) 生成了包含 {len(generated_tasks)} 个任务的任务列表: {', '.join(task_names[:3])}{'...' if len(task_names) > 3 else ''}."
+            state.subgraph_completion_status = "completed_partial"
+            state.is_error = False # Explicitly clear error if parsing succeeds
+            state.error_message = None
 
-            # MODIFIED: Use the new utility function to save iteration data
             tasks_to_save = [task.model_dump() for task in generated_tasks]
             save_iteration_data_as_json(
                 run_output_directory=state.run_output_directory,
@@ -133,34 +185,65 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
                 base_filename_prefix="sas_step1_tasks",
                 file_description="SAS Step 1 generated task list"
             )
-            # End of MODIFIED block
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode LLM JSON output for task list: {e}. Output: {raw_json_output}", exc_info=True)
+            logger.error(f"Failed to decode LLM JSON output for task list (stream {stream_id}): {e}. Output: {raw_json_output}", exc_info=True)
             state.is_error = True
-            state.error_message = f"从LLM收到的任务列表JSON格式无效: {e}"
+            # Use state.error_message if already set by stream error and more informative, else use parsing error.
+            state.error_message = state.error_message if stream_error_occurred and full_response_content else f"从LLM收到的任务列表JSON格式无效: {e}"
+            final_message_content_for_this_node = state.error_message
+            final_message_is_error = True
             state.dialog_state = "generation_failed"
-            if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
             state.subgraph_completion_status = "error"
         except ValidationError as e:
-            logger.error(f"Validation error for generated task list: {e}. Parsed JSON: {parsed_tasks_json if 'parsed_tasks_json' in locals() else 'Error before parsing'}", exc_info=True)
+            logger.error(f"Validation error for generated task list (stream {stream_id}): {e}. Parsed JSON: {parsed_tasks_json if 'parsed_tasks_json' in locals() else 'Error before parsing'}", exc_info=True)
             state.is_error = True
-            state.error_message = f"生成的任务列表不符合预期结构: {e}"
+            error_detail_str = str(e)
+            simplified_error_msg = f"生成的任务列表结构校验失败。错误数量: {len(e.errors())}。首个错误细节: {e.errors()[0]['type'] if e.errors() else 'N/A'} at path \'{'.'.join(map(str,e.errors()[0]['loc'])) if e.errors() else 'N/A'}\'."
+            state.error_message = state.error_message if stream_error_occurred and full_response_content else simplified_error_msg
+            final_message_content_for_this_node = state.error_message
+            final_message_is_error = True
             state.dialog_state = "generation_failed"
-            if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
             state.subgraph_completion_status = "error"
-        except Exception as e:
-            logger.error(f"An unexpected error occurred while processing the LLM output for task list: {e}. Output: {raw_json_output}", exc_info=True)
+        except Exception as e: # Catch any other exception during parsing/validation
+            logger.error(f"An unexpected error occurred while processing the LLM output for task list (stream {stream_id}): {e}. Output: {raw_json_output}", exc_info=True)
             state.is_error = True
-            state.error_message = f"处理任务列表时发生意外错误: {e}"
+            state.error_message = state.error_message if stream_error_occurred and full_response_content else f"处理任务列表时发生意外错误: {e}"
+            final_message_content_for_this_node = state.error_message
+            final_message_is_error = True
             state.dialog_state = "generation_failed"
-            if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
             state.subgraph_completion_status = "error"
+
+    # Replace the streaming AIMessageChunk (if any) with the final AIMessage.
+    if final_message_content_for_this_node:
+        removed_streaming_message = False
+        if streaming_message_index != -1 and streaming_message_index < len(state.messages or []):
+            tracked_message = (state.messages or [])[streaming_message_index]
+            if isinstance(tracked_message, AIMessageChunk) and tracked_message.id == stream_id:
+                state.messages.pop(streaming_message_index)
+                removed_streaming_message = True
+                logger.info(f"Removed in-progress AIMessageChunk (ID: {stream_id}) at index {streaming_message_index}.")
+        
+        # As a safeguard, ensure no other message with this ID remains if removal by index failed.
+        if not removed_streaming_message:
+             current_messages_count = len(state.messages or [])
+             state.messages = [m for m in (state.messages or []) if not (isinstance(m, (AIMessageChunk, AIMessage)) and getattr(m, 'id', None) == stream_id)]
+             if len(state.messages or []) < current_messages_count:
+                 logger.info(f"Cleaned up other messages with stream ID {stream_id}.")
+
+        final_ai_message = AIMessage(content=final_message_content_for_this_node, id=stream_id)
+        
+        # Insert the final message where the streaming one was (if known and valid), or append.
+        if removed_streaming_message and streaming_message_index <= len(state.messages or []):
+             state.messages.insert(streaming_message_index, final_ai_message)
+        else:
+             state.messages = (state.messages or []) + [final_ai_message]
+        
+        log_msg_type = "Error" if final_message_is_error else "Success"
+        logger.info(f"Final {log_msg_type} AIMessage (ID: {stream_id}) set: \"{final_message_content_for_this_node[:100]}...\"")
+
+    # Ensure state.error_message correctly reflects the final message if it was an error
+    if final_message_is_error and final_message_content_for_this_node:
+        state.error_message = final_message_content_for_this_node
             
-    # Ensure user_input is cleared before exiting, as its content (if any) should have been processed
-    # or is irrelevant to the next step (review_and_refine, which expects new feedback).
-    # state.user_input = None # MODIFIED: Commented out
     return state.model_dump() 

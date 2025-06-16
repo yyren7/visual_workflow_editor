@@ -30,7 +30,7 @@ class RobotFlowAgentState(BaseModel):
     user_advice: Optional[str] = Field(None, description="User's feedback/advice for revising the current task description.")
     active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be current_user_request or a revised plan after user feedback).")
 
-    dialog_state: Literal[
+    dialog_state: Optional[Literal[
         "initial",                             #Initial state upon entering the subgraph
         "awaiting_robot_model_input",          #Robot model has been queried, awaiting user reply
         "awaiting_enrichment_confirmation",    #Enriched plan has been proposed, awaiting user confirmation
@@ -51,8 +51,13 @@ class RobotFlowAgentState(BaseModel):
         "sas_step3_completed",                  # SAS step 3 (parameter_mapping) completed successfully
         "sas_awaiting_task_list_review",        # SAS: System has presented the task list and is awaiting user acceptance or feedback.
         "sas_awaiting_module_steps_review",     # SAS: System has presented the module steps and is awaiting user acceptance or feedback.
-        "sas_description_updated_for_regeneration" # SAS: User description has been updated and is ready for regeneration of tasks.
-    ] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
+        "sas_description_updated_for_regeneration", # SAS: User description has been updated and is ready for regeneration of tasks.
+        "sas_step3_to_merge_xml",
+        "sas_merging_completed",
+        "sas_merging_completed_no_files",
+        "sas_merge_to_concatenate_xml",
+        "sas_processing_error"
+    ]] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
     
     clarification_question: Optional[str] = Field(None, description="A question posed to the user for clarification (e.g. about robot model, or ambiguous request).")
     proposed_enriched_text: Optional[str] = Field(None, description="The LLM-enriched version of the user's request, pending user confirmation.")
@@ -99,6 +104,8 @@ class RobotFlowAgentState(BaseModel):
     language: str = Field("zh", description="The language setting for user interactions, e.g., 'zh' or 'en'.")
 
     subgraph_completion_status: Optional[Literal["completed_success", "completed_partial", "needs_clarification", "error"]] = Field(None, description="Indicates how the robot_flow_subgraph concluded its execution for the current call.")
+
+    merged_xml_file_paths: Optional[List[str]] = Field(default_factory=list, description="Paths to XML files after merging individual task XMLs.")
 
     class Config:
         arbitrary_types_allowed = True 

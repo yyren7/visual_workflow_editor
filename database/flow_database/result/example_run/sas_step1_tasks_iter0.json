@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Main_Task",
+    "type": "MainTask",
+    "details": [],
+    "sub_tasks": [],
+    "description": "The main task representing the overall robotic process."
+  }
+]

@@ -16,7 +16,7 @@ if __name__ == '__main__' and (__package__ is None or __package__ == ''):
 
 import logging
 import functools
-from typing import Dict, Any, Optional, Callable, List
+from typing import Dict, Any, Optional, Callable, List, Tuple
 import asyncio
 import os
 import xml.etree.ElementTree as ET
@@ -40,7 +40,8 @@ from .nodes import (
     process_description_to_module_steps_node,
     parameter_mapping_node,
     user_input_to_task_list_node,
-    review_and_refine_node
+    review_and_refine_node,
+    generate_individual_xmls_node
 )
 from .xml_tools import WriteXmlFileTool
 from ....tools.file_share_tool import upload_file
@@ -69,6 +70,14 @@ SAS_USER_INPUT_TO_TASK_LIST = "sas_user_input_to_task_list"
 SAS_PROCESS_TO_MODULE_STEPS = "sas_process_to_module_steps"
 SAS_PARAMETER_MAPPING = "sas_parameter_mapping"
 SAS_REVIEW_AND_REFINE = "sas_review_and_refine"
+
+# New node names for XML processing
+SAS_MERGE_XMLS = "sas_merge_xmls"
+SAS_CONCATENATE_XMLS = "sas_concatenate_xmls"
+
+# Constants from merge_xml.py (adapt as needed)
+MERGE_XML_BLOCKLY_XMLNS = "https://developers.google.com/blockly/xml"
+CONCAT_XML_BLOCKLY_XMLNS = "https://developers.google.com/blockly/xml" # Added this line
 
 def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     logger.info("--- Initializing Agent State (Robot Flow Subgraph) ---")
@@ -466,6 +475,331 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
 
     return state.model_dump(exclude_none=True)
 
+# --- BEGIN NEW XML PROCESSING NODES ---
+
+def _get_block_from_file_for_merge(file_path: Path) -> Tuple[Optional[int], Optional[ET.Element]]:
+    try:
+        tree = ET.parse(file_path)
+        root_element = tree.getroot()
+        namespaced_block_tag = f"{{{MERGE_XML_BLOCKLY_XMLNS}}}block"
+        namespaced_xml_tag = f"{{{MERGE_XML_BLOCKLY_XMLNS}}}xml"
+        block_element = None
+
+        if root_element.tag == namespaced_block_tag or root_element.tag == "block":
+            block_element = root_element
+        elif root_element.tag == namespaced_xml_tag or root_element.tag == "xml":
+            block_element = root_element.find(namespaced_block_tag)
+            if block_element is None: block_element = root_element.find("block")
+            if block_element is None:
+                logger.warning(f"MergeXML Helper: Root is '{root_element.tag}' but no block child in {file_path}.")
+                return None, None
+        else:
+            logger.warning(f"MergeXML Helper: Unexpected root tag '{root_element.tag}' in {file_path}.")
+            return None, None
+        
+        block_no_str = block_element.get("data-blockNo")
+        if block_no_str is None:
+            logger.warning(f"MergeXML Helper: Missing 'data-blockNo' in {file_path}.")
+            return None, None
+        return int(block_no_str), block_element
+    except ET.ParseError as e:
+        logger.error(f"MergeXML Helper: Error parsing {file_path}: {e}")
+        return None, None
+    except ValueError:
+        logger.error(f"MergeXML Helper: Invalid 'data-blockNo' in {file_path}.")
+        return None, None
+    except Exception as e:
+        logger.error(f"MergeXML Helper: Unexpected error processing {file_path}: {e}", exc_info=True)
+        return None, None
+
+def _process_single_directory_for_merge(input_dir: Path, output_dir_base: Path, task_name_for_file: str) -> Optional[str]:
+    logger.info(f"MergeXML Helper: Processing directory: {input_dir.name} for task {task_name_for_file}")
+    all_blocks_with_order = []
+    xml_files_in_dir = list(input_dir.glob("*.xml"))
+    if not xml_files_in_dir:
+        logger.info(f"MergeXML Helper: No XML files found in {input_dir.name}.")
+        return None
+
+    for xml_file in xml_files_in_dir:
+        block_no, block_element = _get_block_from_file_for_merge(xml_file)
+        if block_element is not None and block_no is not None:
+            all_blocks_with_order.append((block_no, block_element, xml_file.name))
+    
+    if not all_blocks_with_order:
+        logger.info(f"MergeXML Helper: No valid blocks found in {input_dir.name} after parsing.")
+        return None
+        
+    all_blocks_with_order.sort(key=lambda item: item[0])
+    sorted_block_elements = [item[1] for item in all_blocks_with_order]
+
+    root_xml_element = ET.Element(f"{{{MERGE_XML_BLOCKLY_XMLNS}}}xml")
+    if sorted_block_elements:
+        first_block_element = sorted_block_elements[0]
+        root_xml_element.append(first_block_element)
+        current_parent_for_chaining = first_block_element
+        for i in range(1, len(sorted_block_elements)):
+            block_to_attach = sorted_block_elements[i]
+            parent_type = current_parent_for_chaining.get("type")
+            target_statement_name = None
+            if parent_type == "procedures_defnoreturn": target_statement_name = "STACK"
+            elif parent_type == "loop": target_statement_name = "DO"
+            elif parent_type in ["controls_repeat_ext", "controls_whileuntil", "controls_for"]: target_statement_name = "DO"
+            elif parent_type == "controls_if": target_statement_name = "DO0"
+
+            namespaced_statement_tag = f"{{{MERGE_XML_BLOCKLY_XMLNS}}}statement"
+            namespaced_next_tag = f"{{{MERGE_XML_BLOCKLY_XMLNS}}}next"
+            
+            if target_statement_name:
+                statement_element = current_parent_for_chaining.find(f"./{namespaced_statement_tag}[@name='{target_statement_name}']")
+                if statement_element is None:
+                    statement_element = ET.SubElement(current_parent_for_chaining, namespaced_statement_tag, {"name": target_statement_name})
+                
+                last_block_in_statement_chain = None
+                # Find first actual block in the statement to append to its <next>
+                current_block_in_statement = None
+                for child_node_in_stmt in list(statement_element):
+                    if child_node_in_stmt.tag == f"{{{MERGE_XML_BLOCKLY_XMLNS}}}block" or child_node_in_stmt.tag == "block":
+                        current_block_in_statement = child_node_in_stmt
+                        break
+                
+                if current_block_in_statement is not None:
+                    last_block_in_statement_chain = current_block_in_statement
+                    while True:
+                        next_tag_node = last_block_in_statement_chain.find(namespaced_next_tag)
+                        if next_tag_node is None or not len(list(next_tag_node)): break
+                        found_block_in_next_tag = False
+                        for block_candidate_in_next in list(next_tag_node):
+                            if block_candidate_in_next.tag == f"{{{MERGE_XML_BLOCKLY_XMLNS}}}block" or block_candidate_in_next.tag == "block":
+                                last_block_in_statement_chain = block_candidate_in_next
+                                found_block_in_next_tag = True; break
+                        if not found_block_in_next_tag: break
+                
+                if last_block_in_statement_chain is None: # No blocks yet in this statement, append directly to statement
+                    statement_element.append(block_to_attach)
+                else: # Append to the <next> of the last block in the statement chain
+                    ET.SubElement(last_block_in_statement_chain, namespaced_next_tag).append(block_to_attach)
+                current_parent_for_chaining = block_to_attach
+            else: # No specific statement target, attach via <next> to the current parent in the main flow
+                ET.SubElement(current_parent_for_chaining, namespaced_next_tag).append(block_to_attach)
+                current_parent_for_chaining = block_to_attach
+    
+    output_file_path = output_dir_base / f"{task_name_for_file}_merged.xml"
+    try:
+        output_dir_base.mkdir(parents=True, exist_ok=True)
+        tree = ET.ElementTree(root_xml_element)
+        if hasattr(ET, 'indent'): ET.indent(root_xml_element, space="  ")
+        tree.write(output_file_path, encoding="utf-8", xml_declaration=True)
+        logger.info(f"MergeXML Helper: Successfully assembled XML for {input_dir.name} to {output_file_path}")
+        return str(output_file_path)
+    except Exception as e:
+        logger.error(f"MergeXML Helper: Error writing output XML {output_file_path}: {e}", exc_info=True)
+        return None
+
+def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
+    logger.info("--- SAS: Merging Individual Task XMLs (Node) ---")
+    state.current_step_description = "Merging individual XMLs for each task flow."
+    state.is_error = False
+    state.error_message = None
+    
+    if not state.run_output_directory:
+        state.is_error = True; state.error_message = "run_output_directory is not set."; logger.error(state.error_message)
+        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        return state.model_dump(exclude_none=True)
+
+    base_input_dir = Path(state.run_output_directory)
+    # Individual XMLs are assumed to be in subdirectories directly under base_input_dir,
+    # named by generate_individual_xmls_node (e.g., "00_TaskName", "01_AnotherTask").
+    merged_output_dir = base_input_dir / "merged_task_flows"
+    try:
+        merged_output_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        state.is_error = True; state.error_message = f"Failed to create dir for merged flows: {e}"; logger.error(state.error_message, exc_info=True)
+        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        return state.model_dump(exclude_none=True)
+
+    merged_file_paths: List[str] = []
+    # Filter for directories that seem to be task outputs, avoiding our own output dirs
+    subdirs_to_process = []
+    if state.generated_node_xmls: # If individual XMLs were generated, their parent dirs were noted
+        # This is more robust if generate_individual_xmls_node saves files in task-specific subdirs.
+        # We need to derive the subdirectories from state.generated_node_xmls file paths
+        processed_parent_dirs = set()
+        for xml_info in state.generated_node_xmls:
+            if xml_info.file_path:
+                parent_dir = Path(xml_info.file_path).parent
+                if parent_dir not in processed_parent_dirs and parent_dir.name != merged_output_dir.name and parent_dir.name != "concatenated_flow_output":
+                    subdirs_to_process.append(parent_dir)
+                    processed_parent_dirs.add(parent_dir)
+    else: # Fallback if generated_node_xmls is not populated as expected, try to scan run_output_directory
+        logger.warning("MergeXML Node: state.generated_node_xmls is empty or not populated. Attempting to scan run_output_directory for task subdirectories.")
+        subdirs_to_process = [d for d in base_input_dir.iterdir() if d.is_dir() and d.name != merged_output_dir.name and d.name != "concatenated_flow_output"]
+
+    if not subdirs_to_process:
+        logger.warning(f"MergeXML Node: No task-specific subdirectories found in {base_input_dir} to merge based on scan or generated_node_xmls state.")
+        state.merged_xml_file_paths = []
+        state.dialog_state = "sas_merging_completed_no_files"
+        return state.model_dump(exclude_none=True)
+
+    ET.register_namespace("", MERGE_XML_BLOCKLY_XMLNS)
+    for task_dir in sorted(subdirs_to_process):
+        # Use task_dir.name as a base for the output filename. It should be like "00_TaskName".
+        # The _process_single_directory_for_merge expects a task_name_for_file which becomes part of output.
+        merged_file_path = _process_single_directory_for_merge(task_dir, merged_output_dir, task_dir.name)
+        if merged_file_path:
+            merged_file_paths.append(merged_file_path)
+        else:
+            logger.warning(f"MergeXML Node: Failed to process/merge XMLs for task directory: {task_dir.name}")
+            # Decide if a single failure here should be a graph-level error
+            # state.is_error = True; state.error_message = f"Failed to merge for {task_dir.name}" # Example
+
+    state.merged_xml_file_paths = merged_file_paths
+    if not merged_file_paths and subdirs_to_process: # If there were dirs but nothing was merged
+        state.is_error = True; state.error_message = "No XML files successfully merged."; logger.error(state.error_message)
+        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+    elif not subdirs_to_process:
+         state.dialog_state = "sas_merging_completed_no_files"
+    else:
+        logger.info(f"MergeXML Node: Successfully merged XMLs into {len(merged_file_paths)} file(s) in {merged_output_dir}.")
+        state.dialog_state = "sas_merging_completed"
+    
+    return state.model_dump(exclude_none=True)
+
+def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
+    logger.info("--- SAS: Concatenating Merged Task XMLs (Node) ---")
+    state.current_step_description = "Concatenating merged task XMLs into a final flow."
+    state.is_error = False
+    state.error_message = None
+
+    if not state.run_output_directory:
+        state.is_error = True; state.error_message = "run_output_directory not set."; logger.error(state.error_message)
+        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        return state.model_dump(exclude_none=True)
+
+    input_dir_for_concat = Path(state.run_output_directory) / "merged_task_flows"
+    output_dir_for_concat = Path(state.run_output_directory) / "concatenated_flow_output"
+    final_output_file = output_dir_for_concat / "final_concatenated_sas_flow.xml" # More specific name
+
+    try:
+        output_dir_for_concat.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        state.is_error = True; state.error_message = f"Failed to create dir for concatenated flow: {e}"; logger.error(state.error_message, exc_info=True)
+        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        return state.model_dump(exclude_none=True)
+
+    merged_files_to_concat_paths = state.merged_xml_file_paths
+    if not merged_files_to_concat_paths:
+        logger.warning(f"ConcatenateXML Node: No merged XML file paths found in state.merged_xml_file_paths (input dir was {input_dir_for_concat}). Generating empty final XML.")
+        state.final_flow_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{CONCAT_XML_BLOCKLY_XMLNS}"></xml>'
+        state.final_flow_xml_path = str(final_output_file)
+        try:
+            with open(state.final_flow_xml_path, "w", encoding="utf-8") as f: f.write(state.final_flow_xml_content)
+            logger.info(f"ConcatenateXML Node: Empty final XML saved to {state.final_flow_xml_path}")
+        except Exception as e_save:
+            state.is_error = True; state.error_message = f"Failed to save empty final XML: {e_save}"; logger.error(state.error_message, exc_info=True)
+            state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+            return state.model_dump(exclude_none=True)
+        state.dialog_state = "final_xml_generated_success"
+        state.subgraph_completion_status = "completed_success"
+        return state.model_dump(exclude_none=True)
+
+    ET.register_namespace("", CONCAT_XML_BLOCKLY_XMLNS)
+    concatenated_root = ET.Element(f"{{{CONCAT_XML_BLOCKLY_XMLNS}}}xml")
+    for xml_file_path_str in sorted(merged_files_to_concat_paths): # Sort by path for deterministic order
+        xml_file = Path(xml_file_path_str)
+        try:
+            if not xml_file.exists():
+                logger.warning(f"ConcatenateXML Node: File {xml_file} listed in merged_xml_file_paths does not exist. Skipping.")
+                continue
+            tree = ET.parse(xml_file)
+            root_element = tree.getroot()
+            if root_element.tag == f"{{{CONCAT_XML_BLOCKLY_XMLNS}}}xml" or root_element.tag == "xml":
+                for child in root_element:
+                    concatenated_root.append(child)
+            elif root_element.tag == f"{{{CONCAT_XML_BLOCKLY_XMLNS}}}block" or root_element.tag == "block":
+                concatenated_root.append(root_element)
+            else:
+                logger.warning(f"ConcatenateXML Node: File {xml_file} has unexpected root '{root_element.tag}'. Skipping.")
+        except ET.ParseError as e:
+            logger.error(f"ConcatenateXML Node: Error parsing {xml_file}: {e}")
+            state.is_error = True; state.error_message = (state.error_message or "") + f" Parse error in {xml_file.name};"
+        except Exception as e:
+            logger.error(f"ConcatenateXML: Unexpected error with {xml_file}: {e}")
+            state.is_error = True; state.error_message = (state.error_message or "") + f" Unexpected error with {xml_file.name};"
+
+    if state.is_error:
+        state.error_message = "Errors occurred during XML concatenation: " + (state.error_message or "Unknown concatenation error.")
+        state.dialog_state = "error"; state.subgraph_completion_status = "error"
+        return state.model_dump(exclude_none=True)
+
+    try:
+        if hasattr(ET, 'indent'): ET.indent(concatenated_root)
+        final_xml_str = ET.tostring(concatenated_root, encoding="unicode", xml_declaration=False)
+        final_xml_str_with_decl = f'<?xml version="1.0" encoding="UTF-8"?>\\n{final_xml_str}'
+        with open(final_output_file, "w", encoding="utf-8") as f: f.write(final_xml_str_with_decl)
+        state.final_flow_xml_path = str(final_output_file)
+        state.final_flow_xml_content = final_xml_str_with_decl
+        logger.info(f"ConcatenateXML: Successfully concatenated XML files to {final_output_file}")
+        state.dialog_state = "final_xml_generated_success"
+        state.subgraph_completion_status = "completed_success"
+    except Exception as e:
+        logger.error(f"ConcatenateXML: Error writing final concatenated XML to {final_output_file}: {e}")
+        state.is_error = True
+        state.error_message = f"Error writing final concatenated XML: {e}"
+        state.dialog_state = "error"; state.subgraph_completion_status = "error"
+        
+    return state.model_dump(exclude_none=True)
+
+# --- END NEW XML PROCESSING NODES ---
+
+# New routing function after SAS_MERGE_XMLS
+def route_after_sas_merge_xmls(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Routing after SAS Merge XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
+    if state.is_error or state.dialog_state == "sas_processing_error":
+        logger.warning(f"Error during SAS Merge XMLs or error state triggered. Error: {state.error_message}")
+        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=f"Error merging XMLs: {state.error_message}")]
+        state.subgraph_completion_status = "error"
+        return END
+    elif state.dialog_state == "sas_merging_completed" or state.dialog_state == "sas_merging_completed_no_files":
+        logger.info(f"SAS Merge XMLs completed (state: {state.dialog_state}). Routing to SAS_CONCATENATE_XMLS.")
+        state.subgraph_completion_status = "processing" # Indicate processing continues
+        # Ensure dialog state is neutral or indicative for the next step if needed
+        state.dialog_state = "sas_merging_done_ready_for_concat" 
+        return SAS_CONCATENATE_XMLS
+    else:
+        logger.error(f"Unexpected dialog state after SAS Merge XMLs: {state.dialog_state}. Routing to END as error.")
+        state.error_message = state.error_message or f"Unexpected state ('{state.dialog_state}') after XML merging."
+        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+        state.subgraph_completion_status = "error"
+        return END
+
+print("DEBUG: Defining route_after_sas_concatenate_xmls") # ADDED DEBUG PRINT
+# New routing function after SAS_CONCATENATE_XMLS
+def route_after_sas_concatenate_xmls(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Routing after SAS Concatenate XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, completion_status: {state.subgraph_completion_status}) ---")
+    if state.is_error or state.subgraph_completion_status == "error":
+        logger.warning(f"Error during SAS Concatenate XMLs or error state encountered. Error: {state.error_message}")
+        # Ensure error message is in AIMessages for the user if not already present
+        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=f"Error concatenating XMLs: {state.error_message}")]
+        # subgraph_completion_status should already be 'error' if set by the node
+        # dialog_state might also be 'error'
+        return END
+    elif state.subgraph_completion_status == "completed_success" and state.dialog_state == "final_xml_generated_success":
+        logger.info("SAS Concatenate XMLs completed successfully. Final XML generated. Routing to END.")
+        # No state change needed here as the node should have set it correctly for success.
+        return END
+    else:
+        # This case handles scenarios where the node might not have explicitly set completion_status to 'error'
+        # but the state is not a clear success state from concatenation.
+        logger.error(f"Unexpected state after SAS Concatenate XMLs: dialog_state='{state.dialog_state}', completion_status='{state.subgraph_completion_status}'. Routing to END as error.")
+        state.error_message = state.error_message or f"Unexpected state ('{state.dialog_state}', status: '{state.subgraph_completion_status}') after XML concatenation."
+        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+        state.subgraph_completion_status = "error"
+        return END
+
 # --- Conditional Edge Functions ---
 def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     logger.info(
@@ -619,6 +953,14 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
         state.subgraph_completion_status = "error"
         return END # Or a dedicated error handling node if desired
 
+    # NEW PRIORITY CHECK: If review_and_refine determined all steps were already accepted.
+    if state.dialog_state == "sas_all_steps_accepted_proceed_to_xml":
+        logger.info("All review steps already accepted (task list & module steps). Routing to GENERATE_INDIVIDUAL_XMLS.")
+        state.current_step_description = "All review steps previously accepted, proceeding to generate individual XMLs."
+        state.dialog_state = "sas_generating_individual_xmls" # Align with state for next step
+        state.subgraph_completion_status = "processing"
+        return GENERATE_INDIVIDUAL_XMLS
+
     # Priority 1: Handling states indicating the node is waiting for external user input
     if state.dialog_state == "sas_awaiting_task_list_review":
         logger.info("Awaiting user feedback on the TASK LIST. Ending graph run for clarification.")
@@ -669,32 +1011,32 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
 def route_after_sas_step2(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Routing after SAS Step 2: Module Steps Generation (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
     if state.is_error or state.dialog_state == "error":
-        logger.warning(f"Error during SAS Step 2. Error message: {state.error_message}")
+        logger.warning(f"Error during SAS Step 2 (Module Steps Generation). Error message: {state.error_message}")
         if not state.error_message:
              state.error_message = "Unknown error after SAS Step 2 (Module Steps Generation)."
         if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 2 (Module Steps Generation) Failed: {state.error_message}")]
         state.subgraph_completion_status = "error"
         return END
-    elif state.dialog_state == "sas_step2_module_steps_generated_for_review":
-        logger.info("SAS Step 2 (Module Steps Generation) completed. Routing to SAS_REVIEW_AND_REFINE for module steps review.")
-        state.subgraph_completion_status = "completed_partial" # Still partial, awaiting review
-        # Reset task_list_accepted as we are entering a new review phase for different content
-        # However, module_steps_accepted will be a new flag for this phase.
-        # For clarity, let's ensure we don't mix up acceptance flags.
-        # The review_and_refine_node will handle its own logic based on the incoming dialog_state.
+    elif state.dialog_state == "sas_step2_module_steps_generated_for_review" or state.dialog_state == "sas_step2_completed":
+        logger.info(f"SAS Step 2 (Module Steps Generation) completed (dialog_state: '{state.dialog_state}'). Routing to SAS_REVIEW_AND_REFINE for module steps review.")
+        state.subgraph_completion_status = "processing" 
+        state.dialog_state = "sas_step2_module_steps_generated_for_review" # Normalize state for review node
+        
+        # previous_value_for_log = None
+        # try:
+        #     previous_value_for_log = state.task_list_accepted
+        # except AttributeError:
+        #     logger.warning("PATCH in route_after_sas_step2: state.task_list_accepted attribute was missing before forcing to True.")
+        
+        # logger.info(f"PATCH in route_after_sas_step2: Forcing state.task_list_accepted = True. Previous value: {previous_value_for_log}")
+        # state.task_list_accepted = True # REMOVED THIS PROBLEMATIC LINE
+        logger.info(f"POST-REMOVAL in route_after_sas_step2: state.task_list_accepted = {state.task_list_accepted}, state.module_steps_accepted = {state.module_steps_accepted}, state.dialog_state = '{state.dialog_state}'")
+        
         return SAS_REVIEW_AND_REFINE
-    elif state.dialog_state == "sas_step2_completed": # Keep old state for now as a fallback during transition, but should be deprecated.
-        logger.warning(f"DEPRECATED ROUTE: SAS Step 2 reached 'sas_step2_completed'. Consider transitioning fully to 'sas_step2_module_steps_generated_for_review'. Routing to SAS_PARAMETER_MAPPING for now.")
-        state.subgraph_completion_status = "completed_partial"
-        return SAS_PARAMETER_MAPPING # This path should ideally be removed once review cycle for step 2 is robust.
     else:
         logger.warning(f"Unexpected state after SAS Step 2 (Module Steps Generation): {state.dialog_state}. Routing to END as error.")
         state.subgraph_completion_status = "error"
-        state.error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 2 (Module Steps Generation)."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-        return END
 
 # New routing function for SAS Step 3
 def route_after_sas_step3(state: RobotFlowAgentState) -> str:
@@ -708,9 +1050,9 @@ def route_after_sas_step3(state: RobotFlowAgentState) -> str:
         state.subgraph_completion_status = "error"
         return END
     elif state.dialog_state == "sas_step3_completed":
-        logger.info("SAS Step 3 (Parameter Mapping) completed successfully. All SAS steps complete.")
-        state.subgraph_completion_status = "completed_success"
-        return END
+        logger.info("SAS Step 3 (Parameter Mapping) completed successfully. Routing to SAS_MERGE_XMLS.")
+        state.dialog_state = "sas_step3_to_merge_xml" 
+        return SAS_MERGE_XMLS
     else:
         logger.warning(f"Unexpected state after SAS Step 3: {state.dialog_state}. Routing to END.")
         state.subgraph_completion_status = "error"
@@ -738,6 +1080,9 @@ def route_after_initialize_state(state: RobotFlowAgentState) -> str:
     if state.dialog_state == "sas_awaiting_task_list_review":
         logger.info("Dialog state is 'sas_awaiting_task_list_review'. Routing to SAS_REVIEW_AND_REFINE.")
         return SAS_REVIEW_AND_REFINE
+    elif state.dialog_state == "sas_awaiting_module_steps_review":
+        logger.info("Dialog state is 'sas_awaiting_module_steps_review'. Routing to SAS_REVIEW_AND_REFINE.")
+        return SAS_REVIEW_AND_REFINE
     else:
         # For all other cases:
         # - Initial run (dialog_state will be 'initial' or None, then set to 'initial' by initialize_state_node)
@@ -745,6 +1090,26 @@ def route_after_initialize_state(state: RobotFlowAgentState) -> str:
         # - If the flow logic somehow leads back to the start without being in a review cycle
         logger.info(f"Dialog state is '{state.dialog_state}'. Routing to SAS_USER_INPUT_TO_TASK_LIST for new task generation.")
         return SAS_USER_INPUT_TO_TASK_LIST
+
+# New routing function after GENERATE_INDIVIDUAL_XMLS
+def route_after_generate_individual_xmls(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Routing after Generate Individual XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, subgraph_status: {state.subgraph_completion_status}) ---")
+    if state.is_error or state.subgraph_completion_status == "error":
+        logger.warning(f"Error during Generate Individual XMLs. Error: {state.error_message}")
+        # Ensure error message is in messages for the user if not already there from the node itself
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=f"Error generating individual XMLs: {state.error_message}")]
+        # The node generate_individual_xmls_node should set subgraph_completion_status to "error"
+        # and dialog_state appropriately (e.g., "error" or a specific error state).
+        return END # Route to END on error
+    else:
+        # If successful, generate_individual_xmls_node sets:
+        # state.dialog_state = "generating_xml_relation" (this might be a legacy state name from the node)
+        # state.subgraph_completion_status = None (meaning not an error, processing continues)
+        logger.info("Generate Individual XMLs successful. Routing to SAS_PARAMETER_MAPPING.")
+        state.dialog_state = "sas_individual_xmls_generated_ready_for_mapping" # Set a more appropriate state for the next step
+        state.subgraph_completion_status = "processing" # Indicate that processing is ongoing
+        return SAS_PARAMETER_MAPPING
 
 # create_robot_flow_graph function (original was L344, this is a rewrite for the new flow)
 def create_robot_flow_graph(
@@ -762,6 +1127,10 @@ def create_robot_flow_graph(
 
     # --- Add the GENERATE_INDIVIDUAL_XMLS node ---
     workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
+
+    # --- Add new XML processing nodes ---
+    workflow.add_node(SAS_MERGE_XMLS, sas_merge_xml_node)
+    workflow.add_node(SAS_CONCATENATE_XMLS, sas_concatenate_xml_node)
 
     # --- Original Nodes (Commented out for SAS refactoring) ---
     # workflow.add_node(CORE_INTERACTION_NODE, functools.partial(preprocess_and_enrich_input_node, llm=llm))
@@ -806,9 +1175,8 @@ def create_robot_flow_graph(
         SAS_PROCESS_TO_MODULE_STEPS,
         route_after_sas_step2,
         {
-            SAS_PARAMETER_MAPPING: SAS_PARAMETER_MAPPING,
-            SAS_REVIEW_AND_REFINE: SAS_REVIEW_AND_REFINE,
-            END: END
+            SAS_REVIEW_AND_REFINE: SAS_REVIEW_AND_REFINE, 
+            END: END # For error cases
         }
     )
 
@@ -816,7 +1184,9 @@ def create_robot_flow_graph(
         SAS_PARAMETER_MAPPING,
         route_after_sas_step3,
         {
-            END: END
+            # END: END # Original route
+            SAS_MERGE_XMLS: SAS_MERGE_XMLS, # New route
+            END: END # For error cases in routing function
         }
     )
 
@@ -827,6 +1197,23 @@ def create_robot_flow_graph(
         {
             SAS_PARAMETER_MAPPING: SAS_PARAMETER_MAPPING,
             END: END
+        }
+    )
+
+    # Add edges for new XML processing nodes
+    workflow.add_conditional_edges(
+        SAS_MERGE_XMLS,
+        route_after_sas_merge_xmls,
+        {
+            SAS_CONCATENATE_XMLS: SAS_CONCATENATE_XMLS,
+            END: END # For error cases
+        }
+    )
+    workflow.add_conditional_edges(
+        SAS_CONCATENATE_XMLS,
+        route_after_sas_concatenate_xmls,
+        {
+            END: END # Success or error, both route to END but with different state.subgraph_completion_status
         }
     )
 
@@ -976,17 +1363,18 @@ async def main_test_run():
         current_run_output_dir = Path("/tmp/sas_test_fallback_output") 
         current_run_output_dir.mkdir(parents=True, exist_ok=True) # Try to make a fallback
         logger.warning(f"Using fallback output directory: {current_run_output_dir}")
-
-    initial_input_state = {
-        "messages": [], 
-        "user_input":  """この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。
+    '''"""この自動化プロセスは、ベアリング（BRG）、ベアリングハウジング（BH）、およびパレット（PLT）が関与する組み立ておよび取り扱いタスクを共同で完了することを目的としています。
 ロボットはまず、初期位置からベアリング（BRG）とベアリングハウジング（BH）を同時に取得します。
 このとき、ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。
 その後、ロボットはまずベアリングハウジング（BH）を右側のマシニングセンター（RMC）に配置します。
 続いて、そのベアリングハウジング（BH）にベアリング（BRG）をはめ込む形で配置し、圧入組み立て操作を行います。
 組み立て後、ロボットはRMCから組み立てられた部品を取り出し、左側のマシニングセンター（LMC）に転送して一時保管します。
 次に、ロボットはベアリングと共用するクランプを用いて空のパレットを取得し、このパレットをコンベア（CNV）の指定されたステーションに配置します。
-最後に、ロボットはLMCから以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。""",
+最後に、ロボットはLMCから以前に保管されていた組み立て済み部品を取得し、コンベア上のパレットに正確に配置して、サイクル全体を完了します。"""'''
+    initial_input_state = {
+        "messages": [], 
+        "user_input":  """ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。
+""",
         "config": {
             "OUTPUT_DIR_PATH": str(current_run_output_dir), # Pass the path to the unique run-specific directory
             "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new/" # Ensure this path is correct

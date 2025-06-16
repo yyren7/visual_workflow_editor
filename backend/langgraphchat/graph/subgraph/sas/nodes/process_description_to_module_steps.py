@@ -1,8 +1,9 @@
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple, Optional
 import json
 from pathlib import Path
 import re
+import asyncio
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, AIMessage
@@ -108,6 +109,88 @@ Please generate the detailed steps for the task defined above:
     
     return prompt_with_blocks + formatted_user_input_section
 
+async def _generate_steps_for_single_task_async(
+    task_def: TaskDefinition,
+    llm: BaseChatModel,
+    available_blocks_markdown: str,
+    node_index: int # For logging
+) -> Tuple[str, List[str], Optional[str]]: # Returns (task_name, list_of_details, error_message_or_none)
+    task_name = getattr(task_def, 'name', f"Unnamed Task {node_index+1}")
+    task_type = getattr(task_def, 'type', 'UnknownType')
+
+    prompt_file_name = f"step2_{task_type.lower()}_prompt_en.md"
+    prompt_file_path = STEP2_PROMPT_DIR / prompt_file_name
+    
+    base_prompt_template: str
+    if prompt_file_path.exists():
+        base_prompt_template = load_raw_prompt_file(str(prompt_file_path))
+        if not base_prompt_template:
+            logger.error(f"Failed to load SAS Step 2 prompt file: {prompt_file_path} for task type '{task_type}'. Using fallback.")
+            base_prompt_template = DEFAULT_FALLBACK_PROMPT_TEXT
+    else:
+        logger.warning(f"Prompt file not found: {prompt_file_path} for task type '{task_type}'. Using fallback.")
+        base_prompt_template = DEFAULT_FALLBACK_PROMPT_TEXT
+
+    if not getattr(task_def, 'description', None):
+        task_def.description = f"Task: {task_name}, Type: {task_type}. Generate appropriate steps."
+        logger.warning(f"Task '{task_name}' had an empty description. Using a generated one.")
+
+    user_prompt_content = _get_formatted_sas_step2_user_prompt(
+        task_definition=task_def,
+        available_blocks_markdown=available_blocks_markdown,
+        base_prompt_template=base_prompt_template
+    )
+
+    logger.info(f"Invoking LLM for SAS Step 2 for task: '{task_name}' (Type: '{task_type}').")
+    
+    system_prompt_content = """\\
+You are an AI assistant specialized in converting robot task definitions into specific, executable module steps.
+
+CRITICAL REQUIREMENTS:
+1.  Analyze the provided **Input Task Definition** (name, type, sub_tasks, description).
+2.  Follow the detailed instructions and examples within the user message, which are specific to the task\'s `type`.
+3.  Generate a sequence of detailed steps for the robot.
+4.  **Every generated step MUST strictly correspond to an "Available Robot Control Block"** detailed in the user message. Do not invent blocks or functionalities.
+5.  Assign concrete parameters as exemplified (point codes like P1, P21, I/O pin numbers, variable names, etc.).
+6.  Respect all precautions and limitations for each block type mentioned.
+7.  Your output MUST be **ONLY a valid JSON array of strings**. Each string in the array is a single, detailed step description, including its (Block Type: `block_name`) annotation.
+    Example: `["1. Select robot (Block Type: select_robot)", "2. Move to P1 (Block Type: moveP)"]`
+8.  Do NOT include any extra headers, explanations, or markdown formatting outside the JSON array itself."""
+
+    llm_response_content = ""
+    try:
+        async for chunk in invoke_llm_for_text_output(
+            llm=llm,
+            system_prompt_content=system_prompt_content,
+            user_message_content=user_prompt_content,
+            message_history=None
+        ):
+            if isinstance(chunk, str):
+                llm_response_content += chunk
+            elif isinstance(chunk, dict) and "error" in chunk: # Handle potential error dicts from stream
+                raise Exception(f"LLM stream error for {task_name}: {chunk.get('error')} - Details: {chunk.get('details')}")
+        
+        if not llm_response_content.strip():
+             raise ValueError("LLM returned empty content.")
+
+        generated_steps_str = llm_response_content.strip()
+        if generated_steps_str.startswith("```json"):
+            generated_steps_str = generated_steps_str[len("```json"):]
+        if generated_steps_str.endswith("```"):
+            generated_steps_str = generated_steps_str.rsplit("```", 1)[0].strip()
+
+        parsed_details = json.loads(generated_steps_str)
+            
+        if isinstance(parsed_details, list) and all(isinstance(s, str) for s in parsed_details):
+            logger.info(f"SAS Step 2 LLM call successful for task '{task_name}'. {len(parsed_details)} module steps generated.")
+            return task_name, parsed_details, None
+        else:
+            raise ValueError("Parsed JSON is not a list of strings.")
+
+    except Exception as e:
+        error_msg = f"Error processing task '{task_name}': {e}. Raw LLM output hint: {llm_response_content[:200]}..."
+        logger.error(error_msg, exc_info=True)
+        return task_name, [f"Error: Could not generate module steps. Details: {str(e)[:100]}"], error_msg
 
 async def process_description_to_module_steps_node(state: RobotFlowAgentState, llm: BaseChatModel) -> Dict[str, Any]:
     """
@@ -115,10 +198,12 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     into specific, executable module steps using task-type-specific prompts.
     """
     logger.info(f"--- Entering SAS Step 2: Process Description to Module Steps (dialog_state: {state.dialog_state}) ---")
-    state.current_step_description = "SAS Step 2: Converting individual task descriptions to specific module steps."
+    logger.info(f"    Initial state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
+    state.current_step_description = "SAS Step 2: Converting individual task descriptions to specific module steps (parallel execution)."
     state.is_error = False
     state.error_message = None
-    all_generated_module_steps_for_logging = [] # For combined logging
+    aggregate_error_messages = []
+    all_generated_module_steps_for_logging = []
 
     if not state.sas_step1_generated_tasks:
         logger.error("state.sas_step1_generated_tasks is missing. Cannot perform SAS Step 2.")
@@ -128,113 +213,97 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
 
-    # Load node descriptions once
     node_descriptions = load_node_descriptions()
     available_blocks_markdown = _generate_available_blocks_markdown(node_descriptions)
 
+    # Create a list of coroutines for processing each task
+    coroutines = []
     for i, task_def in enumerate(state.sas_step1_generated_tasks):
-        task_name = getattr(task_def, 'name', f"Unnamed Task {i+1}")
-        task_type = getattr(task_def, 'type', 'UnknownType')
-        task_def.details = [] # Initialize/clear details for the current task
-
-        prompt_file_name = f"step2_{task_type.lower()}_prompt_en.md"
-        prompt_file_path = STEP2_PROMPT_DIR / prompt_file_name
-        
-        base_prompt_template: str
-        if prompt_file_path.exists():
-            base_prompt_template = load_raw_prompt_file(str(prompt_file_path))
-            if not base_prompt_template:
-                logger.error(f"Failed to load SAS Step 2 prompt file: {prompt_file_path} for task type '{task_type}'. Using fallback.")
-                base_prompt_template = DEFAULT_FALLBACK_PROMPT_TEXT # Fallback to a generic prompt
-        else:
-            logger.warning(f"Prompt file not found: {prompt_file_path} for task type '{task_type}'. Using fallback.")
-            base_prompt_template = DEFAULT_FALLBACK_PROMPT_TEXT # Fallback
-
-        if not getattr(task_def, 'description', None): # Ensure description exists
-            task_def.description = f"Task: {task_name}, Type: {task_type}. Generate appropriate steps."
-            logger.warning(f"Task '{task_name}' had an empty description. Using a generated one.")
-
-        user_prompt_content = _get_formatted_sas_step2_user_prompt(
-            task_definition=task_def,
-            available_blocks_markdown=available_blocks_markdown,
-            base_prompt_template=base_prompt_template
+        # Initialize/clear details for the current task before starting async processing
+        task_def.details = [] 
+        coroutines.append(
+            _generate_steps_for_single_task_async(
+                task_def=task_def,
+                llm=llm,
+                available_blocks_markdown=available_blocks_markdown,
+                node_index=i
+            )
         )
 
-        logger.info(f"Invoking LLM for SAS Step 2 for task: '{task_name}' (Type: '{task_type}').")
-        
-        # System prompt emphasizes core requirements and output format
-        system_prompt_content = """\
-You are an AI assistant specialized in converting robot task definitions into specific, executable module steps.
+    # Run all task processing coroutines concurrently
+    logger.info(f"Starting parallel generation of module steps for {len(coroutines)} tasks.")
+    # return_exceptions=True allows us to gather all results, even if some tasks fail
+    results = await asyncio.gather(*coroutines, return_exceptions=True)
+    logger.info(f"Finished parallel generation. Received {len(results)} results.")
 
-CRITICAL REQUIREMENTS:
-1.  Analyze the provided **Input Task Definition** (name, type, sub_tasks, description).
-2.  Follow the detailed instructions and examples within the user message, which are specific to the task's `type`.
-3.  Generate a sequence of detailed steps for the robot.
-4.  **Every generated step MUST strictly correspond to an "Available Robot Control Block"** detailed in the user message. Do not invent blocks or functionalities.
-5.  Assign concrete parameters as exemplified (point codes like P1, P21, I/O pin numbers, variable names, etc.).
-6.  Respect all precautions and limitations for each block type mentioned.
-7.  Your output MUST be **ONLY a valid JSON array of strings**. Each string in the array is a single, detailed step description, including its (Block Type: `block_name`) annotation.
-    Example: `["1. Select robot (Block Type: select_robot)", "2. Move to P1 (Block Type: moveP)"]`
-8.  Do NOT include any extra headers, explanations, or markdown formatting outside the JSON array itself."""
+    # Process results
+    for i, result_or_exception in enumerate(results):
+        task_def_to_update = state.sas_step1_generated_tasks[i] # Get the original task object
+        task_name_for_log = getattr(task_def_to_update, 'name', f"Unnamed Task {i+1}")
+        task_type_for_log = getattr(task_def_to_update, 'type', 'UnknownType')
 
-        llm_response = await invoke_llm_for_text_output(
-            llm=llm,
-            system_prompt_content=system_prompt_content,
-            user_message_content=user_prompt_content,
-            message_history=None 
-        )
-
-        if "error" in llm_response or not llm_response.get("text_output"):
-            error_msg_llm = f"LLM call for task '{task_name}' failed. Error: {llm_response.get('error')}, Details: {llm_response.get('details')}"
-            logger.error(error_msg_llm)
-            task_def.details = [f"Error: LLM failed to generate module steps. Details: {llm_response.get('error', 'Unknown LLM error')}"]
-            state.is_error = True 
-            state.error_message = (state.error_message or "") + f"LLM error for {task_name}. "
+        if isinstance(result_or_exception, Exception):
+            # Handle exceptions raised by _generate_steps_for_single_task_async explicitly
+            error_msg = f"Exception during module step generation for task '{task_name_for_log}': {str(result_or_exception)}"
+            logger.error(error_msg, exc_info=result_or_exception) # Log with exc_info
+            task_def_to_update.details = [f"Error: Exception occurred - {str(result_or_exception)[:150]}"]
+            aggregate_error_messages.append(f"Error for {task_name_for_log}: {str(result_or_exception)}")
+            state.is_error = True
         else:
-            generated_steps_str = llm_response["text_output"].strip()
-            try:
-                # Remove potential markdown code block fences if LLM wraps output
-                if generated_steps_str.startswith("```json"):
-                    generated_steps_str = generated_steps_str[len("```json"):]
-                if generated_steps_str.endswith("```"): # Handle if ```json is on one line and ``` on another
-                    generated_steps_str = generated_steps_str.rsplit("```", 1)[0].strip()
+            # Result is a tuple: (task_name, list_of_details, error_message_or_none)
+            _processed_task_name, processed_details, individual_task_error_msg = result_or_exception
+            
+            task_def_to_update.details = processed_details # Update the original task_def's details
+            
+            if individual_task_error_msg:
+                # This means the LLM call itself or parsing within the helper function had an issue, but didn't raise an unhandled exception to gather
+                aggregate_error_messages.append(f"Error for {_processed_task_name} (reported by helper): {individual_task_error_msg}")
+                state.is_error = True # Mark overall error
+                logger.warning(f"Task '{_processed_task_name}' completed with reported error: {individual_task_error_msg}")
+            else:
+                all_generated_module_steps_for_logging.append(f"### Module Steps for Task: {task_name_for_log} (Type: {task_type_for_log})\\n{json.dumps(processed_details, indent=2)}")
+                logger.info(f"Successfully processed and updated details for task '{task_name_for_log}'.")
 
-                parsed_details = json.loads(generated_steps_str)
-                
-                if isinstance(parsed_details, list) and all(isinstance(s, str) for s in parsed_details):
-                    task_def.details = parsed_details
-                    all_generated_module_steps_for_logging.append(f"### Module Steps for Task: {task_name} (Type: {task_type})\n{json.dumps(parsed_details, indent=2)}")
-                    logger.info(f"SAS Step 2 LLM call successful for task '{task_name}'. {len(parsed_details)} module steps assigned.")
-                else:
-                    raise ValueError("Parsed JSON is not a list of strings.")
-
-            except (json.JSONDecodeError, ValueError) as e:
-                error_msg_parse = f"Failed to parse LLM output as JSON array of strings for task '{task_name}'. Error: {e}. Raw output: {generated_steps_str[:500]}"
-                logger.error(error_msg_parse)
-                task_def.details = [f"Error: LLM output was not a valid JSON array of strings. Raw: {generated_steps_str[:200]}..."]
-                state.is_error = True
-                state.error_message = (state.error_message or "") + f"Output parsing error for {task_name}. "
-
-    # After processing all tasks, finalize state
     if state.is_error:
-        final_error_detail = state.error_message if state.error_message else "Unknown error during module step generation."
+        final_error_detail = "; ".join(aggregate_error_messages) if aggregate_error_messages else "Unknown error during parallel module step generation."
         state.error_message = f"SAS Step 2 encountered errors: {final_error_detail}"
         logger.error(state.error_message)
         state.dialog_state = "error"
         state.subgraph_completion_status = "error"
-        if not any(state.error_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)): # defensive str(msg.content)
+        if not any(state.error_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
     else:
         state.sas_step2_module_steps = "\\n\\n".join(all_generated_module_steps_for_logging) 
         state.dialog_state = "sas_step2_module_steps_generated_for_review"
-        state.current_step_description = f"SAS Step 2: Module steps generated for all {len(state.sas_step1_generated_tasks)} tasks, awaiting review."
+        state.current_step_description = f"SAS Step 2: Module steps generated in parallel for all {len(state.sas_step1_generated_tasks)} tasks, awaiting review."
+        
+        logger.info("Populating state.parsed_flow_steps from successfully processed tasks after parallel execution.")
+        parsed_steps_list = []
+        for task_def_obj in state.sas_step1_generated_tasks:
+            # Check if task_def_obj.details has error messages; if so, perhaps exclude or mark them?
+            # For now, assume details are either good steps or an error string from the helper.
+            # The generate_individual_xmls_node will need to handle potentially error-filled details.
+            parsed_steps_list.append({
+                "name": getattr(task_def_obj, 'name', 'UnknownTaskName'),
+                "type": getattr(task_def_obj, 'type', 'UnknownTaskType'),
+                "description": getattr(task_def_obj, 'description', ''),
+                "details": getattr(task_def_obj, 'details', []), # These are the crucial module steps
+                "sub_tasks": getattr(task_def_obj, 'sub_tasks', [])
+            })
+        state.parsed_flow_steps = parsed_steps_list
+        logger.info(f"Successfully populated state.parsed_flow_steps with {len(state.parsed_flow_steps)} entries after parallel processing.")
         
         review_message = (
-            f"Module steps have been generated for all {len(state.sas_step1_generated_tasks)} tasks "
-            f"and assigned to their respective 'details' fields (as JSON arrays of strings). They are now ready for your review."
+            f"Module steps have been generated in parallel for all {len(state.sas_step1_generated_tasks)} tasks "
+            f"and assigned to their respective 'details' fields. They are now ready for your review."
         )
-        if not any(review_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)): # defensive str(msg.content)
+        if not any(review_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=review_message)]
         state.subgraph_completion_status = "completed_partial" 
         
+    logger.info(f"    Final state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
     return state.dict(exclude_none=True) 
+
+__all__ = [
+    "process_description_to_module_steps_node"
+] 

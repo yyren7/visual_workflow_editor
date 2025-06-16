@@ -8,7 +8,7 @@ from langgraph.errors import GraphRecursionError
 # 主图的状态
 from ..agent_state import AgentState 
 # 机器人流程子图的创建函数和状态 (假设其状态也是 AgentState 或兼容的)
-from .robot_flow_planner.graph_builder import create_robot_flow_graph, RobotFlowAgentState
+from ..subgraph.sas.graph_builder import create_robot_flow_graph, RobotFlowAgentState
 # 机器人流程子图使用的 LLM 实例需要从某个地方获取，这里我们假设可以传递主 LLM
 # 或者子图内部会实例化自己的 LLM (目前 create_robot_flow_graph 需要一个 llm)
 
@@ -19,47 +19,31 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> Asyn
     调用并执行机器人流程图子图。
     将当前主图的对话历史传递给子图，并在子图完成后，将其历史更新回主图。
     此节点现在支持流式输出 AIMessageChunk。
+    管理SAS子图的持久化状态以支持多轮澄清。
     """
-    logger.info("--- Invoking Robot Flow Subgraph (Streaming Enabled) ---")
+    logger.info("--- Invoking Robot Flow Subgraph (Streaming Enabled, State Persistence Enabled) ---")
 
     # 1. 从主图状态获取当前消息历史
     current_main_messages: List[BaseMessage] = list(state.get("messages", []))
     current_flow_id = state.get("current_flow_id")
-    flow_context = state.get("flow_context")
+    # flow_context = state.get("flow_context") # Not directly used for subgraph input prep here
 
     # 2. 创建机器人流程图实例
-    # create_robot_flow_graph 需要一个 llm 参数。我们传递主图的 llm。
     try:
         robot_flow_subgraph = create_robot_flow_graph(llm=llm)
         logger.info("Robot flow subgraph instance created successfully.")
     except Exception as e:
         logger.error(f"Error creating robot_flow_subgraph: {e}", exc_info=True)
-        # 如果子图创建失败，返回错误信息到主图
         error_message = AIMessage(content=f"Error: Could not initialize the robot flow planning module. Details: {e}")
-        # For generator, yield error and stop
-        yield {"messages": current_main_messages + [error_message], "subgraph_completion_status": "error", "is_error": True, "error_message": str(e)}
+        yield {"messages": current_main_messages + [error_message], "subgraph_completion_status": "error", "is_error": True, "error_message": str(e), "sas_planner_subgraph_state": None}
         return
 
     # 3. 准备子图的初始状态
-    # RobotFlowAgentState 可能有不同的字段。我们需要映射主 AgentState 的相关信息。
-    # 假设 RobotFlowAgentState 也有 'messages' 字段用于对话。
-    # 其他字段如 'config', 'current_flow_id' 等需要根据 RobotFlowAgentState 的定义来设置。
-    # 我们将 current_main_messages 传递给子图。
-    
-    # 构造一个初始的 RobotFlowAgentState
-    # 注意: RobotFlowAgentState 的定义可能需要我们传递特定的初始值。
-    # 我们需要确保这里的初始化是兼容的。
-    # 从 graph_builder.py 中看到 RobotFlowAgentState 包含 config, messages, current_flow_id, raw_user_request 等。
-    # 我们将传递 messages 和 current_flow_id。
-    # config 可能由子图的 initialize_state_node 设置。
-    # raw_user_request 可能需要从最新的 HumanMessage 中提取。
-    
     raw_user_request_for_subgraph = ""
     if current_main_messages and isinstance(current_main_messages[-1], HumanMessage):
         if isinstance(current_main_messages[-1].content, str):
             raw_user_request_for_subgraph = current_main_messages[-1].content
-        elif isinstance(current_main_messages[-1].content, list): # 处理 content 是列表的情况（例如图片）
-             # 查找文本部分
+        elif isinstance(current_main_messages[-1].content, list):
             for item in current_main_messages[-1].content:
                 if isinstance(item, dict) and item.get("type") == "text":
                     raw_user_request_for_subgraph = item.get("text", "")
@@ -67,48 +51,48 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> Asyn
             if not raw_user_request_for_subgraph:
                  logger.warning("Last human message content is a list but no text part found for raw_user_request_for_subgraph.")
 
-    #  initial_subgraph_state: RobotFlowAgentState = { # type: ignore # RobotFlowAgentState is a TypedDict
-    #     "messages": current_main_messages, # 传递整个历史，子图可能需要它
-    #     "raw_user_request": raw_user_request_for_subgraph,
-    #     "current_flow_id": current_flow_id,
-    #     # "config": {}, # 让子图的 initialize_state_node 处理默认配置
-    #     # 其他 RobotFlowAgentState 的必须字段需要在这里初始化或由子图的入口处理
-    #     # "dialog_state": "initial", # RobotFlowAgentState 的默认值
-    #     # "generated_node_xmls": [],
-    #     # "parsed_flow_steps": [],
-    # }
-    # RobotFlowAgentState 会使用 Pydantic 的 default_factory, 所以只需要提供非默认值
-    initial_subgraph_input = {
-        "messages": current_main_messages,
-        "user_input": raw_user_request_for_subgraph,
-        "current_flow_id": current_flow_id,
-        # 如果 RobotFlowAgentState 的 config 字段有 default_factory=dict, 则不需要显式提供空字典
-    }
+    persisted_sas_state = state.get("sas_planner_subgraph_state")
+    subgraph_input_for_current_run: dict # This will be RobotFlowAgentState compatible
 
+    if persisted_sas_state:
+        logger.info(f"Found persisted SAS subgraph state. Using it as a base.")
+        subgraph_input_for_current_run = persisted_sas_state.copy() # Start with the old state
+        subgraph_input_for_current_run["user_input"] = raw_user_request_for_subgraph # Provide new user input for this turn
+        subgraph_input_for_current_run["messages"] = current_main_messages # Update with the latest full message history
+        # Other fields like current_flow_id, config should be part of persisted_sas_state if set previously.
+        # The SAS initialize_state_node will re-evaluate user_input and messages.
+        logger.info(f"Persisted SAS state updated with new user_input: '{raw_user_request_for_subgraph[:50]}...' and current messages ({len(current_main_messages)}).")
+    else:
+        logger.info("No persisted SAS state. Creating fresh input for SAS subgraph.")
+        subgraph_input_for_current_run = {
+            "messages": current_main_messages,
+            "user_input": raw_user_request_for_subgraph,
+            "current_flow_id": current_flow_id,
+            # Config will be handled by SAS subgraph's initialize_state_node using its defaults
+            # and potentially merging anything explicitly passed in its 'config' field within this dict.
+            # For a fresh run, we are not passing an explicit 'config' dict here, letting SAS defaults take over.
+        }
 
-    logger.info(f"Invoking robot_flow_subgraph with initial input containing {len(current_main_messages)} messages and user_input: '{raw_user_request_for_subgraph[:100]}...'")
+    logger.info(f"Invoking robot_flow_subgraph with input: { {k: (v[:100] + '...' if isinstance(v, str) and len(v) > 100 else v) for k, v in subgraph_input_for_current_run.items() if k != 'messages'} } containing {len(subgraph_input_for_current_run.get('messages',[]))} messages.")
     
     # 4. 执行子图
     final_subgraph_state_dict = None
 
     try:
-        async for event in robot_flow_subgraph.astream_events(initial_subgraph_input, {"recursion_limit": 10}, version="v2"):
+        async for event in robot_flow_subgraph.astream_events(subgraph_input_for_current_run, {"recursion_limit": 10}, version="v2"): # recursion_limit might need adjustment
             if event["event"] == "on_chain_stream":
-                # This event contains chunks from streaming runnables within the subgraph.
-                # The chunk is in event["data"]["chunk"].
-                # This chunk itself is typically a dict like: {"node_name_in_subgraph": {"messages": [AIMessageChunk(...)]}}
                 chunk_data = event.get("data", {}).get("chunk")
                 if isinstance(chunk_data, dict):
-                    for _node_name, node_output in chunk_data.items(): # node_name is key, node_output is value (the partial state)
+                    for _node_name, node_output in chunk_data.items():
                         if isinstance(node_output, dict) and "messages" in node_output:
                             messages_in_chunk = node_output["messages"]
                             if messages_in_chunk and isinstance(messages_in_chunk[-1], AIMessageChunk):
-                                # Stream out the AIMessageChunk
                                 logger.debug(f"Streaming AIMessageChunk from subgraph: {messages_in_chunk[-1].content}")
                                 yield {"messages": [messages_in_chunk[-1]]}
             
             elif event["event"] == "on_chain_end" and event["name"] == "LangGraph": 
                 if isinstance(event["data"], dict) and "output" in event["data"]:
+                    # The output here is the final state of the subgraph
                     final_subgraph_state_dict = event["data"]["output"]
                     logger.info(f"Subgraph astream_events ended. Final state keys: {final_subgraph_state_dict.keys() if isinstance(final_subgraph_state_dict, dict) else 'Not a dict'}")
                 else:
@@ -129,9 +113,10 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> Asyn
             "messages": messages_to_return,
             "subgraph_completion_status": "error",
             "is_error": True, 
-            "error_message": error_message_content
+            "error_message": error_message_content,
+            "sas_planner_subgraph_state": None # Clear SAS state on error
         }
-        return # Stop generation
+        return 
     except Exception as e:
         logger.error(f"Error during robot_flow_subgraph.astream_events execution: {e}", exc_info=True)
         error_message_content = f"Error: An issue occurred while interacting with the robot flow planning module. Details: {str(e)}"
@@ -140,73 +125,62 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> Asyn
             "messages": messages_to_return,
             "subgraph_completion_status": "error",
             "is_error": True,
-            "error_message": error_message_content
+            "error_message": error_message_content,
+            "sas_planner_subgraph_state": None # Clear SAS state on error
         }
-        return # Stop generation
+        return 
 
-    # 5. 从子图的最终状态提取消息历史
-    # Ensure final_subgraph_state_dict is a dictionary before calling .get()
+    # 5. 从子图的最终状态提取消息历史和完成状态
     subgraph_final_messages: List[BaseMessage] = []
     completion_status: Optional[str] = None
     
     if isinstance(final_subgraph_state_dict, dict):
-        subgraph_final_messages = final_subgraph_state_dict.get("messages", [])
+        # The messages from the subgraph state are what we need to pass back to the main graph's history.
+        subgraph_final_messages = final_subgraph_state_dict.get("messages", []) 
         completion_status = final_subgraph_state_dict.get("subgraph_completion_status")
         logger.info(f"Extracted from final_subgraph_state_dict: {len(subgraph_final_messages)} messages, status: {completion_status}")
-    elif final_subgraph_state_dict is RobotFlowAgentState:
-        # If it's already a RobotFlowAgentState Pydantic model instance (less likely from astream_events raw output)
-        logger.info("final_subgraph_state_dict is a RobotFlowAgentState Pydantic model instance.")
-        subgraph_final_messages = final_subgraph_state_dict.messages
-        completion_status = final_subgraph_state_dict.subgraph_completion_status
     else:
-        logger.error(f"final_subgraph_state_dict is not a dictionary or RobotFlowAgentState instance. Type: {type(final_subgraph_state_dict)}. Cannot extract messages or status.")
-        # This case implies a problem with how final_subgraph_state_dict was obtained or its structure.
-        # We should return an error state for the main graph.
+        logger.error(f"final_subgraph_state_dict is not a dictionary. Type: {type(final_subgraph_state_dict)}. Cannot extract messages or status.")
         error_message_content = "Internal error: Subgraph returned an unexpected final state format."
         messages_to_return = list(current_main_messages or []) + [AIMessage(content=error_message_content)]
         yield {
             "messages": messages_to_return,
             "subgraph_completion_status": "error",
             "is_error": True,
-            "error_message": error_message_content
+            "error_message": error_message_content,
+            "sas_planner_subgraph_state": None # Clear SAS state
         }
-        return # Stop generation
+        return 
 
-    if not subgraph_final_messages and completion_status != "needs_clarification": # Allow no messages if only needs_clarification
-        logger.warning("Robot flow subgraph did not return any messages. Main history will not be updated by subgraph.")
-        # 仍然返回原始消息，可能子图通过其他方式指示了完成或错误
-        # 但通常我们期望子图通过消息进行通信
-        yield {
-            "messages": current_main_messages, # Yield original messages
-            "subgraph_completion_status": completion_status,
-        }
-        return # Stop generation
+    if not subgraph_final_messages and completion_status != "needs_clarification":
+        logger.warning("Robot flow subgraph did not return any messages and does not need clarification. Main history might not be fully updated by subgraph.")
+        # This situation is a bit ambiguous. If the subgraph truly finished without messages,
+        # we still need to decide what the main graph's message history should be.
+        # For now, we will pass back the subgraph_final_messages (which is empty in this branch).
+        # The main graph usually expects the message history to be continuous.
+        # If the subgraph is meant to clear history, it should do so explicitly in its state.
 
     # 6. 更新主图的状态
-    # 我们将子图的完整消息历史替换主图的消息历史，或者追加。
-    # 通常，子图的 messages 应该包含了初始传入的消息，并追加了新的交互。
-    # 所以直接使用子图的 messages 是合适的。
     logger.info(f"Robot flow subgraph returned {len(subgraph_final_messages)} messages. Updating main graph state.")
 
-    # 主 AgentState 的其他字段保持不变，除非子图明确要修改它们（不常见）
-    # 我们只更新 messages 和 subgraph_completion_status。
-    # task_route_decision 和 user_request_for_router 的清除是有条件的。
-    update_dict = {
-        "messages": subgraph_final_messages,
+    update_dict: dict[str, Any] = { # Make type explicit for clarity
+        "messages": subgraph_final_messages, # Use messages from the subgraph's state
         "subgraph_completion_status": completion_status,
     }
 
     if completion_status == "needs_clarification":
-        logger.info("Subgraph needs clarification. Preserving task_route_decision and user_request_for_router.")
-        # task_route_decision 和 user_request_for_router 将保持不变 (不包含在 update_dict 中)
-        # 确保它们在 state 中确实存在且被保留
-        if state.get("task_route_decision") is not None: # Redundant if TypedDict enforces, but safe
+        logger.info("Subgraph needs clarification. Preserving task_route_decision and user_request_for_router. Storing SAS subgraph state.")
+        # Preserve routing decision for re-entry
+        if state.get("task_route_decision") is not None:
             update_dict["task_route_decision"] = state.get("task_route_decision")
         if state.get("user_request_for_router") is not None:
             update_dict["user_request_for_router"] = state.get("user_request_for_router")
-    else:
-        logger.info(f"Subgraph completion status is '{completion_status}'. Clearing task_route_decision and user_request_for_router.")
+        # Store the full state of the SAS subgraph for persistence
+        update_dict["sas_planner_subgraph_state"] = final_subgraph_state_dict 
+    else: # Covers "completed_success", "error", or any other terminal status
+        logger.info(f"Subgraph completion status is '{completion_status}'. Clearing task_route_decision, user_request_for_router, and SAS subgraph state.")
         update_dict["task_route_decision"] = None
         update_dict["user_request_for_router"] = None
+        update_dict["sas_planner_subgraph_state"] = None # Clear persisted SAS state
         
-    yield update_dict # Changed from return to yield for the final state 
+    yield update_dict 

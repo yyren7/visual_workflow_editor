@@ -29,6 +29,9 @@ from backend.langgraphchat.graph.workflow_graph import compile_workflow_graph
 # --- 工具 ---
 from backend.langgraphchat.tools import flow_tools
 
+# --- AgentState ---
+from backend.langgraphchat.graph.agent_state import AgentState # 确保 AgentState 被导入
+
 # --- 新增导入 ---
 from sqlalchemy.dialects.postgresql import JSONB # 如果您确实在用PostgreSQL并希望用JSONB
 from sqlalchemy.ext.mutable import MutableDict
@@ -47,7 +50,6 @@ class ChatService:
     def _get_active_llm(self) -> BaseChatModel:
         """根据环境变量选择并实例化活动 LLM。"""
         provider = os.getenv("ACTIVE_LLM_PROVIDER", "deepseek").lower()
-        provider = "gemini"
         logger.info(f"Active LLM provider selected: {provider}")
 
         if provider == "gemini":
@@ -56,8 +58,8 @@ class ChatService:
                 logger.error("GOOGLE_API_KEY environment variable not set.")
                 raise ValueError("GOOGLE_API_KEY environment variable not set.")
             try:
-                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20", google_api_key=api_key)
-                logger.info("Instantiated ChatGoogleGenerativeAI (Gemini).")
+                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20", google_api_key=api_key, streaming=True)
+                logger.info("Instantiated ChatGoogleGenerativeAI (Gemini) with streaming.")
                 return llm
             except Exception as e:
                 logger.error(f"Failed to instantiate ChatGoogleGenerativeAI: {e}", exc_info=True)
@@ -383,3 +385,158 @@ class ChatService:
     def get_chat_history(self, chat_id: str) -> List[BaseMessage]:
         # Implementation of get_chat_history method
         pass 
+
+    async def invoke_workflow_for_chat(self, chat_id: str, user_input: str, current_flow_id: Optional[str] = None) -> AgentState:
+        """
+        为给定的聊天调用主LangGraph工作流，并处理SAS子图状态的持久化。
+
+        Args:
+            chat_id: 当前聊天的ID。
+            user_input: 用户提供的最新输入。
+            current_flow_id: 当前流程图的ID (可选，如果可以从chat对象获取则更好)。
+
+        Returns:
+            图执行后的最终 AgentState。
+        """
+        logger.info(f"ChatService: Invoking workflow for chat_id: {chat_id} with user_input: '{user_input[:50]}...'")
+
+        chat = self.db.query(Chat).filter(Chat.id == chat_id).first()
+        if not chat:
+            logger.error(f"ChatService: Chat {chat_id} not found. Cannot invoke workflow.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Chat {chat_id} not found")
+
+        if not chat.chat_data:
+            chat.chat_data = MutableDict()
+        
+        # 确保 chat_data 中有 messages 列表
+        if "messages" not in chat.chat_data or not isinstance(chat.chat_data["messages"], list):
+            chat.chat_data["messages"] = []
+
+        # 1. 从 chat.chat_data 加载持久化的 SAS 状态
+        persisted_sas_state_for_subgraph = chat.chat_data.get("persisted_sas_graph_state")
+        if persisted_sas_state_for_subgraph:
+            logger.info(f"ChatService: Found persisted SAS state for chat {chat_id}.")
+        else:
+            logger.info(f"ChatService: No persisted SAS state found for chat {chat_id}.")
+
+        # 2. 准备 AgentState
+        #   a. 获取完整的消息历史 (这里简单地从chat_data中的messages转换，实际应用中 DbChatMemory 更好)
+        #      注意：DbChatMemory 通常在图的 AgentState 内部或图的入口节点使用。
+        #      这里，我们直接使用存储在 chat.chat_data['messages'] 中的消息历史。
+        
+        raw_message_history = chat.chat_data.get("messages", [])
+        #  转换原始消息历史为 BaseMessage 对象列表 (如果需要)
+        #  这里假设 LangGraph 的 AgentState 可以直接处理 HumanMessage/AIMessage 字典，
+        #  或者在 AgentState 初始化时进行转换。
+        #  为了简单起见，我们假设 compiled_workflow_graph 的输入 AgentState 可以接受 HumanMessage
+        
+        #  确保最新的用户输入被添加为 HumanMessage
+        #  在实际应用中，你可能已经通过 add_message_to_chat 将用户消息持久化了。
+        #  这里的逻辑是假设我们正在处理一个刚刚收到的用户输入。
+        current_messages_for_graph = []
+        for msg_data in raw_message_history:
+            if msg_data.get("role") == "user":
+                current_messages_for_graph.append(HumanMessage(content=msg_data.get("content", "")))
+            elif msg_data.get("role") == "assistant" or msg_data.get("role") == "ai": # Langchain 通常用 'ai'
+                 current_messages_for_graph.append(AIMessage(content=msg_data.get("content", "")))
+            # 可以根据需要处理其他类型的消息
+
+        # 添加当前的用户输入
+        current_messages_for_graph.append(HumanMessage(content=user_input))
+
+        #  b. 构建 AgentState 输入字典
+        #  注意：确保 AgentState 定义中包含 sas_planner_subgraph_state 字段
+        agent_state_input = {
+            "messages": current_messages_for_graph,
+            "input": user_input, # 当前用户的直接输入
+            "user_id": chat_id, # 可以用 chat_id 作为 user_id 或会话标识
+            "current_flow_id": current_flow_id or chat.flow_id, # 使用提供的或从chat对象获取
+            "flow_context": {}, # 根据需要填充流程上下文
+            "chat_history_in_db_for_summary": True, # 示例：指示图可以使用数据库历史
+            "input_processed": False, # 通常在图的 input_handler 中设置为 True
+            "sas_planner_subgraph_state": persisted_sas_state_for_subgraph, # 注入恢复的状态
+            # 其他 AgentState 中定义的字段，根据需要提供默认值或从chat对象加载
+            "task_route_decision": None, 
+            "user_request_for_router": None,
+            "subgraph_completion_status": None,
+            "clarification_question": None,
+            "is_error": False,
+            "error_message": None,
+        }
+        
+        # 确保所有 AgentState 的必填字段都有值，这里我们创建 AgentState 实例以验证
+        try:
+            # 尝试创建 AgentState 实例以确保所有字段都已提供或有默认值
+            # 如果 AgentState 有严格的 schema，这里可能会抛出错误
+            AgentState(**agent_state_input) 
+        except Exception as e_state:
+            logger.error(f"ChatService: Error creating AgentState instance from input dict for chat {chat_id}: {e_state}", exc_info=True)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Internal error preparing agent state: {e_state}")
+
+
+        logger.info(f"ChatService: Invoking compiled_workflow_graph for chat {chat_id}...")
+        # 3. 调用 LangGraph 工作流
+        #    compiled_workflow_graph 需要 AgentState 的字典形式作为输入
+        output_state_dict = await self.compiled_workflow_graph.ainvoke(
+            agent_state_input, 
+            {"recursion_limit": 25} # 根据需要调整递归限制
+        )
+        
+        # 将输出字典转换回 AgentState 对象
+        output_agent_state = AgentState(**output_state_dict)
+        logger.info(f"ChatService: Workflow invocation completed for chat {chat_id}. Subgraph status: {output_agent_state.subgraph_completion_status}")
+
+        # 4. 根据返回的 AgentState 更新或清除持久化的 SAS 状态
+        if output_agent_state.subgraph_completion_status == "needs_clarification":
+            logger.info(f"ChatService: Subgraph needs clarification for chat {chat_id}. Persisting SAS state.")
+            chat.chat_data["persisted_sas_graph_state"] = output_agent_state.sas_planner_subgraph_state
+        else:
+            if "persisted_sas_graph_state" in chat.chat_data:
+                logger.info(f"ChatService: Subgraph status is '{output_agent_state.subgraph_completion_status}'. Clearing persisted SAS state for chat {chat_id}.")
+                del chat.chat_data["persisted_sas_graph_state"]
+            else:
+                logger.info(f"ChatService: Subgraph status is '{output_agent_state.subgraph_completion_status}'. No persisted SAS state to clear for chat {chat_id}.")
+
+        # 5. 更新 chat_data 中的消息历史 (可选，如果图的输出消息需要合并)
+        #    通常，图的 AgentState 的 "messages" 字段会包含最新的完整对话历史。
+        #    我们应该用这个来更新数据库中的消息。
+        updated_messages_for_db = []
+        for msg in output_agent_state.messages:
+            role = "user" if isinstance(msg, HumanMessage) else "assistant"
+            if isinstance(msg, AIMessage) and msg.tool_calls: # 处理工具调用消息的存储
+                # Langchain 的 AIMessage.tool_calls 是一个列表，每个元素包含 id, name, args
+                # 你可能需要将其转换为适合存储的格式
+                 tool_calls_content = json.dumps([tc for tc in msg.tool_calls]) # 示例：直接转为JSON字符串
+                 updated_messages_for_db.append({
+                    "role": role, 
+                    "content": msg.content, # 主要文本内容
+                    "tool_calls": tool_calls_content, # 存储工具调用信息
+                    "timestamp": datetime.utcnow().isoformat() # 或者从消息对象中获取时间戳
+                })
+            else:
+                 updated_messages_for_db.append({
+                    "role": role, 
+                    "content": str(msg.content), # 确保内容是字符串
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+
+        chat.chat_data["messages"] = updated_messages_for_db
+        
+        # 6. 保存对 chat 对象的更改
+        try:
+            flag_modified(chat, "chat_data") # 显式标记 chat_data 已修改
+            self.db.add(chat) # 虽然 chat 是从会话加载的，但 add() 无害
+            self.db.commit()
+            self.db.refresh(chat) # 获取数据库的最新状态
+            logger.info(f"ChatService: Successfully updated chat {chat_id} with new SAS state and messages.")
+        except Exception as e_commit:
+            self.db.rollback()
+            logger.error(f"ChatService: Error committing changes for chat {chat_id} after workflow invocation: {e_commit}", exc_info=True)
+            # 根据错误处理策略，可能需要将错误信息加入到 output_agent_state 中
+            # 这里简单地重新抛出，或者返回一个包含错误信息的 AgentState
+            output_agent_state.is_error = True
+            output_agent_state.error_message = f"Failed to save chat state: {e_commit}"
+            # 不再抛出 HTTPException，而是让调用者处理 AgentState 中的错误
+
+        return output_agent_state
+# --- END of invoke_workflow_for_chat method --- 

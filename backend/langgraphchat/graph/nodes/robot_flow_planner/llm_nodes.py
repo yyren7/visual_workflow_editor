@@ -84,8 +84,9 @@ async def invoke_llm_for_text_output( # Renamed for clarity, as it's now primari
     should_stream_llm = stream_for_gemini or stream_for_deepseek
 
     if should_stream_llm: # Modified condition
-        logger.info(f"Using streaming for LLM text output (Gemini: {stream_for_gemini}, DeepSeek: {stream_for_deepseek}).")
+        logger.info(f"LLM NODES: Using streaming for LLM text output (Gemini: {stream_for_gemini}, DeepSeek: {stream_for_deepseek}).") #LLM NODES prefix
         full_response_content = ""
+        chunk_count = 0 # <--- 添加计数器
         try:
             # Langchain's stream() method is synchronous, astream() is asynchronous
             # Assuming this function might be called in an async context from other nodes,
@@ -94,9 +95,17 @@ async def invoke_llm_for_text_output( # Renamed for clarity, as it's now primari
             # or an async llm.astream() if adapted.
             # Given the function is `async def`, we should use `astream`.
             async for chunk in llm.astream(messages): # Ensure llm.astream is available and correctly used
-                if hasattr(chunk, 'content'):
-                    print(chunk.content, end="", flush=True)
-                    full_response_content += chunk.content
+                chunk_count += 1 # <--- 增加计数
+                chunk_text = ""
+                if hasattr(chunk, 'content') and chunk.content is not None:
+                    chunk_text = chunk.content
+
+                # <--- 添加详细日志 --- >
+                logger.info(f"LLM NODES STREAM CHUNK [{chunk_count}]: Type={type(chunk)}, Content='{chunk_text[:100]}...'" ) #LLM NODES prefix
+
+                print(chunk_text, end="", flush=True)
+                full_response_content += chunk_text
+            logger.info(f"LLM NODES STREAM: Finished iterating. Total chunks received: {chunk_count}") # <--- 打印总块数 & LLM NODES prefix
             print() # Add a newline after streaming is complete
             return {"text_output": full_response_content}
         except Exception as e:

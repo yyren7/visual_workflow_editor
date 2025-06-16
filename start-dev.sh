@@ -13,6 +13,7 @@ case "$1" in
   backend)
     cd /workspace
     echo "启动后端开发服务器..."
+    export PYTHONDONTWRITEBYTECODE=1
     python3 backend/run_backend.py
     ;;
   logs)
@@ -40,6 +41,7 @@ case "$1" in
     
     # 创建后端 tmux 会话
     cd /workspace
+    export PYTHONDONTWRITEBYTECODE=1
     tmux new-session -d -s backend 'python3 backend/run_backend.py | tee /workspace/logs/backend.log; read'
     echo "后端服务已在 tmux 会话 'backend' 中启动"
     

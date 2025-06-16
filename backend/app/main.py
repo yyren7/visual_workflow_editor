@@ -32,6 +32,22 @@ app_main_formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+# --- BEGIN MODIFICATION ---
+# 配置 'backend.app' 命名空间下的日志记录器，使其将 DEBUG 及以上级别日志输出到控制台
+# 这将覆盖 backend.app.routers.chat 等子模块的日志记录器
+backend_app_logger = logging.getLogger("backend.app")
+backend_app_logger.setLevel(logging.DEBUG)
+
+# 创建或复用一个控制台处理器
+# 复用 app_main_formatter
+general_console_handler = logging.StreamHandler()
+general_console_handler.setFormatter(app_main_formatter)
+general_console_handler.setLevel(logging.DEBUG) # 确保处理器本身也允许 DEBUG
+
+backend_app_logger.addHandler(general_console_handler)
+# 不需要设置 backend_app_logger.propagate = False，让 app.main 等子记录器可以进一步自定义行为
+# --- END MODIFICATION ---
+
 # 创建单独的DeepSeek日志记录器
 deepseek_logger = logging.getLogger("backend.deepseek")
 deepseek_logger.setLevel(logging.DEBUG)

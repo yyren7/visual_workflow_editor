@@ -452,76 +452,76 @@ async def parameter_mapping_node(state: RobotFlowAgentState, llm: Optional[BaseC
         state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
 
-    try:
+    # try:
         # Initialize parameter mapper
-        mapper = ParameterMapper()
+        # mapper = ParameterMapper()
         
         # Extract logical parameters from module steps
-        extracted_params = mapper.extract_parameters_from_module_steps(module_steps)
+        # extracted_params = mapper.extract_parameters_from_module_steps(module_steps)
         
         # Create parameter mapping
-        mapping = mapper.create_parameter_mapping(extracted_params)
+        # mapping = mapper.create_parameter_mapping(extracted_params)
         
         # Update parameter files
-        update_success = mapper.update_parameter_files(mapping, extracted_params)
+        # update_success = mapper.update_parameter_files(mapping, extracted_params)
         
-        if not update_success:
-            logger.error("Failed to update parameter files")
-            state.is_error = True
-            state.error_message = "Failed to update parameter files during mapping process."
-            state.dialog_state = "error"
-            state.subgraph_completion_status = "error"
-            return state.dict(exclude_none=True)
+        # if not update_success:
+        #     logger.error("Failed to update parameter files")
+        #     state.is_error = True
+        #     state.error_message = "Failed to update parameter files during mapping process."
+        #     state.dialog_state = "error"
+        #     state.subgraph_completion_status = "error"
+        #     return state.dict(exclude_none=True)
         
         # Generate mapping report
-        mapping_report = mapper.generate_mapping_report(mapping, extracted_params)
+        # mapping_report = mapper.generate_mapping_report(mapping, extracted_params)
         
         # Store results in state
-        state.sas_step3_parameter_mapping = mapping
-        state.sas_step3_mapping_report = mapping_report
+        # state.sas_step3_parameter_mapping = mapping
+        # state.sas_step3_mapping_report = mapping_report
         
-        logger.info("SAS Step 3 completed successfully.")
-        state.dialog_state = "sas_step3_completed"
-        state.current_step_description = "SAS Step 3: Parameter mapping completed successfully."
-        state.subgraph_completion_status = "completed_success"
+    logger.info("SAS Step 3: Parameter Mapping - SKIPPED (logic commented out for now).")
+    state.dialog_state = "sas_step3_completed" # Mark as completed even if skipped
+    state.current_step_description = "SAS Step 3: Parameter mapping SKIPPED (logic commented out)."
+    state.subgraph_completion_status = "completed_success" # Mark as success even if skipped
         
         # Add mapping report to messages
-        if not any(mapping_report in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"Parameter Mapping Report:\n\n{mapping_report}")]
+        # if not any(mapping_report in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        #     state.messages = (state.messages or []) + [AIMessage(content=f"Parameter Mapping Report:\n\n{mapping_report}")]
         
         # Save mapping report to output directory if available
-        if state.run_output_directory:
-            try:
-                logger.info(f"Saving parameter mapping report to directory: {state.run_output_directory}")
-                output_file_name = "sas_step3_parameter_mapping_report.md"
-                output_file_path = Path(state.run_output_directory) / output_file_name
+        # if state.run_output_directory:
+        #     try:
+        #         logger.info(f"Saving parameter mapping report to directory: {state.run_output_directory}")
+        #         output_file_name = "sas_step3_parameter_mapping_report.md"
+        #         output_file_path = Path(state.run_output_directory) / output_file_name
                 
-                output_file_path.parent.mkdir(parents=True, exist_ok=True)
+        #         output_file_path.parent.mkdir(parents=True, exist_ok=True)
                 
-                with open(output_file_path, "w", encoding="utf-8") as f:
-                    f.write(mapping_report)
-                logger.info(f"Successfully saved SAS Step 3 mapping report to: {output_file_path}")
+        #         with open(output_file_path, "w", encoding="utf-8") as f:
+        #             f.write(mapping_report)
+        #         logger.info(f"Successfully saved SAS Step 3 mapping report to: {output_file_path}")
                 
-                # Also save the mapping data as JSON
-                mapping_json_file = "sas_step3_parameter_mapping.json"
-                mapping_json_path = Path(state.run_output_directory) / mapping_json_file
-                with open(mapping_json_path, "w", encoding="utf-8") as f:
-                    import json
-                    json.dump(mapping, f, indent=2, ensure_ascii=False)
-                logger.info(f"Successfully saved SAS Step 3 mapping data to: {mapping_json_path}")
+        #         # Also save the mapping data as JSON
+        #         mapping_json_file = "sas_step3_parameter_mapping.json"
+        #         mapping_json_path = Path(state.run_output_directory) / mapping_json_file
+        #         with open(mapping_json_path, "w", encoding="utf-8") as f:
+        #             import json
+        #             json.dump(mapping, f, indent=2, ensure_ascii=False)
+        #         logger.info(f"Successfully saved SAS Step 3 mapping data to: {mapping_json_path}")
                 
-            except Exception as e:
-                logger.error(f"Failed to save SAS Step 3 outputs to {state.run_output_directory}. Error: {e}", exc_info=True)
-        else:
-            logger.warning("state.run_output_directory is not set. Skipping saving of SAS Step 3 outputs.")
+        #     except Exception as e:
+        #         logger.error(f"Failed to save SAS Step 3 outputs to {state.run_output_directory}. Error: {e}", exc_info=True)
+        # else:
+        #     logger.warning("state.run_output_directory is not set. Skipping saving of SAS Step 3 outputs.")
     
-    except Exception as e:
-        logger.error(f"Error during SAS Step 3 parameter mapping: {e}", exc_info=True)
-        state.is_error = True
-        state.error_message = f"Unexpected error during parameter mapping: {str(e)}"
-        state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+    # except Exception as e:
+    #     logger.error(f"Error during SAS Step 3 parameter mapping: {e}", exc_info=True)
+    #     state.is_error = True
+    #     state.error_message = f"Unexpected error during parameter mapping: {str(e)}"
+    #     state.dialog_state = "error"
+    #     state.subgraph_completion_status = "error"
+    #     if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+    #         state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
 
     return state.dict(exclude_none=True) 
