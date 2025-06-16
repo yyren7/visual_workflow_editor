@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<xml xmlns:ns0="https://developers.google.com/blockly/xml" xmlns="https://developers.google.com/blockly/xml">
+  <block type="procedures_defnoreturn" id="9d30671d-5f5f-4a0d-b7a4-66679fd17720" data-blockNo="29" x="210" y="10">
+    <field name="NAME">Open_BRG_PLT_Clamp</field>
+    <mutation />
+    <statement name="STACK">
+      <block type="wait_timer" id="8f7dc28a-2473-40e5-80af-1244b3bcd506" data-blockNo="30">
+        <mutation timeout="60000" />
+        <field name="name">N0</field>
+        <next>
+          <block type="set_output" id="4b5270a1-a369-4c41-94fa-51abe2196fee" data-blockNo="31">
+            <mutation timeout="-1" />
+            <field name="output_pin_name">1</field>
+            <field name="out_state">on</field>
+            <next>
+              <block type="wait_input" id="0bfa9b99-c284-4bf2-b67d-f29b389c7b7c" data-blockNo="32">
+                <mutation timeout="-1" />
+                <field name="input_pin_name">0</field>
+                <field name="input_state">on</field>
+                <next>
+                  <block type="return" id="c9ca9c5e-5c9a-4406-a81d-486886da4ce8" data-blockNo="33">
+  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

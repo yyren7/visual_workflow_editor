@@ -19,7 +19,7 @@ if not all([smb_host, smb_share_flow, smb_share_config, smb_user_domain, smb_use
     exit(1) # Exit if configuration is incomplete
 
 local_download_dir = "/workspace/backend/langgraphchat/synced_files"
-files_to_download = ["flow.xml"]
+files_to_download = ["llm_test.zip"]
 
 # Full SMB user credentials, format 'DOMAIN\\username%password'
 # smb_credentials = f"{smb_user_domain}\\\\{smb_username}%{smb_password}" # Old method, commented out
@@ -144,16 +144,16 @@ def upload_file(local_file_path, remote_file_name):
         return False # Added return
 
 if __name__ == "__main__":
-    # print("Starting file download process...")
-    # download_files()
-    # print("File download process finished.")
+    print("Starting file download process...")
+    download_files()
+    print("File download process finished.")
 
     # Example usage for upload, ensure these variables are defined if you uncomment
-    local_file_to_upload = "/workspace/backend/tests/llm_sas_test/concatenated_output/concatenated_flow.xml"
-    remote_file_name_for_upload = "concatenated_flow.xml"
-    print("\nStarting file upload process...")
-    upload_file(local_file_to_upload, remote_file_name_for_upload)
-    print("File upload process finished.")
+    # local_file_to_upload = "/workspace/backend/tests/llm_sas_test/concatenated_output/concatenated_flow.xml"
+    # remote_file_name_for_upload = "concatenated_flow.xml"
+    # print("\nStarting file upload process...")
+    # upload_file(local_file_to_upload, remote_file_name_for_upload)
+    # print("File upload process finished.")
 
     # print("\nStarting batch file upload process...")
     # source_directory = "/workspace/backend/tests/llm_sas_test/specific_clamp_output"

@@ -1,0 +1,242 @@
+<?xml version='1.0' encoding='utf-8'?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="select_robot" id="53796deb-ceb1-4e1c-ab4c-230cbb9c34b5" data-blockNo="1" x="10" y="10">
+    <field name="robotName">fairino_FR</field>
+    <next>
+      <block type="set_motor" id="171f6dbc-94b0-43ce-a9a1-ea6579f698db" data-blockNo="2">
+        <field name="state_list">on</field>
+        <next>
+          <block type="set_number" id="81ee3aee-b7f4-42da-aeb2-336d86460c5f" data-blockNo="3">
+            <mutation timeout="60000" />
+            <field name="name">N0</field>
+            <value name="right_hand_side">
+              <block type="math_number" id="332645ad-4f57-4a1d-be7f-92a151e5d069" data-blockNo="1000">
+                <field name="NUM">0</field>
+              </block>
+            </value>
+            <next>
+              <block type="loop" id="4f7e6a89-cbc3-4fbb-b980-7fbb3fd52af3" data-blockNo="4">
+                <statement name="DO">
+                  <block type="controls_if" id="41329e11-536e-4584-8b0d-5d02edf23c17" data-blockNo="5">
+                    <mutation else="0" elseif="0" />
+                    <value name="IF0">
+                      <block type="logic_boolean" id="5643de67-29e4-4c43-a04c-2439f34a0fd8" data-blockNo="1001">
+                        <field name="BOOL">TRUE</field>
+                      </block>
+                    </value>
+                    <statement name="DO0">
+                      <block type="moveP" id="348f8aab-4842-4b75-9af5-21af5aad1d1a" data-blockNo="6">
+                        <mutation timeout="60000000" />
+                        <field name="point_name_list">P1</field>
+                        <field name="control_x">enable</field>
+                        <field name="control_y">enable</field>
+                        <field name="control_z">enable</field>
+                        <field name="control_rx">enable</field>
+                        <field name="control_ry">enable</field>
+                        <field name="control_rz">enable</field>
+                        <field name="pallet_list">none</field>
+                        <field name="camera_list">none</field>
+                        <next>
+                          <block type="wait_external_io_input" id="f8704625-9a1d-468b-9ec2-01a488a6ea3f" data-blockNo="7">
+                            <mutation timeout="-1" />
+                            <field name="io_no">1</field>
+                            <field name="input_pin_name">0</field>
+                            <field name="in_state">on</field>
+                            <next>
+                              <block type="procedures_callnoreturn" id="74d2355c-10ce-4b7f-9c2f-5e5d1cbfccf9" data-blockNo="8">
+                                <mutation name="Grasp_Bearing_BRG">
+    </mutation>
+                                <next>
+                                  <block type="procedures_callnoreturn" id="9747e7c5-ec3b-45cb-94fd-a5a7d0ea4794" data-blockNo="9">
+                                    <mutation name="Grasp_BearingHousing_BH">
+    </mutation>
+                                    <next>
+                                      <block type="moveP" id="a8919073-cba2-4679-851a-fd57396c4c86" data-blockNo="10">
+                                        <mutation timeout="60000000" />
+                                        <field name="point_name_list">P1</field>
+                                        <field name="control_x">enable</field>
+                                        <field name="control_y">enable</field>
+                                        <field name="control_z">enable</field>
+                                        <field name="control_rx">enable</field>
+                                        <field name="control_ry">enable</field>
+                                        <field name="control_rz">enable</field>
+                                        <field name="pallet_list">none</field>
+                                        <field name="camera_list">none</field>
+                                        <next>
+                                          <block type="wait_input" id="0ab47478-687e-411c-9835-a14a41aa6ab2" data-blockNo="11">
+                                            <mutation timeout="-1" />
+                                            <field name="input_pin_name">0</field>
+                                            <field name="input_state">on</field>
+                                            <next>
+                                              <block type="procedures_callnoreturn" id="8e4793a4-cba2-4919-81e5-3034a3fcb3e7" data-blockNo="12">
+                                                <mutation name="Place_BearingHousing_BH_To_RMC">
+    </mutation>
+                                                <next>
+                                                  <block type="procedures_callnoreturn" id="d2638f75-5178-4c05-ba74-72ea99fd5063" data-blockNo="13">
+                                                    <mutation name="Place_Bearing_BRG_Onto_BH_For_Assembly">
+    </mutation>
+                                                    <next>
+                                                      <block type="wait_input" id="1b66e64e-7d9a-47d6-bd73-4ddecc739ae5" data-blockNo="14">
+                                                        <mutation timeout="-1" />
+                                                        <field name="input_pin_name">0</field>
+                                                        <field name="input_state">on</field>
+                                                        <next>
+                                                          <block type="set_output" id="7d805690-6dcb-4049-a088-602e07c879be" data-blockNo="15">
+                                                            <mutation timeout="-1" />
+                                                            <field name="output_pin_name">1</field>
+                                                            <field name="out_state">on</field>
+                                                            <next>
+                                                              <block type="wait_block" id="76908172-a0e0-4f86-8f72-9c4310b75959" data-blockNo="16">
+                                                                <mutation timeout="-1" />
+                                                                <value name="condition">
+                                                                  <block type="logic_operation" id="cccfc284-3a50-4154-b027-07419053adaa" data-blockNo="1002">
+                                                                    <field name="OP">AND</field>
+                                                                    <value name="A">
+                                                                      <block type="logic_boolean" id="8cf5c47f-1478-4280-99e6-21a24b66fcf5" data-blockNo="1003">
+                                                                        <field name="BOOL">TRUE</field>
+                                                                      </block>
+                                                                    </value>
+                                                                    <value name="B">
+                                                                      <block type="logic_boolean" id="8c01bb0a-4baf-4a5b-8f70-422d21f0f3c2" data-blockNo="1004">
+                                                                        <field name="BOOL">TRUE</field>
+                                                                      </block>
+                                                                    </value>
+                                                                  </block>
+                                                                </value>
+                                                                <next>
+                                                                  <block type="procedures_callnoreturn" id="ede895ad-a597-4e46-8ffc-2357f1c4d84a" data-blockNo="17">
+                                                                    <mutation name="Grasp_AssembledPart_From_RMC">
+    </mutation>
+                                                                    <next>
+                                                                      <block type="moveP" id="b37d7019-e7ae-48db-957a-f14dd5059ffb" data-blockNo="18">
+                                                                        <mutation timeout="60000000" />
+                                                                        <field name="point_name_list">P1</field>
+                                                                        <field name="control_x">enable</field>
+                                                                        <field name="control_y">enable</field>
+                                                                        <field name="control_z">enable</field>
+                                                                        <field name="control_rx">enable</field>
+                                                                        <field name="control_ry">enable</field>
+                                                                        <field name="control_rz">enable</field>
+                                                                        <field name="pallet_list">none</field>
+                                                                        <field name="camera_list">none</field>
+                                                                        <next>
+                                                                          <block type="procedures_callnoreturn" id="30fb6fa3-9eea-4704-be21-8b2ae639b25c" data-blockNo="19">
+                                                                            <mutation name="Place_AssembledPart_To_LMC">
+    </mutation>
+                                                                            <next>
+                                                                              <block type="moveP" id="030491d9-dadd-476d-b3cb-9505687115a0" data-blockNo="20">
+                                                                                <mutation timeout="60000000" />
+                                                                                <field name="point_name_list">P1</field>
+                                                                                <field name="control_x">enable</field>
+                                                                                <field name="control_y">enable</field>
+                                                                                <field name="control_z">enable</field>
+                                                                                <field name="control_rx">enable</field>
+                                                                                <field name="control_ry">enable</field>
+                                                                                <field name="control_rz">enable</field>
+                                                                                <field name="pallet_list">none</field>
+                                                                                <field name="camera_list">none</field>
+                                                                                <next>
+                                                                                  <block type="procedures_callnoreturn" id="18cfd0e1-a1aa-4933-bdb4-c8d3162b8a01" data-blockNo="21">
+                                                                                    <mutation name="Grasp_Empty_Pallet_PLT">
+    </mutation>
+                                                                                    <next>
+                                                                                      <block type="procedures_callnoreturn" id="5108b327-c45a-416c-a33f-fef8ff8b8033" data-blockNo="22">
+                                                                                        <mutation name="Place_Empty_Pallet_PLT_To_CNV">
+    </mutation>
+                                                                                        <next>
+                                                                                          <block type="moveP" id="a7f19bfa-2ac5-4cae-86e5-a8f230db9f26" data-blockNo="23">
+                                                                                            <mutation timeout="60000000" />
+                                                                                            <field name="point_name_list">P1</field>
+                                                                                            <field name="control_x">enable</field>
+                                                                                            <field name="control_y">enable</field>
+                                                                                            <field name="control_z">enable</field>
+                                                                                            <field name="control_rx">enable</field>
+                                                                                            <field name="control_ry">enable</field>
+                                                                                            <field name="control_rz">enable</field>
+                                                                                            <field name="pallet_list">none</field>
+                                                                                            <field name="camera_list">none</field>
+                                                                                            <next>
+                                                                                              <block type="procedures_callnoreturn" id="b788ad7d-e30a-46fa-817b-3351472af6b7" data-blockNo="24">
+                                                                                                <mutation name="Grasp_AssembledPart_From_LMC">
+    </mutation>
+                                                                                                <next>
+                                                                                                  <block type="moveP" id="4481965c-fd5e-4703-81ae-d0ac3f0cb069" data-blockNo="25">
+                                                                                                    <mutation timeout="60000000" />
+                                                                                                    <field name="point_name_list">P1</field>
+                                                                                                    <field name="control_x">enable</field>
+                                                                                                    <field name="control_y">enable</field>
+                                                                                                    <field name="control_z">enable</field>
+                                                                                                    <field name="control_rx">enable</field>
+                                                                                                    <field name="control_ry">enable</field>
+                                                                                                    <field name="control_rz">enable</field>
+                                                                                                    <field name="pallet_list">none</field>
+                                                                                                    <field name="camera_list">none</field>
+                                                                                                    <next>
+                                                                                                      <block type="procedures_callnoreturn" id="6409f6c5-b8c4-4ebf-bb4a-3d7d59270917" data-blockNo="26">
+                                                                                                        <mutation name="Place_AssembledPart_Onto_Pallet_CNV">
+    </mutation>
+                                                                                                        <next>
+                                                                                                          <block type="set_external_io_output_during" id="c6c917f8-2df0-4472-bbd5-9e6e03fa9b78" data-blockNo="27">
+                                                                                                            <mutation timeout="-1" />
+                                                                                                            <field name="io_no">1</field>
+                                                                                                            <field name="output_pin_name">0</field>
+                                                                                                            <field name="out_state">on</field>
+                                                                                                            <field name="name">N0</field>
+                                                                                                            <next>
+                                                                                                              <block type="return" id="ae5724eb-42b0-47c2-a166-1ce98e9eb9ab" data-blockNo="28">
+  </block>
+                                                                                                            </next>
+                                                                                                          </block>
+                                                                                                        </next>
+                                                                                                      </block>
+                                                                                                    </next>
+                                                                                                  </block>
+                                                                                                </next>
+                                                                                              </block>
+                                                                                            </next>
+                                                                                          </block>
+                                                                                        </next>
+                                                                                      </block>
+                                                                                    </next>
+                                                                                  </block>
+                                                                                </next>
+                                                                              </block>
+                                                                            </next>
+                                                                          </block>
+                                                                        </next>
+                                                                      </block>
+                                                                    </next>
+                                                                  </block>
+                                                                </next>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                  </block>
+                </statement>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='utf-8'?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="procedures_defnoreturn" id="ffd04db4-3483-4454-98fa-aa136bc128db" data-blockNo="71" x="1410" y="10">
+    <field name="NAME">Place_BearingHousing_BH_To_RMC</field>
+    <mutation />
+    <statement name="STACK">
+      <block type="moveP" id="8157a605-dbb2-4312-9d50-2a492c2a2db4" data-blockNo="72">
+        <mutation timeout="60000000" />
+        <field name="point_name_list">P1</field>
+        <field name="control_x">enable</field>
+        <field name="control_y">enable</field>
+        <field name="control_z">enable</field>
+        <field name="control_rx">enable</field>
+        <field name="control_ry">enable</field>
+        <field name="control_rz">enable</field>
+        <field name="pallet_list">none</field>
+        <field name="camera_list">none</field>
+        <next>
+          <block type="moveP" id="a5e7f19b-a28a-4f45-83a1-802deb7f9673" data-blockNo="73">
+            <mutation timeout="60000000" />
+            <field name="point_name_list">P1</field>
+            <field name="control_x">enable</field>
+            <field name="control_y">enable</field>
+            <field name="control_z">enable</field>
+            <field name="control_rx">enable</field>
+            <field name="control_ry">enable</field>
+            <field name="control_rz">enable</field>
+            <field name="pallet_list">none</field>
+            <field name="camera_list">none</field>
+            <next>
+              <block type="set_speed" id="44b69a73-95b9-4a61-8464-07cae3c39b3b" data-blockNo="74">
+                <mutation timeout="-1" />
+                <field name="speed">100</field>
+                <next>
+                  <block type="moveP" id="1569771b-8468-4bac-9915-7c5c8d307a2b" data-blockNo="75">
+                    <mutation timeout="60000000" />
+                    <field name="point_name_list">P1</field>
+                    <field name="control_x">enable</field>
+                    <field name="control_y">enable</field>
+                    <field name="control_z">enable</field>
+                    <field name="control_rx">enable</field>
+                    <field name="control_ry">enable</field>
+                    <field name="control_rz">enable</field>
+                    <field name="pallet_list">none</field>
+                    <field name="camera_list">none</field>
+                    <next>
+                      <block type="procedures_callnoreturn" id="caa17ee7-c326-4864-abc5-92edb2ed7fbe" data-blockNo="76">
+                        <mutation name="Open_BH_Assembly_Clamp">
+    </mutation>
+                        <next>
+                          <block type="moveP" id="4e3c09d6-3d48-4468-952a-082c2b1a2212" data-blockNo="77">
+                            <mutation timeout="60000000" />
+                            <field name="point_name_list">P1</field>
+                            <field name="control_x">enable</field>
+                            <field name="control_y">enable</field>
+                            <field name="control_z">enable</field>
+                            <field name="control_rx">enable</field>
+                            <field name="control_ry">enable</field>
+                            <field name="control_rz">enable</field>
+                            <field name="pallet_list">none</field>
+                            <field name="camera_list">none</field>
+                            <next>
+                              <block type="set_speed" id="989780df-1c98-4035-83f9-ac2a97612ce8" data-blockNo="78">
+                                <mutation timeout="-1" />
+                                <field name="speed">100</field>
+                                <next>
+                                  <block type="moveP" id="9566c4df-3682-4bcd-b752-7b16de36068a" data-blockNo="79">
+                                    <mutation timeout="60000000" />
+                                    <field name="point_name_list">P1</field>
+                                    <field name="control_x">enable</field>
+                                    <field name="control_y">enable</field>
+                                    <field name="control_z">enable</field>
+                                    <field name="control_rx">enable</field>
+                                    <field name="control_ry">enable</field>
+                                    <field name="control_rz">enable</field>
+                                    <field name="pallet_list">none</field>
+                                    <field name="camera_list">none</field>
+                                    <next>
+                                      <block type="return" id="4858dbe0-bd7b-4710-b7ac-f86dea188a51" data-blockNo="80">
+  </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

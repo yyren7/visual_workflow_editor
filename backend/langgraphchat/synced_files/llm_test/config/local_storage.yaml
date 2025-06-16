@@ -1,0 +1,1410 @@
+robot_port_readOnly2: '23'
+robot_ip_readOnly: 192.168.250.101
+override_value_readOnly: '60'
+auto_start_readOnly2: 'no'
+robot_name_readOnly2: dobot_mg400
+save_program_name: llm_test
+override_value_readOnly2: '60'
+robot_ip: 192.168.250.101
+robot_port: '23'
+auto_start_readOnly: 'no'
+robot_usb_readOnly: ''
+save_program_name_readOnly: llm_test
+robot_name: dobot_mg400
+load_program_name: llm_test
+external_input_03_readOnly: 'ON'
+save_program_name_readOnly2: llm_test
+robot_usb: ''
+program_backup: |-
+  <xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="select_robot" id="53796deb-ceb1-4e1c-ab4c-230cbb9c34b5" editable="false" x="10" y="10" data-blockNo="1">
+      <mutation timeout="-1"></mutation>
+      <field name="robotName">dobot_mg400</field>
+      <next>
+        <block type="set_motor" id="171f6dbc-94b0-43ce-a9a1-ea6579f698db" data-blockNo="2">
+          <mutation timeout="-1"></mutation>
+          <field name="state_list">on</field>
+          <next>
+            <block type="set_number" id="81ee3aee-b7f4-42da-aeb2-336d86460c5f" data-blockNo="3">
+              <mutation timeout="60000"></mutation>
+              <field name="name">N1</field>
+              <value name="right_hand_side">
+                <block type="math_number" id="332645ad-4f57-4a1d-be7f-92a151e5d069" data-blockNo="1000">
+                  <field name="NUM">0</field>
+                </block>
+              </value>
+              <next>
+                <block type="loop" id="4f7e6a89-cbc3-4fbb-b980-7fbb3fd52af3" data-blockNo="4">
+                  <statement name="DO">
+                    <block type="controls_if" id="41329e11-536e-4584-8b0d-5d02edf23c17" data-blockNo="5">
+                      <value name="IF0">
+                        <block type="logic_boolean" id="5643de67-29e4-4c43-a04c-2439f34a0fd8" data-blockNo="1001">
+                          <field name="BOOL">TRUE</field>
+                        </block>
+                      </value>
+                      <statement name="DO0">
+                        <block type="moveP" id="348f8aab-4842-4b75-9af5-21af5aad1d1a" data-blockNo="6">
+                          <mutation timeout="60000000"></mutation>
+                          <field name="point_name_list">P1</field>
+                          <field name="execution_mode">wait</field>
+                          <field name="control_x">enable</field>
+                          <field name="control_y">enable</field>
+                          <field name="control_z">enable</field>
+                          <field name="control_rx">enable</field>
+                          <field name="control_ry">enable</field>
+                          <field name="control_rz">enable</field>
+                          <field name="pallet_list">none</field>
+                          <field name="camera_list">none</field>
+                          <next>
+                            <block type="wait_external_io_input" id="f8704625-9a1d-468b-9ec2-01a488a6ea3f" disabled-reasons="MANUALLY_DISABLED" data-blockNo="7">
+                              <mutation timeout="-1"></mutation>
+                              <field name="io_no">1</field>
+                              <field name="input_pin_name"></field>
+                              <field name="in_state">on</field>
+                              <next>
+                                <block type="procedures_callnoreturn" id="74d2355c-10ce-4b7f-9c2f-5e5d1cbfccf9" data-blockNo="8">
+                                  <mutation name="Grasp_Bearing_BRG"></mutation>
+                                  <next>
+                                    <block type="procedures_callnoreturn" id="9747e7c5-ec3b-45cb-94fd-a5a7d0ea4794" data-blockNo="9">
+                                      <mutation name="Grasp_BearingHousing_BH"></mutation>
+                                      <next>
+                                        <block type="moveP" id="a8919073-cba2-4679-851a-fd57396c4c86" data-blockNo="10">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="wait_input" id="0ab47478-687e-411c-9835-a14a41aa6ab2" data-blockNo="11">
+                                              <mutation timeout="-1"></mutation>
+                                              <field name="input_pin_name">0</field>
+                                              <field name="input_state">on</field>
+                                              <next>
+                                                <block type="procedures_callnoreturn" id="8e4793a4-cba2-4919-81e5-3034a3fcb3e7" data-blockNo="12">
+                                                  <mutation name="Place_BearingHousing_BH_To_RMC"></mutation>
+                                                  <next>
+                                                    <block type="procedures_callnoreturn" id="d2638f75-5178-4c05-ba74-72ea99fd5063" data-blockNo="13">
+                                                      <mutation name="Place_Bearing_BRG_Onto_BH_For_Assembly"></mutation>
+                                                      <next>
+                                                        <block type="wait_input" id="1b66e64e-7d9a-47d6-bd73-4ddecc739ae5" data-blockNo="14">
+                                                          <mutation timeout="-1"></mutation>
+                                                          <field name="input_pin_name">0</field>
+                                                          <field name="input_state">on</field>
+                                                          <next>
+                                                            <block type="set_output" id="7d805690-6dcb-4049-a088-602e07c879be" data-blockNo="15">
+                                                              <mutation timeout="-1"></mutation>
+                                                              <field name="output_pin_name">1</field>
+                                                              <field name="out_state">on</field>
+                                                              <next>
+                                                                <block type="wait_block" id="76908172-a0e0-4f86-8f72-9c4310b75959" data-blockNo="16">
+                                                                  <mutation timeout="-1"></mutation>
+                                                                  <value name="condition">
+                                                                    <block type="logic_operation" id="cccfc284-3a50-4154-b027-07419053adaa" data-blockNo="1002">
+                                                                      <field name="OP">AND</field>
+                                                                      <value name="A">
+                                                                        <block type="logic_boolean" id="8cf5c47f-1478-4280-99e6-21a24b66fcf5" data-blockNo="1003">
+                                                                          <field name="BOOL">TRUE</field>
+                                                                        </block>
+                                                                      </value>
+                                                                      <value name="B">
+                                                                        <block type="logic_boolean" id="8c01bb0a-4baf-4a5b-8f70-422d21f0f3c2" data-blockNo="1004">
+                                                                          <field name="BOOL">TRUE</field>
+                                                                        </block>
+                                                                      </value>
+                                                                    </block>
+                                                                  </value>
+                                                                  <next>
+                                                                    <block type="procedures_callnoreturn" id="ede895ad-a597-4e46-8ffc-2357f1c4d84a" data-blockNo="17">
+                                                                      <mutation name="Grasp_AssembledPart_From_RMC"></mutation>
+                                                                      <next>
+                                                                        <block type="moveP" id="b37d7019-e7ae-48db-957a-f14dd5059ffb" data-blockNo="18">
+                                                                          <mutation timeout="60000000"></mutation>
+                                                                          <field name="point_name_list">P1</field>
+                                                                          <field name="execution_mode">wait</field>
+                                                                          <field name="control_x">enable</field>
+                                                                          <field name="control_y">enable</field>
+                                                                          <field name="control_z">enable</field>
+                                                                          <field name="control_rx">enable</field>
+                                                                          <field name="control_ry">enable</field>
+                                                                          <field name="control_rz">enable</field>
+                                                                          <field name="pallet_list">none</field>
+                                                                          <field name="camera_list">none</field>
+                                                                          <next>
+                                                                            <block type="procedures_callnoreturn" id="30fb6fa3-9eea-4704-be21-8b2ae639b25c" data-blockNo="19">
+                                                                              <mutation name="Place_AssembledPart_To_LMC"></mutation>
+                                                                              <next>
+                                                                                <block type="moveP" id="030491d9-dadd-476d-b3cb-9505687115a0" data-blockNo="20">
+                                                                                  <mutation timeout="60000000"></mutation>
+                                                                                  <field name="point_name_list">P1</field>
+                                                                                  <field name="execution_mode">wait</field>
+                                                                                  <field name="control_x">enable</field>
+                                                                                  <field name="control_y">enable</field>
+                                                                                  <field name="control_z">enable</field>
+                                                                                  <field name="control_rx">enable</field>
+                                                                                  <field name="control_ry">enable</field>
+                                                                                  <field name="control_rz">enable</field>
+                                                                                  <field name="pallet_list">none</field>
+                                                                                  <field name="camera_list">none</field>
+                                                                                  <next>
+                                                                                    <block type="procedures_callnoreturn" id="18cfd0e1-a1aa-4933-bdb4-c8d3162b8a01" data-blockNo="21">
+                                                                                      <mutation name="Grasp_Empty_Pallet_PLT"></mutation>
+                                                                                      <next>
+                                                                                        <block type="procedures_callnoreturn" id="5108b327-c45a-416c-a33f-fef8ff8b8033" data-blockNo="22">
+                                                                                          <mutation name="Place_Empty_Pallet_PLT_To_CNV"></mutation>
+                                                                                          <next>
+                                                                                            <block type="moveP" id="a7f19bfa-2ac5-4cae-86e5-a8f230db9f26" data-blockNo="23">
+                                                                                              <mutation timeout="60000000"></mutation>
+                                                                                              <field name="point_name_list">P1</field>
+                                                                                              <field name="execution_mode">wait</field>
+                                                                                              <field name="control_x">enable</field>
+                                                                                              <field name="control_y">enable</field>
+                                                                                              <field name="control_z">enable</field>
+                                                                                              <field name="control_rx">enable</field>
+                                                                                              <field name="control_ry">enable</field>
+                                                                                              <field name="control_rz">enable</field>
+                                                                                              <field name="pallet_list">none</field>
+                                                                                              <field name="camera_list">none</field>
+                                                                                              <next>
+                                                                                                <block type="procedures_callnoreturn" id="b788ad7d-e30a-46fa-817b-3351472af6b7" data-blockNo="24">
+                                                                                                  <mutation name="Grasp_AssembledPart_From_LMC"></mutation>
+                                                                                                  <next>
+                                                                                                    <block type="moveP" id="4481965c-fd5e-4703-81ae-d0ac3f0cb069" data-blockNo="25">
+                                                                                                      <mutation timeout="60000000"></mutation>
+                                                                                                      <field name="point_name_list">P1</field>
+                                                                                                      <field name="execution_mode">wait</field>
+                                                                                                      <field name="control_x">enable</field>
+                                                                                                      <field name="control_y">enable</field>
+                                                                                                      <field name="control_z">enable</field>
+                                                                                                      <field name="control_rx">enable</field>
+                                                                                                      <field name="control_ry">enable</field>
+                                                                                                      <field name="control_rz">enable</field>
+                                                                                                      <field name="pallet_list">none</field>
+                                                                                                      <field name="camera_list">none</field>
+                                                                                                      <next>
+                                                                                                        <block type="procedures_callnoreturn" id="6409f6c5-b8c4-4ebf-bb4a-3d7d59270917" data-blockNo="26">
+                                                                                                          <mutation name="Place_AssembledPart_Onto_Pallet_CNV"></mutation>
+                                                                                                          <next>
+                                                                                                            <block type="set_external_io_output_during" id="c6c917f8-2df0-4472-bbd5-9e6e03fa9b78" disabled-reasons="MANUALLY_DISABLED" data-blockNo="27">
+                                                                                                              <mutation timeout="-1"></mutation>
+                                                                                                              <field name="io_no">1</field>
+                                                                                                              <field name="output_pin_name"></field>
+                                                                                                              <field name="out_state">on</field>
+                                                                                                              <field name="name">N1</field>
+                                                                                                              <next>
+                                                                                                                <block type="return" id="ae5724eb-42b0-47c2-a166-1ce98e9eb9ab" data-blockNo="28">
+                                                                                                                  <mutation timeout="-1"></mutation>
+                                                                                                                </block>
+                                                                                                              </next>
+                                                                                                            </block>
+                                                                                                          </next>
+                                                                                                        </block>
+                                                                                                      </next>
+                                                                                                    </block>
+                                                                                                  </next>
+                                                                                                </block>
+                                                                                              </next>
+                                                                                            </block>
+                                                                                          </next>
+                                                                                        </block>
+                                                                                      </next>
+                                                                                    </block>
+                                                                                  </next>
+                                                                                </block>
+                                                                              </next>
+                                                                            </block>
+                                                                          </next>
+                                                                        </block>
+                                                                      </next>
+                                                                    </block>
+                                                                  </next>
+                                                                </block>
+                                                              </next>
+                                                            </block>
+                                                          </next>
+                                                        </block>
+                                                      </next>
+                                                    </block>
+                                                  </next>
+                                                </block>
+                                              </next>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </statement>
+                    </block>
+                  </statement>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </next>
+    </block>
+    <block type="procedures_defnoreturn" id="9d30671d-5f5f-4a0d-b7a4-66679fd17720" x="210" y="10" data-blockNo="29">
+      <field name="NAME">Open_BRG_PLT_Clamp</field>
+      <statement name="STACK">
+        <block type="wait_timer" id="8f7dc28a-2473-40e5-80af-1244b3bcd506" data-blockNo="30">
+          <mutation timeout="60000"></mutation>
+          <field name="name">N1</field>
+          <next>
+            <block type="set_output" id="4b5270a1-a369-4c41-94fa-51abe2196fee" data-blockNo="31">
+              <mutation timeout="-1"></mutation>
+              <field name="output_pin_name">1</field>
+              <field name="out_state">on</field>
+              <next>
+                <block type="wait_input" id="0bfa9b99-c284-4bf2-b67d-f29b389c7b7c" data-blockNo="32">
+                  <mutation timeout="-1"></mutation>
+                  <field name="input_pin_name">0</field>
+                  <field name="input_state">on</field>
+                  <next>
+                    <block type="return" id="c9ca9c5e-5c9a-4406-a81d-486886da4ce8" data-blockNo="33">
+                      <mutation timeout="-1"></mutation>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="a584c858-ab4b-41c2-8b06-1375efbcfdc1" x="410" y="10" data-blockNo="34">
+      <field name="NAME">Close_BRG_PLT_Clamp</field>
+      <statement name="STACK">
+        <block type="wait_timer" id="c48e6b7d-a7b4-4252-8e41-3580ab664078" data-blockNo="35">
+          <mutation timeout="60000"></mutation>
+          <field name="name">N1</field>
+          <next>
+            <block type="set_output" id="e46e4fd3-e2d0-47b8-9bd0-05ae6c76e044" data-blockNo="36">
+              <mutation timeout="-1"></mutation>
+              <field name="output_pin_name">1</field>
+              <field name="out_state">on</field>
+              <next>
+                <block type="wait_input" id="66ca92f9-6c68-4e95-9ebf-58fb3da471c0" data-blockNo="37">
+                  <mutation timeout="-1"></mutation>
+                  <field name="input_pin_name">0</field>
+                  <field name="input_state">on</field>
+                  <next>
+                    <block type="return" id="8066ae6f-960d-4614-a078-fc2bee696a55" data-blockNo="38">
+                      <mutation timeout="-1"></mutation>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="27ddafc5-5cdd-4ff5-8b52-462153393280" x="610" y="10" data-blockNo="39">
+      <field name="NAME">Open_BH_Assembly_Clamp</field>
+      <statement name="STACK">
+        <block type="wait_timer" id="8632e5e2-ecf0-416e-afb1-ebb2387423b3" data-blockNo="40">
+          <mutation timeout="60000"></mutation>
+          <field name="name">N1</field>
+          <next>
+            <block type="set_output" id="61095b12-d8b4-4376-8324-de2dc781649e" data-blockNo="41">
+              <mutation timeout="-1"></mutation>
+              <field name="output_pin_name">1</field>
+              <field name="out_state">on</field>
+              <next>
+                <block type="wait_input" id="7f8e5ce4-48dc-4b62-a00f-547c14f81f3c" data-blockNo="42">
+                  <mutation timeout="-1"></mutation>
+                  <field name="input_pin_name">0</field>
+                  <field name="input_state">on</field>
+                  <next>
+                    <block type="return" id="387715ca-3197-4f69-a9cd-0a899658bb95" data-blockNo="43">
+                      <mutation timeout="-1"></mutation>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="0c206b67-b1de-44a2-87c6-181cd988d1f9" x="810" y="10" data-blockNo="44">
+      <field name="NAME">Close_BH_Assembly_Clamp</field>
+      <statement name="STACK">
+        <block type="wait_timer" id="c50fc430-283b-45fa-8b7f-f4fac7245316" data-blockNo="45">
+          <mutation timeout="60000"></mutation>
+          <field name="name">N1</field>
+          <next>
+            <block type="set_output" id="206db575-28f7-4116-847d-a330e49caa0c" data-blockNo="46">
+              <mutation timeout="-1"></mutation>
+              <field name="output_pin_name">1</field>
+              <field name="out_state">on</field>
+              <next>
+                <block type="wait_input" id="2963fa2b-bd7d-4cef-b468-6289987c5b73" data-blockNo="47">
+                  <mutation timeout="-1"></mutation>
+                  <field name="input_pin_name">0</field>
+                  <field name="input_state">on</field>
+                  <next>
+                    <block type="return" id="e0ca8b9f-154a-4d84-bb0d-dcb961ba0612" data-blockNo="48">
+                      <mutation timeout="-1"></mutation>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="e93d61a5-7fcc-496d-a8b8-58fa9a78b560" x="1010" y="10" data-blockNo="49">
+      <field name="NAME">Grasp_Bearing_BRG</field>
+      <statement name="STACK">
+        <block type="moveP" id="e083d932-674c-4f80-920d-572ee37c123d" data-blockNo="50">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="dca40117-5534-419c-8a39-356badf9b39f" data-blockNo="51">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="procedures_callnoreturn" id="a06bda25-ce76-4122-b53f-1aa176403091" data-blockNo="52">
+                  <mutation name="Open_BRG_PLT_Clamp"></mutation>
+                  <next>
+                    <block type="set_speed" id="2cfa4f08-c79e-4648-9344-a2d7f14eccd9" data-blockNo="53">
+                      <mutation timeout="-1"></mutation>
+                      <field name="speed">100</field>
+                      <next>
+                        <block type="moveP" id="1cf0bdec-08ef-4800-a529-dab63f633a97" data-blockNo="54">
+                          <mutation timeout="60000000"></mutation>
+                          <field name="point_name_list">P1</field>
+                          <field name="execution_mode">wait</field>
+                          <field name="control_x">enable</field>
+                          <field name="control_y">enable</field>
+                          <field name="control_z">enable</field>
+                          <field name="control_rx">enable</field>
+                          <field name="control_ry">enable</field>
+                          <field name="control_rz">enable</field>
+                          <field name="pallet_list">none</field>
+                          <field name="camera_list">none</field>
+                          <next>
+                            <block type="procedures_callnoreturn" id="692f913d-b673-42a1-bb8b-20b2808b65a4" data-blockNo="55">
+                              <mutation name="Close_BRG_PLT_Clamp"></mutation>
+                              <next>
+                                <block type="set_speed" id="5f4c3f75-3544-4cc9-b998-fa2c8d90d06f" data-blockNo="56">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="2fb47626-5375-46a4-878f-3a0c948270ff" data-blockNo="57">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="moveP" id="18795518-4fe3-46d5-8769-77edad0ec549" data-blockNo="58">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="return" id="8c192219-e617-4f9c-8f81-2d06930a8b9e" data-blockNo="59">
+                                              <mutation timeout="-1"></mutation>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="93c6181d-e392-469b-999c-81eb785d1be6" x="1210" y="10" data-blockNo="60">
+      <field name="NAME">Grasp_BearingHousing_BH</field>
+      <statement name="STACK">
+        <block type="moveP" id="ceb68519-a70a-44c5-bef1-dfc5407ec69d" data-blockNo="61">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="4692ebc7-f8a4-4371-9e36-26ee8d926415" data-blockNo="62">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="procedures_callnoreturn" id="2fed59a5-b5b0-4b82-bc87-c5859b1525ae" data-blockNo="63">
+                  <mutation name="Open_BH_Assembly_Clamp"></mutation>
+                  <next>
+                    <block type="set_speed" id="37ec0119-b6e8-4415-b134-24c8a57e2883" data-blockNo="64">
+                      <mutation timeout="-1"></mutation>
+                      <field name="speed">100</field>
+                      <next>
+                        <block type="moveP" id="d2373b9e-4b23-4ba9-86e4-ddc2c6d46961" data-blockNo="65">
+                          <mutation timeout="60000000"></mutation>
+                          <field name="point_name_list">P1</field>
+                          <field name="execution_mode">wait</field>
+                          <field name="control_x">enable</field>
+                          <field name="control_y">enable</field>
+                          <field name="control_z">enable</field>
+                          <field name="control_rx">enable</field>
+                          <field name="control_ry">enable</field>
+                          <field name="control_rz">enable</field>
+                          <field name="pallet_list">none</field>
+                          <field name="camera_list">none</field>
+                          <next>
+                            <block type="procedures_callnoreturn" id="4318bade-d586-41b0-b889-6c3a775df6a1" data-blockNo="66">
+                              <mutation name="Close_BH_Assembly_Clamp"></mutation>
+                              <next>
+                                <block type="set_speed" id="7a80ea5a-16f9-45ac-bd88-e1062aa4f453" data-blockNo="67">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="8eeb48da-0c5d-4da4-bda9-31d490fcdf8c" data-blockNo="68">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="moveP" id="3e4e9360-c767-4f53-b3de-ad0fe83dee9c" data-blockNo="69">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="return" id="495045cc-f08f-43e5-ac03-2f7b4cbacea5" data-blockNo="70">
+                                              <mutation timeout="-1"></mutation>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="ffd04db4-3483-4454-98fa-aa136bc128db" x="1410" y="10" data-blockNo="71">
+      <field name="NAME">Place_BearingHousing_BH_To_RMC</field>
+      <statement name="STACK">
+        <block type="moveP" id="8157a605-dbb2-4312-9d50-2a492c2a2db4" data-blockNo="72">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="a5e7f19b-a28a-4f45-83a1-802deb7f9673" data-blockNo="73">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="set_speed" id="44b69a73-95b9-4a61-8464-07cae3c39b3b" data-blockNo="74">
+                  <mutation timeout="-1"></mutation>
+                  <field name="speed">100</field>
+                  <next>
+                    <block type="moveP" id="1569771b-8468-4bac-9915-7c5c8d307a2b" data-blockNo="75">
+                      <mutation timeout="60000000"></mutation>
+                      <field name="point_name_list">P1</field>
+                      <field name="execution_mode">wait</field>
+                      <field name="control_x">enable</field>
+                      <field name="control_y">enable</field>
+                      <field name="control_z">enable</field>
+                      <field name="control_rx">enable</field>
+                      <field name="control_ry">enable</field>
+                      <field name="control_rz">enable</field>
+                      <field name="pallet_list">none</field>
+                      <field name="camera_list">none</field>
+                      <next>
+                        <block type="procedures_callnoreturn" id="caa17ee7-c326-4864-abc5-92edb2ed7fbe" data-blockNo="76">
+                          <mutation name="Open_BH_Assembly_Clamp"></mutation>
+                          <next>
+                            <block type="moveP" id="4e3c09d6-3d48-4468-952a-082c2b1a2212" data-blockNo="77">
+                              <mutation timeout="60000000"></mutation>
+                              <field name="point_name_list">P1</field>
+                              <field name="execution_mode">wait</field>
+                              <field name="control_x">enable</field>
+                              <field name="control_y">enable</field>
+                              <field name="control_z">enable</field>
+                              <field name="control_rx">enable</field>
+                              <field name="control_ry">enable</field>
+                              <field name="control_rz">enable</field>
+                              <field name="pallet_list">none</field>
+                              <field name="camera_list">none</field>
+                              <next>
+                                <block type="set_speed" id="989780df-1c98-4035-83f9-ac2a97612ce8" data-blockNo="78">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="9566c4df-3682-4bcd-b752-7b16de36068a" data-blockNo="79">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="return" id="4858dbe0-bd7b-4710-b7ac-f86dea188a51" data-blockNo="80">
+                                          <mutation timeout="-1"></mutation>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="35ddc58e-248e-4a36-8df2-786e09a4f2c7" x="1610" y="10" data-blockNo="81">
+      <field name="NAME">Place_Bearing_BRG_Onto_BH_For_Assembly</field>
+      <statement name="STACK">
+        <block type="moveP" id="f351ef47-2251-417c-98f8-0a0578cf5ded" data-blockNo="82">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="b63dc3d3-eb9e-4fa9-a2cf-1e87edd59b4a" data-blockNo="83">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="set_speed" id="8922516a-117c-4e34-99d9-34f19732dc90" data-blockNo="84">
+                  <mutation timeout="-1"></mutation>
+                  <field name="speed">100</field>
+                  <next>
+                    <block type="moveP" id="67fb6dd2-3eda-421c-8064-97992e5524f7" data-blockNo="85">
+                      <mutation timeout="60000000"></mutation>
+                      <field name="point_name_list">P1</field>
+                      <field name="execution_mode">wait</field>
+                      <field name="control_x">enable</field>
+                      <field name="control_y">enable</field>
+                      <field name="control_z">enable</field>
+                      <field name="control_rx">enable</field>
+                      <field name="control_ry">enable</field>
+                      <field name="control_rz">enable</field>
+                      <field name="pallet_list">none</field>
+                      <field name="camera_list">none</field>
+                      <next>
+                        <block type="procedures_callnoreturn" id="1e42ce9f-4eb8-4886-8ac2-a1f955129b40" data-blockNo="86">
+                          <mutation name="Open_BRG_PLT_Clamp"></mutation>
+                          <next>
+                            <block type="wait_timer" id="1f946db4-e6b1-4cc3-a74c-c2383fbc8085" data-blockNo="87">
+                              <mutation timeout="60000"></mutation>
+                              <field name="name">N1</field>
+                              <next>
+                                <block type="moveP" id="0a0f5e30-b277-4365-96a8-88929ddb60fc" data-blockNo="88">
+                                  <mutation timeout="60000000"></mutation>
+                                  <field name="point_name_list">P1</field>
+                                  <field name="execution_mode">wait</field>
+                                  <field name="control_x">enable</field>
+                                  <field name="control_y">enable</field>
+                                  <field name="control_z">enable</field>
+                                  <field name="control_rx">enable</field>
+                                  <field name="control_ry">enable</field>
+                                  <field name="control_rz">enable</field>
+                                  <field name="pallet_list">none</field>
+                                  <field name="camera_list">none</field>
+                                  <next>
+                                    <block type="set_speed" id="a8f803d9-d8f2-4d99-a7d3-a0a8bb7b62f4" data-blockNo="89">
+                                      <mutation timeout="-1"></mutation>
+                                      <field name="speed">100</field>
+                                      <next>
+                                        <block type="moveP" id="6498e59c-4824-440b-8c1a-03fbccafb11d" data-blockNo="90">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="return" id="de286393-b441-4c95-a96f-3efafc6c04f6" data-blockNo="91">
+                                              <mutation timeout="-1"></mutation>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="dd27d994-8653-4a6f-9e3f-1df4b28f1f60" x="1810" y="10" data-blockNo="92">
+      <field name="NAME">Grasp_AssembledPart_From_RMC</field>
+      <statement name="STACK">
+        <block type="moveP" id="d3d8cd63-d18b-45c5-81a5-491f5756799f" data-blockNo="93">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="ff020bfb-b778-4538-8124-752f8952f7b5" data-blockNo="94">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="procedures_callnoreturn" id="81b6be67-5a0b-40a2-9ca9-8983056bdc07" data-blockNo="95">
+                  <mutation name="Open_BH_Assembly_Clamp"></mutation>
+                  <next>
+                    <block type="set_speed" id="2f658316-b4e0-44a3-bf20-6db730b89362" data-blockNo="96">
+                      <mutation timeout="-1"></mutation>
+                      <field name="speed">100</field>
+                      <next>
+                        <block type="moveP" id="bce03214-b8ea-4f53-a249-1c469e3f8bd1" data-blockNo="97">
+                          <mutation timeout="60000000"></mutation>
+                          <field name="point_name_list">P1</field>
+                          <field name="execution_mode">wait</field>
+                          <field name="control_x">enable</field>
+                          <field name="control_y">enable</field>
+                          <field name="control_z">enable</field>
+                          <field name="control_rx">enable</field>
+                          <field name="control_ry">enable</field>
+                          <field name="control_rz">enable</field>
+                          <field name="pallet_list">none</field>
+                          <field name="camera_list">none</field>
+                          <next>
+                            <block type="procedures_callnoreturn" id="e69cee9c-0b8b-42f4-818d-bfa03a15d585" data-blockNo="98">
+                              <mutation name="Close_BH_Assembly_Clamp"></mutation>
+                              <next>
+                                <block type="set_speed" id="0503bddc-254d-4d8a-80c8-c753215af61f" data-blockNo="99">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="16109063-88fd-4f5c-8b44-a0d75c65873a" data-blockNo="100">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="moveP" id="9332b72d-6117-4b7c-9af2-21f7b48fc6fb" data-blockNo="101">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="return" id="520b19e0-8abd-4179-be79-c21d582f2b9b" data-blockNo="102">
+                                              <mutation timeout="-1"></mutation>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="810aee2f-3c98-486a-8095-1ee5f021cc30" x="2010" y="10" data-blockNo="103">
+      <field name="NAME">Place_AssembledPart_To_LMC</field>
+      <statement name="STACK">
+        <block type="moveP" id="442cc367-a8ce-4fe2-b703-22121ad5d0e7" data-blockNo="104">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="fea31f0b-0d38-4f17-8db3-0f19ba8fadbe" data-blockNo="105">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="set_speed" id="14c99b21-d91a-4158-9fd9-fb35bad80e81" data-blockNo="106">
+                  <mutation timeout="-1"></mutation>
+                  <field name="speed">100</field>
+                  <next>
+                    <block type="moveP" id="68df25d6-fbd0-479a-9fe4-b24716973761" data-blockNo="107">
+                      <mutation timeout="60000000"></mutation>
+                      <field name="point_name_list">P1</field>
+                      <field name="execution_mode">wait</field>
+                      <field name="control_x">enable</field>
+                      <field name="control_y">enable</field>
+                      <field name="control_z">enable</field>
+                      <field name="control_rx">enable</field>
+                      <field name="control_ry">enable</field>
+                      <field name="control_rz">enable</field>
+                      <field name="pallet_list">none</field>
+                      <field name="camera_list">none</field>
+                      <next>
+                        <block type="procedures_callnoreturn" id="5a1b75bf-3fc2-4a54-8afe-4f2f5956ecd4" data-blockNo="108">
+                          <mutation name="Open_BH_Assembly_Clamp"></mutation>
+                          <next>
+                            <block type="moveP" id="53b38dff-76d6-484f-8dec-39f0a098b7b1" data-blockNo="109">
+                              <mutation timeout="60000000"></mutation>
+                              <field name="point_name_list">P1</field>
+                              <field name="execution_mode">wait</field>
+                              <field name="control_x">enable</field>
+                              <field name="control_y">enable</field>
+                              <field name="control_z">enable</field>
+                              <field name="control_rx">enable</field>
+                              <field name="control_ry">enable</field>
+                              <field name="control_rz">enable</field>
+                              <field name="pallet_list">none</field>
+                              <field name="camera_list">none</field>
+                              <next>
+                                <block type="set_speed" id="3c0fc09c-d756-4c6f-99c5-58f685de1504" data-blockNo="110">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="2c5c3e2f-19fa-46a8-8afd-375590ec2d94" data-blockNo="111">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="return" id="1bd75946-df0f-4971-8cbd-b68567f9c140" data-blockNo="112">
+                                          <mutation timeout="-1"></mutation>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="ffaa72ae-9dff-4a42-a87f-dc366cd0017a" x="2210" y="10" data-blockNo="113">
+      <field name="NAME">Grasp_Empty_Pallet_PLT</field>
+      <statement name="STACK">
+        <block type="moveP" id="77390de8-d224-485a-a5ab-f6d118d69bea" data-blockNo="114">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="33bd06c2-7162-49c9-a957-793f3c518b8e" data-blockNo="115">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="procedures_callnoreturn" id="2341182e-d889-4750-a3b6-58cd3cb6c54f" data-blockNo="116">
+                  <mutation name="Open_BRG_PLT_Clamp"></mutation>
+                  <next>
+                    <block type="set_speed" id="8c97c728-32e1-42f6-8ac6-0c24db8b4d2d" data-blockNo="117">
+                      <mutation timeout="-1"></mutation>
+                      <field name="speed">100</field>
+                      <next>
+                        <block type="moveP" id="783fbb9d-de00-469d-ac62-540b41d0c092" data-blockNo="118">
+                          <mutation timeout="60000000"></mutation>
+                          <field name="point_name_list">P1</field>
+                          <field name="execution_mode">wait</field>
+                          <field name="control_x">enable</field>
+                          <field name="control_y">enable</field>
+                          <field name="control_z">enable</field>
+                          <field name="control_rx">enable</field>
+                          <field name="control_ry">enable</field>
+                          <field name="control_rz">enable</field>
+                          <field name="pallet_list">none</field>
+                          <field name="camera_list">none</field>
+                          <next>
+                            <block type="procedures_callnoreturn" id="19ec422e-2afa-4041-b71c-1147e78911df" data-blockNo="119">
+                              <mutation name="Close_BRG_PLT_Clamp"></mutation>
+                              <next>
+                                <block type="set_speed" id="3e5b185f-ef61-42cb-92ce-40439dbafc80" data-blockNo="120">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="121f6191-06d0-443b-8490-ca8b6f0eaa81" data-blockNo="121">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="moveP" id="8e869f38-286a-4ac1-b292-53353da486ed" data-blockNo="122">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="return" id="85c54f77-ebc0-4425-bfa3-1dac5b14df50" data-blockNo="123">
+                                              <mutation timeout="-1"></mutation>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="7676ab34-f640-4b60-8fdc-3e5f613be75a" x="2410" y="10" data-blockNo="124">
+      <field name="NAME">Place_Empty_Pallet_PLT_To_CNV</field>
+      <statement name="STACK">
+        <block type="moveP" id="019e7510-d63f-4913-adb5-f153dd19a77b" data-blockNo="125">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="f9cc8194-ce65-4497-b2bb-e30c68fb5d6e" data-blockNo="126">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="set_speed" id="0c2e6f9b-b0ea-480e-8c2f-67e65fc49a20" data-blockNo="127">
+                  <mutation timeout="-1"></mutation>
+                  <field name="speed">100</field>
+                  <next>
+                    <block type="moveP" id="4d9a3117-6c39-4faa-bac5-b06baf242032" data-blockNo="128">
+                      <mutation timeout="60000000"></mutation>
+                      <field name="point_name_list">P1</field>
+                      <field name="execution_mode">wait</field>
+                      <field name="control_x">enable</field>
+                      <field name="control_y">enable</field>
+                      <field name="control_z">enable</field>
+                      <field name="control_rx">enable</field>
+                      <field name="control_ry">enable</field>
+                      <field name="control_rz">enable</field>
+                      <field name="pallet_list">none</field>
+                      <field name="camera_list">none</field>
+                      <next>
+                        <block type="procedures_callnoreturn" id="42207f30-4628-4087-ae4f-d7b08ae3d451" data-blockNo="129">
+                          <mutation name="Open_BRG_PLT_Clamp"></mutation>
+                          <next>
+                            <block type="moveP" id="962e9bb3-8a38-40ba-9211-3a51c05bb0bc" data-blockNo="130">
+                              <mutation timeout="60000000"></mutation>
+                              <field name="point_name_list">P1</field>
+                              <field name="execution_mode">wait</field>
+                              <field name="control_x">enable</field>
+                              <field name="control_y">enable</field>
+                              <field name="control_z">enable</field>
+                              <field name="control_rx">enable</field>
+                              <field name="control_ry">enable</field>
+                              <field name="control_rz">enable</field>
+                              <field name="pallet_list">none</field>
+                              <field name="camera_list">none</field>
+                              <next>
+                                <block type="set_speed" id="8c78c34d-2ffa-4da6-b378-a87a7e211d46" data-blockNo="131">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="9369a186-3051-409f-8852-5e754d030da3" data-blockNo="132">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="return" id="73d76558-8039-4bbc-a82a-7da45398738f" data-blockNo="133">
+                                          <mutation timeout="-1"></mutation>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="a35d365b-ba12-4e05-b476-d4b0c31f7864" x="2610" y="10" data-blockNo="134">
+      <field name="NAME">Grasp_AssembledPart_From_LMC</field>
+      <statement name="STACK">
+        <block type="moveP" id="af490e19-2c2a-4bd0-8ed8-36871b65730c" data-blockNo="135">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="fef31eea-2845-40c7-b117-24bb6b526dc8" data-blockNo="136">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="procedures_callnoreturn" id="c48d2ec6-1427-4480-a6f2-b1975349b9db" data-blockNo="137">
+                  <mutation name="Open_BH_Assembly_Clamp"></mutation>
+                  <next>
+                    <block type="set_speed" id="6b103863-ad25-4b4c-b7f8-4af9dc330626" data-blockNo="138">
+                      <mutation timeout="-1"></mutation>
+                      <field name="speed">100</field>
+                      <next>
+                        <block type="moveP" id="00e5f558-a93e-4336-88b5-6a63783d95fc" data-blockNo="139">
+                          <mutation timeout="60000000"></mutation>
+                          <field name="point_name_list">P1</field>
+                          <field name="execution_mode">wait</field>
+                          <field name="control_x">enable</field>
+                          <field name="control_y">enable</field>
+                          <field name="control_z">enable</field>
+                          <field name="control_rx">enable</field>
+                          <field name="control_ry">enable</field>
+                          <field name="control_rz">enable</field>
+                          <field name="pallet_list">none</field>
+                          <field name="camera_list">none</field>
+                          <next>
+                            <block type="procedures_callnoreturn" id="819abec3-471a-4c68-81d7-bb8b6fbf98fa" data-blockNo="140">
+                              <mutation name="Close_BH_Assembly_Clamp"></mutation>
+                              <next>
+                                <block type="set_speed" id="1ac214c6-134b-4ab5-8846-d6c0db60afcb" data-blockNo="141">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="cee8ed0c-91d3-4be5-9388-641a523ebc59" data-blockNo="142">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="moveP" id="242eef98-6315-408f-b8b5-0a4609fe7462" data-blockNo="143">
+                                          <mutation timeout="60000000"></mutation>
+                                          <field name="point_name_list">P1</field>
+                                          <field name="execution_mode">wait</field>
+                                          <field name="control_x">enable</field>
+                                          <field name="control_y">enable</field>
+                                          <field name="control_z">enable</field>
+                                          <field name="control_rx">enable</field>
+                                          <field name="control_ry">enable</field>
+                                          <field name="control_rz">enable</field>
+                                          <field name="pallet_list">none</field>
+                                          <field name="camera_list">none</field>
+                                          <next>
+                                            <block type="return" id="2ee716ce-605c-461b-ad85-339daedd7f33" data-blockNo="144">
+                                              <mutation timeout="-1"></mutation>
+                                            </block>
+                                          </next>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="6b820894-4648-4353-92d9-9b57ec833402" x="2810" y="10" data-blockNo="145">
+      <field name="NAME">Place_AssembledPart_Onto_Pallet_CNV</field>
+      <statement name="STACK">
+        <block type="moveP" id="0a0004ce-0ba0-4459-9bd3-da7c070ff9c3" data-blockNo="146">
+          <mutation timeout="60000000"></mutation>
+          <field name="point_name_list">P1</field>
+          <field name="execution_mode">wait</field>
+          <field name="control_x">enable</field>
+          <field name="control_y">enable</field>
+          <field name="control_z">enable</field>
+          <field name="control_rx">enable</field>
+          <field name="control_ry">enable</field>
+          <field name="control_rz">enable</field>
+          <field name="pallet_list">none</field>
+          <field name="camera_list">none</field>
+          <next>
+            <block type="moveP" id="aaaa178d-2b07-48dc-9989-f78d64a6b60d" data-blockNo="147">
+              <mutation timeout="60000000"></mutation>
+              <field name="point_name_list">P1</field>
+              <field name="execution_mode">wait</field>
+              <field name="control_x">enable</field>
+              <field name="control_y">enable</field>
+              <field name="control_z">enable</field>
+              <field name="control_rx">enable</field>
+              <field name="control_ry">enable</field>
+              <field name="control_rz">enable</field>
+              <field name="pallet_list">none</field>
+              <field name="camera_list">none</field>
+              <next>
+                <block type="set_speed" id="69b9303c-a29f-4e7e-842d-99f2a2faad25" data-blockNo="148">
+                  <mutation timeout="-1"></mutation>
+                  <field name="speed">100</field>
+                  <next>
+                    <block type="moveP" id="156d67df-208b-4d19-8da8-195f81c98291" data-blockNo="149">
+                      <mutation timeout="60000000"></mutation>
+                      <field name="point_name_list">P1</field>
+                      <field name="execution_mode">wait</field>
+                      <field name="control_x">enable</field>
+                      <field name="control_y">enable</field>
+                      <field name="control_z">enable</field>
+                      <field name="control_rx">enable</field>
+                      <field name="control_ry">enable</field>
+                      <field name="control_rz">enable</field>
+                      <field name="pallet_list">none</field>
+                      <field name="camera_list">none</field>
+                      <next>
+                        <block type="procedures_callnoreturn" id="6b784329-1874-4bf0-9b80-b37a1925b6df" data-blockNo="150">
+                          <mutation name="Open_BH_Assembly_Clamp"></mutation>
+                          <next>
+                            <block type="moveP" id="9c6a3c36-ba89-4bc4-8d6d-b1481623d75d" data-blockNo="151">
+                              <mutation timeout="60000000"></mutation>
+                              <field name="point_name_list">P1</field>
+                              <field name="execution_mode">wait</field>
+                              <field name="control_x">enable</field>
+                              <field name="control_y">enable</field>
+                              <field name="control_z">enable</field>
+                              <field name="control_rx">enable</field>
+                              <field name="control_ry">enable</field>
+                              <field name="control_rz">enable</field>
+                              <field name="pallet_list">none</field>
+                              <field name="camera_list">none</field>
+                              <next>
+                                <block type="set_speed" id="a966b6b2-a067-4c75-b4d6-7679416a0285" data-blockNo="152">
+                                  <mutation timeout="-1"></mutation>
+                                  <field name="speed">100</field>
+                                  <next>
+                                    <block type="moveP" id="c12814b2-c6ab-4340-a92b-563d0bebe088" data-blockNo="153">
+                                      <mutation timeout="60000000"></mutation>
+                                      <field name="point_name_list">P1</field>
+                                      <field name="execution_mode">wait</field>
+                                      <field name="control_x">enable</field>
+                                      <field name="control_y">enable</field>
+                                      <field name="control_z">enable</field>
+                                      <field name="control_rx">enable</field>
+                                      <field name="control_ry">enable</field>
+                                      <field name="control_rz">enable</field>
+                                      <field name="pallet_list">none</field>
+                                      <field name="camera_list">none</field>
+                                      <next>
+                                        <block type="return" id="548d907d-00a0-4699-aa43-3c64a2a2a194" data-blockNo="154">
+                                          <mutation timeout="-1"></mutation>
+                                        </block>
+                                      </next>
+                                    </block>
+                                  </next>
+                                </block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+  </xml>
+load_program_name_readOnly2: llm_test
+override_value: '60'
+robot_name_readOnly: dobot_mg400
+load_program_name_readOnly: llm_test
+auto_start: 'no'
+external_input_03_readOnly2: 'ON'
+robot_port_readOnly: '23'
+robot_ip_readOnly2: 192.168.250.101
+version: 2.4.0
+external_input_03: 'ON'
