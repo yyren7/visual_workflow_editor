@@ -60,15 +60,15 @@ class Config:
     DEBUG: bool = os.getenv("DEBUG", "0") == "1"
 
     # CORS settings
-    CORS_ORIGINS: list = [
-        "http://localhost:3000",      # 本地开发环境
-        "http://172.18.0.3:3000",     # Docker网络中的前端容器
-        "http://workflow-editor-frontend:3000",  # 容器名称访问
-        "*"                          # 允许所有源（生产环境应该更严格）
-    ]
-    CORS_CREDENTIALS: bool = True
-    CORS_METHODS: list = ["*"]
-    CORS_HEADERS: list = ["*"]
+    # CORS_ORIGINS: list = [
+    #     "http://localhost:3000",      # 本地开发环境
+    #     "http://172.18.0.3:3000",     # Docker网络中的前端容器
+    #     "http://workflow-editor-frontend:3000",  # 容器名称访问
+    #     "*"                          # 允许所有源（生产环境应该更严格）
+    # ]
+    # CORS_CREDENTIALS: bool = True
+    # CORS_METHODS: list = ["*"]
+    # CORS_HEADERS: list = ["*"]
 
     # Global Variables File Path
     GLOBAL_VARIABLES_PATH: str = os.getenv("GLOBAL_VARIABLES_PATH", "global_variables.json") # Default path for global variables

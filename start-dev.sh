@@ -8,7 +8,7 @@ case "$1" in
   frontend)
     cd /workspace/frontend
     echo "启动前端开发服务器..."
-    npm start
+    PORT=3001 npm start
     ;;
   backend)
     cd /workspace
@@ -36,7 +36,7 @@ case "$1" in
     
     # 创建前端 tmux 会话
     cd /workspace/frontend
-    tmux new-session -d -s frontend 'npm start | tee /workspace/logs/frontend.log; read'
+    tmux new-session -d -s frontend 'PORT=3001 npm start | tee /workspace/logs/frontend.log; read'
     echo "前端服务已在 tmux 会话 'frontend' 中启动"
     
     # 创建后端 tmux 会话

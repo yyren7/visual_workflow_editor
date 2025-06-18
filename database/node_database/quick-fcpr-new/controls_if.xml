@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="controls_if" id="GENERATED_ID" data-blockNo="1">
-    <!-- <mutation else="0" elseif="0"></mutation> -->
-    <!-- quickfcpr.md 中的 'if' 块支持 'else if' 和 'else'。 -->
-    <!-- 要启用 'else if'，请添加 <mutation elseif="N"></mutation> (N > 0)。 -->
-    <!-- 要启用 'else'，请添加 <mutation else="1"></mutation>。 -->
-    <!-- 示例 (if-else): <mutation else="1"></mutation> -->
-    <!-- 示例 (if-elseif-else): <mutation elseif="1" else="1"></mutation> -->
+    <mutation else="0" elseif="0"></mutation>
     <value name="IF0">
       <!-- IF0 (条件0): 'if' 语句的条件，连接一个逻辑块。 -->
       <!-- 有效范围: 逻辑值输出块 -->
       <!-- 初期値: 无 (必须连接) -->
       <!-- 示例: 连接一个 <block type="logic_compare">...</block> -->
+      <block type="logic_boolean" id="GENERATED_ID_CONDITION">
+        <field name="BOOL">TRUE</field>
+      </block>
     </value>
     <statement name="DO0">
       <!-- DO0 (处理0): 当 IF0 条件为真时执行的块序列。 -->
     </statement>
-    <!-- 如果 mutation 中 elseif="N" (N>0)，则会有对应的 IF1..IFN 和 DO1..DON -->
-    <!-- 如果 mutation 中 else="1"，则会有对应的 <statement name="ELSE">...</statement> -->
     <!-- <next> ... </next> -->
   </block>
 </xml> 

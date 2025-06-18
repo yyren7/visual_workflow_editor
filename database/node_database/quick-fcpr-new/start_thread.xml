@@ -6,6 +6,9 @@
       <!-- 有效范围: 逻辑值输出块 -->
       <!-- 初期値: 无 (必须连接) -->
       <!-- 示例: 连接一个 <block type="logic_boolean"><field name="BOOL">TRUE</field></block> -->
+      <block type="logic_boolean" id="GENERATED_ID_CONDITION">
+        <field name="BOOL">TRUE</field>
+      </block>
     </value>
     <statement name="DO">
       <!-- 此处嵌套在该线程启动后要执行的块序列 -->

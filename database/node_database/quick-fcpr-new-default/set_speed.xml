@@ -4,11 +4,12 @@
     <mutation timeout="-1"></mutation>
     <!-- timeout属性存在于flow.xml示例中，具体含义需参照文档或实际行为，-1可能表示无限等待或默认超时 -->
     <!-- quickfcpr.md 的 'set speed value' 未明确此mutation timeout -->
-    <field name="speed">100</field>
-    <!-- speed (速度): 设置机器人的动作速度百分比。 -->
-    <!-- 有效范围: 1 ~ 100 (%) -->
-    <!-- 初期値: 100 -->
-    <!-- 示例: 10 -->
+    <field name="speed">
+      <!-- speed (速度): 设置机器人的动作速度百分比。 -->
+      <!-- 有效范围: 1 ~ 100 (%) -->
+      <!-- 初期値: 100 -->
+      <!-- 示例: 10 -->
+    </field>
     <!-- <next> ... </next> -->
   </block>
 </xml> 

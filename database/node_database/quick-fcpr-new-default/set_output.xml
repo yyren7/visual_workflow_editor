@@ -4,16 +4,18 @@
     <mutation timeout="-1"></mutation>
     <!-- timeout属性在flow.xml示例中存在，具体含义可能表示无限等待或默认超时。 -->
     <!-- quickfcpr.md 中对 set_output 的描述未明确此 mutation timeout。通常可以是 -1 (无限) 或具体毫秒数。 -->
-    <field name="output_pin_name">1</field>
-    <!-- output_pin_name (出力ピン名): 指定要操作的机器人输出引脚的名称或编号。 -->
-    <!-- 有效范围: 取决于机器人控制器配置的输出引脚，通常是数字编号。 -->
-    <!-- 初期値: (需要根据实际机器人配置确定，此处留空或设为通用值如 "1") -->
-    <!-- 示例: 1, 6 (根据 flow.xml 中的示例) -->
-    <field name="out_state">on</field>
-    <!-- out_state (出力状態): 指定输出引脚的状态。 -->
-    <!-- 有效范围: on (开启), off (关闭) -->
-    <!-- 初期値: on -->
-    <!-- 示例: on, off (根据 flow.xml 中的示例) -->
+    <field name="output_pin_name">
+      <!-- output_pin_name (出力ピン名): 指定要操作的机器人输出引脚的名称或编号。 -->
+      <!-- 有效范围: 取决于机器人控制器配置的输出引脚，通常是数字编号。 -->
+      <!-- 初期値: (需要根据实际机器人配置确定，此处留空或设为通用值如 "1") -->
+      <!-- 示例: 1, 6 (根据 flow.xml 中的示例) -->
+    </field>
+    <field name="out_state">
+      <!-- out_state (出力状態): 指定输出引脚的状态。 -->
+      <!-- 有效范围: on (开启), off (关闭) -->
+      <!-- 初期値: on -->
+      <!-- 示例: on, off (根据 flow.xml 中的示例) -->
+    </field>
     <!-- <next> ... </next> 代表流程中的下一个块 -->
   </block>
 </xml> 

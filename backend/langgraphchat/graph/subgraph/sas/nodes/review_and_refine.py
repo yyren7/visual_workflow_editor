@@ -49,143 +49,111 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
     state.is_error = False
     # state.error_message = None # Keep existing error message if any
 
-    # Determine current review stage more robustly
-    # This logic prioritizes explicit dialog_states set by preceding nodes when user_input is present.
-    # When user_input is None, it decides what to present for review.
-    
-    reviewing_task_list = False
-    reviewing_module_steps = False
+    # --- This initial determination of reviewing_task_list/steps is primarily for when user_input IS PRESENT ---
+    # --- to know what their feedback pertains to. ---
+    # --- When user_input IS NONE, we will re-evaluate directly below. ---
+    reviewing_task_list_for_feedback_context = False
+    reviewing_module_steps_for_feedback_context = False
 
-    if state.user_input is None: # System is presenting something for review
-        if not state.task_list_accepted:
-            reviewing_task_list = True
-        elif state.task_list_accepted and not state.module_steps_accepted:
-            reviewing_module_steps = True
-        # If both are accepted, this node might not be the right place, or it's a loop completion.
-        # For now, this implies if task_list is accepted, we must be looking at module_steps if they aren't accepted.
-    else: # System is processing user_input
-        # What was the system waiting for? This should be reflected in dialog_state from the *previous* turn when clarification_question was set.
-        # However, dialog_state might have been updated by initialize_state if graph re-entered.
-        # Let's rely on the acceptance flags primarily for what the feedback applies to.
+    if state.user_input is not None: # System is processing user_input, determine context of feedback
         if state.dialog_state == "sas_awaiting_task_list_review" or (not state.task_list_accepted):
-             # If user input is present and task list wasn't accepted, feedback is for task list.
-            reviewing_task_list = True
+            reviewing_task_list_for_feedback_context = True
         elif state.dialog_state == "sas_awaiting_module_steps_review" or (state.task_list_accepted and not state.module_steps_accepted):
-            # If user input is present, task list was accepted, but module steps not, feedback is for module steps.
-            reviewing_module_steps = True
-
-    logger.info(f"    Determined Stage - Reviewing task list: {reviewing_task_list}")
-    logger.info(f"    Determined Stage - Reviewing module steps: {reviewing_module_steps}")
-
-    current_data_for_review_json_str = "[]"
-    question_for_user = ""
-    dialog_state_if_awaiting_input = state.dialog_state # Default to current
-
-    if reviewing_task_list:
-        logger.info("Preparing to review/process feedback for: TASK LIST.")
-    if state.sas_step1_generated_tasks:
-        try:
-                current_data_for_review_json_str = json.dumps([task.model_dump(exclude_none=True) for task in state.sas_step1_generated_tasks], indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Error serializing current task list: {e}")
-            current_data_for_review_json_str = "[Error serializing task list]"
-        question_for_user = f"""This is the task list generated based on the current description (iteration {state.revision_iteration}):
-
-```json
-{current_data_for_review_json_str}
-```
-
-Do you accept this task list? If you need to make changes, please let me know your opinion. You can directly say "accept" or "agree", or provide your modification instructions."""
-        dialog_state_if_awaiting_input = "sas_awaiting_task_list_review"
-
-    elif reviewing_module_steps:
-        logger.info("Preparing to review/process feedback for: MODULE STEPS.")
-        if state.sas_step1_generated_tasks: 
-            tasks_with_details = []
-            for task in state.sas_step1_generated_tasks:
-                tasks_with_details.append({
-                    "name": task.name,
-                    "type": task.type,
-                    "description": task.description,
-                    "details": task.details if task.details else ["No module steps generated for this task."]
-                })
-            try:
-                current_data_for_review_json_str = json.dumps(tasks_with_details, indent=2, ensure_ascii=False)
-            except Exception as e:
-                logger.error(f"Error serializing module steps: {e}")
-                current_data_for_review_json_str = "[Error serializing module steps]"
-        question_for_user = f"""These are the module steps generated for each task (iteration {state.revision_iteration}):
-
-```json
-{current_data_for_review_json_str}
-```
-
-Do you accept these module steps? If you need to make changes, please let me know your opinion. You can directly say "accept" or "agree", or provide your modification instructions for specific tasks or steps."""
-        dialog_state_if_awaiting_input = "sas_awaiting_module_steps_review"
+            reviewing_module_steps_for_feedback_context = True
     
-    else: # Neither task list nor module steps review stage could be clearly determined.
-          # This might happen if user_input is present but dialog_state is unexpected, or both already accepted.
-        logger.warning(f"Review node in ambiguous state or review cycle complete. Dialog_state: '{state.dialog_state}', task_list_accepted: {state.task_list_accepted}, module_steps_accepted: {state.module_steps_accepted}.")
-        # If both are accepted, effectively this node's interactive part is done for this pass.
-        if state.task_list_accepted and state.module_steps_accepted:
-             logger.info("Both task list and module steps are already accepted. Passing through.")
-             # No change in dialog_state, allow routing to decide next based on these flags.
-             return state.model_dump()
+    logger.info(f"    Context for feedback (if user_input present) - Reviewing task list: {reviewing_task_list_for_feedback_context}")
+    logger.info(f"    Context for feedback (if user_input present) - Reviewing module steps: {reviewing_module_steps_for_feedback_context}")
 
-        # If we have user input but can't determine stage, it's an error or needs clarification.
-        if state.user_input:
+    # ---- BEGIN REFACTORED SECTION for PRESENTING QUESTIONS ----
+    if state.user_input is None: # System is presenting something for review
+        logger.info("Mode: Presenting data for review to the user.")
+        question_for_user = ""
+        dialog_state_if_awaiting_input = state.dialog_state # Default
+
+        if not state.task_list_accepted:
+            logger.info("Presenting for review: TASK LIST (since state.task_list_accepted is False).")
+            if state.sas_step1_generated_tasks:
+                try:
+                    current_data_for_review_json_str = json.dumps([task.model_dump(exclude_none=True) for task in state.sas_step1_generated_tasks], indent=2, ensure_ascii=False)
+                except Exception as e:
+                    logger.error(f"Error serializing current task list: {e}")
+                    current_data_for_review_json_str = "[Error serializing task list]"
+                question_for_user = f"""This is the task list generated based on the current description (iteration {state.revision_iteration}):\\n\\n```json\\n{current_data_for_review_json_str}\\n```\\n\\nDo you accept this task list? If you need to make changes, please let me know your opinion. You can directly say "accept" or "agree", or provide your modification instructions."""
+                dialog_state_if_awaiting_input = "sas_awaiting_task_list_review"
+            else:
+                logger.warning("Attempting to review task list, but no tasks found in state.sas_step1_generated_tasks. This might be an issue.")
+                state.is_error = True
+                state.error_message = "Review node: No tasks available for task list review, though task list is not accepted."
+                # No question can be formed.
+
+        elif state.task_list_accepted and not state.module_steps_accepted:
+            logger.info("Presenting for review: MODULE STEPS (since task_list_accepted is True and module_steps_accepted is False).")
+            if state.sas_step1_generated_tasks and any(getattr(task, 'details', None) for task in state.sas_step1_generated_tasks): # Ensure details (module steps) exist
+                tasks_with_details = []
+                for task in state.sas_step1_generated_tasks:
+                    tasks_with_details.append({
+                        "name": task.name,
+                        "type": task.type,
+                        "description": task.description,
+                        "details": task.details if task.details else ["No module steps generated for this task."]
+                    })
+                try:
+                    current_data_for_review_json_str = json.dumps(tasks_with_details, indent=2, ensure_ascii=False)
+                except Exception as e:
+                    logger.error(f"Error serializing module steps: {e}")
+                    current_data_for_review_json_str = "[Error serializing module steps]"
+                question_for_user = f"""These are the module steps generated for each task (iteration {state.revision_iteration}):\\n\\n```json\\n{current_data_for_review_json_str}\\n```\\n\\nDo you accept these module steps? If you need to make changes, please let me know your opinion. You can directly say "accept" or "agree", or provide your modification instructions for specific tasks or steps."""
+                dialog_state_if_awaiting_input = "sas_awaiting_module_steps_review"
+            else:
+                logger.warning("Attempting to review module steps, but no tasks with details (module steps) found or no tasks at all. This might be an issue if module steps were expected.")
+                # This could happen if module step generation failed or produced nothing.
+                # The node should ideally not ask for review if there's nothing substantive to review.
+                # Consider if an error message or a different path is needed.
+                # For now, if no steps, no question. The routing after process_description_to_module_steps_node should handle empty/error states.
+                # If we are here, it means process_description_to_module_steps_node probably completed "successfully" but maybe with no actual steps.
+                state.clarification_question = "Module steps generation might have resulted in no steps or an issue. Proceeding with caution. If you expected module steps, please indicate a problem with the previous step."
+                # No specific dialog_state to await input for this, it's more of a notification.
+                # The graph will likely proceed, and if XML generation fails due to no steps, that will be caught.
+
+        elif state.task_list_accepted and state.module_steps_accepted:
+            logger.info("Both task list and module steps are already accepted. Passing through.")
+            # No clarification question, user_advice should be None.
+            state.clarification_question = None
+            state.user_advice = None
+            state.dialog_state = "sas_all_steps_accepted_proceed_to_xml" # Signal to routing
+            return state.model_dump() # Pass through
+
+        else: # Should ideally not be reached if logic above is complete
+            logger.error(f"Review node (presenting question): Fell into unexpected 'else' case. Dialog_state: '{state.dialog_state}', task_list_accepted: {state.task_list_accepted}, module_steps_accepted: {state.module_steps_accepted}.")
             state.is_error = True
-            state.error_message = "Review node received user input but could not determine the review stage. Please clarify your intention or restart."
-            logger.error(state.error_message + f" (dialog_state: {state.dialog_state}, task_list_accepted: {state.task_list_accepted}, module_steps_accepted: {state.module_steps_accepted})")
-            if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-            return state.model_dump()
-        
-        # If no user input and still ambiguous (e.g. no tasks loaded yet, but it's not the initial review state)
-        # This case should ideally be caught by specific dialog_states from previous nodes.
-        # For safety, prompt for initial task list review if it makes sense.
-        if not state.sas_step1_generated_tasks and not state.task_list_accepted:
-            logger.info("No tasks generated yet, prompting for initial user request if this is effectively the start of a review cycle.")
-            # This path is less likely if graph structure is correct.
-            # Fallback to prompting for initial task description or let it flow to task generation.
-            # For now, let's assume if we are here without user input and without tasks, it's an issue.
-            state.is_error = True
-            state.error_message = "Review node reached: No tasks available for review and not in a defined review state."
-            logger.error(state.error_message)
-            if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-            return state.model_dump()
-        
-        # If still here, it's a genuine ambiguity not caught.
-        logger.error("Fell through review stage determination. This is an unexpected state.")
-        state.is_error = True
-        state.error_message = "Internal error: Review stage could not be determined."
-        if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-        return state.model_dump()
+            state.error_message = "Internal error: Review stage could not be determined when presenting question."
+            # No specific question.
 
-
-    if state.user_input is None: # System is presenting for review
-        logger.info(f"No new user input. Presenting data for review. Identified stage: {'Task List' if reviewing_task_list else 'Module Steps' if reviewing_module_steps else 'Undefined (Error)'}")
-        if not question_for_user : # Should be set if reviewing_task_list or reviewing_module_steps
-            logger.error("Internal error: question_for_user was not set before presenting to user, though a review stage was identified.")
-            state.is_error = True
-            state.error_message = "Internal error in review node: question prompt not generated for review stage."
-            if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
-                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-            return state.model_dump()
-
+        # Set clarification question and dialog state
         state.clarification_question = question_for_user
-        if not state.messages or state.messages[-1].content != question_for_user: # Avoid duplicate questions
-            state.messages = (state.messages or []) + [AIMessage(content=question_for_user)]
+        if question_for_user: # Only add message if there's a question
+             if not state.messages or state.messages[-1].content != question_for_user:
+                state.messages = (state.messages or []) + [AIMessage(content=question_for_user)]
+        elif not state.is_error and not (state.task_list_accepted and state.module_steps_accepted):
+            # If no question was formed, but it's not an error and not a pass-through state, it's problematic.
+            logger.error("Internal logic error: No question formed for user review, but not an error/pass-through state.")
+            state.is_error = True
+            state.error_message = "Internal error: Failed to prepare a review question."
+            if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
+                state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+
         state.dialog_state = dialog_state_if_awaiting_input
-        state.user_advice = None 
-        logger.info(f"Paused for user input. Dialog state set to: {state.dialog_state}")
+        state.user_advice = None # Clear any old advice
+        logger.info(f"Paused for user input. Clarification: '{str(state.clarification_question)[:100]}...'. Dialog state set to: {state.dialog_state}")
+        return state.model_dump()
+    # ---- END REFACTORED SECTION for PRESENTING QUESTIONS ----
     
     else: # User has provided input, process it
+        # This section uses reviewing_task_list_for_feedback_context and reviewing_module_steps_for_feedback_context
+        # which were determined at the start of the function based on dialog_state and acceptance flags.
         state.user_advice = state.user_input 
         state.user_input = None 
-        logger.info(f"Processing user feedback (advice): '{state.user_advice[:200]}...' for stage: {'Task List' if reviewing_task_list else 'Module Steps' if reviewing_module_steps else 'Undefined (Error)'}")
+        logger.info(f"Processing user feedback (advice): '{state.user_advice[:200]}...' for context: {'Task List' if reviewing_task_list_for_feedback_context else 'Module Steps' if reviewing_module_steps_for_feedback_context else 'Undefined'}")
 
         if not state.messages or not (isinstance(state.messages[-1], HumanMessage) and state.messages[-1].content == state.user_advice):
             state.messages = (state.messages or []) + [HumanMessage(content=state.user_advice)]
@@ -207,23 +175,23 @@ Do you accept these module steps? If you need to make changes, please let me kno
             state.clarification_question = None
             state.user_advice = None 
 
-            if reviewing_task_list:
+            if reviewing_task_list_for_feedback_context:
                 logger.info("User accepted the TASK LIST.")
                 state.task_list_accepted = True
                 state.dialog_state = "sas_step1_tasks_generated" 
                 if not any("Task list confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
                      state.messages = (state.messages or []) + [AIMessage(content="Task list confirmed. Generating detailed module steps next.")]
-            elif reviewing_module_steps:
+            elif reviewing_module_steps_for_feedback_context:
                 logger.info("User accepted the MODULE STEPS.")
                 state.module_steps_accepted = True
                 state.dialog_state = "sas_module_steps_accepted_proceeding" 
-                if not any("Module steps confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-                     state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed. Preparing to generate XML program.")]
+                if not any("Module steps confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):\
+                    state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed. Preparing to generate XML program.")]
             else: 
-                logger.error("CRITICAL: Acceptance received but review stage was undefined during processing.")
+                logger.error("CRITICAL: Acceptance received but review context was undefined during processing.")
                 state.is_error = True
-                state.error_message = "Accepted feedback, but review stage was unclear internally. Please try again or restart."
-                if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
+                state.error_message = "Accepted feedback, but review context was unclear internally. Please try again or restart."
+                if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):\
                     state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
                 return state.model_dump()
         
@@ -233,12 +201,12 @@ Do you accept these module steps? If you need to make changes, please let me kno
             
             modification_triggers_description_revision = False
 
-            if reviewing_task_list:
+            if reviewing_task_list_for_feedback_context:
                 logger.info("Modifications pertain to the TASK LIST or underlying description. Revising current_user_request.")
                 state.task_list_accepted = False # Mark as not accepted due to modifications
                 modification_triggers_description_revision = True
             
-            elif reviewing_module_steps:
+            elif reviewing_module_steps_for_feedback_context:
                 # Check if the "modification" was just an empty input
                 if not state.user_advice.strip():
                     logger.info("Empty feedback received for module steps. Re-presenting module steps for review.")

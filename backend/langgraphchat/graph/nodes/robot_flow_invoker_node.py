@@ -14,7 +14,7 @@ from ..subgraph.sas.graph_builder import create_robot_flow_graph, RobotFlowAgent
 
 logger = logging.getLogger(__name__)
 
-async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> AsyncIterator[dict]:
+async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel, sas_subgraph_app: StateGraph) -> AsyncIterator[dict]:
     """
     调用并执行机器人流程图子图。
     将当前主图的对话历史传递给子图，并在子图完成后，将其历史更新回主图。
@@ -28,15 +28,24 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel) -> Asyn
     current_flow_id = state.get("current_flow_id")
     # flow_context = state.get("flow_context") # Not directly used for subgraph input prep here
 
-    # 2. 创建机器人流程图实例
-    try:
-        robot_flow_subgraph = create_robot_flow_graph(llm=llm)
-        logger.info("Robot flow subgraph instance created successfully.")
-    except Exception as e:
-        logger.error(f"Error creating robot_flow_subgraph: {e}", exc_info=True)
-        error_message = AIMessage(content=f"Error: Could not initialize the robot flow planning module. Details: {e}")
-        yield {"messages": current_main_messages + [error_message], "subgraph_completion_status": "error", "is_error": True, "error_message": str(e), "sas_planner_subgraph_state": None}
+    # 2. 机器人流程图实例现在通过参数传入 (sas_subgraph_app)
+    # try:
+    #     robot_flow_subgraph = create_robot_flow_graph(llm=llm) # 旧的创建方式
+    #     logger.info("Robot flow subgraph instance created successfully.")
+    # except Exception as e:
+    #     logger.error(f\"Error creating robot_flow_subgraph: {e}\", exc_info=True)
+    #     error_message = AIMessage(content=f\"Error: Could not initialize the robot flow planning module. Details: {e}\")
+    #     yield {"messages": current_main_messages + [error_message], "subgraph_completion_status": "error", "is_error": True, "error_message": str(e), "sas_planner_subgraph_state": None}
+    #     return
+
+    # 直接使用传入的 sas_subgraph_app
+    robot_flow_subgraph = sas_subgraph_app
+    if not robot_flow_subgraph:
+        logger.error("SAS Subgraph (sas_subgraph_app) was not provided to robot_flow_invoker_node.")
+        error_message = AIMessage(content="Error: The robot flow planning module is not available.")
+        yield {"messages": current_main_messages + [error_message], "subgraph_completion_status": "error", "is_error": True, "error_message": "SAS subgraph not provided.", "sas_planner_subgraph_state": None}
         return
+    logger.info("Using provided SAS subgraph instance.")
 
     # 3. 准备子图的初始状态
     raw_user_request_for_subgraph = ""

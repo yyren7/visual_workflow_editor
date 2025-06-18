@@ -22,6 +22,7 @@ sys.path.append(str(BASE_DIR))
 
 # 导入配置
 from backend.config.base import LOG_DIR
+from backend.config.app_config import APP_CONFIG
 
 # 创建logs目录
 log_dir = Path(LOG_DIR) # 使用配置中的 LOG_DIR
@@ -191,17 +192,10 @@ async def log_requests_detailed(request: Request, call_next):
 # CORS configuration - 配置更加明确的CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",      # 本地开发环境
-        "http://127.0.0.1:3000",      # 本地开发环境(另一种URL)
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",      # 后端API地址
-        "http://172.18.0.3:3000",     # Docker网络中的前端容器
-        "http://workflow-editor-frontend:3000",  # 容器名称访问
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=APP_CONFIG['CORS_ORIGINS'],
+    allow_credentials=APP_CONFIG.get('CORS_CREDENTIALS', True),
+    allow_methods=APP_CONFIG.get('CORS_METHODS', ["*"]),
+    allow_headers=APP_CONFIG.get('CORS_HEADERS', ["*"]),
     expose_headers=["*"],
 )
 

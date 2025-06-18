@@ -4,6 +4,6 @@
     "type": "MainTask",
     "details": [],
     "sub_tasks": [],
-    "description": "The main task representing the overall robotic process."
+    "description": "The main overarching robot process. No specific sub-tasks were detailed in the user's input."
   }
 ]

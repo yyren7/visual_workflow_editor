@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="math_number" id="GENERATED_ID" data-blockNo="1">
-    <field name="NUM">0</field>
-    <!-- NUM (数値): 一个常量数值。 -->
-    <!-- 有效范围: 任意整数或浮点数 -->
-    <!-- 初期値: 0 -->
-    <!-- 示例: 2 -->
+    <field name="NUM">
+      <!-- NUM (数値): 一个常量数值。 -->
+      <!-- 有效范围: 任意整数或浮点数 -->
+      <!-- 初期値: 0 -->
+      <!-- 示例: 2 -->
+    </field>
     <!-- 该块通常不直接连接到下一个块，而是作为其他块的输入值 -->
   </block>
 </xml> 

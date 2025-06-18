@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="robot_io" id="GENERATED_ID" data-blockNo="1">
-    <field name="input_pin_name">
-      <!-- input_pin_name (入力ポート名/番号): 要获取状态的机器人本体IO输入端口的名称或编号。 -->
-      <!-- 有效范围: 0 ~ 15 (或其他特定于机器人的输入名称) -->
-      <!-- 初期値: 0 -->
-      <!-- 示例: 10 -->
-    </field>
+    <field name="input_pin_name">0</field>
+    <!-- input_pin_name (入力ポート名/番号): 要获取状态的机器人本体IO输入端口的名称或编号。 -->
+    <!-- 有效范围: 0 ~ 15 (或其他特定于机器人的输入名称) -->
+    <!-- 初期値: 0 -->
+    <!-- 示例: 10 -->
     <!-- 该块返回一个布尔值，通常作为其他块的输入值 -->
   </block>
 </xml> 

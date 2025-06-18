@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="math_custom_number" id="GENERATED_ID" data-blockNo="1">
-    <field name="name">
-      <!-- name (変数名): 要获取其值的数值型变量的名称。 -->
-      <!-- 有效范围: N0 ~ N499 -->
-      <!-- 初期値: N0 -->
-      <!-- 示例: N5 -->
-    </field>
+    <field name="name">N0</field>
+    <!-- name (変数名): 要获取其值的数值型变量的名称。 -->
+    <!-- 有效范围: N0 ~ N499 -->
+    <!-- 初期値: N0 -->
+    <!-- 示例: N5 -->
     <!-- 该块通常不直接连接到下一个块，而是作为其他块的输入值 -->
   </block>
 </xml> 

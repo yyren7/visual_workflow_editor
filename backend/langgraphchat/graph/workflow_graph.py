@@ -1,3 +1,19 @@
+# ---- START PATCH FOR DIRECT EXECUTION ----
+if __name__ == '__main__' and (__package__ is None or __package__ == ''):
+    import sys
+    from pathlib import Path
+    # Calculate the path to the project root ('/workspace')
+    # This file is backend/langgraphchat/graph/workflow_graph.py
+    # Relative path from this file to /workspace is ../../../.. (4 levels up)
+    project_root = Path(__file__).resolve().parents[4]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    
+    # Set __package__ to the expected package name for relative imports to work
+    # The package is 'backend.langgraphchat.graph'
+    __package__ = "backend.langgraphchat.graph"
+# ---- END PATCH FOR DIRECT EXECUTION ----
+
 """
 定义和编译 LangGraph 工作流图。
 
@@ -12,7 +28,11 @@
 # Input-》advisor-》planner-》parameter-》
 # exhibitor-》code generator-》code combination
 
-from typing import List
+from typing import List, Optional
+from pathlib import Path # Added
+from dotenv import load_dotenv # Added
+from datetime import datetime, timezone # Added
+
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage, AIMessageChunk
@@ -25,19 +45,31 @@ from .agent_state import AgentState
 from ..prompts.chat_prompts import STRUCTURED_CHAT_AGENT_PROMPT # For system prompt content
 from ..prompts.dynamic_prompt_utils import get_dynamic_node_types_info
 from ..tools import flow_tools # This should be the List[BaseTool]
-from ..context import current_flow_id_var # Context variable for flow_id
+from langchain_google_genai import ChatGoogleGenerativeAI # Added
+from langchain_openai import ChatOpenAI # Added
+from langsmith import Client as LangSmithClient # Added
+from langsmith.utils import LangSmithNotFoundError # Added
+
 import logging # Ensure logging is imported
 import os # Make sure os is imported for listing files
 import xml.etree.ElementTree as ET
 import json
 from functools import partial
+import asyncio # <-- Added import
+from langchain_core.language_models.fake_chat_models import FakeListChatModel # <-- Added import
 
 # 导入工具，LLM, ChatService 等将在此处添加
 # from ...app.services.chat_service import ChatService # 路径可能需要调整
 # from ..tools.flow_tools import ... # 具体的工具或工具列表
 
+# Load environment variables from .env file at the module level
+load_dotenv()
+
 # 获取日志记录器
 logger = logging.getLogger(__name__)
+# Basic logging configuration, can be overridden if the module is imported
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # --- 导入节点和条件逻辑实现 --- (这部分应该在 logger 定义之后)
 from .nodes.input_handler import input_handler_node # Will be used
@@ -52,110 +84,57 @@ from .nodes.goodbye_node import handle_goodbye_node # <-- 新增导入
 from .conditions import should_continue, route_after_task_router # RouteDecision is now in types
 from .graph_types import RouteDecision # Import RouteDecision from types
 
+# --- 导入SAS子图构建器 ---
+from backend.langgraphchat.graph.subgraph.sas.graph_builder import create_robot_flow_graph
+# --- END ---
 
-# Conditional edge for the old planner (will be removed or re-purposed if needed)
-# def should_continue(state: AgentState) -> str:
-# \"\"\"
-# 条件边：决定 Planner 节点之后的下一个状态。
-# \"\"\"
-# messages = state.get("messages", [])
-# if not messages:
-# logger.warning("should_continue: No messages found in state, ending.")
-# return END
-# last_message = messages[-1]
-# if isinstance(last_message, AIMessage):
-# if last_message.tool_calls:
-# logger.info("should_continue: AIMessage has tool_calls, routing to 'tools'.")
-# return "tools"
-# else:
-# logger.info("should_continue: AIMessage has no tool_calls, ending.")
-# return END
-# else:
-# logger.info(f"should_continue: Last message is not AIMessage (type: {type(last_message)}), ending.")
-# return END
-# The should_continue logic might not be needed if robot_flow_invoker_node always goes to END or handles its own loop.
 
 # --- 新增：处理重新输入的节点（如果需要明确提示用户）---
 # 这个节点可以用来向用户明确地发送"请重新输入"的消息
-# 或者，这个逻辑可以合并到 task_router_node 内部
 async def rephrase_request_node(state: AgentState) -> dict:
     """
     如果 task_router 决定需要用户重新澄清，这个节点可以添加一个提示消息。
-    然后流程会回到 task_router。
+    然后流程会通过路由到 END 来结束当前轮次，等待用户的新输入。
     """
-    # 从 state 中获取 task_router 的原始意图总结（如果存在）
     decision = state.get("task_route_decision")
-    llm_summary = decision.user_intent if decision else "我不确定您的意思。"
+    llm_summary = decision.user_intent if decision and hasattr(decision, 'user_intent') else "我不确定您的意思。"
+    
+    rephrase_message_content = f"抱歉，我不太理解您的请求：'{llm_summary}'。您能换个方式详细描述一下吗？"
+    
+    current_messages = state.get("messages", [])
+    current_messages.append(AIMessage(content=rephrase_message_content, id=f"ai_rephrase_{len(current_messages)}"))
 
-    # 创建提示用户重新输入的消息
-    # TODO: 思考这个消息应该由谁发出，以及如何更好地融入对话历史
-    # 一种可能是，task_router 在判断为 rephrase 时，自己就返回一个包含引导的 AIMessage
-    # 这样就不需要一个单独的 rephrase_request_node，直接在 task_router 条件路由回 task_router 即可
-    # 目前的设计是 task_router 返回 next_node="rephrase"，然后条件路由回 task_router
-    # task_router 节点在再次被调用时，会处理最新的用户输入。
-    # 如果需要明确的系统提示，可以在 task_router 内部检查是否是 "rephrase" 后的再次调用。
-
-    # 为了简化，我们先不在 state 中添加额外的消息，
-    # 而是依赖 task_router 在下一次调用时处理新的用户输入。
-    # 如果需要更明确的提示，可以在 task_router_node 的开头检查
-    # state 中是否有之前的 "rephrase" 信号，并相应调整其初始行为或提示。
-
-    # 此处，我们仅打印日志，因为 task_router 自身会重新处理输入。
-    # 如果要在此节点添加消息到 state['messages']，需要确保消息的来源和类型是合适的。
-    logger.info("Rephrase request: Prompting user to rephrase or provide more details.")
-    # 返回空字典，因为我们不直接修改主要的状态（如 messages）
-    # 路由将通过条件边完成
-    return {}
+    logger.info(f"Rephrase request: Prompting user to rephrase. Summary of unclear intent: {llm_summary}")
+    
+    return {"messages": current_messages}
 
 def route_after_functional_node(state: AgentState) -> str:
     """
-    在功能节点（如 robot_flow_planner, teaching, other_assistant）执行完毕后进行路由。
-    检查子图是否需要澄清，或者任务是否完成/出错。
+    在功能节点执行完毕后进行路由。
     """
-    logger.info(f"--- Routing after Functional Node. Subgraph status: {state.get('subgraph_completion_status')}, Current Task Route: {state.get('task_route_decision')}")
+    logger.info(f"--- Routing after Functional Node. Subgraph status: {state.get('subgraph_completion_status')}")
     
     subgraph_status = state.get("subgraph_completion_status")
 
     if subgraph_status == "needs_clarification":
-        logger.info("Functional node/subgraph needs clarification. Ending current graph invocation to await user input.")
-        # task_route_decision 和 user_request_for_router 应该已被 invoker_node 保留 (或在 AgentState 中持久化)
-        # subgraph_completion_status 也保留，以便下一轮图执行时 input_handler 或 task_router 能知道上下文。
-        # 主图的当前执行轮次结束，等待前端的下一次输入触发新的图执行。
-        return END # <--- 修改点：返回 END，让图结束当前轮次
+        logger.info("Functional node/subgraph needs clarification. Suspending graph.")
+        # 设置挂起状态
+        state["is_suspended"] = True
+        return "SUSPENDED"  # 新的路由状态
     elif subgraph_status in ["completed_success", "error"]:
-        logger.info(f"Subgraph completed with status: {subgraph_status}. Resetting task context and routing to END for new cycle.")
-        # 清理特定于此子任务的状态，为下一个独立的用户请求做准备。
-        # 注意：messages 历史通常应该保留。
-        current_messages = list(state.get("messages", []))
-        new_state_after_subgraph_completion = {
-            "messages": current_messages, # 保留消息历史
-            "input": None, # 清除旧的输入
-            "input_processed": False,
-            "task_route_decision": None,
-            "user_request_for_router": None,
-            "subgraph_completion_status": None, # 清除子图状态
-            "clarification_question": None, # 清除可能残留的澄清问题
-            # 其他特定于任务的状态字段也可能需要在这里重置
-            # "flow_context": state.get("flow_context"), # flow_context 可能需要保留或按需更新
-            # "current_flow_id": state.get("current_flow_id") # current_flow_id 通常需要保留
-        }
-        # 更新状态。LangGraph 的 StateGraph 会处理这个返回字典的更新。
-        # 我们不能直接修改 state 然后返回 END，因为路由函数只决定下一个节点。
-        # 更新应该由一个节点完成，或者在这里通过返回一个特殊的节点名，该节点执行状态重置然后到 END。
-        # 然而，更简单的做法是，如果图因为 END 而终止，调用者 (chat.py) 在下一次调用图之前，
-        # 应该准备一个新的、干净的初始状态 (除了 messages 和长期上下文)。
-        # 所以，这里仅清除 task_route_decision, user_request_for_router, subgraph_completion_status
-        # 并依赖于调用者在下一轮正确设置 state。
+        logger.info(f"Subgraph completed with status: {subgraph_status}. Resetting task context.")
+        # 重置状态
         state["task_route_decision"] = None
         state["user_request_for_router"] = None
         state["subgraph_completion_status"] = None
-        return END 
-    else: # subgraph_status is None (it was a simple functional node like teaching/other_assistant that doesn't set this status)
-        logger.info(f"Simple functional node completed (status: {subgraph_status}). Resetting task context and routing to END to signify turn completion.")
-        # 对于这些简单节点，它们通常不涉及多轮澄清，完成后就结束当前回合。
-        state["task_route_decision"] = None 
-        state["user_request_for_router"] = None 
-        state["subgraph_completion_status"] = None 
+        state["is_suspended"] = False
+        return END
+    else:
+        logger.info(f"Simple functional node completed. Resetting task context.")
+        state["task_route_decision"] = None
+        state["user_request_for_router"] = None
+        state["subgraph_completion_status"] = None
+        state["is_suspended"] = False
         return END
 
 # Graph compilation
@@ -198,7 +177,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         node_types_description = get_dynamic_node_types_info()
     except Exception as e:
         logger.error(f"Error getting dynamic node types info: {e}")
-        node_types_description = "(获取节点类型信息时出错)\\n"
+        node_types_description = "(获取节点类型信息时出错)\\\\n"
 
     system_prompt_template_for_planner = raw_system_template # This might not be used by new invoker node
     placeholders_to_fill = {
@@ -210,7 +189,16 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         if placeholder in system_prompt_template_for_planner:
             system_prompt_template_for_planner = system_prompt_template_for_planner.replace(placeholder, value)
         else:
-            logger.warning(f"Placeholder '{placeholder}' not found in the system prompt template provided by STRUCTURED_CHAT_AGENT_PROMPT.")
+            logger.warning(f"Placeholder \'{placeholder}\' not found in the system prompt template provided by STRUCTURED_CHAT_AGENT_PROMPT.")
+
+    # --- 实例化SAS子图 ---
+    try:
+        sas_subgraph_app = create_robot_flow_graph(llm=llm)
+        logger.info("SAS Subgraph (robot_flow_graph) compiled successfully.")
+    except Exception as e:
+        logger.error(f"Failed to compile SAS Subgraph (robot_flow_graph): {e}", exc_info=True)
+        # 根据需要处理错误，例如抛出异常或使用备用方案
+        raise # 重新引发异常，因为这是一个关键组件
 
 
     # --- 创建和配置 StateGraph ---
@@ -219,20 +207,9 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     bound_input_handler_node = partial(input_handler_node)
     
     # 绑定新的 robot_flow_invoker_node，它也需要 llm
-    bound_robot_flow_invoker_node = partial(robot_flow_invoker_node, llm=llm)
-    
-    # 旧的 planner_node 和 tool_node 暂时保留，以防万一，但它们不再是主要的规划路径
-    # from .nodes.planner import planner_node # Make sure this is not accidentally re-imported if deleted above
-    # bound_planner_node = partial(
-    # planner_node, # This would cause NameError if planner_node import is removed
-    # llm=llm,
-    # tools=tools_to_use,
-    # system_message_template=system_prompt_template_for_planner
-    # )
-    # bound_tool_node = partial(
-    # tool_node, 
-    # tools=tools_to_use
-    # )
+    # bound_robot_flow_invoker_node = partial(robot_flow_invoker_node, llm=llm) # 旧的绑定方式
+    # 新的绑定方式，传入编译好的SAS子图实例
+    bound_robot_flow_invoker_node = partial(robot_flow_invoker_node, llm=llm, sas_subgraph_app=sas_subgraph_app)
     
     # 新节点绑定
     bound_task_router_node = partial(task_router_node, llm=llm) 
@@ -246,8 +223,6 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     workflow.add_node("input_handler", bound_input_handler_node)
     workflow.add_node("task_router", bound_task_router_node) 
     workflow.add_node("robot_flow_planner", bound_robot_flow_invoker_node) # 新的规划器节点
-    # workflow.add_node("planner", bound_planner_node) # 旧的 planner 节点，移除
-    # workflow.add_node("tools", bound_tool_node) # 旧的 tools 节点，如果不再需要，也可以移除
     workflow.add_node("teaching", bound_teaching_node) 
     workflow.add_node("other_assistant", bound_other_assistant_node) # Changed from ask_info
     workflow.add_node("rephrase_prompt", bound_rephrase_prompt_node) # <-- 添加新节点
@@ -274,13 +249,16 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         }
     )
     
-    # 从功能节点出来后，进行统一路由处理
+    # 添加挂起状态节点
+    workflow.add_node("SUSPENDED", lambda state: state)  # 空操作节点
+    
+    # 添加从功能节点到挂起节点的路由
     workflow.add_conditional_edges(
         "robot_flow_planner",
         route_after_functional_node,
         {
-            "input_handler": "input_handler",
-            END: END # Handle case where it might end
+            "SUSPENDED": "SUSPENDED",
+            END: END
         }
     )
     workflow.add_conditional_edges(
@@ -303,24 +281,8 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 新增：从 rephrase_prompt 节点出来的边，固定到 END
     workflow.add_edge("rephrase_prompt", END)
 
-    # 旧的 planner 和 tools 相关的边被移除
-    # workflow.add_conditional_edges(
-    # "planner",
-    # should_continue,
-    # {
-    # "tools": "tools",
-    #         END: END
-    #     }
-    # )
-    # workflow.add_edge("tools", "planner")
-
-    # teaching 节点执行完毕后也导向 END # 旧逻辑，已通过上面条件边处理
-    # workflow.add_edge("teaching", END)
-    # other_assistant 节点执行完毕后导向 END (Changed from ask_info) # 旧逻辑，已通过上面条件边处理
-    # workflow.add_edge("other_assistant", END)
-
-    # 新增：从 rephrase_prompt 节点出来的边，固定到 task_router
-    workflow.add_edge("rephrase_prompt", "task_router")
+    # 添加从挂起状态回到输入处理器的边
+    workflow.add_edge("SUSPENDED", "input_handler")
 
     # 新增：从 goodbye 节点出来的边，固定到 END
     workflow.add_edge("handle_goodbye", END)
@@ -328,3 +290,104 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 编译图
     logger.info("Workflow graph compilation complete.")
     return workflow.compile()
+
+
+async def interactive_workflow_runner():
+    """交互式工作流运行器，支持多轮输入"""
+    # 1. 初始化LLM
+    llm: Optional[BaseChatModel] = None
+    
+    if os.getenv("GOOGLE_API_KEY"):
+        try:
+            model_name = os.getenv("GEMINI_MODEL", "gemini-pro")
+            llm = ChatGoogleGenerativeAI(model=model_name, temperature=0, convert_system_message_to_human=True)
+            logger.info(f"Using ChatGoogleGenerativeAI ({model_name}).")
+        except Exception as e:
+            logger.warning(f"Failed to initialize ChatGoogleGenerativeAI: {e}. Trying OpenAI.")
+            llm = None
+    
+    if not llm and os.getenv("OPENAI_API_KEY"):
+        try:
+            llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+            logger.info("Using ChatOpenAI (gpt-3.5-turbo).")
+        except Exception as e:
+            logger.warning(f"Failed to initialize ChatOpenAI: {e}. Falling back to FakeListChatModel.")
+            llm = None
+
+    if not llm:
+        # 使用预定义的响应
+        fake_responses = [
+            AIMessage(content=json.dumps({
+                "decision": "planner",
+                "user_intent": "ロボットタスクのためのプランナーにルーティングします。"
+            })).model_dump_json(),
+            AIMessage(content='タスクリストを生成しました。確認しますか？').model_dump_json(),
+            AIMessage(content="了解しました。次のフェーズに進みます。").model_dump_json()
+        ]
+        llm = FakeListChatModel(responses=fake_responses)
+        logger.info("Using FakeListChatModel with predefined responses.")
+
+    # 2. 编译图
+    logger.info("Compiling workflow graph for interactive session...")
+    graph_app = compile_workflow_graph(llm=llm)
+    logger.info("Workflow graph compiled.")
+
+    # 3. 准备初始状态
+    current_state = AgentState(
+        input="ロボットは初期位置からベアリング（BRG）とベアリングハウジング（BH）を取得します。",
+        messages=[HumanMessage(content="ロボットは初期位置からベアリング（BRG）とベアリングハウジング（BH）を取得します。", id="user_input_001")],
+        flow_context={"interactive_mode": True},
+        current_flow_id=f"interactive_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",
+        input_processed=False,
+        is_suspended=False  # 初始非挂起状态
+    )
+    
+    while True:
+        # 4. 执行图
+        run_config = RunnableConfig(recursion_limit=100)
+        async for state_update in graph_app.astream(current_state, config=run_config):
+            current_state = state_update
+        
+        # 5. 检查是否挂起
+        if current_state.get("is_suspended", False):
+            print("\n--- Graph Suspended ---")
+            print(f"Clarification needed: {current_state.get('clarification_question', 'No question provided')}")
+            
+            # 获取用户输入
+            user_input = input("Your response: ")
+            if user_input.lower() in ["exit", "quit"]:
+                break
+                
+            # 更新状态继续处理
+            current_state["input"] = user_input
+            current_state["messages"].append(HumanMessage(content=user_input))
+            current_state["input_processed"] = False
+            current_state["is_suspended"] = False
+        else:
+            # 6. 显示最终结果
+            print("\n--- Task Completed ---")
+            for msg in current_state.get("messages", []):
+                if isinstance(msg, AIMessage):
+                    print(f"Assistant: {msg.content}")
+            
+            # 7. 开始新任务
+            new_task = input("\nEnter new task (or 'exit' to quit): ")
+            if new_task.lower() in ["exit", "quit"]:
+                break
+                
+            # 8. 重置状态
+            current_state = AgentState(
+                input=new_task,
+                messages=[HumanMessage(content=new_task)],
+                flow_context={"interactive_mode": True},
+                current_flow_id=f"interactive_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",
+                input_processed=False,
+                is_suspended=False
+            )
+    
+    # 9. 清理资源
+    if hasattr(llm, 'aclose'):
+        await llm.aclose()
+
+if __name__ == "__main__":
+    asyncio.run(interactive_workflow_runner())

@@ -177,18 +177,46 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
     """
     logger.info("Task Router: Entered node.")
 
-    # 检查是否有预设的路由决策 (例如，在子图澄清循环中)
     existing_route_decision = state.get("task_route_decision")
-    if existing_route_decision and state.get("subgraph_completion_status") == "needs_clarification":
-        logger.info(f"Task Router: Found existing route decision for clarification: {existing_route_decision.next_node}. Re-using it.")
-        # user_request_for_router 应该已经被 robot_flow_invoker_node 保留了
-        # subgraph_completion_status 也会被保留，直到 functional_node_router 清除它
-        return {
-            "task_route_decision": existing_route_decision, 
-            "user_request_for_router": state.get("user_request_for_router") # 确保原始请求被保留并传回
-        }
+    subgraph_needs_clarification = state.get("subgraph_completion_status") == "needs_clarification"
+    current_user_request = state.get("user_request_for_router") # This is what input_handler set (e.g., "agree")
 
-    user_input_to_process = state.get("user_request_for_router")
+    if existing_route_decision and subgraph_needs_clarification and current_user_request:
+        # We are in a state where a subgraph (likely 'planner' for SAS) previously needed clarification,
+        # and the user has just provided an input (current_user_request).
+        # We need to check if this input is a confirmation to proceed with the 'existing_route_decision'.
+
+        positive_confirmations = ["agree", "yes", "ok", "yep", "accept", "confirm", "y", "是的", "同意", "接受", "好的", "没错"]
+        # Normalize the user input for comparison
+        normalized_user_request = current_user_request.strip().lower()
+
+        if normalized_user_request in positive_confirmations:
+            logger.info(
+                f"Task Router: User input ('{current_user_request}') is a positive confirmation "
+                f"while subgraph_status is 'needs_clarification'. "
+                f"Re-using preserved route: '{existing_route_decision.next_node}'."
+            )
+            # The 'current_user_request' (e.g., "agree") has served its purpose for this router's decision.
+            # It will be available in the state for the 'robot_flow_invoker_node' to pass to the subgraph as 'user_input'.
+            # We set user_request_for_router to None in the output of *this node* because it's consumed for this routing decision.
+            return {
+                "task_route_decision": existing_route_decision,
+                "user_request_for_router": None
+            }
+        else:
+            # User provided input during 'needs_clarification', but it wasn't a simple positive confirmation.
+            # Let the LLM decide based on this new input.
+            logger.info(
+                f"Task Router: 'needs_clarification' active. User input ('{current_user_request}') is not a direct "
+                f"positive confirmation. Proceeding to LLM-based routing for this input."
+            )
+            # Fall through to the main LLM routing logic below.
+            # user_input_to_process will use current_user_request.
+            pass # Explicitly indicate fall-through
+    
+    # If the clarification bypass was not taken, or if it fell through,
+    # user_input_to_process will be the current_user_request (e.g. "agree", or any other input).
+    user_input_to_process = current_user_request
     
     effective_input_for_llm: str
     if user_input_to_process:

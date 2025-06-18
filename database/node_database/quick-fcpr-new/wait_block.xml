@@ -13,6 +13,19 @@
       <!-- 有效范围: 逻辑值输出块 -->
       <!-- 初期値: 无 (必须连接) -->
       <!-- 示例: 连接一个 <block type="logic_operation">...</block> -->
+      <block type="logic_operation" id="GENERATED_ID_CONDITION">
+        <field name="OP">AND</field>
+        <value name="A">
+          <block type="logic_boolean" id="GENERATED_ID_A">
+            <field name="BOOL">TRUE</field>
+          </block>
+        </value>
+        <value name="B">
+          <block type="logic_boolean" id="GENERATED_ID_B">
+            <field name="BOOL">TRUE</field>
+          </block>
+        </value>
+      </block>
     </value>
     <!-- <next> ... </next> -->
   </block>

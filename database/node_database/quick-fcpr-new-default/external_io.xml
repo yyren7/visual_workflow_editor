@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="external_io" id="GENERATED_ID" data-blockNo="1">
-    <field name="io_no">1</field>
-    <!-- io_no (IO番号): IO模块的编号。 -->
-    <!-- 有效范围: 1 ~ 10 -->
-    <!-- 初期値: 1 -->
-    <!-- 示例: 1 -->
-    <field name="input_pin_name">0</field>
-    <!-- input_pin_name (入力ポート名): 输入端口的名称或编号。 -->
-    <!-- 有效范围: 参照各IO模块的规格 (例如 0 ~ 15, 或具体引脚名称如 "12") -->
-    <!-- 初期値: 0 -->
-    <!-- 示例: 12 -->
+    <field name="io_no">
+      <!-- io_no (IO番号): IO模块的编号。 -->
+      <!-- 有效范围: 1 ~ 10 -->
+      <!-- 初期値: 1 -->
+      <!-- 示例: 1 -->
+    </field>
+    <field name="input_pin_name">
+      <!-- input_pin_name (入力ポート名): 输入端口的名称或编号。 -->
+      <!-- 有效范围: 参照各IO模块的规格 (例如 0 ~ 15, 或具体引脚名称如 "12") -->
+      <!-- 初期値: 0 -->
+      <!-- 示例: 12 -->
+    </field>
     <!-- 该块返回一个布尔值，通常作为其他块的输入值 -->
   </block>
 </xml> 

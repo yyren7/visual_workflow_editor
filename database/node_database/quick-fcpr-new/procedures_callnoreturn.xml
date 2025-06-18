@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="procedures_callnoreturn" id="GENERATED_ID" data-blockNo="1">
-    <mutation name="PROCEDURE_NAME">
+    <mutation name="Open_BRG&amp;PLT_Crump">
       <!-- name (プロシージャ名): 要调用的已定义过程（函数）的名称。 -->
       <!-- 有效范围: 已通过 procedures_defnoreturn 定义的过程名称。 -->
       <!-- 初期値: 无 (必须选择一个已定义的过程) -->

@@ -3,34 +3,35 @@
   <block type="set_external_io_output_upon" id="GENERATED_ID" data-blockNo="1">
     <mutation timeout="-1"></mutation>
     <!-- timeout属性存在于flow.xml示例中，具体含义需参照文档或实际行为，-1可能表示无限等待或默认超时 -->
-    <field name="io_no">1</field>
-    <!-- io_no (IO番号): IO模块的编号。 -->
-    <!-- 有效范围: 1 ~ 10 -->
-    <!-- 初期値: 1 -->
-    <!-- 示例: 1 -->
-    <field name="output_pin_name">0</field>
-    <!-- output_pin_name (出力ポート名): 输出端口的名称或编号。 -->
-    <!-- 有效范围: 参照各IO模块的规格 (例如 0 ~ 15, 或具体引脚名称如 "14") -->
-    <!-- 初期値: 0 -->
-    <!-- 示例: 14 -->
-    <field name="out_state">on</field>
-    <!-- out_state (出力状態): 设置的输出状态。 -->
-    <!-- 有效范围: on (输出ON), off (输出OFF) -->
-    <!-- 初期値: on -->
-    <!-- 示例: on -->
-    <field name="trigger_condition">rising</field>
-    <!-- trigger_condition (トリガー条件): 触发输出动作的条件类型。 -->
-    <!-- 有效范围: rising (上升沿), falling (下降沿), steady (电平符合) -->
-    <!-- 初期値: rising -->
-    <!-- 示例: steady -->
+    <field name="io_no">
+      <!-- io_no (IO番号): IO模块的编号。 -->
+      <!-- 有效范围: 1 ~ 10 -->
+      <!-- 初期値: 1 -->
+      <!-- 示例: 1 -->
+    </field>
+    <field name="output_pin_name">
+      <!-- output_pin_name (出力ポート名): 输出端口的名称或编号。 -->
+      <!-- 有效范围: 参照各IO模块的规格 (例如 0 ~ 15, 或具体引脚名称如 "14") -->
+      <!-- 初期値: 0 -->
+      <!-- 示例: 14 -->
+    </field>
+    <field name="out_state">
+      <!-- out_state (出力状態): 设置的输出状态。 -->
+      <!-- 有效范围: on (输出ON), off (输出OFF) -->
+      <!-- 初期値: on -->
+      <!-- 示例: on -->
+    </field>
+    <field name="trigger_condition">
+      <!-- trigger_condition (トリガー条件): 触发输出动作的条件类型。 -->
+      <!-- 有效范围: rising (上升沿), falling (下降沿), steady (电平符合) -->
+      <!-- 初期値: rising -->
+      <!-- 示例: steady -->
+    </field>
     <value name="condition">
       <!-- condition (判定条件): 触发输出的逻辑条件，连接一个逻辑块。 -->
       <!-- 有效范围: 逻辑值输出块 -->
       <!-- 初期値: 无 (必须连接) -->
       <!-- 示例: 连接一个 <block type="logic_custom_flag"><field name="name">F481</field></block> -->
-      <block type="logic_custom_flag" id="GENERATED_ID_CONDITION">
-        <field name="name">F0</field>
-      </block>
     </value>
     <!-- <next> ... </next> -->
   </block>

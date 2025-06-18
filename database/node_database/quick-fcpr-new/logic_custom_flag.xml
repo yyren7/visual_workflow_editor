@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml xmlns="https://developers.google.com/blockly/xml">
   <block type="logic_custom_flag" id="GENERATED_ID" data-blockNo="1">
-    <field name="name">
-      <!-- name (フラグ名): 用户自定义标志位的名称。 -->
-      <!-- 有效范围: F0 ~ F499 -->
-      <!-- 初期値: F0 -->
-      <!-- 示例: F481 -->
-    </field>
+    <field name="name">F0</field>
+    <!-- name (フラグ名): 用户自定义标志位的名称。 -->
+    <!-- 有效范围: F0 ~ F499 -->
+    <!-- 初期値: F0 -->
+    <!-- 示例: F481 -->
     <!-- 该块通常不直接连接到下一个块，而是作为其他块的输入值 -->
   </block>
 </xml> 

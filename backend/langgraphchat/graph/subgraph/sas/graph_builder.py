@@ -25,6 +25,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 import json
+import time
+from langsmith.utils import LangSmithNotFoundError
 
 from langgraph.graph import StateGraph, END
 from langchain_core.language_models import BaseChatModel
@@ -1318,10 +1320,13 @@ class RootRunIDCollector(BaseCallbackHandler):
 
 async def main_test_run():
     # from langchain_openai import ChatOpenAI # Commented out OpenAI import
-    import json
-    import os # Ensure os is imported for getenv
-    from pathlib import Path # Ensure Path is imported
-    from datetime import datetime # Ensure datetime is imported
+    # import json # Removed, already global
+    # import os # Removed, already global
+    # from pathlib import Path # Removed, already global
+    # from datetime import datetime, timezone # Removed, already global
+    # import time # Removed, already global
+    # from langsmith.utils import LangSmithNotFoundError # Removed, already global
+    # from langsmith import Client as LangSmithClient # Removed, already global
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
@@ -1488,101 +1493,122 @@ async def main_test_run():
     if langsmith_client and root_run_id_collector.root_run_id and run_output_directory:
         root_run_id = root_run_id_collector.root_run_id
         logger.info(f"Attempting to fetch metrics for root run ID: {root_run_id}")
-        try:
-            root_run = langsmith_client.read_run(root_run_id)
-            
-            # Fetch all types of runs associated with the trace for comprehensive node data
-            runs_in_trace_iterator = langsmith_client.list_runs(trace_id=root_run.trace_id) # Use trace_id from root_run
-            all_runs_in_trace = list(runs_in_trace_iterator)
-            
-            metrics_report = {
-                "run_id": str(root_run.id),
-                "name": root_run.name,
-                "status": "failure" if root_run.error else "success",
-                "error_message": root_run.error,
-                "start_time": root_run.start_time.isoformat() if root_run.start_time else None,
-                "end_time": root_run.end_time.isoformat() if root_run.end_time else None,
-                "total_duration_seconds": (root_run.end_time - root_run.start_time).total_seconds() if root_run.start_time and root_run.end_time else None,
-                "inputs_summary": f"Input type: {type(root_run.inputs)}, Keys: {list(root_run.inputs.keys()) if isinstance(root_run.inputs, dict) else 'N/A'}", # Add a brief summary instead
-                "nodes": []
-            }
+        
+        max_retries = 3
+        retry_delay_seconds = 5
+        root_run = None
 
-            # Filter for actual graph nodes (children of the root_run or part of the same trace)
-            # Nodes are runs that are not the root_run itself.
-            node_runs = [r for r in all_runs_in_trace if r.id != root_run.id]
-            
-            # Sort nodes by start time for chronological order in the report
-            node_runs.sort(key=lambda r: r.start_time if r.start_time else datetime.min.replace(tzinfo=timezone))
+        for attempt in range(max_retries):
+            try:
+                root_run = langsmith_client.read_run(root_run_id)
+                logger.info(f"Successfully fetched root run data for {root_run_id} on attempt {attempt + 1}.")
+                break 
+            except LangSmithNotFoundError as e:
+                logger.warning(f"Attempt {attempt + 1} of {max_retries} to fetch run_id {root_run_id} failed: {e}. Retrying in {retry_delay_seconds} seconds...")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay_seconds)
+                else:
+                    logger.error(f"Failed to fetch LangSmith run data for run_id {root_run_id} after {max_retries} attempts. Skipping metrics report.")
+                    # root_run remains None
+            except Exception as e: 
+                logger.error(f"An unexpected error occurred while fetching run_id {root_run_id} on attempt {attempt + 1}: {e}", exc_info=True)
+                root_run = None # Ensure root_run is None
+                break 
 
-            for node_run in node_runs:
-                node_info = {
-                    "node_id": str(node_run.id),
-                    "name": node_run.name,
-                    "status": "failure" if node_run.error else "success",
-                    "error_message": node_run.error,
-                    "start_time": node_run.start_time.isoformat() if node_run.start_time else None,
-                    "end_time": node_run.end_time.isoformat() if node_run.end_time else None,
-                    "duration_seconds": (node_run.end_time - node_run.start_time).total_seconds() if node_run.start_time and node_run.end_time else None,
-                    "run_type": node_run.run_type,
+        if root_run: 
+            try:
+                # Fetch all types of runs associated with the trace for comprehensive node data
+                runs_in_trace_iterator = langsmith_client.list_runs(trace_id=root_run.trace_id) # Use trace_id from root_run
+                all_runs_in_trace = list(runs_in_trace_iterator)
+                
+                metrics_report = {
+                    "run_id": str(root_run.id),
+                    "name": root_run.name,
+                    "status": "failure" if root_run.error else "success",
+                    "error_message": root_run.error,
+                    "start_time": root_run.start_time.isoformat() if root_run.start_time else None,
+                    "end_time": root_run.end_time.isoformat() if root_run.end_time else None,
+                    "total_duration_seconds": (root_run.end_time - root_run.start_time).total_seconds() if root_run.start_time and root_run.end_time else None,
+                    "inputs_summary": f"Input type: {type(root_run.inputs)}, Keys: {list(root_run.inputs.keys()) if isinstance(root_run.inputs, dict) else 'N/A'}",
+                    "nodes": []
                 }
 
-                if node_run.run_type == "llm":
-                    logger.info(f"LLM Node found: {node_run.name}, ID: {node_run.id}") # DEBUG LOG
-                    logger.info(f"Raw node_run.extra: {node_run.extra}") # DEBUG LOG
-                    llm_metrics = {}
-                    ttfb_seconds = None
-                    
-                    if node_run.extra and 'metadata' in node_run.extra and isinstance(node_run.extra['metadata'], dict):
-                        logger.info(f"Metadata found: {node_run.extra['metadata']}") # DEBUG LOG
-                        ttfb_ms = node_run.extra['metadata'].get('time_to_first_token_ms')
-                        logger.info(f"Extracted ttfb_ms: {ttfb_ms}") # DEBUG LOG
-                        if ttfb_ms is not None: # Check for None explicitly
-                            try:
-                                ttfb_seconds = float(ttfb_ms) / 1000.0
-                                llm_metrics["time_to_first_token_seconds"] = ttfb_seconds
-                                logger.info(f"Calculated ttfb_seconds: {ttfb_seconds}") # DEBUG LOG
-                            except (ValueError, TypeError) as e:
-                                logger.warning(f"Could not parse TTFB from metadata (\\'{ttfb_ms}\\') for node {node_run.name}: {e}")
-                    else: # DEBUG LOG
-                        logger.warning(f"No metadata or metadata not a dict for LLM node {node_run.name}. node_run.extra: {node_run.extra}") # DEBUG LOG
-                    
-                    completion_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("completion_tokens") if node_run.outputs else None
-                    prompt_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("prompt_tokens") if node_run.outputs else None
-                    # total_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("total_tokens") if node_run.outputs else None
-                    # Use tokens from run object directly if available, often more reliable
-                    if hasattr(node_run, 'completion_tokens') and node_run.completion_tokens is not None:
-                         completion_tokens = node_run.completion_tokens
-                    if hasattr(node_run, 'prompt_tokens') and node_run.prompt_tokens is not None:
-                         prompt_tokens = node_run.prompt_tokens
-                    
-                    # Make sure we only add integers or serializable values
-                    if isinstance(completion_tokens, int): llm_metrics["completion_tokens"] = completion_tokens
-                    if isinstance(prompt_tokens, int): llm_metrics["prompt_tokens"] = prompt_tokens
-                    if isinstance(completion_tokens, int) and isinstance(prompt_tokens, int):
-                        llm_metrics["total_tokens"] = completion_tokens + prompt_tokens
-                    
-                    if isinstance(completion_tokens, int) and node_run.start_time and node_run.end_time:
-                        effective_latency_seconds = (node_run.end_time - node_run.start_time).total_seconds()
-                        if effective_latency_seconds > 0: # Avoid division by zero
-                            if ttfb_seconds is not None and effective_latency_seconds > ttfb_seconds:
-                                generation_time = effective_latency_seconds - ttfb_seconds
-                                if generation_time > 0: # Avoid division by zero
-                                    llm_metrics["tokens_per_second"] = completion_tokens / generation_time
-                            else: # If no TTFB or TTFB is not applicable
-                                 llm_metrics["tokens_per_second"] = completion_tokens / effective_latency_seconds
-                    
-                    if llm_metrics:
-                        node_info["llm_metrics"] = llm_metrics
+                node_runs = [r for r in all_runs_in_trace if r.id != root_run.id]
                 
-                metrics_report["nodes"].append(node_info)
-            
-            metrics_file_path = Path(run_output_directory) / "langsmith_run_metrics.json"
-            with open(metrics_file_path, "w", encoding="utf-8") as f:
-                json.dump(metrics_report, f, indent=2, ensure_ascii=False)
-            logger.info(f"LangSmith metrics report saved to: {metrics_file_path}")
+                # Sort nodes by start time for chronological order in the report
+                # from datetime import timezone # Removed, timezone is globally imported
+                node_runs.sort(key=lambda r: r.start_time if r.start_time else datetime.min.replace(tzinfo=timezone.utc))
 
-        except Exception as e:
-            logger.error(f"Failed to fetch or process LangSmith run data for run_id {root_run_id}: {e}", exc_info=True)
+
+                for node_run in node_runs:
+                    node_info = {
+                        "node_id": str(node_run.id),
+                        "name": node_run.name,
+                        "status": "failure" if node_run.error else "success",
+                        "error_message": node_run.error,
+                        "start_time": node_run.start_time.isoformat() if node_run.start_time else None,
+                        "end_time": node_run.end_time.isoformat() if node_run.end_time else None,
+                        "duration_seconds": (node_run.end_time - node_run.start_time).total_seconds() if node_run.start_time and node_run.end_time else None,
+                        "run_type": node_run.run_type,
+                    }
+
+                    if node_run.run_type == "llm":
+                        logger.info(f"LLM Node found: {node_run.name}, ID: {node_run.id}") 
+                        logger.info(f"Raw node_run.extra: {node_run.extra}") 
+                        llm_metrics = {}
+                        ttfb_seconds = None
+                        
+                        if node_run.extra and 'metadata' in node_run.extra and isinstance(node_run.extra['metadata'], dict):
+                            logger.info(f"Metadata found: {node_run.extra['metadata']}") 
+                            ttfb_ms = node_run.extra['metadata'].get('time_to_first_token_ms')
+                            logger.info(f"Extracted ttfb_ms: {ttfb_ms}") 
+                            if ttfb_ms is not None: 
+                                try:
+                                    ttfb_seconds = float(ttfb_ms) / 1000.0
+                                    llm_metrics["time_to_first_token_seconds"] = ttfb_seconds
+                                    logger.info(f"Calculated ttfb_seconds: {ttfb_seconds}") 
+                                except (ValueError, TypeError) as e:
+                                    logger.warning(f"Could not parse TTFB from metadata (\\'{ttfb_ms}\\') for node {node_run.name}: {e}")
+                        else: 
+                            logger.warning(f"No metadata or metadata not a dict for LLM node {node_run.name}. node_run.extra: {node_run.extra}") 
+                        
+                        completion_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("completion_tokens") if node_run.outputs else None
+                        prompt_tokens = node_run.outputs.get("llm_output", {}).get("token_usage", {}).get("prompt_tokens") if node_run.outputs else None
+                        
+                        if hasattr(node_run, 'completion_tokens') and node_run.completion_tokens is not None:
+                             completion_tokens = node_run.completion_tokens
+                        if hasattr(node_run, 'prompt_tokens') and node_run.prompt_tokens is not None:
+                             prompt_tokens = node_run.prompt_tokens
+                        
+                        if isinstance(completion_tokens, int): llm_metrics["completion_tokens"] = completion_tokens
+                        if isinstance(prompt_tokens, int): llm_metrics["prompt_tokens"] = prompt_tokens
+                        if isinstance(completion_tokens, int) and isinstance(prompt_tokens, int):
+                            llm_metrics["total_tokens"] = completion_tokens + prompt_tokens
+                        
+                        if isinstance(completion_tokens, int) and node_run.start_time and node_run.end_time:
+                            effective_latency_seconds = (node_run.end_time - node_run.start_time).total_seconds()
+                            if effective_latency_seconds > 0: 
+                                if ttfb_seconds is not None and effective_latency_seconds > ttfb_seconds:
+                                    generation_time = effective_latency_seconds - ttfb_seconds
+                                    if generation_time > 0: 
+                                        llm_metrics["tokens_per_second"] = completion_tokens / generation_time
+                                else: 
+                                     llm_metrics["tokens_per_second"] = completion_tokens / effective_latency_seconds
+                        
+                        if llm_metrics:
+                            node_info["llm_metrics"] = llm_metrics
+                    
+                    metrics_report["nodes"].append(node_info)
+                
+                metrics_file_path = Path(run_output_directory) / "langsmith_run_metrics.json"
+                with open(metrics_file_path, "w", encoding="utf-8") as f:
+                    json.dump(metrics_report, f, indent=2, ensure_ascii=False)
+                logger.info(f"LangSmith metrics report saved to: {metrics_file_path}")
+
+            except Exception as e:
+                logger.error(f"Failed to process LangSmith run data or save metrics for run_id {root_run_id}: {e}", exc_info=True)
+        # No specific else needed here as errors are logged within the loop or if root_run is None.
+            
     elif not run_output_directory:
         logger.warning("run_output_directory is not set. LangSmith metrics report cannot be saved to a file.")
     elif not (langsmith_client and root_run_id_collector.root_run_id):
