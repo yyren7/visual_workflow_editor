@@ -181,3 +181,68 @@ def get_version_info():
 def get_version():
     """简单获取版本号"""
     return get_version_info().get("version", "0.0.0")
+
+def get_default_agent_state():
+    """
+    返回一个包含所有必需字段的默认 agent_state
+    与 RobotFlowAgentState 保持一致
+    """
+    return {
+        # 基础消息和输入
+        "messages": [],
+        "user_input": None,
+        "current_user_request": "",
+        "user_advice": None,
+        "active_plan_basis": None,
+        
+        # 对话状态
+        "dialog_state": "initial",
+        "clarification_question": None,
+        "proposed_enriched_text": None,
+        "enriched_structured_text": None,
+        
+        # 配置
+        "config": {},
+        
+        # SAS 步骤1：任务列表生成
+        "sas_step1_generated_tasks": [],
+        "parsed_flow_steps": None,
+        
+        # SAS 步骤2：模块步骤生成
+        "sas_step2_module_steps": None,
+        "sas_step2_generated_task_details": {},
+        
+        # SAS 步骤3：参数映射
+        "sas_step3_parameter_mapping": None,
+        "sas_step3_mapping_report": None,
+        
+        # XML 生成相关
+        "generated_node_xmls": [],
+        "relation_xml_content": "",
+        "relation_xml_path": "",
+        "final_flow_xml_content": None,
+        "final_flow_xml_path": None,
+        "merged_xml_file_paths": [],
+        
+        # 运行时信息
+        "run_output_directory": None,
+        "task_list_accepted": False,
+        "module_steps_accepted": False,
+        "revision_iteration": 0,
+        "current_step_description": None,
+        
+        # 错误处理
+        "error_message": None,
+        "upload_status": None,
+        "is_error": False,
+        
+        # 其他
+        "language": "zh",
+        "subgraph_completion_status": None,
+        
+        # 这些字段用于主图，但不在 SAS 中
+        "sas_planner_subgraph_state": None,
+        "task_route_decision": None,
+        "user_request_for_router": None,
+        "input_processed": False,
+    }

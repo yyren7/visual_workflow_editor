@@ -522,7 +522,14 @@ class ChatService:
 
         chat.chat_data["messages"] = updated_messages_for_db
         
-        # 6. 保存对 chat 对象的更改
+        # 6. 更新Flow的agent_state
+        flow = self.db.query(Flow).filter(Flow.id == chat.flow_id).first()
+        if flow and output_agent_state.sas_planner_subgraph_state:
+            flow.agent_state = output_agent_state.sas_planner_subgraph_state
+            flag_modified(flow, "agent_state")
+            logger.info(f"ChatService: Updated Flow {flow.id} agent_state from chat {chat_id}")
+        
+        # 7. 保存对 chat 对象的更改
         try:
             flag_modified(chat, "chat_data") # 显式标记 chat_data 已修改
             self.db.add(chat) # 虽然 chat 是从会话加载的，但 add() 无害

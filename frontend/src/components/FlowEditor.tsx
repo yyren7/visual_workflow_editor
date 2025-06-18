@@ -26,6 +26,9 @@ import FlowSelect from './FlowSelect';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getFlow, updateFlow, getLastChatIdForFlow } from '../api/flowApi'; // Ignore unused 'updateFlow' as it IS used in debounced effect
 import GenericNode from './nodes/GenericNode';
+import { LangGraphInputNode } from './nodes/LangGraphInputNode';
+import { LangGraphTaskNode } from './nodes/LangGraphTaskNode';
+import { LangGraphDetailNode } from './nodes/LangGraphDetailNode';
 import { debounce } from 'lodash';
 import { getNodeTemplates, NodeTemplatesResponse } from '../api/nodeTemplates'; // Import API function and type
 
@@ -34,6 +37,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import {
   fetchFlowById,
+  ensureFlowAgentStateThunk,
   setCurrentFlowId,
   setNodes as setFlowNodes,
   setEdges as setFlowEdges,
@@ -43,6 +47,7 @@ import {
   selectFlowName,
   selectNodes,
   selectEdges,
+  selectAgentState,
   selectIsFlowLoading,
   selectFlowError,
   selectIsSaving,
@@ -54,6 +59,7 @@ import {
 import { usePanelManager } from '../hooks/usePanelManager';
 import { useFlowLayout } from '../hooks/useFlowLayout';
 import { useReactFlowManager } from '../hooks/useReactFlowManager';
+import { useLangGraphNodes } from '../hooks/useLangGraphNodes';
 
 // Import UI components
 import EditorAppBar from './EditorAppBar'; // Import the new AppBar component
@@ -83,9 +89,15 @@ const baseNodeTypes: NodeTypes = {
   // decision: DecisionNode,
   // condition: ConditionNode, // Specific component for 'condition'
   // generic: GenericNode, // Keep a generic fallback just in case
+  langgraph_input: LangGraphInputNode,
+  langgraph_task: LangGraphTaskNode,
+  langgraph_detail: LangGraphDetailNode,
 };
 
 const SAVE_DEBOUNCE_MS = 100;
+
+// LangGraph节点类型常量
+const LANGGRAPH_NODE_TYPES = ['langgraph_input', 'langgraph_task', 'langgraph_detail'];
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const { t } = useTranslation();
@@ -104,6 +116,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const flowName = useSelector(selectFlowName);
   const nodes = useSelector(selectNodes);
   const edges = useSelector(selectEdges);
+  const agentState = useSelector(selectAgentState);
   const isLoading = useSelector(selectIsFlowLoading);
   const error = useSelector(selectFlowError);
   const isSaving = useSelector(selectIsSaving);
@@ -115,6 +128,79 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
 
   // Ref to track if it's the initial load to prevent immediate save
   const isInitialLoad = useRef(true);
+  
+  // Use LangGraph nodes hook
+  const { syncLangGraphNodes } = useLangGraphNodes(agentState);
+
+  // 新增：动态边界计算函数
+  const calculateDynamicViewport = useCallback(() => {
+    if (!nodes || nodes.length === 0) {
+      return {
+        x: [0, 800],
+        y: [0, 600],
+        zoom: [0.1, 1.5]
+      };
+    }
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    // 计算所有节点的边界
+    nodes.forEach(node => {
+      const nodeWidth = node.width || (LANGGRAPH_NODE_TYPES.includes(node.type || '') ? 600 : 200);
+      const nodeHeight = node.height || (LANGGRAPH_NODE_TYPES.includes(node.type || '') ? 300 : 100);
+      
+      minX = Math.min(minX, node.position.x);
+      maxX = Math.max(maxX, node.position.x + nodeWidth);
+      minY = Math.min(minY, node.position.y);
+      maxY = Math.max(maxY, node.position.y + nodeHeight);
+    });
+
+    // 添加边距（扩展范围）
+    const margin = 200;
+    return {
+      x: [minX - margin, maxX + margin],
+      y: [minY - margin, maxY + margin],
+      zoom: [0.1, 2.0] // 允许一定程度的缩放
+    };
+  }, [nodes]);
+
+  // 新增：设置LangGraph节点不可拖动
+  const processedNodes = useMemo(() => {
+    return nodes.map(node => ({
+      ...node,
+      draggable: !LANGGRAPH_NODE_TYPES.includes(node.type || ''), // LangGraph节点不可拖动
+      dragHandle: LANGGRAPH_NODE_TYPES.includes(node.type || '') ? undefined : '.drag-handle', // LangGraph节点没有拖拽句柄
+      // 确保LangGraph节点有固定尺寸和位置限制
+      ...(LANGGRAPH_NODE_TYPES.includes(node.type || '') && {
+        style: {
+          ...node.style,
+          width: node.type === 'langgraph_input' ? 600 : (node.type === 'langgraph_detail' ? 350 : 400),
+          height: node.type === 'langgraph_input' ? 400 : (node.type === 'langgraph_detail' ? 400 : 300),
+          pointerEvents: 'auto' as const, // 修复类型错误
+        },
+        selectable: true, // 仍然可选择
+        deletable: false, // 不可删除
+      })
+    }));
+  }, [nodes]);
+
+  // 新增：ReactFlow实例配置，包含动态边界限制
+  const reactFlowConfig = useMemo(() => {
+    const viewport = calculateDynamicViewport();
+    return {
+      translateExtent: [
+        [viewport.x[0], viewport.y[0]], 
+        [viewport.x[1], viewport.y[1]]
+      ] as [[number, number], [number, number]],
+      nodeExtent: [
+        [viewport.x[0], viewport.y[0]], 
+        [viewport.x[1], viewport.y[1]]
+      ] as [[number, number], [number, number]],
+      minZoom: viewport.zoom[0],
+      maxZoom: viewport.zoom[1],
+    };
+  }, [calculateDynamicViewport]);
 
   // --- Effect to fetch Node Templates ---
   useEffect(() => {
@@ -161,7 +247,18 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
       console.log(`FlowEditor: Prop flowId changed. Dispatching fetch...`);
       dispatch(setCurrentFlowId(targetFlowId));
       if (targetFlowId) {
-        dispatch(fetchFlowById(targetFlowId)).finally(() => {
+        dispatch(fetchFlowById(targetFlowId))
+          .then(() => {
+            // After fetching, ensure agent_state is complete
+            console.log("FlowEditor: Ensuring agent state after fetch...");
+            return dispatch(ensureFlowAgentStateThunk(targetFlowId));
+          })
+          .then(() => {
+            // After ensuring agent state, sync LangGraph nodes
+            console.log("FlowEditor: Syncing LangGraph nodes after agent state ensure...");
+            syncLangGraphNodes();
+          })
+          .finally(() => {
             // Set initial load complete *after* fetch finishes (success or fail)
             setTimeout(() => { isInitialLoad.current = false; }, 100); // Small delay
             console.log("FlowEditor: Initial fetch finished, allowing saves.");
@@ -290,6 +387,13 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   }, [dispatch]);
 
   const handleNodeClick: NodeMouseHandler = useCallback((event: React.MouseEvent, node: Node) => {
+      // LangGraph节点不需要打开属性面板，它们是自包含的
+      if (LANGGRAPH_NODE_TYPES.includes(node.type || '')) {
+        setSelectedNode(node);
+        console.log('LangGraph node clicked (no panel):', node);
+        return; // 不打开属性面板
+      }
+      
       setSelectedNode(node);
       openNodeInfoPanel();
       console.log('Node clicked (FlowEditor):', node);
@@ -305,7 +409,12 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
       const nodeToSelect = nodes.find((n: Node) => n.id === nodeId);
       if (nodeToSelect) {
         setSelectedNode(nodeToSelect);
-        openNodeInfoPanel();
+        
+        // LangGraph节点不需要打开属性面板
+        if (!LANGGRAPH_NODE_TYPES.includes(nodeToSelect.type || '')) {
+          openNodeInfoPanel();
+        }
+        
         // Optional: Center view on the node
         if (position && reactFlowInstance) {
           reactFlowInstance.setCenter(position.x, position.y, { duration: 800 });
@@ -413,7 +522,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
             </Alert>
           )}
           <FlowCanvas
-            nodes={nodes}
+            nodes={processedNodes}
             edges={edges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
@@ -431,6 +540,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
             onAutoLayout={handleLayout}
             onNodeDragStart={handleNodeDragStart}
             onNodeDragStop={handleNodeDragStop}
+            reactFlowConfig={reactFlowConfig}
           >
             <Panel position="top-right">
               <VersionInfo />

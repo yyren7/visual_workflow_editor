@@ -60,6 +60,10 @@ class Flow(Base):
     last_interacted_chat_id = Column(String(36), ForeignKey('chats.id', ondelete="SET NULL"), nullable=True)
     # --- 结束添加 ---
 
+    # --- 添加 agent_state 用于存储 LangGraph 状态 ---
+    agent_state = Column(JSON, nullable=True, default={})  # Stores the LangGraph agent state as JSON
+    # --- 结束添加 ---
+
     def __repr__(self):
         return f"<Flow(id={self.id}, name='{self.name}', owner_id={self.owner_id})>"
 

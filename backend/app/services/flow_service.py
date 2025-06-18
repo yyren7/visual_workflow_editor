@@ -6,6 +6,7 @@ import uuid
 
 from database.models import Flow
 from backend.app.services.flow_variable_service import FlowVariableService
+from backend.app.utils import get_default_agent_state
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class FlowService:
             "id": flow.id,
             "name": flow.name,
             "owner_id": flow.owner_id,
+            "agent_state": flow.agent_state or {},  # 添加agent_state
             "created_at": flow.created_at.isoformat() if flow.created_at else None,
             "updated_at": flow.updated_at.isoformat() if flow.updated_at else None,
             **flow_data
@@ -98,6 +100,7 @@ class FlowService:
                 owner_id=owner_id,
                 name=name,
                 flow_data=data or {},
+                agent_state=get_default_agent_state(),  # 使用默认的agent_state
                 created_at=datetime.datetime.utcnow(),
                 updated_at=datetime.datetime.utcnow()
             )
@@ -182,4 +185,85 @@ class FlowService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"删除流程图失败: {str(e)}")
+            return False
+    
+    def ensure_agent_state_fields(self, flow_id: str) -> bool:
+        """
+        确保流程图的 agent_state 包含所有必需的字段
+        如果缺少字段，则添加默认值
+        
+        Args:
+            flow_id: 流程图ID
+            
+        Returns:
+            是否进行了更新
+        """
+        try:
+            flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
+            if not flow:
+                logger.warning(f"流程图不存在: {flow_id}")
+                return False
+            
+            # 获取默认结构
+            default_state = get_default_agent_state()
+            
+            # 如果 agent_state 为空，直接使用默认值
+            if not flow.agent_state:
+                flow.agent_state = default_state
+                flow.updated_at = datetime.datetime.utcnow()
+                self.db.commit()
+                logger.info(f"为流程图 {flow_id} 初始化了默认 agent_state")
+                return True
+            
+            # 检查并添加缺失的字段
+            updated = False
+            current_state = flow.agent_state.copy()
+            
+            for key, default_value in default_state.items():
+                if key not in current_state:
+                    current_state[key] = default_value
+                    updated = True
+            
+            if updated:
+                flow.agent_state = current_state
+                flow.updated_at = datetime.datetime.utcnow()
+                self.db.commit()
+                logger.info(f"为流程图 {flow_id} 补充了缺失的 agent_state 字段")
+                
+            return updated
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"确保 agent_state 字段时失败: {str(e)}")
+            return False
+    
+    def update_flow_agent_state(self, flow_id: str, agent_state_data: Dict[str, Any]) -> bool:
+        """
+        更新流程图的 LangGraph agent 状态
+        
+        Args:
+            flow_id: 流程图ID
+            agent_state_data: agent 状态数据
+            
+        Returns:
+            是否成功
+        """
+        try:
+            # 查找流程图
+            flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
+            if not flow:
+                logger.warning(f"要更新agent状态的流程图不存在: {flow_id}")
+                return False
+                
+            # 更新agent状态
+            flow.agent_state = agent_state_data
+            flow.updated_at = datetime.datetime.utcnow()
+                
+            self.db.commit()
+            
+            logger.info(f"流程图agent状态更新成功: {flow_id}")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"更新流程图agent状态失败: {str(e)}")
             return False 

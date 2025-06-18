@@ -6,6 +6,7 @@ export interface FlowData {
     id?: string; // UUID字符串
     name: string;
     flow_data?: any;
+    agent_state?: any; // LangGraph agent state
     user_id?: string; // UUID字符串
     created_at?: string;
     updated_at?: string;
@@ -303,6 +304,22 @@ export const getLastSelectedFlow = async (): Promise<FlowData> => {
         },
     });
     return response.data;
+};
+
+/**
+ * 确保流程图有完整的 agent_state 结构
+ * @param flowId 流程图ID
+ * @returns 更新后的流程图数据
+ */
+export const ensureFlowAgentState = async (flowId: string): Promise<FlowData> => {
+    console.log("ensureFlowAgentState request:", flowId);
+    try {
+        const response: AxiosResponse<FlowData> = await apiClient.post(`/flows/${flowId}/ensure-agent-state`);
+        return response.data;
+    } catch (error: any) {
+        console.error("Error ensuring flow agent state:", error);
+        throw error;
+    }
 };
 
 // 原始 api.ts 中残留的 flowApi 对象，现在里面的函数已被导出，这个对象不再需要

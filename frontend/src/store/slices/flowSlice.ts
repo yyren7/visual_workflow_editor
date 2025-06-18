@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk, ActionReducerMapBuilder, SerializedError } from '@reduxjs/toolkit';
 import { Node, Edge, addEdge as reactFlowAddEdge } from 'reactflow';
 import { NodeData } from '../../components/FlowEditor'; // Adjust path if needed
-import { getFlow, updateFlow } from '../../api/flowApi'; // API function to fetch flow data
+import { getFlow, updateFlow, ensureFlowAgentState } from '../../api/flowApi'; // API function to fetch flow data
 import { RootState } from '../store';
 
 interface FlowState {
@@ -9,6 +9,7 @@ interface FlowState {
   flowName: string;
   nodes: Node<NodeData>[];
   edges: Edge[];
+  agentState: any; // Agent state from backend
   isLoading: boolean;
   error: string | null;
   // Add other relevant state, e.g., selectedNodeId?
@@ -22,6 +23,7 @@ const initialState: FlowState = {
   flowName: 'Untitled Flow', // Default name
   nodes: [],
   edges: [],
+  agentState: {},
   isLoading: false,
   error: null,
   isSaving: false,
@@ -35,7 +37,34 @@ interface FetchFlowByIdPayload {
     name: string;
     nodes: Node<NodeData>[];
     edges: Edge[];
+    agent_state?: any;
 }
+
+// Async thunk to ensure flow has complete agent_state
+export const ensureFlowAgentStateThunk = createAsyncThunk<FetchFlowByIdPayload, string, { rejectValue: string }>(
+    'flow/ensureAgentState',
+    async (flowId: string, { rejectWithValue }) => {
+        try {
+            console.log(`Redux: Ensuring agent state for flow ${flowId}`);
+            const flowData = await ensureFlowAgentState(flowId);
+            if (flowData && flowData.id) {
+                return {
+                    id: flowData.id,
+                    name: flowData.name || 'Untitled Flow',
+                    nodes: flowData.flow_data?.nodes || [],
+                    edges: flowData.flow_data?.edges || [],
+                    agent_state: flowData.agent_state || {},
+                };
+            } else {
+                console.error(`Redux: Invalid flow data received after ensuring agent state for ${flowId}`);
+                return rejectWithValue('Invalid flow data received');
+            }
+        } catch (error: any) {
+            console.error(`Redux: Error ensuring agent state for flow ${flowId}:`, error);
+            return rejectWithValue(error.message || 'Failed to ensure agent state');
+        }
+    }
+);
 
 // Async thunk for fetching flow data
 // Redux Toolkit's createAsyncThunk handles the async logic and dispatches pending/fulfilled/rejected actions
@@ -51,6 +80,7 @@ export const fetchFlowById = createAsyncThunk<FetchFlowByIdPayload, string, { re
                     name: flowData.name || 'Untitled Flow',
                     nodes: flowData.flow_data.nodes || [],
                     edges: flowData.flow_data.edges || [],
+                    agent_state: flowData.agent_state || {},
                 };
             } else {
                 console.error(`Redux: Invalid flow data received for ${flowId}. Data:`, flowData);
@@ -132,6 +162,7 @@ const flowSlice = createSlice({
           state.nodes = [];
           state.edges = [];
           state.flowName = 'Untitled Flow';
+          state.agentState = {};
           state.error = null;
           state.isLoading = false; // Will be set true by fetch thunk
           // Reset save status when flow changes
@@ -175,6 +206,9 @@ const flowSlice = createSlice({
         state.flowName = action.payload;
         // TODO: Trigger auto-save for name change?
     },
+    updateAgentState: (state: FlowState, action: PayloadAction<any>) => {
+        state.agentState = { ...state.agentState, ...action.payload };
+    },
     // Reducer to handle single node selection
     selectNode: (state: FlowState, action: PayloadAction<string>) => {
       const selectedNodeId = action.payload;
@@ -205,6 +239,7 @@ const flowSlice = createSlice({
         state.flowName = action.payload.name;
         state.nodes = action.payload.nodes;
         state.edges = action.payload.edges;
+        state.agentState = action.payload.agent_state || {};
         state.error = null;
         console.log('Redux: Fetching flow fulfilled');
         // Set lastSaveTime based on loaded data if available?
@@ -219,6 +254,7 @@ const flowSlice = createSlice({
         state.nodes = [];
         state.edges = [];
         state.flowName = 'Untitled Flow';
+        state.agentState = {};
         console.error('Redux: Fetching flow rejected', action.payload, action.error);
       });
     // --- Save Flow Cases ---
@@ -241,6 +277,17 @@ const flowSlice = createSlice({
             state.saveError = (action.payload as string) ?? action.error.message ?? 'Unknown save error';
             // Keep last successful save time?
         });
+    // --- Ensure Agent State Cases ---
+    builder
+        .addCase(ensureFlowAgentStateThunk.fulfilled, (state: FlowState, action: PayloadAction<FetchFlowByIdPayload>) => {
+            // Update agent state when ensure operation completes
+            state.agentState = action.payload.agent_state || {};
+            console.log('Redux: Agent state ensured and updated');
+        })
+        .addCase(ensureFlowAgentStateThunk.rejected, (state: FlowState, action) => {
+            console.error('Redux: Failed to ensure agent state', action.payload, action.error);
+            // Don't update the state on failure, keep existing agent_state
+        });
   },
 });
 
@@ -252,6 +299,7 @@ export const {
     addEdge,
     updateNodeData,
     setFlowName,
+    updateAgentState,
     selectNode,      // Export new action
     deselectAllNodes // Export new action
 } = flowSlice.actions;
@@ -261,6 +309,7 @@ export const selectCurrentFlowId = (state: RootState) => state.flow.currentFlowI
 export const selectFlowName = (state: RootState) => state.flow.flowName;
 export const selectNodes = (state: RootState) => state.flow.nodes;
 export const selectEdges = (state: RootState) => state.flow.edges;
+export const selectAgentState = (state: RootState) => state.flow.agentState;
 export const selectIsFlowLoading = (state: RootState) => state.flow.isLoading;
 export const selectFlowError = (state: RootState) => state.flow.error;
 export const selectIsSaving = (state: RootState) => state.flow.isSaving;

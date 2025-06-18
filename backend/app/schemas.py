@@ -59,6 +59,7 @@ class Flow(FlowBase):
     id: str
     owner_id: str
     flow_data: Dict[str, Any]
+    agent_state: Optional[Dict[str, Any]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     last_interacted_chat_id: Optional[str] = None
@@ -139,3 +140,28 @@ class LastChatResponse(BaseModel):
 
 class SetLastChatRequest(BaseModel):
     chat_id: str
+
+# LangGraph 相关的模型
+class LangGraphStateUpdateRequest(BaseModel):
+    """LangGraph状态更新请求"""
+    action_type: str  # update_input, update_task, update_details
+    data: Dict[str, Any]
+
+class LangGraphStateResponse(BaseModel):
+    """LangGraph状态响应"""
+    agent_state: Dict[str, Any]
+    
+    class Config:
+        from_attributes = True
+
+class LangGraphInitializeRequest(BaseModel):
+    """LangGraph初始化请求"""
+    agent_state: Dict[str, Any]
+
+class LangGraphInitializeResponse(BaseModel):
+    """LangGraph初始化响应"""
+    nodes: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]
+    
+    class Config:
+        from_attributes = True

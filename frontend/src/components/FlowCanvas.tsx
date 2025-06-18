@@ -36,6 +36,13 @@ interface FlowCanvasProps extends Omit<ReactFlowProps, 'nodes' | 'edges'> {
   // Add drag handlers
   onNodeDragStart?: (event: React.MouseEvent, node: Node) => void;
   onNodeDragStop?: (event: React.MouseEvent, node: Node) => void;
+  // 新增：动态边界配置
+  reactFlowConfig?: {
+    translateExtent: [[number, number], [number, number]];
+    nodeExtent: [[number, number], [number, number]];
+    minZoom: number;
+    maxZoom: number;
+  };
 }
 
 const FlowCanvas: React.FC<FlowCanvasProps> = ({
@@ -58,6 +65,8 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   // Destructure drag handlers
   onNodeDragStart,
   onNodeDragStop,
+  // 新增：解构动态边界配置
+  reactFlowConfig,
   ...rest // Pass any remaining ReactFlowProps
 }) => {
   const { t } = useTranslation();
@@ -111,7 +120,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         deleteKeyCode="Delete"
         multiSelectionKeyCode="Control"
         selectionOnDrag={false}
-        panOnDrag={true}
+        panOnDrag={true} // 修改为true，允许拖拽画布
         zoomOnScroll={true}
         zoomOnPinch={true}
         snapToGrid={false}
@@ -131,6 +140,11 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         // Pass drag handlers to ReactFlow
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
+        // 应用动态边界配置
+        translateExtent={reactFlowConfig?.translateExtent}
+        nodeExtent={reactFlowConfig?.nodeExtent}
+        minZoom={reactFlowConfig?.minZoom}
+        maxZoom={reactFlowConfig?.maxZoom}
         {...rest} // Spread remaining props
       >
         <Controls

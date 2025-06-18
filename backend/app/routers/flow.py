@@ -269,3 +269,29 @@ async def set_flow_last_chat(
             detail="Failed to update the last interacted chat for the flow."
         )
 # --- 结束新增 ---
+
+@router.post("/{flow_id}/ensure-agent-state", response_model=schemas.Flow)
+async def ensure_agent_state(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user)
+):
+    """
+    确保流程图有完整的 agent_state 结构。
+    如果没有或缺少字段，会自动补充默认值。
+    """
+    from backend.app.services.flow_service import FlowService
+    
+    # 验证流程图所有权
+    flow = verify_flow_ownership(flow_id, current_user, db)
+    
+    # 确保 agent_state 字段
+    flow_service = FlowService(db)
+    updated = flow_service.ensure_agent_state_fields(flow_id)
+    
+    if updated:
+        logger.info(f"Updated agent_state for flow {flow_id}")
+    
+    # 重新获取更新后的流程图
+    db.refresh(flow)
+    return flow

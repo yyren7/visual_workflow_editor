@@ -287,31 +287,112 @@ async def add_message(
 ) -> Response:
     """
     向聊天添加用户消息，触发后台处理流程。
+    支持虚拟Chat ID（使用flow_id作为chat_id）。
     立即返回 202 Accepted，客户端需要随后连接 GET /{chat_id}/events 获取事件。
     """
     chat_service = ChatService(db)
+    flow_service = FlowService(db)
+    
+    # 首先尝试获取常规聊天
     chat = chat_service.get_chat(chat_id)
     
     if not chat:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="聊天不存在")
+        # 检查chat_id是否是一个有效的LangGraph虚拟Chat ID
+        logger.info(f"Chat {chat_id} not found, checking if it's a virtual LangGraph chat ID...")
+        
+        # 从chat_id中解析flow_id、task_index、detail_index
+        # 支持格式：flow_id, flow_id_task_X, flow_id_task_X_detail_Y
+        flow_id = chat_id.split('_task_')[0].split('_detail_')[0]
+        task_index = None
+        detail_index = None
+        
+        # 解析task_index
+        if '_task_' in chat_id:
+            task_part = chat_id.split('_task_')[1]
+            if '_detail_' in task_part:
+                task_index = int(task_part.split('_detail_')[0])
+                detail_index = int(task_part.split('_detail_')[1])
+            else:
+                task_index = int(task_part)
+        
+        # 尝试验证这是否是一个有效的flow_id
+        try:
+            flow = verify_flow_ownership(flow_id, current_user, db)
+            if flow:
+                logger.info(f"Virtual LangGraph chat detected: {chat_id} -> flow_id: {flow_id}, task: {task_index}, detail: {detail_index}")
+                
+                # 为虚拟聊天创建一个临时的聊天会话
+                # 这样可以复用现有的聊天处理逻辑
+                if task_index is not None and detail_index is not None:
+                    virtual_chat_name = f"Virtual Detail Chat - {flow.name} Task {task_index + 1} Detail {detail_index + 1}"
+                elif task_index is not None:
+                    virtual_chat_name = f"Virtual Task Chat - {flow.name} Task {task_index + 1}"
+                else:
+                    virtual_chat_name = f"Virtual LangGraph Chat - {flow.name}"
+                
+                virtual_chat = chat_service.create_chat(
+                    flow_id=flow_id,  # 使用解析出的flow_id
+                    name=virtual_chat_name,
+                    chat_data={
+                        "messages": [], 
+                        "is_virtual_langgraph_chat": True,
+                        "virtual_chat_id": chat_id,  # 保存原始的虚拟chat_id
+                        "task_index": task_index,
+                        "detail_index": detail_index
+                    }
+                )
+                
+                if virtual_chat:
+                    logger.info(f"Created virtual chat {virtual_chat.id} for LangGraph chat_id {chat_id}")
+                    # 使用新创建的虚拟聊天
+                    chat = virtual_chat
+                    # 重要：使用实际创建的chat ID，而不是虚拟chat ID
+                    actual_chat_id = virtual_chat.id
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="无法创建虚拟聊天会话"
+                    )
+            else:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="聊天不存在且不是有效的流程图ID")
+        except HTTPException as he:
+            # 如果验证失败，重新抛出原始的404错误
+            if he.status_code == 404:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="聊天不存在")
+            else:
+                raise he
+        except Exception as e:
+            logger.error(f"Error checking virtual LangGraph chat ID {chat_id}: {e}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="聊天不存在")
+    else:
+        # 常规聊天流程
+        actual_chat_id = chat_id
+    
+    # 验证流程图归属（常规聊天和虚拟聊天都需要）
     verified_flow = verify_flow_ownership(chat.flow_id, current_user, db)
-    logger.info(f"Flow ownership 验证通过 for flow: {verified_flow.id} linked to chat: {chat_id}")
+    logger.info(f"Flow ownership 验证通过 for flow: {verified_flow.id} linked to chat: {chat.id}")
+    
     if message.role != 'user':
          logger.warning(f"Received message with role '{message.role}' in add_message. Processing as user message.")
          
+    # 对于虚拟聊天，我们需要使用原始的chat_id（即flow_id）作为事件队列的key
+    # 这样前端就能用flow_id来监听事件
+    event_queue_key = chat_id  # 使用原始请求的chat_id
+    actual_processing_chat_id = chat.id  # 使用实际的chat记录ID进行处理
+    
     event_queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE) 
-    active_chat_queues[chat_id] = event_queue
-    logger.info(f"为 chat {chat_id} 创建/设置了新的事件队列")
+    active_chat_queues[event_queue_key] = event_queue  # 使用原始chat_id作为key
+    logger.info(f"为 chat {event_queue_key} (actual: {actual_processing_chat_id}) 创建/设置了新的事件队列")
 
     background_tasks.add_task(
         _process_and_publish_chat_events, 
-        chat_id, 
+        actual_processing_chat_id,  # 传递实际的chat ID给后台任务
         initial_user_message_content=message.content, 
         event_queue=event_queue,
         is_edit_flow=False,
         client_message_id=message.client_message_id
     )
-    logger.info(f"已为 chat {chat_id} 启动后台事件处理任务 (new message, client_id: {message.client_message_id})")
+    logger.info(f"已为 chat {event_queue_key} (processing: {actual_processing_chat_id}) 启动后台事件处理任务 (new message, client_id: {message.client_message_id})")
     
     return Response(status_code=status.HTTP_202_ACCEPTED)
 
@@ -320,6 +401,7 @@ async def add_message(
 async def get_chat_events(chat_id: str, request: Request):
     """
     用于客户端通过 EventSource 连接以接收聊天事件。
+    支持虚拟Chat ID（flow_id作为chat_id）。
     """
     logger.info(f"收到对 chat {chat_id} 事件流的 GET 请求 from IP: {request.client.host if request.client else 'unknown'}")
 
@@ -704,6 +786,10 @@ async def _process_and_publish_chat_events(
                         final_state = outputs_from_chain
                         logger.info(f"[Chat {chat_id}] Main Graph run '{run_name}' ended. Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Final state content: {str(final_state)[:500]}...") # More detailed log for final_state
 
+                        # 新增：同步LangGraph生成的任务到主Flow的agent_state
+                        if isinstance(final_state, dict):
+                            _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg)
+
                         latest_ai_message_from_state: Optional[str] = None
                         if isinstance(final_state, dict) and "messages" in final_state and isinstance(final_state["messages"], list):
                             
@@ -831,3 +917,92 @@ async def _process_and_publish_chat_events(
             logger.error(f"[Chat {chat_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
         
         logger.info(f"[Chat {chat_id}] Background task (is_edit_flow: {is_edit_flow}) cleanup completed.") 
+
+def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
+    """
+    将LangGraph执行的final_state同步到主Flow的agent_state
+    特别是sas_step1_generated_tasks等重要状态
+    """
+    try:
+        logger.info(f"[Flow {flow_id}] 开始同步LangGraph状态到Flow agent_state...")
+        
+        # 获取当前Flow的agent_state
+        flow = flow_service_bg.get_flow_instance(flow_id)
+        if not flow:
+            logger.error(f"[Flow {flow_id}] 无法找到Flow，同步失败")
+            return
+        
+        current_agent_state = flow.agent_state or {}
+        
+        # 从final_state中提取需要同步的数据
+        updated = False
+        
+        # 1. 同步SAS子图状态
+        if "sas_planner_subgraph_state" in final_state:
+            sas_state = final_state["sas_planner_subgraph_state"]
+            logger.info(f"[Flow {flow_id}] 发现SAS子图状态，开始提取任务数据...")
+            
+            # 提取生成的任务列表
+            if isinstance(sas_state, dict) and "sas_step1_generated_tasks" in sas_state:
+                tasks = sas_state["sas_step1_generated_tasks"]
+                if tasks:
+                    current_agent_state["sas_step1_generated_tasks"] = tasks
+                    updated = True
+                    logger.info(f"[Flow {flow_id}] 同步了 {len(tasks)} 个生成的任务")
+            
+            # 提取任务详情
+            if isinstance(sas_state, dict) and "sas_step2_generated_task_details" in sas_state:
+                task_details = sas_state["sas_step2_generated_task_details"]
+                if task_details:
+                    current_agent_state["sas_step2_generated_task_details"] = task_details
+                    updated = True
+                    logger.info(f"[Flow {flow_id}] 同步了任务详情")
+            
+            # 同步其他重要状态
+            state_keys_to_sync = [
+                "dialog_state", 
+                "current_user_request",
+                "task_list_accepted",
+                "module_steps_accepted",
+                "revision_iteration",
+                "subgraph_completion_status"
+            ]
+            
+            for key in state_keys_to_sync:
+                if key in sas_state and sas_state[key] is not None:
+                    current_agent_state[key] = sas_state[key]
+                    updated = True
+                    logger.debug(f"[Flow {flow_id}] 同步了状态: {key} = {sas_state[key]}")
+        
+        # 2. 直接从final_state同步（用于一些直接在根级别的状态）
+        direct_sync_keys = [
+            "current_user_request",
+            "input_processed",
+            "task_route_decision"
+        ]
+        
+        for key in direct_sync_keys:
+            if key in final_state and final_state[key] is not None:
+                current_agent_state[key] = final_state[key]
+                updated = True
+                logger.debug(f"[Flow {flow_id}] 直接同步了状态: {key} = {final_state[key]}")
+        
+        # 3. 更新Flow的agent_state
+        if updated:
+            success = flow_service_bg.update_flow_agent_state(flow_id, current_agent_state)
+            if success:
+                logger.info(f"[Flow {flow_id}] LangGraph状态同步成功！")
+                
+                # 如果有生成的任务，记录任务名称
+                if "sas_step1_generated_tasks" in current_agent_state:
+                    tasks = current_agent_state["sas_step1_generated_tasks"]
+                    if tasks:
+                        task_names = [task.get("name", "未命名任务") for task in tasks]
+                        logger.info(f"[Flow {flow_id}] 同步的任务: {', '.join(task_names)}")
+            else:
+                logger.error(f"[Flow {flow_id}] 更新Flow agent_state失败")
+        else:
+            logger.info(f"[Flow {flow_id}] 没有需要同步的状态变更")
+            
+    except Exception as e:
+        logger.error(f"[Flow {flow_id}] 同步LangGraph状态时发生错误: {e}", exc_info=True) 

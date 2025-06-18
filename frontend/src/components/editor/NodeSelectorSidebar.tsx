@@ -60,6 +60,7 @@ const NodeSelectorSidebar: React.FC<NodeSelectorSidebarProps> = ({ open }) => {
         >
           {t('sidebar.dragHint')}
         </Typography>
+        
         <NodeSelector />
       </Box>
     </Box>
