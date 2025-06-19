@@ -776,19 +776,92 @@ async def _process_and_publish_chat_events(
                         output_summary = output_summary[:200] + "..."
                     logger.info(f"[Chat {chat_id}] Tool End: '{tool_name}' from '{run_name}' with output: {output_summary}")
                     await event_queue.put({"type": "tool_end", "data": {"name": tool_name, "output_summary": output_summary, "full_output": tool_output}})
+                    
+                    # 检查特定工具是否需要触发状态同步
+                    if tool_name and "sas" in tool_name.lower() and isinstance(tool_output, dict):
+                        # 检查工具输出是否包含重要状态
+                        important_keys = ['sas_step1_generated_tasks', 'sas_step2_generated_task_details', 'dialog_state']
+                        if any(key in tool_output for key in important_keys):
+                            logger.info(f"[Chat {chat_id}] 工具 '{tool_name}' 输出包含重要状态，触发同步")
+                            sync_result = _sync_langgraph_state_to_flow(tool_output, flow_id, flow_service_bg)
+                            
+                            # 如果同步成功且需要前端更新，发送通知事件
+                            if sync_result and sync_result.get("needs_frontend_update"):
+                                logger.info(f"[Chat {chat_id}] 工具结束后发送agent_state_updated事件到前端")
+                                await event_queue.put({
+                                    "type": "agent_state_updated", 
+                                    "data": {
+                                        "message": f"Agent state updated by tool '{tool_name}'",
+                                        "update_types": sync_result.get("update_types", []),
+                                        "flow_id": flow_id,
+                                        "agent_state": sync_result.get("updated_agent_state", {}),
+                                        "trigger": "tool_end"
+                                    }
+                                })
 
                 elif event_name == "on_chain_end": 
                     outputs_from_chain = event_data.get("output", {})
                     logger.info(f"[Chat {chat_id}] Chain End: '{run_name}'. Output keys: {list(outputs_from_chain.keys()) if isinstance(outputs_from_chain, dict) else 'Not a dict'}")
                     
-                    # Special handling for the end of the main graph execution
+                    # 多种同步触发条件
+                    should_sync = False
+                    sync_reason = ""
+                    
+                    # 1. 主图结束时同步（原有逻辑）
                     if run_name == compiled_graph.name or run_name == "__graph__":
+                        should_sync = True
+                        sync_reason = "主图执行结束"
                         final_state = outputs_from_chain
-                        logger.info(f"[Chat {chat_id}] Main Graph run '{run_name}' ended. Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Final state content: {str(final_state)[:500]}...") # More detailed log for final_state
-
-                        # 新增：同步LangGraph生成的任务到主Flow的agent_state
+                        
+                    # 2. SAS子图重要节点执行完成时同步
+                    elif "sas" in run_name.lower() and isinstance(outputs_from_chain, dict):
+                        # 检查是否包含需要同步的重要状态
+                        important_keys = [
+                            'sas_step1_generated_tasks',
+                            'sas_step2_generated_task_details', 
+                            'dialog_state',
+                            'task_list_accepted',
+                            'module_steps_accepted',
+                            'current_user_request'
+                        ]
+                        
+                        if any(key in outputs_from_chain for key in important_keys):
+                            should_sync = True
+                            sync_reason = f"SAS子图状态更新 (run_name: {run_name})"
+                            final_state = outputs_from_chain
+                    
+                    # 3. 机器人流程调用节点完成时同步
+                    elif "robot_flow_invoker" in run_name.lower() and isinstance(outputs_from_chain, dict):
+                        if "sas_planner_subgraph_state" in outputs_from_chain:
+                            should_sync = True
+                            sync_reason = f"机器人流程节点完成 (run_name: {run_name})"
+                            final_state = outputs_from_chain
+                    
+                    # 执行同步
+                    if should_sync:
+                        logger.info(f"[Chat {chat_id}] 触发同步 - 原因: {sync_reason}")
+                        logger.info(f"[Chat {chat_id}] Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Content: {str(final_state)[:500]}...")
+                        
                         if isinstance(final_state, dict):
-                            _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg)
+                            sync_result = _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg)
+                            
+                            # 如果同步成功且需要前端更新，发送通知事件
+                            if sync_result and sync_result.get("needs_frontend_update"):
+                                logger.info(f"[Chat {chat_id}] 发送agent_state_updated事件到前端")
+                                await event_queue.put({
+                                    "type": "agent_state_updated", 
+                                    "data": {
+                                        "message": "Agent state has been updated with new tasks/details",
+                                        "update_types": sync_result.get("update_types", []),
+                                        "flow_id": flow_id,
+                                        "agent_state": sync_result.get("updated_agent_state", {})
+                                    }
+                                })
+                        else:
+                            logger.warning(f"[Chat {chat_id}] final_state不是字典类型，跳过同步。类型: {type(final_state)}")
+                    
+                    # 主图结束时的特殊处理（保持原有逻辑）
+                    if run_name == compiled_graph.name or run_name == "__graph__":
 
                         latest_ai_message_from_state: Optional[str] = None
                         if isinstance(final_state, dict) and "messages" in final_state and isinstance(final_state["messages"], list):
@@ -921,10 +994,11 @@ async def _process_and_publish_chat_events(
 def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
     """
     将LangGraph执行的final_state同步到主Flow的agent_state
-    特别是sas_step1_generated_tasks等重要状态
+    支持多种重要状态的同步，包括任务生成、详情生成等
     """
     try:
         logger.info(f"[Flow {flow_id}] 开始同步LangGraph状态到Flow agent_state...")
+        logger.info(f"[Flow {flow_id}] final_state键值: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}")
         
         # 获取当前Flow的agent_state
         flow = flow_service_bg.get_flow_instance(flow_id)
@@ -936,69 +1010,114 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
         
         # 从final_state中提取需要同步的数据
         updated = False
+        sync_summary = []
         
-        # 1. 同步SAS子图状态
+        # 1. 同步SAS子图状态（从sas_planner_subgraph_state）
         if "sas_planner_subgraph_state" in final_state:
             sas_state = final_state["sas_planner_subgraph_state"]
             logger.info(f"[Flow {flow_id}] 发现SAS子图状态，开始提取任务数据...")
             
-            # 提取生成的任务列表
-            if isinstance(sas_state, dict) and "sas_step1_generated_tasks" in sas_state:
-                tasks = sas_state["sas_step1_generated_tasks"]
-                if tasks:
-                    current_agent_state["sas_step1_generated_tasks"] = tasks
-                    updated = True
-                    logger.info(f"[Flow {flow_id}] 同步了 {len(tasks)} 个生成的任务")
-            
-            # 提取任务详情
-            if isinstance(sas_state, dict) and "sas_step2_generated_task_details" in sas_state:
-                task_details = sas_state["sas_step2_generated_task_details"]
-                if task_details:
-                    current_agent_state["sas_step2_generated_task_details"] = task_details
-                    updated = True
-                    logger.info(f"[Flow {flow_id}] 同步了任务详情")
-            
-            # 同步其他重要状态
-            state_keys_to_sync = [
-                "dialog_state", 
-                "current_user_request",
-                "task_list_accepted",
-                "module_steps_accepted",
-                "revision_iteration",
-                "subgraph_completion_status"
-            ]
-            
-            for key in state_keys_to_sync:
-                if key in sas_state and sas_state[key] is not None:
-                    current_agent_state[key] = sas_state[key]
-                    updated = True
-                    logger.debug(f"[Flow {flow_id}] 同步了状态: {key} = {sas_state[key]}")
+            if isinstance(sas_state, dict):
+                # 提取生成的任务列表
+                if "sas_step1_generated_tasks" in sas_state:
+                    tasks = sas_state["sas_step1_generated_tasks"]
+                    if tasks:
+                        current_agent_state["sas_step1_generated_tasks"] = tasks
+                        updated = True
+                        sync_summary.append(f"任务列表 ({len(tasks)}个)")
+                
+                # 提取任务详情
+                if "sas_step2_generated_task_details" in sas_state:
+                    task_details = sas_state["sas_step2_generated_task_details"]
+                    if task_details:
+                        current_agent_state["sas_step2_generated_task_details"] = task_details
+                        updated = True
+                        sync_summary.append(f"任务详情 ({len(task_details)}项)")
+                
+                # 同步其他重要状态
+                sas_state_keys = [
+                    "dialog_state", "current_user_request", "task_list_accepted",
+                    "module_steps_accepted", "revision_iteration", "subgraph_completion_status"
+                ]
+                
+                for key in sas_state_keys:
+                    if key in sas_state and sas_state[key] is not None:
+                        current_agent_state[key] = sas_state[key]
+                        updated = True
+                        sync_summary.append(f"{key}")
         
-        # 2. 直接从final_state同步（用于一些直接在根级别的状态）
+        # 2. 直接从final_state同步重要状态
         direct_sync_keys = [
-            "current_user_request",
-            "input_processed",
-            "task_route_decision"
+            "sas_step1_generated_tasks", "sas_step2_generated_task_details",
+            "dialog_state", "current_user_request", "task_list_accepted",
+            "module_steps_accepted", "input_processed", "task_route_decision",
+            "revision_iteration", "subgraph_completion_status"
         ]
         
         for key in direct_sync_keys:
             if key in final_state and final_state[key] is not None:
-                current_agent_state[key] = final_state[key]
-                updated = True
-                logger.debug(f"[Flow {flow_id}] 直接同步了状态: {key} = {final_state[key]}")
+                # 特殊处理任务列表和详情
+                if key == "sas_step1_generated_tasks" and final_state[key]:
+                    current_agent_state[key] = final_state[key]
+                    updated = True
+                    sync_summary.append(f"直接任务列表 ({len(final_state[key])}个)")
+                elif key == "sas_step2_generated_task_details" and final_state[key]:
+                    current_agent_state[key] = final_state[key]
+                    updated = True
+                    sync_summary.append(f"直接任务详情 ({len(final_state[key])}项)")
+                else:
+                    current_agent_state[key] = final_state[key]
+                    updated = True
+                    sync_summary.append(key)
         
         # 3. 更新Flow的agent_state
         if updated:
             success = flow_service_bg.update_flow_agent_state(flow_id, current_agent_state)
             if success:
-                logger.info(f"[Flow {flow_id}] LangGraph状态同步成功！")
+                logger.info(f"[Flow {flow_id}] LangGraph状态同步成功！同步内容: {', '.join(sync_summary)}")
                 
-                # 如果有生成的任务，记录任务名称
-                if "sas_step1_generated_tasks" in current_agent_state:
+                # 检查是否需要触发前端节点更新
+                needs_frontend_update = False
+                update_types = []
+                
+                # 记录重要的任务信息并标记需要前端更新
+                if "sas_step1_generated_tasks" in current_agent_state and current_agent_state["sas_step1_generated_tasks"]:
                     tasks = current_agent_state["sas_step1_generated_tasks"]
-                    if tasks:
-                        task_names = [task.get("name", "未命名任务") for task in tasks]
-                        logger.info(f"[Flow {flow_id}] 同步的任务: {', '.join(task_names)}")
+                    task_names = [task.get("name", "未命名任务") for task in tasks if isinstance(task, dict)]
+                    if task_names:
+                        logger.info(f"[Flow {flow_id}] 同步的任务: {', '.join(task_names[:5])}{'...' if len(task_names) > 5 else ''}")
+                        needs_frontend_update = True
+                        update_types.append("tasks")
+                
+                # 记录任务详情信息并标记需要前端更新
+                if "sas_step2_generated_task_details" in current_agent_state and current_agent_state["sas_step2_generated_task_details"]:
+                    details = current_agent_state["sas_step2_generated_task_details"]
+                    logger.info(f"[Flow {flow_id}] 同步的任务详情数量: {len(details)}")
+                    needs_frontend_update = True
+                    update_types.append("details")
+                
+                # 检查等待状态变化
+                if "dialog_state" in current_agent_state:
+                    dialog_state = current_agent_state["dialog_state"]
+                    waiting_states = [
+                        "sas_awaiting_task_list_review",
+                        "sas_step2_module_steps_generated_for_review",
+                        "sas_awaiting_user_input"
+                    ]
+                    if dialog_state in waiting_states:
+                        needs_frontend_update = True
+                        update_types.append("waiting_state")
+                        logger.info(f"[Flow {flow_id}] 检测到等待状态: {dialog_state}")
+                
+                # 记录前端更新需求
+                if needs_frontend_update:
+                    logger.info(f"[Flow {flow_id}] 需要前端节点更新，类型: {', '.join(update_types)}")
+                    # 注意：这里可以在未来添加主动通知前端的机制（如WebSocket）
+                    
+                    # 新增：通过事件队列通知前端agent_state已更新
+                    # 这需要在调用此函数的地方传入event_queue参数
+                    # 暂时先返回一个标记，让调用方处理
+                    return {"needs_frontend_update": True, "update_types": update_types, "updated_agent_state": current_agent_state}
             else:
                 logger.error(f"[Flow {flow_id}] 更新Flow agent_state失败")
         else:
@@ -1006,3 +1125,5 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
             
     except Exception as e:
         logger.error(f"[Flow {flow_id}] 同步LangGraph状态时发生错误: {e}", exc_info=True) 
+        
+    return None 

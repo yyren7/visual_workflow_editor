@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { AppDispatch } from '../store/store';
-import { updateAgentState, selectCurrentFlowId, selectAgentState } from '../store/slices/flowSlice';
+import { AppDispatch, RootState } from '../store/store';
+import { updateAgentState, selectCurrentFlowId, selectAgentState, fetchFlowById } from '../store/slices/flowSlice';
 import { updateLangGraphState } from '../api/langgraphApi';
 import { chatApi } from '../api/chatApi';
 import { debounce } from 'lodash';
@@ -64,6 +64,9 @@ export const useAgentStateSync = () => {
       
       console.log('Using dynamic LangGraph chat ID:', dynamicChatId);
       
+      // 新增：设置SSE事件监听器来捕获agent_state_updated事件
+      setupSSEListener(dynamicChatId);
+      
       // 发送消息来启动LangGraph处理
       // 这个chat ID可能是虚拟的，后端会智能处理
       const token = localStorage.getItem('access_token');
@@ -114,6 +117,9 @@ export const useAgentStateSync = () => {
           }
           
           console.log('LangGraph processing started with fallback chat ID:', chatResponse.id);
+          
+          // 为fallback chat也设置SSE监听
+          setupSSEListener(chatResponse.id);
           return;
         }
         
@@ -126,6 +132,132 @@ export const useAgentStateSync = () => {
       console.error('Failed to start LangGraph processing:', error);
     }
   }, [currentFlowId]);
+
+  // 新增：设置SSE事件监听器
+  const setupSSEListener = useCallback((chatId: string) => {
+    if (!chatId) return;
+
+    console.log('Setting up SSE listener for chat:', chatId);
+    
+    const eventSource = new EventSource(
+      `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/events`,
+      {
+        withCredentials: false
+      }
+    );
+
+    // 监听agent_state_updated事件
+    eventSource.addEventListener('agent_state_updated', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Received agent_state_updated event:', data);
+        
+        // 验证这个事件是否属于当前flow
+        if (data.flow_id && data.agent_state) {
+          console.log('Updating Redux agent state with:', data.agent_state);
+          // 直接更新Redux中的agent state
+          dispatch(updateAgentState(data.agent_state));
+          
+          // 可选：显示通知
+          console.log(`Agent state updated: ${data.update_types?.join(', ')}`);
+          
+          // 新增：检查是否需要自动确认等待状态
+          checkAndHandleAwaitingStates(data.agent_state, chatId);
+        }
+      } catch (error) {
+        console.error('Error parsing agent_state_updated event:', error);
+      }
+    });
+
+    // 处理其他事件（可选）
+    eventSource.addEventListener('token', (event) => {
+      console.log('Received token:', event.data);
+    });
+
+    eventSource.addEventListener('error', (event) => {
+      console.error('SSE error event:', event);
+    });
+
+    // 监听连接状态
+    eventSource.onopen = () => {
+      console.log('SSE connection opened for chat:', chatId);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error for chat:', chatId, error);
+      // 可以在这里决定是否重新连接
+      setTimeout(() => {
+        if (eventSource.readyState === EventSource.CLOSED) {
+          console.log('SSE connection closed, cleaning up');
+        }
+      }, 1000);
+    };
+
+    // 设置定时器，在一定时间后关闭连接（避免资源泄露）
+    const cleanup = setTimeout(() => {
+      console.log('Closing SSE connection for chat:', chatId);
+      eventSource.close();
+    }, 5 * 60 * 1000); // 5分钟后关闭
+
+    // 返回清理函数
+    return () => {
+      clearTimeout(cleanup);
+      eventSource.close();
+    };
+  }, [currentFlowId, dispatch]);
+
+  // 新增：轮询检查agent_state变化的函数
+  const pollForAgentStateChanges = useCallback(() => {
+    if (!currentFlowId) return;
+
+    let pollCount = 0;
+    const maxPolls = 30; // 最多轮询30次（约5分钟）
+    const pollInterval = 10000; // 每10秒轮询一次
+    
+    // 保存开始轮询时的状态，用于比较
+    const initialTaskCount = agentState?.sas_step1_generated_tasks?.length || 0;
+    const initialDialogState = agentState?.dialog_state;
+
+    const polling = setInterval(async () => {
+      pollCount++;
+      console.log(`Polling for agent state changes (${pollCount}/${maxPolls})...`);
+
+      try {
+        // 重新获取flow数据以更新agent_state
+        const result = await dispatch(fetchFlowById(currentFlowId));
+        console.log('Agent state refreshed from server');
+        
+        // 检查是否有重要状态变化（任务生成等）
+        if (result.payload && typeof result.payload === 'object' && 'agent_state' in result.payload) {
+          const newAgentState = (result.payload as any).agent_state;
+          const newTaskCount = newAgentState?.sas_step1_generated_tasks?.length || 0;
+          const newDialogState = newAgentState?.dialog_state;
+          
+          // 检查是否有显著变化
+          if (newTaskCount > initialTaskCount || 
+              (newDialogState && newDialogState !== initialDialogState)) {
+            console.log('Detected significant agent state changes, stopping polling');
+            console.log(`Task count: ${initialTaskCount} -> ${newTaskCount}`);
+            console.log(`Dialog state: ${initialDialogState} -> ${newDialogState}`);
+            clearInterval(polling);
+            return;
+          }
+        }
+
+        // 达到最大轮询次数时停止
+        if (pollCount >= maxPolls) {
+          console.log('Max polling attempts reached, stopping');
+          clearInterval(polling);
+        }
+      } catch (error) {
+        console.error('Error during agent state polling:', error);
+        clearInterval(polling);
+      }
+    }, pollInterval);
+
+    // 清理函数
+    return () => clearInterval(polling);
+  }, [currentFlowId, dispatch, agentState]);
 
   // Update specific parts of agent state
   const updateUserInput = useCallback(async (content: string, taskIndex?: number, detailIndex?: number) => {
@@ -171,6 +303,75 @@ export const useAgentStateSync = () => {
       syncToBackend(currentFlowId, agentState);
     }
   }, [agentState, currentFlowId, syncToBackend]);
+
+  // 新增：发送自动确认消息的函数
+  const sendAutoConfirmation = useCallback(async (chatId: string, confirmation: string) => {
+    try {
+      console.log(`Sending auto confirmation "${confirmation}" to chat ${chatId}`);
+      
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: confirmation,
+          role: 'user'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log(`Auto confirmation "${confirmation}" sent successfully`);
+    } catch (error) {
+      console.error('Failed to send auto confirmation:', error);
+    }
+  }, []);
+
+  // 新增：检查并处理等待状态的函数
+  const checkAndHandleAwaitingStates = useCallback(async (agentState: any, chatId: string) => {
+    if (!agentState || !chatId) return;
+
+    const dialogState = agentState.dialog_state;
+    const hasClaficationQuestion = agentState.clarification_question;
+    
+    // 检查是否处于等待用户确认的状态
+    const awaitingStates = [
+      'sas_awaiting_task_list_review',
+      'sas_awaiting_module_steps_review', 
+      'awaiting_enrichment_confirmation',
+      'awaiting_user_input'
+    ];
+
+    if (awaitingStates.includes(dialogState)) {
+      console.log(`Detected awaiting state: ${dialogState}`);
+      
+      // 检查是否有生成的任务需要确认
+      if (dialogState === 'sas_awaiting_task_list_review' && agentState.sas_step1_generated_tasks) {
+        console.log('Auto-confirming task list...');
+        await sendAutoConfirmation(chatId, 'accept');
+      }
+      // 检查是否有模块步骤需要确认  
+      else if (dialogState === 'sas_awaiting_module_steps_review') {
+        console.log('Auto-confirming module steps...');
+        await sendAutoConfirmation(chatId, 'accept');
+      }
+      // 检查是否有enriched plan需要确认
+      else if (dialogState === 'awaiting_enrichment_confirmation') {
+        console.log('Auto-confirming enriched plan...');
+        await sendAutoConfirmation(chatId, 'yes');
+      }
+      // 一般等待用户输入的情况，如果有明确的问题，可以提供默认回答
+      else if (dialogState === 'awaiting_user_input' && hasClaficationQuestion) {
+        console.log('Auto-responding to clarification question...');
+        await sendAutoConfirmation(chatId, 'continue');
+      }
+    }
+  }, [sendAutoConfirmation]);
 
   return {
     updateUserInput,
