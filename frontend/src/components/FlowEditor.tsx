@@ -53,6 +53,7 @@ import {
   selectIsSaving,
   selectSaveError,
   selectLastSaveTime,
+  selectNode,
 } from '../store/slices/flowSlice';
 
 // Import custom hooks
@@ -131,6 +132,22 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   
   // Use LangGraph nodes hook
   const { syncLangGraphNodes } = useLangGraphNodes(agentState);
+  
+  // 临时调试函数
+  const debugAgentState = useCallback(() => {
+    console.log('🐛 [DEBUG] Manual debug trigger');
+    console.log('🐛 [DEBUG] Current flow ID:', currentFlowId);
+    console.log('🐛 [DEBUG] Agent state:', agentState);
+    console.log('🐛 [DEBUG] Current nodes:', nodes.length);
+    console.log('🐛 [DEBUG] LangGraph nodes:', nodes.filter(n => n.id.startsWith('langgraph_')));
+    
+    if (agentState?.sas_step1_generated_tasks?.length) {
+      console.log('🐛 [DEBUG] Found tasks, manually syncing nodes...');
+      syncLangGraphNodes();
+    } else {
+      console.log('🐛 [DEBUG] No tasks found in agent state');
+    }
+  }, [currentFlowId, agentState, nodes, syncLangGraphNodes]);
 
   // 新增：动态边界计算函数
   const calculateDynamicViewport = useCallback(() => {
@@ -167,22 +184,43 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
 
   // 新增：设置LangGraph节点不可拖动
   const processedNodes = useMemo(() => {
-    return nodes.map(node => ({
-      ...node,
-      draggable: !LANGGRAPH_NODE_TYPES.includes(node.type || ''), // LangGraph节点不可拖动
-      dragHandle: LANGGRAPH_NODE_TYPES.includes(node.type || '') ? undefined : '.drag-handle', // LangGraph节点没有拖拽句柄
-      // 确保LangGraph节点有固定尺寸和位置限制
-      ...(LANGGRAPH_NODE_TYPES.includes(node.type || '') && {
-        style: {
-          ...node.style,
-          width: node.type === 'langgraph_input' ? 600 : (node.type === 'langgraph_detail' ? 350 : 400),
-          height: node.type === 'langgraph_input' ? 400 : (node.type === 'langgraph_detail' ? 400 : 300),
-          pointerEvents: 'auto' as const, // 修复类型错误
-        },
-        selectable: true, // 仍然可选择
-        deletable: false, // 不可删除
-      })
-    }));
+    const processed = nodes.map(node => {
+      const isLangGraphNode = LANGGRAPH_NODE_TYPES.includes(node.type || '');
+      const processedNode = {
+        ...node,
+        draggable: !isLangGraphNode, // LangGraph节点不可拖动
+        dragHandle: isLangGraphNode ? undefined : '.drag-handle', // LangGraph节点没有拖拽句柄
+        // 确保LangGraph节点有固定尺寸和位置限制
+        ...(isLangGraphNode && {
+          style: {
+            ...node.style,
+            width: node.type === 'langgraph_input' ? 600 : (node.type === 'langgraph_detail' ? 350 : 400),
+            height: node.type === 'langgraph_input' ? 400 : (node.type === 'langgraph_detail' ? 400 : 300),
+            pointerEvents: 'auto' as const, // 修复类型错误
+          },
+          selectable: true, // 仍然可选择
+          deletable: false, // 不可删除
+        })
+      };
+      
+      // 重要：确保 selected 属性不被覆盖
+      processedNode.selected = node.selected;
+      
+      // 添加调试日志
+      console.log(`节点 ${node.id} (${node.type}):`, {
+        isLangGraphNode,
+        deletable: processedNode.deletable !== false, // 如果没有明确设置为 false，则为 true
+        selectable: processedNode.selectable !== false,
+        draggable: processedNode.draggable,
+        selected: processedNode.selected // 添加选择状态的日志
+      });
+      
+      return processedNode;
+    });
+    
+    console.log('processedNodes 总数:', processed.length);
+    console.log('processedNodes 中选中的节点:', processed.filter(n => n.selected).map(n => ({ id: n.id, selected: n.selected })));
+    return processed;
   }, [nodes]);
 
   // 新增：ReactFlow实例配置，包含动态边界限制
@@ -322,6 +360,8 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     onDragOver,
     onDrop,
     handleNodeDataUpdate,
+    onNodesDelete,
+    onEdgesDelete,
   } = useReactFlowManager({
     reactFlowWrapperRef: reactFlowWrapper,
   });
@@ -387,6 +427,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   }, [dispatch]);
 
   const handleNodeClick: NodeMouseHandler = useCallback((event: React.MouseEvent, node: Node) => {
+      // 重要：首先调用 Redux action 来更新节点选择状态
+      dispatch(selectNode(node.id));
+      
       // LangGraph节点不需要打开属性面板，它们是自包含的
       if (LANGGRAPH_NODE_TYPES.includes(node.type || '')) {
         setSelectedNode(node);
@@ -397,7 +440,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
       setSelectedNode(node);
       openNodeInfoPanel();
       console.log('Node clicked (FlowEditor):', node);
-  }, [setSelectedNode, openNodeInfoPanel]);
+  }, [setSelectedNode, openNodeInfoPanel, dispatch]);
 
   // Intermediate callback for NodePropertiesPanel
   const handlePanelNodeDataChange = useCallback((id: string, data: Partial<NodeData>) => {
@@ -500,9 +543,32 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         isAuthenticated={isAuthenticated}
         onLogout={logout}
         isSaving={isSaving}
-        lastSaveTime={lastSaveTime}
-        chatOpen={chatOpen}
-      />
+                  lastSaveTime={lastSaveTime}
+          chatOpen={chatOpen}
+        />
+
+        {/* 临时调试工具栏 */}
+        {process.env.NODE_ENV === 'development' && (
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 80, 
+            right: 20, 
+            zIndex: 1000,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            p: 1,
+            borderRadius: 1,
+            border: '1px solid #ccc'
+          }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={debugAgentState}
+              sx={{ fontSize: '0.75rem', minWidth: 'auto', px: 1 }}
+            >
+              🐛 调试Agent状态
+            </Button>
+          </Box>
+        )}
 
       <Box sx={{ display: 'flex', flexGrow: 1, position: 'relative' }}>
         <NodeSelectorSidebar open={sidebarOpen} />
@@ -540,6 +606,8 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
             onAutoLayout={handleLayout}
             onNodeDragStart={handleNodeDragStart}
             onNodeDragStop={handleNodeDragStop}
+            onNodesDelete={onNodesDelete}
+            onEdgesDelete={onEdgesDelete}
             reactFlowConfig={reactFlowConfig}
           >
             <Panel position="top-right">

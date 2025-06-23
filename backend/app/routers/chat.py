@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 import logging
 import json
 import asyncio # 确保导入 asyncio
+import time  # 添加时间模块导入
 from datetime import datetime # <--- 修改此行
 from collections import defaultdict # 导入 defaultdict
 from backend.langgraphchat.context import current_flow_id_var # <--- Import context variable
@@ -24,6 +25,8 @@ logger = logging.getLogger(__name__)
 # Key: chat_id, Value: asyncio.Queue
 # 注意：简单内存实现，不适用于多进程/多实例部署
 active_chat_queues: Dict[str, asyncio.Queue] = defaultdict(asyncio.Queue)
+# 用于追踪每个chat的SSE连接数
+active_sse_connections: Dict[str, int] = defaultdict(int)
 # 用于通知 GET 请求流已结束的标记
 STREAM_END_SENTINEL = {"type": "stream_end", "data": {"message": "Stream finished or no stream generated."}}
 # 队列最大长度，防止内存无限增长
@@ -421,22 +424,32 @@ async def get_chat_events(chat_id: str, request: Request):
     logger.info(f"找到 chat {chat_id} 的事件队列，准备发送 SSE 事件")
 
     async def sse_event_sender():
-        logger.debug(f"Starting SSE event sender for chat {chat_id}")
+        # 追踪连接数
+        active_sse_connections[chat_id] += 1
+        connection_count = active_sse_connections[chat_id]
+        logger.info(f"🔴 Starting SSE event sender #{connection_count} for chat {chat_id}")
+        
+        # 如果已经有连接，发出警告
+        if connection_count > 1:
+            logger.warning(f"🔴 WARNING: Multiple SSE connections detected for chat {chat_id}! Count: {connection_count}")
+        
         client_disconnected = False
         event_data = None # Initialize event_data
 
         async def check_disconnect():
             nonlocal client_disconnected
             try:
-                # This is a FastAPI specific way to check if client disconnected
-                # It might not work perfectly for all server setups / ASGI servers
-                # but is a common approach.
-                await request.is_disconnected() 
-                if await request.is_disconnected(): # Check again to be sure
+                # 更可靠的断开检测：检查连接状态
+                is_disconnected = await request.is_disconnected()
+                if is_disconnected:
                     client_disconnected = True
-                    logger.info(f"SSE client for chat {chat_id} disconnected (checked via request.is_disconnected()).")
-            except Exception as e: # Handle cases where request.is_disconnected might not be available or raises error
-                logger.debug(f"Could not check client disconnect status for chat {chat_id}: {e}")
+                    logger.info(f"SSE client for chat {chat_id} disconnected (detected via request.is_disconnected()).")
+                    return True
+                return False
+            except Exception as e:
+                # 如果检测失败，假设连接仍然活跃，但记录警告
+                logger.warning(f"Could not check client disconnect status for chat {chat_id}: {e}")
+                return False
 
         try:
             # 发送初始的心跳/连接确认事件
@@ -449,16 +462,26 @@ async def get_chat_events(chat_id: str, request: Request):
             while not client_disconnected:
                 event_data = None # Reset event_data at the start of each iteration
                 try:
-                    # Timeout to allow disconnect check
+                    # 缩短超时时间，更快检测断开
                     logger.debug(f"[SSE {chat_id}] Waiting for event from queue...")
-                    event_data = await asyncio.wait_for(event_queue.get(), timeout=1.0) 
+                    event_data = await asyncio.wait_for(event_queue.get(), timeout=0.5) 
                     logger.debug(f"[SSE {chat_id}] Got event: {str(event_data)[:100]}")
                 except asyncio.TimeoutError:
-                    logger.debug(f"[SSE {chat_id}] Queue get timed out. Checking disconnect.")
-                    await check_disconnect()
-                    if client_disconnected:
-                        logger.debug(f"[SSE {chat_id}] Client disconnected after timeout. Breaking loop.")
+                    # 先检查断开状态
+                    is_disconnected = await check_disconnect()
+                    if is_disconnected or client_disconnected:
+                        logger.info(f"[SSE {chat_id}] Client disconnected after timeout. Breaking loop.")
                         break 
+                    
+                    # 减少ping频率，每5秒发送一次
+                    current_time = time.time()
+                    if not hasattr(check_disconnect, '_last_ping_time'):
+                        check_disconnect._last_ping_time = 0
+                    
+                    time_since_ping = current_time - check_disconnect._last_ping_time
+                    if time_since_ping < 5.0:  # 5秒内不重复发送ping
+                        continue
+                    
                     # Send ping if not disconnected
                     logger.debug(f"[SSE {chat_id}] Client still connected. Sending ping.")
                     try:
@@ -466,15 +489,13 @@ async def get_chat_events(chat_id: str, request: Request):
                             "event": "ping",
                             "data": json.dumps({"timestamp": datetime.utcnow().isoformat(), "message": "keep-alive"})
                         }
+                        check_disconnect._last_ping_time = current_time
                     except Exception as ping_err:
                         logger.error(f"[SSE {chat_id}] Error sending ping: {ping_err}", exc_info=True)
-                        # Potentially break or handle client disconnect here too
-                        await check_disconnect()
-                        if client_disconnected:
-                            break
-                    # Removed the 15s sleep from here, ping now acts as the periodic keep-alive
-                    # The timeout on queue.get() serves as the loop beat.
-                    continue # Continue to next iteration to wait for new event or another timeout
+                        # ping发送失败通常意味着客户端已断开
+                        client_disconnected = True
+                        break
+                    continue
                 except asyncio.CancelledError:
                     logger.info(f"SSE event sender for chat {chat_id} was cancelled (likely client disconnect or task shutdown).")
                     client_disconnected = True # Ensure flag is set
@@ -507,7 +528,22 @@ async def get_chat_events(chat_id: str, request: Request):
                         event_queue.task_done()
                     except Exception as send_final_err:
                         logger.error(f"[SSE {chat_id}] Error sending stream_end sentinel: {send_final_err}", exc_info=True)
-                    client_disconnected = True # Mark as disconnected to ensure loop termination
+                    
+                    # 强制标记为断开连接
+                    client_disconnected = True
+                    logger.info(f"[SSE {chat_id}] Marking as disconnected after stream_end")
+                    
+                    # 只在没有其他连接时清理队列
+                    current_connections = active_sse_connections.get(chat_id, 0)
+                    logger.info(f"🔴 [SSE {chat_id}] Current SSE connections after stream_end: {current_connections}")
+                    
+                    if current_connections <= 1:  # 只有当前这一个连接时
+                        if chat_id in active_chat_queues:
+                            active_chat_queues.pop(chat_id, None)
+                            logger.info(f"[SSE {chat_id}] Immediately removed queue from active_chat_queues")
+                    else:
+                        logger.warning(f"🔴 [SSE {chat_id}] NOT removing queue - still have {current_connections} connections")
+                    
                     break 
 
                 if isinstance(event_data, dict) and "type" in event_data and "data" in event_data:
@@ -553,28 +589,35 @@ async def get_chat_events(chat_id: str, request: Request):
                 except Exception as send_outer_err:
                     logger.error(f"[SSE {chat_id}] Failed to send final critical (outer) error to client: {send_outer_err}")
         finally:
-            logger.info(f"SSE event sender for chat {chat_id} is cleaning up. Final client_disconnected status: {client_disconnected}")
-            # Only remove queue if it was ours and task is truly ending
-            # If cancelled due to disconnect, this might be called.
-            # If STREAM_END_SENTINEL was processed, it should be removed there.
-            # However, a robust cleanup is good.
-            if chat_id in active_chat_queues and active_chat_queues[chat_id] is event_queue:
-                # Check if queue is empty, if not, log warning as some events might be lost
-                if not event_queue.empty():
-                    logger.warning(f"Cleaning up queue for chat {chat_id} but it's not empty. {event_queue.qsize()} items remaining.")
-                    # Drain the queue to prevent tasks from hanging on put() if this queue instance is reused (though defaultdict should create new)
-                    while not event_queue.empty():
-                        try:
-                            event_queue.get_nowait()
-                            event_queue.task_done()
-                        except asyncio.QueueEmpty:
-                            break
+            # 减少连接计数
+            active_sse_connections[chat_id] -= 1
+            remaining_connections = active_sse_connections[chat_id]
+            logger.info(f"🔴 SSE event sender for chat {chat_id} is cleaning up. Remaining connections: {remaining_connections}, client_disconnected: {client_disconnected}")
+            
+            # 只有当没有其他连接时才清理队列
+            if remaining_connections == 0:
+                logger.info(f"🔴 No more SSE connections for chat {chat_id}, cleaning up queue")
+                active_sse_connections.pop(chat_id, None)  # 清理连接计数
                 
-                removed_queue = active_chat_queues.pop(chat_id, None)
-                if removed_queue:
-                    logger.info(f"已成功从 active_chat_queues 中移除 chat {chat_id} 的队列 (Final cleanup).")
+                if chat_id in active_chat_queues and active_chat_queues[chat_id] is event_queue:
+                    # Check if queue is empty, if not, log warning as some events might be lost
+                    if not event_queue.empty():
+                        logger.warning(f"Cleaning up queue for chat {chat_id} but it's not empty. {event_queue.qsize()} items remaining.")
+                        # Drain the queue to prevent tasks from hanging on put() if this queue instance is reused (though defaultdict should create new)
+                        while not event_queue.empty():
+                            try:
+                                event_queue.get_nowait()
+                                event_queue.task_done()
+                            except asyncio.QueueEmpty:
+                                break
+                    
+                    removed_queue = active_chat_queues.pop(chat_id, None)
+                    if removed_queue:
+                        logger.info(f"已成功从 active_chat_queues 中移除 chat {chat_id} 的队列 (Final cleanup).")
+                else:
+                    logger.warning(f"在 SSE 清理阶段，chat {chat_id} 的队列已不在 active_chat_queues 中或不匹配当前实例，可能已被其他地方清理。")
             else:
-                logger.warning(f"在 SSE 清理阶段，chat {chat_id} 的队列已不在 active_chat_queues 中或不匹配当前实例，可能已被其他地方清理。")
+                logger.warning(f"🔴 Still have {remaining_connections} SSE connections for chat {chat_id}, NOT cleaning up queue")
             
     return EventSourceResponse(sse_event_sender())
 
@@ -738,7 +781,20 @@ async def _process_and_publish_chat_events(
                 event_data = event.get("data", {})
                 run_name = event.get("name", "unknown_run")
 
-                logger.info(f"[Chat {chat_id}] Received event: '{event_name}' from '{run_name}', Data keys: {list(event_data.keys())}")
+                # 添加更详细的事件日志
+                logger.info(f"[Chat {chat_id}] 🔍 Received event: '{event_name}' from '{run_name}', Data keys: {list(event_data.keys())}")
+                
+                # 特别关注Chain End事件
+                if event_name == "on_chain_end":
+                    logger.info(f"[Chat {chat_id}] 🚨 CHAIN END DETECTED: run_name='{run_name}', compiled_graph.name='{compiled_graph.name}'")
+                    logger.info(f"[Chat {chat_id}] 🚨 Output data type: {type(event_data.get('output', 'NO_OUTPUT'))}")
+                    if isinstance(event_data.get('output'), dict):
+                        output_keys = list(event_data.get('output', {}).keys())
+                        logger.info(f"[Chat {chat_id}] 🚨 Output keys: {output_keys}")
+                
+                # 记录所有不同类型的事件
+                if event_name not in ["on_chat_model_stream"]:  # 避免token流的日志过多
+                    logger.info(f"[Chat {chat_id}] 📋 Event details - Name: {event_name}, Run: {run_name}, Data type: {type(event_data)}")
 
                 if event_name == "on_chat_model_stream":
                     chunk = event_data.get("chunk")
@@ -782,12 +838,12 @@ async def _process_and_publish_chat_events(
                         # 检查工具输出是否包含重要状态
                         important_keys = ['sas_step1_generated_tasks', 'sas_step2_generated_task_details', 'dialog_state']
                         if any(key in tool_output for key in important_keys):
-                            logger.info(f"[Chat {chat_id}] 工具 '{tool_name}' 输出包含重要状态，触发同步")
+                            logger.info(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 输出包含重要状态，触发同步")
                             sync_result = _sync_langgraph_state_to_flow(tool_output, flow_id, flow_service_bg)
                             
                             # 如果同步成功且需要前端更新，发送通知事件
                             if sync_result and sync_result.get("needs_frontend_update"):
-                                logger.info(f"[Chat {chat_id}] 工具结束后发送agent_state_updated事件到前端")
+                                logger.info(f"[Chat {chat_id}] 🎯 工具结束后发送agent_state_updated事件到前端")
                                 await event_queue.put({
                                     "type": "agent_state_updated", 
                                     "data": {
@@ -798,10 +854,16 @@ async def _process_and_publish_chat_events(
                                         "trigger": "tool_end"
                                     }
                                 })
+                            else:
+                                logger.warning(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 同步未产生前端更新需求")
+                        else:
+                            logger.info(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 输出不包含重要状态键: {list(tool_output.keys())}")
 
-                elif event_name == "on_chain_end": 
+                elif event_name == "on_chain_end":
                     outputs_from_chain = event_data.get("output", {})
-                    logger.info(f"[Chat {chat_id}] Chain End: '{run_name}'. Output keys: {list(outputs_from_chain.keys()) if isinstance(outputs_from_chain, dict) else 'Not a dict'}")
+                    logger.info(f"[Chat {chat_id}] 🚨 Chain End: '{run_name}'. Output keys: {list(outputs_from_chain.keys()) if isinstance(outputs_from_chain, dict) else 'Not a dict'}")
+                    logger.info(f"[Chat {chat_id}] 🚨 Chain End output type: {type(outputs_from_chain)}")
+                    logger.info(f"[Chat {chat_id}] 🚨 Chain End output content: {str(outputs_from_chain)[:500]}...")
                     
                     # 多种同步触发条件
                     should_sync = False
@@ -812,6 +874,7 @@ async def _process_and_publish_chat_events(
                         should_sync = True
                         sync_reason = "主图执行结束"
                         final_state = outputs_from_chain
+                        logger.info(f"[Chat {chat_id}] 🎯 触发条件1: 主图结束 (run_name: {run_name}, graph_name: {compiled_graph.name})")
                         
                     # 2. SAS子图重要节点执行完成时同步
                     elif "sas" in run_name.lower() and isinstance(outputs_from_chain, dict):
@@ -825,10 +888,15 @@ async def _process_and_publish_chat_events(
                             'current_user_request'
                         ]
                         
-                        if any(key in outputs_from_chain for key in important_keys):
+                        found_keys = [key for key in important_keys if key in outputs_from_chain]
+                        if found_keys:
                             should_sync = True
-                            sync_reason = f"SAS子图状态更新 (run_name: {run_name})"
+                            sync_reason = f"SAS子图状态更新 (run_name: {run_name}, found_keys: {found_keys})"
                             final_state = outputs_from_chain
+                            logger.info(f"[Chat {chat_id}] 🎯 触发条件2: SAS子图状态更新")
+                            logger.info(f"[Chat {chat_id}] 🎯 发现重要键: {found_keys}")
+                        else:
+                            logger.info(f"[Chat {chat_id}] 🎯 SAS子图结束但无重要状态: {run_name}, keys: {list(outputs_from_chain.keys())}")
                     
                     # 3. 机器人流程调用节点完成时同步
                     elif "robot_flow_invoker" in run_name.lower() and isinstance(outputs_from_chain, dict):
@@ -836,18 +904,25 @@ async def _process_and_publish_chat_events(
                             should_sync = True
                             sync_reason = f"机器人流程节点完成 (run_name: {run_name})"
                             final_state = outputs_from_chain
+                            logger.info(f"[Chat {chat_id}] 🎯 触发条件3: 机器人流程节点完成")
+                        else:
+                            logger.info(f"[Chat {chat_id}] 🎯 机器人流程节点结束但无子图状态: {run_name}")
+                    
+                    # 记录未触发同步的情况
+                    if not should_sync:
+                        logger.info(f"[Chat {chat_id}] 🎯 Chain End不满足同步条件: run_name='{run_name}', graph_name='{compiled_graph.name}', is_dict={isinstance(outputs_from_chain, dict)}")
                     
                     # 执行同步
                     if should_sync:
-                        logger.info(f"[Chat {chat_id}] 触发同步 - 原因: {sync_reason}")
-                        logger.info(f"[Chat {chat_id}] Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Content: {str(final_state)[:500]}...")
+                        logger.info(f"[Chat {chat_id}] 🎯 触发同步 - 原因: {sync_reason}")
+                        logger.info(f"[Chat {chat_id}] 🎯 Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Content: {str(final_state)[:500]}...")
                         
                         if isinstance(final_state, dict):
                             sync_result = _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg)
                             
                             # 如果同步成功且需要前端更新，发送通知事件
                             if sync_result and sync_result.get("needs_frontend_update"):
-                                logger.info(f"[Chat {chat_id}] 发送agent_state_updated事件到前端")
+                                logger.info(f"[Chat {chat_id}] 🎯 发送agent_state_updated事件到前端")
                                 await event_queue.put({
                                     "type": "agent_state_updated", 
                                     "data": {
@@ -857,8 +932,10 @@ async def _process_and_publish_chat_events(
                                         "agent_state": sync_result.get("updated_agent_state", {})
                                     }
                                 })
+                            else:
+                                logger.warning(f"[Chat {chat_id}] 🎯 同步完成但无需前端更新: sync_result={sync_result}")
                         else:
-                            logger.warning(f"[Chat {chat_id}] final_state不是字典类型，跳过同步。类型: {type(final_state)}")
+                            logger.warning(f"[Chat {chat_id}] 🎯 final_state不是字典类型，跳过同步。类型: {type(final_state)}")
                     
                     # 主图结束时的特殊处理（保持原有逻辑）
                     if run_name == compiled_graph.name or run_name == "__graph__":
@@ -989,141 +1066,186 @@ async def _process_and_publish_chat_events(
         except Exception as qe:
             logger.error(f"[Chat {chat_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
         
-        logger.info(f"[Chat {chat_id}] Background task (is_edit_flow: {is_edit_flow}) cleanup completed.") 
+        # --- 新增：确保向所有可能的队列发送STREAM_END_SENTINEL ---
+        # 检查是否有活跃的队列，如果有，确保发送结束信号
+        if chat_id in active_chat_queues and active_chat_queues[chat_id] is not event_queue:
+            try:
+                current_queue = active_chat_queues[chat_id]
+                logger.info(f"[Chat {chat_id}] Found active queue during cleanup. Queue size: {current_queue.qsize()}")
+                
+                # 检查队列中是否已经有STREAM_END_SENTINEL
+                has_end_sentinel = False
+                temp_items = []
+                while not current_queue.empty():
+                    try:
+                        item = current_queue.get_nowait()
+                        temp_items.append(item)
+                        if item is STREAM_END_SENTINEL:
+                            has_end_sentinel = True
+                            logger.info(f"[Chat {chat_id}] Found existing STREAM_END_SENTINEL in queue")
+                        current_queue.task_done()
+                    except asyncio.QueueEmpty:
+                        break
+                
+                # 将临时取出的项目放回队列
+                for item in temp_items:
+                    await current_queue.put(item)
+                
+                # 如果没有结束标记，添加一个
+                if not has_end_sentinel:
+                    logger.info(f"[Chat {chat_id}] No STREAM_END_SENTINEL found in queue, adding one now")
+                    await current_queue.put(STREAM_END_SENTINEL)
+                    logger.info(f"[Chat {chat_id}] STREAM_END_SENTINEL added to queue during cleanup")
+                else:
+                    logger.info(f"[Chat {chat_id}] STREAM_END_SENTINEL already exists in queue, skipping duplicate")
+                    
+            except asyncio.QueueFull:
+                logger.error(f"[Chat {chat_id}] Failed to add STREAM_END_SENTINEL during cleanup - queue is full")
+            except Exception as cleanup_err:
+                logger.error(f"[Chat {chat_id}] Error during queue cleanup: {cleanup_err}", exc_info=True)
+        else:
+            logger.info(f"[Chat {chat_id}] No active queue found during cleanup")
+            
+        logger.info(f"[Chat {chat_id}] Background task (is_edit_flow: {is_edit_flow}) final cleanup completed.")
 
 def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
     """
     将LangGraph执行的final_state同步到主Flow的agent_state
     支持多种重要状态的同步，包括任务生成、详情生成等
+    **新增**：支持从sas_planner_subgraph_state中提取SAS子图数据
     """
     try:
-        logger.info(f"[Flow {flow_id}] 开始同步LangGraph状态到Flow agent_state...")
-        logger.info(f"[Flow {flow_id}] final_state键值: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}")
+        logger.info(f"[Flow {flow_id}] 🎯 开始同步LangGraph状态到Flow agent_state...")
+        logger.info(f"[Flow {flow_id}] 🎯 final_state键值: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}")
+        logger.info(f"[Flow {flow_id}] 🎯 final_state内容摘要: {str(final_state)[:1000]}...")
         
         # 获取当前Flow的agent_state
         flow = flow_service_bg.get_flow_instance(flow_id)
         if not flow:
             logger.error(f"[Flow {flow_id}] 无法找到Flow，同步失败")
-            return
+            return None
         
         current_agent_state = flow.agent_state or {}
+        logger.info(f"[Flow {flow_id}] 🎯 当前agent_state键值: {list(current_agent_state.keys())}")
         
-        # 从final_state中提取需要同步的数据
-        updated = False
-        sync_summary = []
+        # 检查需要同步的状态变化
+        needs_sync = False
+        sync_updates = {}
+        update_types = []
         
-        # 1. 同步SAS子图状态（从sas_planner_subgraph_state）
-        if "sas_planner_subgraph_state" in final_state:
-            sas_state = final_state["sas_planner_subgraph_state"]
-            logger.info(f"[Flow {flow_id}] 发现SAS子图状态，开始提取任务数据...")
-            
-            if isinstance(sas_state, dict):
-                # 提取生成的任务列表
-                if "sas_step1_generated_tasks" in sas_state:
-                    tasks = sas_state["sas_step1_generated_tasks"]
-                    if tasks:
-                        current_agent_state["sas_step1_generated_tasks"] = tasks
-                        updated = True
-                        sync_summary.append(f"任务列表 ({len(tasks)}个)")
-                
-                # 提取任务详情
-                if "sas_step2_generated_task_details" in sas_state:
-                    task_details = sas_state["sas_step2_generated_task_details"]
-                    if task_details:
-                        current_agent_state["sas_step2_generated_task_details"] = task_details
-                        updated = True
-                        sync_summary.append(f"任务详情 ({len(task_details)}项)")
-                
-                # 同步其他重要状态
-                sas_state_keys = [
-                    "dialog_state", "current_user_request", "task_list_accepted",
-                    "module_steps_accepted", "revision_iteration", "subgraph_completion_status"
-                ]
-                
-                for key in sas_state_keys:
-                    if key in sas_state and sas_state[key] is not None:
-                        current_agent_state[key] = sas_state[key]
-                        updated = True
-                        sync_summary.append(f"{key}")
-        
-        # 2. 直接从final_state同步重要状态
-        direct_sync_keys = [
-            "sas_step1_generated_tasks", "sas_step2_generated_task_details",
-            "dialog_state", "current_user_request", "task_list_accepted",
-            "module_steps_accepted", "input_processed", "task_route_decision",
-            "revision_iteration", "subgraph_completion_status"
+        # 1. 检查主图状态中的直接字段
+        important_fields = [
+            'sas_step1_generated_tasks',
+            'sas_step2_generated_task_details', 
+            'task_list_accepted',
+            'module_steps_accepted',
+            'dialog_state',
+            'subgraph_completion_status',
+            'current_user_request',
+            'revision_iteration',
+            'input_processed'
         ]
         
-        for key in direct_sync_keys:
-            if key in final_state and final_state[key] is not None:
-                # 特殊处理任务列表和详情
-                if key == "sas_step1_generated_tasks" and final_state[key]:
-                    current_agent_state[key] = final_state[key]
-                    updated = True
-                    sync_summary.append(f"直接任务列表 ({len(final_state[key])}个)")
-                elif key == "sas_step2_generated_task_details" and final_state[key]:
-                    current_agent_state[key] = final_state[key]
-                    updated = True
-                    sync_summary.append(f"直接任务详情 ({len(final_state[key])}项)")
-                else:
-                    current_agent_state[key] = final_state[key]
-                    updated = True
-                    sync_summary.append(key)
+        for field in important_fields:
+            if field in final_state:
+                current_value = current_agent_state.get(field)
+                new_value = final_state[field]
+                if current_value != new_value:
+                    logger.info(f"[Flow {flow_id}] 🎯 检测到{field}变化: {current_value} -> {new_value}")
+                    sync_updates[field] = new_value
+                    update_types.append(field)
+                    needs_sync = True
         
-        # 3. 更新Flow的agent_state
-        if updated:
-            success = flow_service_bg.update_flow_agent_state(flow_id, current_agent_state)
-            if success:
-                logger.info(f"[Flow {flow_id}] LangGraph状态同步成功！同步内容: {', '.join(sync_summary)}")
-                
-                # 检查是否需要触发前端节点更新
-                needs_frontend_update = False
-                update_types = []
-                
-                # 记录重要的任务信息并标记需要前端更新
-                if "sas_step1_generated_tasks" in current_agent_state and current_agent_state["sas_step1_generated_tasks"]:
-                    tasks = current_agent_state["sas_step1_generated_tasks"]
-                    task_names = [task.get("name", "未命名任务") for task in tasks if isinstance(task, dict)]
-                    if task_names:
-                        logger.info(f"[Flow {flow_id}] 同步的任务: {', '.join(task_names[:5])}{'...' if len(task_names) > 5 else ''}")
-                        needs_frontend_update = True
-                        update_types.append("tasks")
-                
-                # 记录任务详情信息并标记需要前端更新
-                if "sas_step2_generated_task_details" in current_agent_state and current_agent_state["sas_step2_generated_task_details"]:
-                    details = current_agent_state["sas_step2_generated_task_details"]
-                    logger.info(f"[Flow {flow_id}] 同步的任务详情数量: {len(details)}")
-                    needs_frontend_update = True
-                    update_types.append("details")
-                
-                # 检查等待状态变化
-                if "dialog_state" in current_agent_state:
-                    dialog_state = current_agent_state["dialog_state"]
-                    waiting_states = [
-                        "sas_awaiting_task_list_review",
-                        "sas_step2_module_steps_generated_for_review",
-                        "sas_awaiting_user_input"
-                    ]
-                    if dialog_state in waiting_states:
-                        needs_frontend_update = True
-                        update_types.append("waiting_state")
-                        logger.info(f"[Flow {flow_id}] 检测到等待状态: {dialog_state}")
-                
-                # 记录前端更新需求
-                if needs_frontend_update:
-                    logger.info(f"[Flow {flow_id}] 需要前端节点更新，类型: {', '.join(update_types)}")
-                    # 注意：这里可以在未来添加主动通知前端的机制（如WebSocket）
-                    
-                    # 新增：通过事件队列通知前端agent_state已更新
-                    # 这需要在调用此函数的地方传入event_queue参数
-                    # 暂时先返回一个标记，让调用方处理
-                    return {"needs_frontend_update": True, "update_types": update_types, "updated_agent_state": current_agent_state}
-            else:
-                logger.error(f"[Flow {flow_id}] 更新Flow agent_state失败")
-        else:
-            logger.info(f"[Flow {flow_id}] 没有需要同步的状态变更")
+        # 2. **新增**：检查sas_planner_subgraph_state（关键修复）
+        sas_subgraph_state = final_state.get('sas_planner_subgraph_state')
+        if sas_subgraph_state and isinstance(sas_subgraph_state, dict):
+            logger.info(f"[Flow {flow_id}] 🎯 发现SAS子图状态，开始提取数据...")
+            logger.info(f"[Flow {flow_id}] 🎯 SAS子图状态键值: {list(sas_subgraph_state.keys())}")
             
-    except Exception as e:
-        logger.error(f"[Flow {flow_id}] 同步LangGraph状态时发生错误: {e}", exc_info=True) 
+            # 提取SAS子图中的重要数据
+            sas_important_fields = [
+                'sas_step1_generated_tasks',
+                'sas_step2_generated_task_details',
+                'sas_step2_module_steps',
+                'task_list_accepted',
+                'module_steps_accepted',
+                'dialog_state',
+                'subgraph_completion_status',
+                'current_user_request',
+                'revision_iteration'
+            ]
+            
+            for field in sas_important_fields:
+                if field in sas_subgraph_state:
+                    current_value = current_agent_state.get(field)
+                    new_value = sas_subgraph_state[field]
+                    if current_value != new_value:
+                        logger.info(f"[Flow {flow_id}] 🎯 从SAS子图检测到{field}变化: {current_value} -> {new_value}")
+                        sync_updates[field] = new_value
+                        update_types.append(f"sas_{field}")
+                        needs_sync = True
+            
+            # 特别处理任务数据的详细检查
+            sas_tasks = sas_subgraph_state.get('sas_step1_generated_tasks')
+            if sas_tasks:
+                logger.info(f"[Flow {flow_id}] 🎯 SAS子图包含 {len(sas_tasks)} 个任务:")
+                for i, task in enumerate(sas_tasks):
+                    if isinstance(task, dict):
+                        logger.info(f"[Flow {flow_id}] 🎯   任务{i+1}: {task.get('name', 'Unknown')} (类型: {task.get('type', 'Unknown')})")
+                    else:
+                        logger.info(f"[Flow {flow_id}] 🎯   任务{i+1}: {task}")
+            
+            sas_details = sas_subgraph_state.get('sas_step2_generated_task_details')
+            if sas_details:
+                logger.info(f"[Flow {flow_id}] 🎯 SAS子图包含任务详情: {len(sas_details)} 项")
+                for task_key, details in sas_details.items():
+                    if isinstance(details, dict) and 'details' in details:
+                        detail_count = len(details['details']) if isinstance(details['details'], list) else 1
+                        logger.info(f"[Flow {flow_id}] 🎯   {task_key}: {detail_count} 个详情")
         
-    return None 
+        # 3. 强制检查是否需要前端节点更新（关键逻辑）
+        has_task_data = (
+            sync_updates.get('sas_step1_generated_tasks') or 
+            current_agent_state.get('sas_step1_generated_tasks') or
+            (sas_subgraph_state and sas_subgraph_state.get('sas_step1_generated_tasks'))
+        )
+        
+        has_detail_data = (
+            sync_updates.get('sas_step2_generated_task_details') or
+            current_agent_state.get('sas_step2_generated_task_details') or
+            (sas_subgraph_state and sas_subgraph_state.get('sas_step2_generated_task_details'))
+        )
+        
+        needs_frontend_update = has_task_data or has_detail_data
+        if needs_frontend_update:
+            logger.info(f"[Flow {flow_id}] 🎯 检测到任务数据，需要前端节点更新")
+            update_types.append("frontend_nodes")
+            needs_sync = True
+        
+        # 4. 执行同步更新
+        if needs_sync:
+            logger.info(f"[Flow {flow_id}] 🎯 执行状态同步，更新 {len(sync_updates)} 个字段:")
+            for key, value in sync_updates.items():
+                logger.info(f"[Flow {flow_id}] 🎯   {key}: {str(value)[:200]}...")
+            
+            # 更新Flow的agent_state
+            current_agent_state.update(sync_updates)
+            flow.agent_state = current_agent_state
+            
+            # 准备返回结果
+            result = {
+                "needs_frontend_update": needs_frontend_update,
+                "update_types": update_types,
+                "updated_agent_state": current_agent_state,
+                "sync_updates": sync_updates
+            }
+            
+            logger.info(f"[Flow {flow_id}] 🎯 状态同步完成，需要前端更新: {needs_frontend_update}")
+            return result
+        else:
+            logger.info(f"[Flow {flow_id}] 🎯 没有检测到需要同步的状态变化")
+            return None
+    
+    except Exception as e:
+        logger.error(f"[Flow {flow_id}] 🎯 状态同步过程中发生错误: {e}", exc_info=True)
+        return None 

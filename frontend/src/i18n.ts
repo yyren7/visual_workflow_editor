@@ -120,6 +120,9 @@ const resources: Resource = {
       'flowEditor.nodeNotFound': '未找到节点',
       'flowEditor.edgeAdded': '已连接节点',
       'flowEditor.edgeAddedError': '连接节点失败',
+      'flowEditor.nodesDeleted': '已删除 {{count}} 个节点',
+      'flowEditor.edgesDeleted': '已删除 {{count}} 条边',
+      'flowEditor.nodeAdded': '已添加节点: {{type}}',
 
       // 节点类型
       'nodeType.input': '输入节点',
@@ -353,6 +356,9 @@ const resources: Resource = {
       'flowEditor.nodeNotFound': 'Node not found',
       'flowEditor.edgeAdded': 'Edge added successfully',
       'flowEditor.edgeAddedError': 'Failed to add edge',
+      'flowEditor.nodesDeleted': 'Deleted {{count}} node(s)',
+      'flowEditor.edgesDeleted': 'Deleted {{count}} edge(s)',
+      'flowEditor.nodeAdded': 'Added node: {{type}}',
 
       // Node Types
       'nodeType.input': 'Input Node',
@@ -561,6 +567,9 @@ const resources: Resource = {
       'flowEditor.nodeNotFound': 'ノードが見つかりません',
       'flowEditor.edgeAdded': 'エッジが正常に追加されました',
       'flowEditor.edgeAddedError': 'エッジの追加に失敗しました',
+      'flowEditor.nodesDeleted': '{{count}}個のノードを削除しました',
+      'flowEditor.edgesDeleted': '{{count}}個のエッジを削除しました',
+      'flowEditor.nodeAdded': 'ノードを追加しました: {{type}}',
 
       // ノードタイプ
       'nodeType.input': '入力ノード',

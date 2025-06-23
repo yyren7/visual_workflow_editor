@@ -13,6 +13,17 @@ export const useAgentStateSync = () => {
   
   // Track if this is the first render to avoid syncing on mount
   const isFirstRender = useRef(true);
+  
+  // 新增：跟踪当前活跃的SSE连接
+  const activeSSEConnection = useRef<{
+    eventSource: EventSource | null;
+    chatId: string | null;
+    cleanup: (() => void) | null;
+  }>({
+    eventSource: null,
+    chatId: null,
+    cleanup: null
+  });
 
   // Debounced sync function to avoid too many API calls
   const syncToBackend = useRef(
@@ -39,6 +50,21 @@ export const useAgentStateSync = () => {
     dispatch(updateAgentState(updates));
   }, [dispatch]);
 
+  // 新增：清理当前SSE连接的函数
+  const cleanupCurrentSSEConnection = useCallback(() => {
+    const current = activeSSEConnection.current;
+    if (current.eventSource) {
+      console.log('Cleaning up existing SSE connection for chat:', current.chatId);
+      current.eventSource.close();
+      current.eventSource = null;
+    }
+    if (current.cleanup) {
+      current.cleanup();
+      current.cleanup = null;
+    }
+    current.chatId = null;
+  }, []);
+
   // 新增：启动LangGraph处理的函数
   const startLangGraphProcessing = useCallback(async (content: string, taskIndex?: number, detailIndex?: number) => {
     if (!currentFlowId) {
@@ -48,6 +74,9 @@ export const useAgentStateSync = () => {
 
     try {
       console.log('Starting LangGraph processing for input:', content, { taskIndex, detailIndex });
+      
+      // 清理之前的SSE连接，避免重复连接
+      cleanupCurrentSSEConnection();
       
       // 动态构建chat ID，支持三种格式：
       // 1. flow_id - 整个流程的聊天
@@ -64,9 +93,6 @@ export const useAgentStateSync = () => {
       
       console.log('Using dynamic LangGraph chat ID:', dynamicChatId);
       
-      // 新增：设置SSE事件监听器来捕获agent_state_updated事件
-      setupSSEListener(dynamicChatId);
-      
       // 发送消息来启动LangGraph处理
       // 这个chat ID可能是虚拟的，后端会智能处理
       const token = localStorage.getItem('access_token');
@@ -81,6 +107,8 @@ export const useAgentStateSync = () => {
           role: 'user'
         }),
       });
+
+      let finalChatId = dynamicChatId;
 
       if (!response.ok) {
         // 如果虚拟chat不存在，创建一个真实的chat作为fallback
@@ -98,9 +126,10 @@ export const useAgentStateSync = () => {
           }
           
           const chatResponse = await chatApi.createChat(currentFlowId, chatName);
+          finalChatId = chatResponse.id;
           
           // 使用新创建的chat ID重新发送请求
-          const fallbackResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatResponse.id}/messages`, {
+          const fallbackResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${finalChatId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -116,95 +145,210 @@ export const useAgentStateSync = () => {
             throw new Error(`Fallback HTTP ${fallbackResponse.status}: ${fallbackResponse.statusText}`);
           }
           
-          console.log('LangGraph processing started with fallback chat ID:', chatResponse.id);
-          
-          // 为fallback chat也设置SSE监听
-          setupSSEListener(chatResponse.id);
-          return;
+          console.log('LangGraph processing started with fallback chat ID:', finalChatId);
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      } else {
+        console.log('LangGraph processing started successfully with dynamic chat ID:', finalChatId);
       }
 
-      console.log('LangGraph processing started successfully with dynamic chat ID:', dynamicChatId);
+      // 只在这里设置一次SSE监听器，使用最终确定的chat ID
+      setupSSEListener(finalChatId);
       
     } catch (error) {
       console.error('Failed to start LangGraph processing:', error);
     }
-  }, [currentFlowId]);
+  }, [currentFlowId, cleanupCurrentSSEConnection]);
 
   // 新增：设置SSE事件监听器
   const setupSSEListener = useCallback((chatId: string) => {
     if (!chatId) return;
 
+    // 如果已经有相同chat ID的连接，不重复创建
+    if (activeSSEConnection.current.chatId === chatId && activeSSEConnection.current.eventSource) {
+      console.log('SSE connection already exists for chat:', chatId);
+      return;
+    }
+
+    // 清理之前的连接
+    cleanupCurrentSSEConnection();
+    
+    // 添加延迟，避免快速重复创建连接
+    if (activeSSEConnection.current.chatId === chatId) {
+      console.log('SSE connection just cleaned up for same chat:', chatId, 'skipping immediate reconnect');
+      return;
+    }
+
     console.log('Setting up SSE listener for chat:', chatId);
     
-    const eventSource = new EventSource(
-      `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/events`,
-      {
-        withCredentials: false
-      }
-    );
+    // 添加连接状态跟踪
+    let connectionClosed = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const createConnection = () => {
+      if (connectionClosed) return null;
+      
+      const eventSource = new EventSource(
+        `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/events`,
+        {
+          withCredentials: false
+        }
+      );
 
-    // 监听agent_state_updated事件
-    eventSource.addEventListener('agent_state_updated', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('Received agent_state_updated event:', data);
+      // 监听agent_state_updated事件
+      eventSource.addEventListener('agent_state_updated', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('🎯 Received agent_state_updated event:', data);
+          console.log('🎯 Event data keys:', Object.keys(data));
+          console.log('🎯 Agent state keys:', data.agent_state ? Object.keys(data.agent_state) : 'No agent_state');
+          
+          // 验证这个事件是否属于当前flow
+          if (data.flow_id && data.agent_state) {
+            console.log('🎯 Validating event for current flow...');
+            console.log('🎯 Event flow_id:', data.flow_id);
+            console.log('🎯 Current flow_id:', currentFlowId);
+            console.log('🎯 Agent state has tasks:', !!(data.agent_state.sas_step1_generated_tasks?.length));
+            console.log('🎯 Agent state has details:', !!(data.agent_state.sas_step2_generated_task_details && Object.keys(data.agent_state.sas_step2_generated_task_details).length));
+            
+            if (data.flow_id === currentFlowId) {
+              console.log('🎯 ✅ Event belongs to current flow, updating Redux agent state...');
+              console.log('🎯 Updating Redux agent state with:', data.agent_state);
+              
+              // 直接更新Redux中的agent state
+              dispatch(updateAgentState(data.agent_state));
+              
+              // 可选：显示通知
+              console.log(`🎯 Agent state updated successfully! Update types: ${data.update_types?.join(', ')}`);
+              
+              // 新增：检查是否需要自动确认等待状态
+              checkAndHandleAwaitingStates(data.agent_state, chatId);
+              
+              // 新增：手动触发节点同步（如果需要）
+              setTimeout(() => {
+                console.log('🎯 Triggering manual node sync after agent state update...');
+                // 这里可以触发额外的同步逻辑，如果需要的话
+              }, 100);
+            } else {
+              console.log('🎯 ⚠️ Event flow_id does not match current flow_id, ignoring...');
+            }
+          } else {
+            console.log('🎯 ❌ Event missing flow_id or agent_state, ignoring...');
+          }
+        } catch (error) {
+          console.error('🎯 ❌ Error parsing agent_state_updated event:', error);
+        }
+      });
+
+      // 处理其他事件（可选）
+      eventSource.addEventListener('token', (event) => {
+        console.log('Received token:', event.data);
+        // 重置重试计数，因为收到了有效数据
+        retryCount = 0;
+      });
+
+      // 监听stream_end事件，表示流结束
+      eventSource.addEventListener('stream_end', (event) => {
+        console.log('Received stream_end event for chat:', chatId);
+        connectionClosed = true;
+        eventSource.close();
+        console.log('SSE connection closed due to stream end');
         
-        // 验证这个事件是否属于当前flow
-        if (data.flow_id && data.agent_state) {
-          console.log('Updating Redux agent state with:', data.agent_state);
-          // 直接更新Redux中的agent state
-          dispatch(updateAgentState(data.agent_state));
-          
-          // 可选：显示通知
-          console.log(`Agent state updated: ${data.update_types?.join(', ')}`);
-          
-          // 新增：检查是否需要自动确认等待状态
-          checkAndHandleAwaitingStates(data.agent_state, chatId);
+        // 清理引用
+        if (activeSSEConnection.current.eventSource === eventSource) {
+          activeSSEConnection.current.eventSource = null;
+          activeSSEConnection.current.chatId = null;
         }
-      } catch (error) {
-        console.error('Error parsing agent_state_updated event:', error);
-      }
-    });
+      });
 
-    // 处理其他事件（可选）
-    eventSource.addEventListener('token', (event) => {
-      console.log('Received token:', event.data);
-    });
+      eventSource.addEventListener('error', (event) => {
+        console.error('SSE error event:', event);
+      });
 
-    eventSource.addEventListener('error', (event) => {
-      console.error('SSE error event:', event);
-    });
+      // 监听连接状态
+      eventSource.onopen = () => {
+        console.log('SSE connection opened for chat:', chatId);
+        retryCount = 0; // 重置重试计数
+      };
 
-    // 监听连接状态
-    eventSource.onopen = () => {
-      console.log('SSE connection opened for chat:', chatId);
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error for chat:', chatId, error);
-      // 可以在这里决定是否重新连接
-      setTimeout(() => {
+      eventSource.onerror = (error) => {
+        console.error('SSE connection error for chat:', chatId, error);
+        
+        if (connectionClosed) {
+          return; // 如果已标记为关闭，不再重连
+        }
+        
+        // 检查连接状态并决定是否重连
         if (eventSource.readyState === EventSource.CLOSED) {
-          console.log('SSE connection closed, cleaning up');
+          if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`SSE connection closed, retrying (${retryCount}/${maxRetries}) in 2 seconds...`);
+            setTimeout(() => {
+              if (!connectionClosed) {
+                const newEventSource = createConnection();
+                if (newEventSource) {
+                  activeSSEConnection.current.eventSource = newEventSource;
+                }
+              }
+            }, 2000);
+          } else {
+            console.log('Max retries reached, stopping SSE reconnection attempts');
+            connectionClosed = true;
+            if (activeSSEConnection.current.eventSource === eventSource) {
+              activeSSEConnection.current.eventSource = null;
+              activeSSEConnection.current.chatId = null;
+            }
+          }
         }
-      }, 1000);
+      };
+
+      return eventSource;
     };
 
+    const eventSource = createConnection();
+    if (!eventSource) return;
+
+    // 保存连接引用
+    activeSSEConnection.current = {
+      eventSource,
+      chatId,
+      cleanup: null
+    };
+    
     // 设置定时器，在一定时间后关闭连接（避免资源泄露）
     const cleanup = setTimeout(() => {
-      console.log('Closing SSE connection for chat:', chatId);
-      eventSource.close();
+      console.log('Closing SSE connection for chat due to timeout:', chatId);
+      connectionClosed = true;
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (activeSSEConnection.current.eventSource === eventSource) {
+        activeSSEConnection.current.eventSource = null;
+        activeSSEConnection.current.chatId = null;
+      }
     }, 5 * 60 * 1000); // 5分钟后关闭
+
+    activeSSEConnection.current.cleanup = () => {
+      clearTimeout(cleanup);
+    };
 
     // 返回清理函数
     return () => {
+      console.log('Cleaning up SSE connection for chat:', chatId);
+      connectionClosed = true;
       clearTimeout(cleanup);
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (activeSSEConnection.current.eventSource === eventSource) {
+        activeSSEConnection.current.eventSource = null;
+        activeSSEConnection.current.chatId = null;
+        activeSSEConnection.current.cleanup = null;
+      }
     };
-  }, [currentFlowId, dispatch]);
+  }, [currentFlowId, dispatch, cleanupCurrentSSEConnection]);
 
   // 新增：轮询检查agent_state变化的函数
   const pollForAgentStateChanges = useCallback(() => {
@@ -350,6 +494,12 @@ export const useAgentStateSync = () => {
     if (awaitingStates.includes(dialogState)) {
       console.log(`Detected awaiting state: ${dialogState}`);
       
+      // 暂时禁用自动确认，让流程按照设计的步骤执行
+      // TODO: 根据实际需求决定是否启用自动确认
+      console.log(`Detected awaiting state: ${dialogState}, but auto-confirmation is disabled`);
+      
+      // 注释掉自动确认逻辑，让用户手动确认或让流程继续
+      /*
       // 检查是否有生成的任务需要确认
       if (dialogState === 'sas_awaiting_task_list_review' && agentState.sas_step1_generated_tasks) {
         console.log('Auto-confirming task list...');
@@ -370,6 +520,7 @@ export const useAgentStateSync = () => {
         console.log('Auto-responding to clarification question...');
         await sendAutoConfirmation(chatId, 'continue');
       }
+      */
     }
   }, [sendAutoConfirmation]);
 

@@ -1,0 +1,626 @@
+2025-06-23 07:23:29 - backend.langgraphchat - INFO - 日志已配置: 级别=DEBUG, 文件=logs/langchain.log
+2025-06-23 07:23:29 - backend.langgraphchat - INFO - Langchain debug logging enabled, writing to logs/langchain_debug.log
+2025-06-23 07:38:31 - backend.langgraphchat.graph.workflow_graph - INFO - Compiling workflow graph...
+2025-06-23 07:38:31 - backend.langgraphchat.graph.workflow_graph - INFO - SAS Subgraph (robot_flow_graph) compiled successfully.
+2025-06-23 07:38:31 - backend.langgraphchat.graph.workflow_graph - INFO - Workflow graph compilation complete.
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.input_handler - DEBUG - Input Handler START. Input='ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。', InputProcessed='None', SubgraphStatus='None', NumMessages=1
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.input_handler - INFO - Input Handler: New Input. Using 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。' as user_request_for_router.
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.input_handler - INFO - Input Handler: Input string 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。' matches the last HumanMessage; not adding as a new message again.
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.input_handler - INFO - Input Handler: Input string 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。' was actively processed this cycle. Setting 'input_processed'=True, 'input'=None.
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.input_handler - DEBUG - Input Handler END. Returning updates: {'user_request_for_router': 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。', 'input_processed': True, 'input': None}
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.task_router - INFO - Task Router: Entered node.
+2025-06-23 07:38:31 - backend.langgraphchat.graph.nodes.task_router - INFO - Task Router: Processing user_request_for_router: 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。...'
+2025-06-23 07:38:37 - backend.langgraphchat.graph.nodes.task_router - INFO - Task Router: LLM decision with context: Intent='描述夹具在不同工件上的共用情况，为机器人工作流程提供细节', Next Node='planner'
+2025-06-23 07:38:37 - backend.langgraphchat.graph.nodes.task_router - INFO - Task Router: Direct analysis successful: planner
+2025-06-23 07:38:37 - backend.langgraphchat.graph.conditions - INFO - route_after_task_router: Routing to 'planner' based on LLM decision.
+2025-06-23 07:38:37 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - --- Invoking Robot Flow Subgraph (Streaming Enabled, State Persistence Enabled) ---
+2025-06-23 07:38:37 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Using provided SAS subgraph instance.
+2025-06-23 07:38:37 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - No persisted SAS state. Creating fresh input for SAS subgraph.
+2025-06-23 07:38:37 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Invoking robot_flow_subgraph with input: {'user_input': 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。', 'current_flow_id': '36b95799-f2c0-4b27-96ae-38160e5517bd'} containing 1 messages.
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Initializing Agent State (Robot Flow Subgraph) ---
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Initial state.config before merge: {}
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Initial OUTPUT_DIR_PATH from state.config: None
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - state.config after merge with DEFAULT_CONFIG: {'GENERAL_INSTRUCTION_INTRO': "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:", 'NODE_TEMPLATE_DIR_PATH': '/workspace/database/node_database/quick-fcpr-new', 'OUTPUT_DIR_PATH': '/workspace/database/flow_database/result/example_run/', 'EXAMPLE_FLOW_STRUCTURE_DOC_PATH': '/workspace/database/document_database/flow.xml', 'BLOCK_ID_PREFIX_EXAMPLE': 'block_uuid', 'RELATION_FILE_NAME_ACTUAL': 'relation.xml', 'FINAL_FLOW_FILE_NAME_ACTUAL': 'flow.xml'}
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Value of 'OUTPUT_DIR_PATH' from merged_config: '/workspace/database/flow_database/result/example_run/'
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Checking provided_output_dir_str: '/workspace/database/flow_database/result/example_run/'
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Path('/workspace/database/flow_database/result/example_run/').exists(): True
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Path('/workspace/database/flow_database/result/example_run/').is_dir(): True
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - SUCCESS: Using provided output directory: /workspace/database/flow_database/result/example_run
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Initializing current_user_request from initial user_input: 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。...'
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Initial user_input 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。...' moved to current_user_request. Clearing user_input for subsequent nodes.
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Agent state initialized. Dialog state: initial, User Input (transient, should be None if processed by this node): 'None', Current User Request (active base for generation): 'ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。', NODE_TEMPLATE_DIR_PATH: /workspace/database/node_database/quick-fcpr-new
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - FINAL user_input in initialize_state_node before return: 'None'
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after Initialize State. Dialog state: initial, Subgraph status: None, User input available: False, Clarification question: None, Task list accepted: False, Generated tasks exist: False
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Dialog state is 'initial'. Routing to SAS_USER_INPUT_TO_TASK_LIST for new task generation.
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - --- Entering SAS Step 1: User Input to Task List Generation (dialog_state: initial) ---
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.prompt_loader - DEBUG - Generated Step 1 Task List Prompt:
+# Robot Process Generation Prompt - Stage 1: User Input to Task List
+
+## Objective
+
+This Prompt aims to guide you in transforming a user's natural language robot task description (typically in Markdown format) into a structured **Task List**. This Task List will serve as an intermediate representation, outlining the main task and its constituent sub-tasks with their types, targets, and hierarchical relationships. This structured list will then be parsed and used as input for Stage 2, where detailed process steps are generated. The process should ideally support streaming generation of the task list, followed by a parsing step to ensure structural correctness.
+
+## Contextual Information for Task List Generation
+
+You will be provided with the following information to help you generate the Task List from the User Robot Task Description:
+
+### 1. Task Type Descriptions
+
+This section contains definitions and characteristics of different task types you must use when classifying tasks.
+
+
+
+---
+...
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - DEBUG - FULL formatted_prompt for task list generation:
+# Robot Process Generation Prompt - Stage 1: User Input to Task List
+
+## Objective
+
+This Prompt aims to guide you in transforming a user's natural language robot task description (typically in Markdown format) into a structured **Task List**. This Task List will serve as an intermediate representation, outlining the main task and its constituent sub-tasks with their types, targets, and hierarchical relationships. This structured list will then be parsed and used as input for Stage 2, where detailed process steps are generated. The process should ideally support streaming generation of the task list, followed by a parsing step to ensure structural correctness.
+
+## Contextual Information for Task List Generation
+
+You will be provided with the following information to help you generate the Task List from the User Robot Task Description:
+
+### 1. Task Type Descriptions
+
+This section contains definitions and characteristics of different task types you must use when classifying tasks.
+
+
+
+---
+### From file: Close_Clamp_Task.md
+---
+## 5. Close Clamp Task (夹爪关闭任务)
+
+- **Type Description (类型描述)**:
+  A specific, often atomic, action to close a designated clamp, gripper, or other end-effector, typically to secure an object. This task is usually called as a sub-step within a Grasp Task.
+
+- **Precautions (注意事项)**:
+
+  - Ensure this task is called only after the robot/clamp is correctly positioned over/around the object to be grasped.
+  - Verify the correct clamp/effector.
+  - Consider necessary delays (`wait_timer`) for the mechanical action of closing.
+  - If available, wait for sensor feedback (`wait_input`) to confirm the clamp is closed and/or the object is securely held (e.g., pressure sensor, proximity sensor).
+  - Avoid applying excessive force that could damage the object or the clamp, unless force control is explicitly part of the block's capability.
+
+- **Naming Convention (取名原理)**:
+
+  - Usually `Close_` followed by the specific clamp or effector name.
+  - Abbreviations should be consistent.
+  - Examples: `Close_BH_Clamp`, `Close_BRG&PLT_Clamp`, `Close_Gripper_A`.
+
+- **Typical Block Types Used (典型使用的 BlockType)**:
+
+  - Signal Output: `set_output` (to send the electrical signal to close the clamp).
+  - Timing: `wait_timer` (to allow time for the clamp to close).
+  - Sensor Feedback: `wait_input` (to confirm the clamp is closed or part is present).
+
+- **Allowed Contained Task Types (允许包含的任务类型)**:
+  - Typically none. These are usually considered atomic operations at the task planning level.
+
+
+---
+### From file: Grasp_Task.md
+---
+## 2. Grasp Task (拿取任务)
+
+- **Type Description (类型描述)**:
+  Defines a sequence of actions specifically for picking up an object from a source location using an end-effector (e.g., gripper, multi-finger clamp, suction cup). It typically involves approaching the object, positioning the end-effector, activating it to secure the object, and then retracting.
+
+- **Precautions (注意事项)**:
+
+  - Ensure the correct end-effector/clamp sub-program (e.g., `Open_XYZ_Clamp`, `Close_XYZ_Clamp`) is specified and called.
+  - Approach, grasp, and retract paths must be carefully planned to be clear of obstacles.
+  - Precise positioning of the end-effector relative to the object is critical before attempting to grasp.
+  - Speed (`set_speed`) should often be reduced for the final approach and grasp movement to ensure accuracy and prevent damage.
+  - Must include a step to open the clamp _before_ final approach to the object.
+  - Must include a step to close the clamp to secure the object.
+  - Verify grasp success if sensors are available (e.g., `wait_input`).
+
+- **Naming Convention (取名原理)**:
+
+  - Typically includes "Get", "Grasp", or "Pick" along with the object's name and optionally its source.
+  - Abbreviations for objects (e.g., BRG for Bearing, BH for Bearing Housing) should be used if defined.
+  - Examples: `Get_Bearing_BRG`, `Grasp_Part_From_Feeder`, `Pick_Component_A_From_Tray1`.
+
+- **Typical Block Types Used (典型使用的 BlockType)**:
+
+  - Movement: `moveP`, `moveL` (for approach, fine positioning, departure).
+  - Effector Control: `procedures_callnoreturn` (to call `Open_Clamp_Task` and `Close_Clamp_Task` sub-programs).
+  - Speed Control: `set_speed`.
+  - Waiting/Confirmation (optional): `wait_timer`, `wait_input`.
+
+- **Allowed Contained Task Types (允许包含的任务类型)**:
+  - OpenClampTask (夹爪开启任务)
+  - CloseClampTask (夹爪关闭任务)
+  - (Conceptionally, can also include fine-grained movement sub-tasks if the grasp is very complex, but usually involves direct motion commands).
+
+
+---
+### From file: Main_Task.md
+---
+## 1. Main Task (主任务)
+
+- **Type Description (类型描述)**:
+  Represents the overall robotic process or a major, high-level phase of an operation. It orchestrates calls to various sub-tasks (like Grasp, Place, or other specialized sub-programs) to achieve a larger, composite goal. The Main Task defines the primary sequence, control flow (loops, conditionals), and initialization/shutdown procedures for the entire operation.
+
+- **Precautions (注意事项)**:
+
+  - Must include essential initialization steps at the beginning, such as robot model selection (`select_robot`) and starting robot motors (`set_motor`).
+  - Should clearly define the primary control flow, including any main loops (`loop`) or conditional logic (`controls_if`) that governs the process execution.
+  - Ensure all orchestrated sub-tasks are called in a logically correct sequence.
+  - Consider overall safety: for instance, moving to a "Home" or safe position at the start, end, and between major segments.
+  - May require initialization of process-critical variables (e.g., using `set_number`).
+
+- **Naming Convention (取名原理)**:
+
+  - Names should be `Main_Task`.
+
+- **Typical Block Types Used (典型使用的 BlockType)**:
+
+  - Initialization: `select_robot`, `set_motor`, `set_number`.
+  - Control Flow: `loop`, `controls_if`, `return` (for loop control).
+  - Sub-task Orchestration: `procedures_callnoreturn` (to call other defined sub-tasks/sub-programs).
+  - Movement: `moveP`, `moveL` (for moving to safe/initial positions).
+  - Waiting/Synchronization: `wait_external_io_input`, `wait_input`, `wait_timer`, `set_external_io_output_upon`, `set_output` (for interaction with external systems or signals).
+
+- **Allowed Contained Task Types (允许包含的任务类型)**:
+  - GraspTask (拿取任务)
+  - PlaceTask (放置任务)
+  - OpenClampTask (夹爪开启任务) - usually called within Grasp/Place tasks.
+  - CloseClampTask (夹爪关闭任务) - usually called within Grasp tasks.
+  - Other custom SubTask types representing specific sequences or logic.
+
+
+---
+### From file: Open_Clamp_Task.md
+---
+## 4. Open Clamp Task (夹爪开启任务)
+
+- **Type Description (类型描述)**:
+  A specific, often atomic, action to open a designated clamp, gripper, or other end-effector. This task is usually called as a sub-step within a Grasp Task (before approaching an object) or a Place Task (to release an object).
+
+- **Precautions (注意事项)**:
+
+  - Ensure this task is called at the correct point in a sequence.
+  - Verify that the correct clamp/effector is being addressed if the robot has multiple effectors.
+  - Consider any necessary delays (`wait_timer`) to allow for the mechanical action of opening.
+  - If available, wait for sensor feedback (`wait_input`) to confirm the clamp is fully open.
+
+- **Naming Convention (取名原理)**:
+
+  - Usually `Open_` followed by the specific clamp or effector name.
+  - Abbreviations should be consistent.
+  - Examples: `Open_BH_Clamp`, `Open_BRG&PLT_Clamp`, `Open_Gripper_A`.
+
+- **Typical Block Types Used (典型使用的 BlockType)**:
+
+  - Signal Output: `set_output` (to send the electrical signal to open the clamp).
+  - Timing: `wait_timer` (to allow time for the clamp to open).
+  - Sensor Feedback: `wait_input` (to confirm the clamp is open via a sensor).
+
+- **Allowed Contained Task Types (允许包含的任务类型)**:
+  - Typically none. These are usually considered atomic operations at the task planning level, though their block implementation might have a sequence.
+
+
+---
+### From file: Place_Task.md
+---
+## 3. Place Task (放置任务)
+
+- **Type Description (类型描述)**:
+  Defines a sequence of actions for placing an object, currently held by an end-effector, at a target destination. It involves approaching the destination, positioning the object, and then deactivating the end-effector to release the object.
+
+- **Precautions (注意事项)**:
+
+  - Ensure the target location is clear and ready to receive the object.
+  - Approach, placement, and retract paths must be clear of obstacles.
+  - Precise positioning of the object at the target location is critical before release.
+  - Speed (`set_speed`) should often be reduced for the final approach and placement movement.
+  - Must include a step to open the clamp (or deactivate effector) to release the object.
+  - Verify placement success or effector release if sensors are available.
+
+- **Naming Convention (取名原理)**:
+
+  - Typically includes "Put", "Place", or "Release" along with the object's name and optionally its destination.
+  - Abbreviations should be consistent.
+  - Examples: `Put_Bearing_In_RMC`, `Place_Assembly_On_Pallet`, `Release_Part_To_Conveyor`.
+
+- **Typical Block Types Used (典型使用的 BlockType)**:
+
+  - Movement: `moveP`, `moveL` (for approach, fine positioning, departure).
+  - Effector Control: `procedures_callnoreturn` (to call `Open_Clamp_Task` sub-program).
+  - Speed Control: `set_speed`.
+  - Waiting/Confirmation (optional): `wait_timer`.
+
+- **Allowed Contained Task Types (允许包含的任务类型)**:
+  - OpenClampTask (夹爪开启任务)
+  - (Conceptionally, can also include fine-grained movement sub-tasks for complex placements).
+
+
+### 2. Allowed Block Types (for context and feasibility assessment)
+
+This section lists underlying robot control blocks and their descriptions. While you are not mapping directly to these blocks in this stage, awareness of their capabilities is crucial for defining feasible and implementable tasks. The tasks you define should ultimately be implementable using combinations of these blocks.
+
+# Node Descriptions (Format: block_type_name: Description)
+
+
+---
+
+## Generation Guidelines and Requirements for Task List
+
+Please follow these guidelines to generate a structured Task List:
+
+### 1. Task Identification and Decomposition
+
+    - Analyze the user's input to identify the primary goal (Main Task).
+    - Break down the main task into a sequence of logical sub-tasks.
+    - Identify operations related to effectors like clamps (Open Clamp, Close Clamp).
+
+### 2. Task List Structure
+
+    - The output should be a list of tasks.
+    - Each task in the list should have the following attributes:
+        - **`name`**: A concise and descriptive name for the task (e.g., `Get_Bearing_From_Rack`, `Open_Gripper_A`). Abbreviations used in the original prompt (e.g., BRG, PLT, CNV) should be preserved or logically inferred if beneficial for clarity and conciseness.
+        - **`type`**: The category of the task. Must be one of the predefined task types (e.g., "MainTask", "GraspTask", "PlaceTask", "OpenClampTask", "CloseClampTask", "SubTask_Sequential", "SubTask_Parallel").
+        - **`sub_tasks`**: A list of names of other tasks that are nested within or executed as part of this task. For simple tasks, this can be empty.
+        - **`description`**: A brief natural language description of the task's purpose.
+
+### 3. Generating the Task List
+
+    - Process the user input sequentially.
+    - As tasks are identified, generate their corresponding entries in the list.
+    - Strive for a streaming-friendly generation process where task entries can be outputted as they are determined.
+    - Ensure the order of tasks in the list reflects the intended execution sequence.
+
+### 4. Parsing and Structuring
+
+    - After the initial (potentially streamed) generation, the Task List should be parseable into a well-defined data structure (e.g., a list of objects/dictionaries).
+    - This structured data will be the direct input for Stage 2.
+
+### Example Task List Snippet (Conceptual)
+
+```
+[
+  {
+    "name": "Main_Assembly_Process",
+    "type": "MainTask",
+    "sub_tasks": ["Get_Bearing_BRG", "Get_Housing_BH", ...],
+    "description": "Main process for assembling and handling parts."
+  },
+  {
+    "name": "Get_Bearing_BRG",
+    "type": "GraspTask",
+    "sub_tasks": ["Open_BRG_PLT_Clamp", "Close_BRG_PLT_Clamp"],
+    "description": "Retrieve a bearing from its initial position."
+  },
+  {
+    "name": "Open_BRG_PLT_Clamp",
+    "type": "OpenClampTask",
+    "sub_tasks": [],
+    "description": "Open the clamp for bearings and pallets."
+  },
+  // ... more tasks
+]
+```
+
+The primary goal of this stage is to create a clear, structured, and machine-readable inventory of tasks derived from the user's description, paving the way for detailed step generation in the next stage.
+
+
+## User Robot Task Description (Process this to generate the Task List)
+
+```text
+ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。
+```
+
+## Generated Task List (JSON format as described in guidelines)
+
+**IMPORTANT REMINDER**: 
+- Analyze the user's description carefully.
+- Identify the Main Task and decompose it into sub-tasks.
+- Use ONLY the Task Types defined in the "Task Type Descriptions" section.
+- Refer to the "Allowed Block Types" for contextual understanding of robot capabilities to ensure tasks are feasible.
+- Ensure the output is a valid JSON list of task objects, following the structure specified in the guidelines (name, type, target, sub_tasks, description).
+- Pay attention to hierarchical relationships and the order of tasks.
+
+```json
+[
+  // Your generated JSON task list starts here
+]
+```
+
+2025-06-23 07:38:37 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - Invoking LLM for SAS Step 1: Task List Generation based on current_user_request (iteration 0).
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - LLM streaming finished for stream sas_step1_llm_stream_2a4c8b34-156e-428a-803f-3908ca45263a. Accumulated 256 characters.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - DEBUG - Aggregated raw LLM output for task list (stream sas_step1_llm_stream_2a4c8b34-156e-428a-803f-3908ca45263a): ```json
+[
+  {
+    "name": "Main_Task",
+    "type": "MainTask",
+    "sub_tasks": [],
+    "description": "Overall process that utilizes a clamp shared by bearings and pallets (PLT), and another clamp shared by bearing housings and assembled parts."
+  }
+]
+```
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - SAS Step 1 (Task List Generation) completed successfully for stream sas_step1_llm_stream_2a4c8b34-156e-428a-803f-3908ca45263a. 1 tasks generated for request iteration 0.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - Generated task names: ['Main_Task']
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.tools.iteration_data_saver - INFO - Successfully saved SAS Step 1 generated task list (Iteration 0) to: /workspace/database/flow_database/result/example_run/sas_step1_tasks_iter0.json
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - Removed in-progress AIMessageChunk (ID: sas_step1_llm_stream_2a4c8b34-156e-428a-803f-3908ca45263a) at index 1.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.user_input_to_task_list - INFO - Final Success AIMessage (ID: sas_step1_llm_stream_2a4c8b34-156e-428a-803f-3908ca45263a) set: "成功为请求 (迭代 0) 生成了包含 1 个任务的任务列表: Main_Task...."
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Step 1: User Input to Task List Generation (is_error: False, dialog_state: sas_step1_tasks_generated) ---
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - SAS Step 1 (User Input to Task List Generation) completed successfully. Routing to SAS_REVIEW_AND_REFINE.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - --- SAS: Review and Refine Node (Iteration 0) ---
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     Initial dialog_state: 'sas_step1_tasks_generated'
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     task_list_accepted: False
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     module_steps_accepted: False
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     RECEIVED user_input at START: 'None'
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - Auto accept mode: True
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     Context for feedback (if user_input present) - Reviewing task list: False
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     Context for feedback (if user_input present) - Reviewing module steps: False
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - No user_input. Determining what to present to the user for review.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - Presenting for review: TASK LIST (since task_list_accepted is False).
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - Auto-accepting task list (auto_accept_tasks=True)
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Review/Refine Node ---
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     is_error: False
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     dialog_state: 'sas_step1_tasks_generated'
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     task_list_accepted: True
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     module_steps_accepted: False
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Task list accepted by user. Routing to SAS_PROCESS_TO_MODULE_STEPS.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - --- Entering SAS Step 2: Process Description to Module Steps (dialog_state: sas_step1_tasks_generated) ---
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO -     Initial state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: True
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - WARNING - No node descriptions loaded. LLM will rely on its general knowledge. A placeholder warning will be added to the prompt.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - Starting parallel generation of module steps for 1 tasks.
+2025-06-23 07:38:45 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - Invoking LLM for SAS Step 2 for task: 'Main_Task' (Type: 'MainTask').
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - SAS Step 2 LLM call successful for task 'Main_Task'. 11 module steps generated.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - Finished parallel generation. Received 1 results.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - Successfully processed and updated details for task 'Main_Task'.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - Populating state.parsed_flow_steps from successfully processed tasks after parallel execution.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO - Successfully populated state.parsed_flow_steps with 1 entries after parallel processing.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.process_description_to_module_steps - INFO -     Final state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Step 2: Module Steps Generation (is_error: False, dialog_state: sas_step2_module_steps_generated_for_review) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - SAS Step 2 (Module Steps Generation) completed (dialog_state: 'sas_step2_module_steps_generated_for_review'). Routing to SAS_REVIEW_AND_REFINE for module steps review.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - POST-REMOVAL in route_after_sas_step2: state.task_list_accepted = True, state.module_steps_accepted = False, state.dialog_state = 'sas_step2_module_steps_generated_for_review'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - --- SAS: Review and Refine Node (Iteration 0) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     Initial dialog_state: 'sas_step2_module_steps_generated_for_review'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     task_list_accepted: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     module_steps_accepted: False
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     RECEIVED user_input at START: 'None'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - Auto accept mode: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     Context for feedback (if user_input present) - Reviewing task list: False
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO -     Context for feedback (if user_input present) - Reviewing module steps: False
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - No user_input. Determining what to present to the user for review.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - Presenting for review: MODULE STEPS (since task_list_accepted is True and module_steps_accepted is False).
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.review_and_refine - INFO - Auto-accepting module steps (auto_accept_tasks=True)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Review/Refine Node ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     is_error: False
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     dialog_state: 'sas_module_steps_accepted_proceeding'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     task_list_accepted: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO -     module_steps_accepted: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Module steps accepted by user. Routing to GENERATE_INDIVIDUAL_XMLS.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - --- Running Step 2: Generate Independent Node XMLs (Template-based) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - Processing Task 'Main_Task' (index 0): 11 details found.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: select_robot (detail: '1. Select **default robot (e.g., "dobot_mg400")** (Block Type: `select_robot`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'select_robot'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'select_robot'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: set_motor (detail: '2. **Start motor (e.g., "on")** (Block Type: `set_motor`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'set_motor'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'set_motor'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: set_number (detail: '3. Set **numerical variable for process control (e.g., "N5") to its initial judgment value (e.g., 2)** (Block Type: `set_number`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'set_number'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'set_number'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: loop (detail: '4. Start loop - Operations within loop: (Block Type: `loop`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'loop'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'loop'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: controls_if (detail: '5. Conditional judgment - IF condition: **Numerical variable (e.g., "N5") equals its initial set value (e.g., 2)** - DO (if condition is true): (Block Type: `controls_if`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'controls_if'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'controls_if'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: moveP (detail: '6. PTP move to **initial/safe point (e.g., "P1")** (Block Type: `moveP`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - Using default parameters for moveP: {'fields': {'point_name_list': 'P1', 'control_x': 'enable', 'control_y': 'enable', 'control_z': 'enable', 'control_rx': 'enable', 'control_ry': 'enable', 'control_rz': 'enable', 'pallet_list': 'none', 'camera_list': 'none'}, 'mutations': {'timeout': '60000000'}}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Final default/extracted parameters for 'moveP': {'fields': {'point_name_list': 'P1', 'control_x': 'enable', 'control_y': 'enable', 'control_z': 'enable', 'control_rx': 'enable', 'control_ry': 'enable', 'control_rz': 'enable', 'pallet_list': 'none', 'camera_list': 'none'}, 'mutations': {'timeout': '60000000'}}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: wait_input (detail: '7. Wait for robot **specified input pin to reach preset state (e.g., pin "12" is "on")** (Block Type: `wait_input`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'wait_input'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'wait_input'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: set_output (detail: '8. Set robot **specified output pin to preset state (e.g., pin "6" is "on")** (Block Type: `set_output`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'set_output'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'set_output'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: wait_block (detail: '9. Wait for compound condition - Condition: (**Specified robot compound I/O condition (e.g., (Robot I/O pin "10" equals boolean value True) OR (Robot I/O pin "11" equals boolean value True))**) (Block Type: `wait_block`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - No specific default parameter logic in _extract_parameters_from_detail for block_type: 'wait_block'. XML will rely solely on template structure if no params are set.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No default parameters explicitly set for block_type: 'wait_block'. Template defaults will be primary.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: moveP (detail: '10. PTP move to **initial/safe point (e.g., "P1")** (Block Type: `moveP`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - Using default parameters for moveP: {'fields': {'point_name_list': 'P1', 'control_x': 'enable', 'control_y': 'enable', 'control_z': 'enable', 'control_rx': 'enable', 'control_ry': 'enable', 'control_rz': 'enable', 'pallet_list': 'none', 'camera_list': 'none'}, 'mutations': {'timeout': '60000000'}}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Final default/extracted parameters for 'moveP': {'fields': {'point_name_list': 'P1', 'control_x': 'enable', 'control_y': 'enable', 'control_z': 'enable', 'control_rx': 'enable', 'control_ry': 'enable', 'control_rz': 'enable', 'pallet_list': 'none', 'camera_list': 'none'}, 'mutations': {'timeout': '60000000'}}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Generating mostly default parameters for block_type: return (detail: '11. Return (Block Type: `return`)' used sparingly)
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - Using default parameters for return: {'fields': {}, 'mutations': {'timeout': '60000'}}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Final default/extracted parameters for 'return': {'fields': {}, 'mutations': {'timeout': '60000'}}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: a8f9fc20-4b35-4084-9c0b-a608f103a1f2, type: select_robot
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/select_robot.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied x_coord='10' to block ID a8f9fc20-4b35-4084-9c0b-a608f103a1f2
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied y_coord='10' to block ID a8f9fc20-4b35-4084-9c0b-a608f103a1f2
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID a8f9fc20-4b35-4084-9c0b-a608f103a1f2.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: 4e0f1a0d-6d2f-4934-93f7-894d40f253be, type: set_motor
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/set_motor.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID 4e0f1a0d-6d2f-4934-93f7-894d40f253be.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: 51f6628f-c225-404e-8755-ccc0fbd9bc4f, type: set_number
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/set_number.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Found 1 nested block(s) for block ID 51f6628f-c225-404e-8755-ccc0fbd9bc4f. Randomizing their IDs and setting data-blockNo.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Nested block (type: math_number): ID set to '0e2374b0-d029-4c60-8bb0-cbf2369fda6a', data-blockNo set to '1000'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: d3605eda-14db-4ee9-9c49-6b91d140aeed, type: loop
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/loop.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID d3605eda-14db-4ee9-9c49-6b91d140aeed.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: 73b12304-dcd9-4c54-ab65-892690a52911, type: controls_if
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/controls_if.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Found 1 nested block(s) for block ID 73b12304-dcd9-4c54-ab65-892690a52911. Randomizing their IDs and setting data-blockNo.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Nested block (type: logic_boolean): ID set to '75d3afd8-b546-4acb-b185-d367d511382b', data-blockNo set to '1001'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: d3a731bf-149f-4ea5-8da4-473ff3d00524, type: moveP
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/moveP.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {
+    "point_name_list": "P1",
+    "control_x": "enable",
+    "control_y": "enable",
+    "control_z": "enable",
+    "control_rx": "enable",
+    "control_ry": "enable",
+    "control_rz": "enable",
+    "pallet_list": "none",
+    "camera_list": "none"
+  },
+  "mutations": {
+    "timeout": "60000000"
+  }
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'point_name_list' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'P1'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'point_name_list' = 'P1' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'P1'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_x' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_x' = 'enable' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_y' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_y' = 'enable' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_z' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_z' = 'enable' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_rx' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_rx' = 'enable' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_ry' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_ry' = 'enable' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_rz' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_rz' = 'enable' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'pallet_list' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'pallet_list' = 'none' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'camera_list' in template for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. Current text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'camera_list' = 'none' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524. New text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Applied mutation attribute 'timeout' = '60000000' to block ID d3a731bf-149f-4ea5-8da4-473ff3d00524
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID d3a731bf-149f-4ea5-8da4-473ff3d00524.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: 94428a8a-1050-41a1-b399-2aa0650571b4, type: wait_input
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/wait_input.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID 94428a8a-1050-41a1-b399-2aa0650571b4.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: 49c176cb-1005-4e44-998a-a68bf89a5c92, type: set_output
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/set_output.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID 49c176cb-1005-4e44-998a-a68bf89a5c92.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: 0c8e8269-7272-41c3-87b6-de94a93eaf15, type: wait_block
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/wait_block.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {}
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Found 3 nested block(s) for block ID 0c8e8269-7272-41c3-87b6-de94a93eaf15. Randomizing their IDs and setting data-blockNo.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Nested block (type: logic_operation): ID set to '9a5dc4f1-6833-422a-8489-04278911b648', data-blockNo set to '1002'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Nested block (type: logic_boolean): ID set to '8ae092f9-2e0f-49c5-abec-56801bd3160b', data-blockNo set to '1003'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Nested block (type: logic_boolean): ID set to '5cfb2bf3-1881-4819-bb35-db91b1c87042', data-blockNo set to '1004'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d, type: moveP
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/moveP.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {
+    "point_name_list": "P1",
+    "control_x": "enable",
+    "control_y": "enable",
+    "control_z": "enable",
+    "control_rx": "enable",
+    "control_ry": "enable",
+    "control_rz": "enable",
+    "pallet_list": "none",
+    "camera_list": "none"
+  },
+  "mutations": {
+    "timeout": "60000000"
+  }
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'point_name_list' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'P1'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'point_name_list' = 'P1' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'P1'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_x' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_x' = 'enable' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_y' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_y' = 'enable' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_z' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_z' = 'enable' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_rx' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_rx' = 'enable' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_ry' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_ry' = 'enable' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'control_rz' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'control_rz' = 'enable' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'enable'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'pallet_list' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'pallet_list' = 'none' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Found field 'camera_list' in template for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. Current text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Applied field 'camera_list' = 'none' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d. New text: 'none'
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Applied mutation attribute 'timeout' = '60000000' to block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID fc46f1cb-48c6-4f3a-9e0e-d20b2dc4c00d.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - Attempting to generate XML for block_id: f192b56f-208b-40ec-ac8f-c61c4e523e72, type: return
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Template path: /workspace/database/node_database/quick-fcpr-new/return.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG -   Received parameters: {
+  "fields": {},
+  "mutations": {
+    "timeout": "60000"
+  }
+}
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - WARNING - <mutation> element not found in template for block ID f192b56f-208b-40ec-ac8f-c61c4e523e72, type return, but mutation parameters were provided: {'timeout': '60000'}. Path: /workspace/database/node_database/quick-fcpr-new/return.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - DEBUG - No nested blocks found for block ID f192b56f-208b-40ec-ac8f-c61c4e523e72.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - Coordinates successfully applied to block a8f9fc20-4b35-4084-9c0b-a608f103a1f2 for task 'Main_Task'.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - Next task's first block will start at X = 210
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/1_select_robot.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/2_set_motor.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/3_set_number.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/4_loop.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/5_controls_if.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/6_moveP.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/7_wait_input.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/8_set_output.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/9_wait_block.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/10_moveP.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO -   Successfully wrote XML block to: /workspace/database/flow_database/result/example_run/00_Main_Task/11_return.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.generate_individual_xmls - INFO - All individual XML blocks for all tasks were generated and saved successfully.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after Generate Individual XMLs (is_error: False, dialog_state: generating_xml_relation, subgraph_status: None) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - Generate Individual XMLs successful. Routing to SAS_PARAMETER_MAPPING.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.parameter_mapping - INFO - --- Entering SAS Step 3: Parameter Mapping (dialog_state: generating_xml_relation) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.nodes.parameter_mapping - INFO - SAS Step 3: Parameter Mapping - SKIPPED (logic commented out for now).
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Step 3: Parameter Mapping (is_error: False, dialog_state: sas_step3_completed) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - SAS Step 3 (Parameter Mapping) completed successfully. Routing to SAS_MERGE_XMLS.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- SAS: Merging Individual Task XMLs (Node) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - MergeXML Helper: Processing directory: 00_Main_Task for task 00_Main_Task
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - MergeXML Helper: Successfully assembled XML for 00_Main_Task to /workspace/database/flow_database/result/example_run/merged_task_flows/00_Main_Task_merged.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - MergeXML Node: Successfully merged XMLs into 1 file(s) in /workspace/database/flow_database/result/example_run/merged_task_flows.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Merge XMLs (is_error: False, dialog_state: sas_merging_completed) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - SAS Merge XMLs completed (state: sas_merging_completed). Routing to SAS_CONCATENATE_XMLS.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- SAS: Concatenating Merged Task XMLs (Node) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - ConcatenateXML: Successfully concatenated XML files to /workspace/database/flow_database/result/example_run/concatenated_flow_output/final_concatenated_sas_flow.xml
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - --- Routing after SAS Concatenate XMLs (is_error: False, dialog_state: final_xml_generated_success, completion_status: completed_success) ---
+2025-06-23 07:38:55 - backend.langgraphchat.graph.subgraph.sas.graph_builder - INFO - SAS Concatenate XMLs completed successfully. Final XML generated. Routing to END.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Subgraph astream_events ended. Final state keys: dict_keys(['messages', 'user_input', 'current_user_request', 'user_advice', 'active_plan_basis', 'dialog_state', 'clarification_question', 'proposed_enriched_text', 'enriched_structured_text', 'config', 'parsed_flow_steps', 'generated_node_xmls', 'relation_xml_content', 'relation_xml_path', 'final_flow_xml_content', 'final_flow_xml_path', 'sas_step1_generated_tasks', 'sas_step2_module_steps', 'sas_step3_parameter_mapping', 'sas_step3_mapping_report', 'run_output_directory', 'task_list_accepted', 'module_steps_accepted', 'revision_iteration', 'current_step_description', 'error_message', 'upload_status', 'is_error', 'language', 'subgraph_completion_status', 'merged_xml_file_paths'])
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Robot flow subgraph execution via astream_events completed.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Extracted from final_subgraph_state_dict: 5 messages, status: completed_success
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Robot flow subgraph returned 5 messages. Updating main graph state.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Subgraph completed successfully. Extracting important data and preserving SAS state for sync.
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Extracted 1 tasks from SAS subgraph
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Extracted current_user_request: ベアリングとパレット（PLT）で共用するクランプと、ベアリングハウジングと組み立て後の部品で共用するクランプをそれぞれ使用します。
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Extracted dialog_state: final_xml_generated_success
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Extracted task_list_accepted: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.nodes.robot_flow_invoker_node - INFO - Extracted module_steps_accepted: True
+2025-06-23 07:38:55 - backend.langgraphchat.graph.workflow_graph - INFO - --- Routing after Functional Node. Subgraph status: completed_success
+2025-06-23 07:38:55 - backend.langgraphchat.graph.workflow_graph - INFO - Subgraph completed with status: completed_success. Resetting task context.

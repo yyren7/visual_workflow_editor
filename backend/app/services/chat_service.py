@@ -58,8 +58,13 @@ class ChatService:
                 logger.error("GOOGLE_API_KEY environment variable not set.")
                 raise ValueError("GOOGLE_API_KEY environment variable not set.")
             try:
-                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-05-20", google_api_key=api_key, streaming=True)
-                logger.info("Instantiated ChatGoogleGenerativeAI (Gemini) with streaming.")
+                llm = ChatGoogleGenerativeAI(
+                    model="gemini-2.5-flash-preview-05-20", 
+                    google_api_key=api_key, 
+                    streaming=True,
+                    temperature=0  # 添加温度参数以确保确定性输出
+                )
+                logger.info("Instantiated ChatGoogleGenerativeAI (Gemini) with streaming and temperature=0.")
                 return llm
             except Exception as e:
                 logger.error(f"Failed to instantiate ChatGoogleGenerativeAI: {e}", exc_info=True)
@@ -67,8 +72,11 @@ class ChatService:
 
         elif provider == "deepseek":
             try:
-                llm = ChatDeepSeek(model="deepseek-chat") # 假设 'deepseek-chat' 是支持工具调用的模型
-                logger.info("Instantiated ChatDeepSeek.")
+                llm = ChatDeepSeek(
+                    model="deepseek-chat",
+                    temperature=0  # 添加温度参数以确保确定性输出
+                )
+                logger.info("Instantiated ChatDeepSeek with temperature=0.")
                 return llm
             except Exception as e:
                 logger.error(f"Failed to instantiate ChatDeepSeek: {e}", exc_info=True)

@@ -50,7 +50,7 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
     # state.error_message = None # Keep existing error message if any
 
     # 新增：检查是否启用自动接受模式
-    auto_accept_enabled = state.config.get("auto_accept_tasks", True)  # 默认启用自动接受
+    auto_accept_enabled = state.config.get("auto_accept_tasks", False)  # 默认禁用自动接受，让流程正常执行任务分解
     logger.info(f"Auto accept mode: {auto_accept_enabled}")
 
     # --- This initial determination of reviewing_task_list/steps is primarily for when user_input IS PRESENT ---

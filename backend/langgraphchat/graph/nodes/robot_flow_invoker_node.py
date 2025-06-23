@@ -186,10 +186,38 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel, sas_sub
             update_dict["user_request_for_router"] = state.get("user_request_for_router")
         # Store the full state of the SAS subgraph for persistence
         update_dict["sas_planner_subgraph_state"] = final_subgraph_state_dict 
-    else: # Covers "completed_success", "error", or any other terminal status
+    elif completion_status == "completed_success":
+        logger.info(f"Subgraph completed successfully. Extracting important data and preserving SAS state for sync.")
+        # Clear routing decision as workflow is complete
+        update_dict["task_route_decision"] = None
+        update_dict["user_request_for_router"] = None
+        
+        # **关键修复**：保留SAS子图状态以便数据同步
+        # 即使子图完成，我们也需要保留状态用于状态同步
+        update_dict["sas_planner_subgraph_state"] = final_subgraph_state_dict
+        
+        # **新增**：直接提取重要数据到主图状态
+        if isinstance(final_subgraph_state_dict, dict):
+            # 提取任务数据
+            if "sas_step1_generated_tasks" in final_subgraph_state_dict:
+                update_dict["sas_step1_generated_tasks"] = final_subgraph_state_dict["sas_step1_generated_tasks"]
+                logger.info(f"Extracted {len(final_subgraph_state_dict['sas_step1_generated_tasks'])} tasks from SAS subgraph")
+            
+            # 提取详情数据
+            if "sas_step2_generated_task_details" in final_subgraph_state_dict:
+                update_dict["sas_step2_generated_task_details"] = final_subgraph_state_dict["sas_step2_generated_task_details"]
+                logger.info(f"Extracted {len(final_subgraph_state_dict['sas_step2_generated_task_details'])} task details from SAS subgraph")
+            
+            # 提取其他重要状态
+            important_fields = ["current_user_request", "dialog_state", "task_list_accepted", "module_steps_accepted"]
+            for field in important_fields:
+                if field in final_subgraph_state_dict:
+                    update_dict[field] = final_subgraph_state_dict[field]
+                    logger.info(f"Extracted {field}: {final_subgraph_state_dict[field]}")
+    else: # Covers "error" or other unexpected terminal status
         logger.info(f"Subgraph completion status is '{completion_status}'. Clearing task_route_decision, user_request_for_router, and SAS subgraph state.")
         update_dict["task_route_decision"] = None
         update_dict["user_request_for_router"] = None
-        update_dict["sas_planner_subgraph_state"] = None # Clear persisted SAS state
+        update_dict["sas_planner_subgraph_state"] = None # Clear persisted SAS state on error
         
     yield update_dict 

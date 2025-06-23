@@ -17,6 +17,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import _isEqual from 'lodash/isEqual'; // 引入 isEqual
+import React from 'react';
 
 // --- Redux Imports ---
 import { useSelector, useDispatch } from 'react-redux';
@@ -30,7 +31,9 @@ import {
     selectNodes,
     selectEdges,
     selectNode as selectNodeAction,      // Import new action
-    deselectAllNodes as deselectAllNodesAction // Import new action
+    deselectAllNodes as deselectAllNodesAction, // Import new action
+    deleteNode,
+    deleteEdge,
 } from '../store/slices/flowSlice';
 
 // --- 辅助函数：比较节点数组，忽略 selected 属性 ---
@@ -120,6 +123,8 @@ interface UseReactFlowManagerOutput {
   onDragOver: (event: React.DragEvent) => void;
   onDrop: (event: React.DragEvent) => void;
   handleNodeDataUpdate: (update: { id: string; data: Partial<NodeData> }) => void;
+  onNodesDelete: (deletedNodes: Node<NodeData>[]) => void;
+  onEdgesDelete: (deletedEdges: Edge[]) => void;
 }
 
 // Define props for the hook
@@ -142,6 +147,34 @@ export const useReactFlowManager = ({
   const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
+  // 添加键盘事件监听器进行调试
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('键盘事件:', {
+        key: event.key,
+        code: event.code,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        target: event.target
+      });
+      
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        console.log('删除键被按下!');
+        const selectedNodes = nodes.filter(node => node.selected);
+        console.log('当前选中的节点:', selectedNodes);
+        
+        if (selectedNodes.length > 0) {
+          console.log('有选中的节点，应该可以删除');
+        } else {
+          console.log('没有选中的节点');
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [nodes]);
+
   // --- Handlers using Redux ---
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -153,8 +186,26 @@ export const useReactFlowManager = ({
         console.log("useReactFlowManager: Applying node changes (non-drag or drag-end) and dispatching to Redux:", changes);
       }
       
+      // 计算下一个状态
       const nextNodes = applyNodeChanges(changes, nodes);
-      dispatch(setFlowNodes(nextNodes));
+      
+      // 检查是否只是选择状态变化
+      const onlySelectionChanges = changes.every(change => change.type === 'select');
+      
+      // 比较当前状态和下一个状态，忽略 selected 属性
+      const hasSubstantiveChanges = haveNodesChanged(nodes, nextNodes);
+      
+      if (hasSubstantiveChanges) {
+        console.log("useReactFlowManager: Substantive node changes detected, dispatching setFlowNodes.");
+        dispatch(setFlowNodes(nextNodes));
+      } else if (onlySelectionChanges) {
+        console.log("useReactFlowManager: Only selection changes detected, updating nodes but won't trigger save.");
+        // 对于仅选择状态的变化，我们仍然需要更新 ReactFlow 的状态，但这不会触发保存
+        // 因为 FlowEditor 的 useEffect 依赖于 haveNodesChanged 的结果
+        dispatch(setFlowNodes(nextNodes));
+      } else {
+        console.log("useReactFlowManager: No significant changes detected, skipping dispatch.");
+      }
     },
     [dispatch, nodes]
   );
@@ -175,6 +226,38 @@ export const useReactFlowManager = ({
       }
     },
     [dispatch, edges] // Dependency: dispatch and the current edges state
+  );
+
+  // 添加节点删除处理器
+  const onNodesDelete = useCallback(
+    (deletedNodes: Node<NodeData>[]) => {
+      console.log("⚠️ useReactFlowManager: onNodesDelete 被调用!");
+      console.log("useReactFlowManager: Nodes deleted:", deletedNodes);
+      console.log("删除的节点数量:", deletedNodes.length);
+      console.log("删除的节点详情:", deletedNodes.map(n => ({ id: n.id, type: n.type })));
+      
+      // 对于每个被删除的节点，使用我们的 Redux action
+      deletedNodes.forEach(node => {
+        console.log(`正在删除节点: ${node.id}`);
+        dispatch(deleteNode(node.id));
+      });
+      enqueueSnackbar(t('flowEditor.nodesDeleted', { count: deletedNodes.length }), { variant: 'success' });
+    },
+    [dispatch, enqueueSnackbar, t]
+  );
+
+  // 添加边删除处理器
+  const onEdgesDelete = useCallback(
+    (deletedEdges: Edge[]) => {
+      console.log("⚠️ useReactFlowManager: onEdgesDelete 被调用!");
+      console.log("useReactFlowManager: Edges deleted:", deletedEdges);
+      // 对于每个被删除的边，使用我们的 Redux action
+      deletedEdges.forEach(edge => {
+        dispatch(deleteEdge(edge.id));
+      });
+      enqueueSnackbar(t('flowEditor.edgesDeleted', { count: deletedEdges.length }), { variant: 'success' });
+    },
+    [dispatch, enqueueSnackbar, t]
   );
 
   const onConnect = useCallback(
@@ -198,15 +281,28 @@ export const useReactFlowManager = ({
 
   const onNodeClick: NodeMouseHandler = useCallback((event, node) => {
     setSelectedNode(node); // Keep for local state if needed by properties panel etc.
-    dispatch(selectNodeAction(node.id)); // Dispatch Redux action to update store
+    // 需要更新 Redux 中的节点选中状态，这样 delete 键才能工作
+    // 由于 haveNodesChanged 函数会忽略仅选择状态的变化，所以不会触发保存
+    dispatch(selectNodeAction(node.id));
     console.log('Node clicked (useReactFlowManager), dispatched selectNode:', node.id);
-  }, [dispatch]); // Add dispatch to dependencies
+    console.log('节点类型:', node.type);
+    console.log('节点是否可删除:', node.deletable);
+    console.log('节点是否可选择:', node.selectable);
+    
+    // 检查更新后的节点状态
+    setTimeout(() => {
+      const updatedNodes = nodes.filter(n => n.selected);
+      console.log('点击后选中的节点:', updatedNodes.map(n => ({ id: n.id, selected: n.selected })));
+    }, 100);
+  }, [dispatch, nodes]);
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null); // Keep for local state if needed
-    dispatch(deselectAllNodesAction()); // Dispatch Redux action to update store
+    // 需要更新 Redux 中的节点取消选中状态
+    // 由于 haveNodesChanged 函数会忽略仅选择状态的变化，所以不会触发保存
+    dispatch(deselectAllNodesAction());
     console.log('Pane clicked (useReactFlowManager), dispatched deselectAllNodes');
-  }, [dispatch]); // Add dispatch to dependencies
+  }, [dispatch]); // Add dispatch dependency
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -310,5 +406,7 @@ export const useReactFlowManager = ({
     onDragOver,
     onDrop,
     handleNodeDataUpdate,
+    onNodesDelete,
+    onEdgesDelete,
   };
 }; 

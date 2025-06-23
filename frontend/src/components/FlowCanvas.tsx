@@ -43,6 +43,9 @@ interface FlowCanvasProps extends Omit<ReactFlowProps, 'nodes' | 'edges'> {
     minZoom: number;
     maxZoom: number;
   };
+  // 添加删除事件处理器
+  onNodesDelete?: (deletedNodes: Node[]) => void;
+  onEdgesDelete?: (deletedEdges: Edge[]) => void;
 }
 
 const FlowCanvas: React.FC<FlowCanvasProps> = ({
@@ -67,6 +70,9 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   onNodeDragStop,
   // 新增：解构动态边界配置
   reactFlowConfig,
+  // 新增：解构删除处理器
+  onNodesDelete,
+  onEdgesDelete,
   ...rest // Pass any remaining ReactFlowProps
 }) => {
   const { t } = useTranslation();
@@ -145,6 +151,9 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
         nodeExtent={reactFlowConfig?.nodeExtent}
         minZoom={reactFlowConfig?.minZoom}
         maxZoom={reactFlowConfig?.maxZoom}
+        // 添加删除事件处理器
+        onNodesDelete={onNodesDelete}
+        onEdgesDelete={onEdgesDelete}
         {...rest} // Spread remaining props
       >
         <Controls

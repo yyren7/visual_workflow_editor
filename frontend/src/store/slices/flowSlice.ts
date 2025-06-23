@@ -212,10 +212,20 @@ const flowSlice = createSlice({
     // Reducer to handle single node selection
     selectNode: (state: FlowState, action: PayloadAction<string>) => {
       const selectedNodeId = action.payload;
+      console.log('🔍 Redux selectNode action 被调用，节点ID:', selectedNodeId);
+      console.log('🔍 当前节点数量:', state.nodes.length);
+      
+      const beforeUpdate = state.nodes.find(n => n.id === selectedNodeId);
+      console.log('🔍 更新前节点状态:', beforeUpdate ? { id: beforeUpdate.id, selected: beforeUpdate.selected } : '节点未找到');
+      
       state.nodes = state.nodes.map(node => ({
         ...node,
         selected: node.id === selectedNodeId,
       }));
+      
+      const afterUpdate = state.nodes.find(n => n.id === selectedNodeId);
+      console.log('🔍 更新后节点状态:', afterUpdate ? { id: afterUpdate.id, selected: afterUpdate.selected } : '节点未找到');
+      console.log('🔍 总共选中的节点数量:', state.nodes.filter(n => n.selected).length);
     },
     // Reducer to deselect all nodes
     deselectAllNodes: (state: FlowState) => {
@@ -223,7 +233,22 @@ const flowSlice = createSlice({
         ...node,
         selected: false,
       }));
-    }
+    },
+    // 添加删除节点的 reducer
+    deleteNode: (state: FlowState, action: PayloadAction<string>) => {
+      const nodeId = action.payload;
+      // 删除节点
+      state.nodes = state.nodes.filter(node => node.id !== nodeId);
+      // 删除与该节点相关的所有边
+      state.edges = state.edges.filter(edge => 
+        edge.source !== nodeId && edge.target !== nodeId
+      );
+    },
+    // 添加删除边的 reducer
+    deleteEdge: (state: FlowState, action: PayloadAction<string>) => {
+      const edgeId = action.payload;
+      state.edges = state.edges.filter(edge => edge.id !== edgeId);
+    },
     // Add other reducers as needed (e.g., addNode, addEdge, deleteNode)
   },
   extraReducers: (builder: ActionReducerMapBuilder<FlowState>) => {
@@ -301,7 +326,9 @@ export const {
     setFlowName,
     updateAgentState,
     selectNode,      // Export new action
-    deselectAllNodes // Export new action
+    deselectAllNodes, // Export new action
+    deleteNode,       // Export new action
+    deleteEdge        // Export new action
 } = flowSlice.actions;
 
 // Selectors

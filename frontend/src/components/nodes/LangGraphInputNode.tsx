@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Handle, Position } from 'reactflow';
 import { 
   Card, 
   CardContent, 
@@ -20,6 +21,7 @@ import {
   AutoFixHigh as ProcessingIcon
 } from '@mui/icons-material';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
+import { useSSEManager } from '../../hooks/useSSEManager';
 
 interface LangGraphInputNodeData {
   label: string;
@@ -43,8 +45,8 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   const [isProcessing, setIsProcessing] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [processingStage, setProcessingStage] = useState('');
-  const eventSourceRef = useRef<EventSource | null>(null);
   const streamingContentRef = useRef<HTMLDivElement>(null);
+  const currentChatIdRef = useRef<string | null>(null);
   
   // 新增：滚动区域的refs
   const taskDescriptionRef = useRef<HTMLDivElement>(null);
@@ -52,6 +54,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   const cardRef = useRef<HTMLDivElement>(null);
   
   const { updateUserInput } = useAgentStateSync();
+  const { createConnection, closeConnection } = useSSEManager();
 
   // 初始化状态
   useEffect(() => {
@@ -65,88 +68,92 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
 
   // 新增：启动SSE监听流式输出的函数
   const startStreamListener = useCallback((chatId: string) => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
+    // 清理之前的连接
+    if (currentChatIdRef.current) {
+      closeConnection(currentChatIdRef.current);
     }
 
-    const eventSource = new EventSource(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/events`);
-    eventSourceRef.current = eventSource;
-
+    console.log('LangGraphInputNode: 开始监听流式输出，chatId:', chatId);
+    
     setIsProcessing(true);
     setStreamingContent('');
     setProcessingStage('正在连接...');
+    
+    currentChatIdRef.current = chatId;
 
-    eventSource.onopen = () => {
-      console.log('SSE连接已建立，开始监听流式输出...');
-      setProcessingStage('正在处理任务描述...');
-    };
-
-    eventSource.addEventListener('token', (event) => {
-      const tokenData = event.data;
-      console.log('收到流式token:', tokenData);
-      setStreamingContent(prev => prev + tokenData);
-      setProcessingStage('正在生成任务列表...');
-      
-      // 自动滚动到底部
-      setTimeout(() => {
-        if (streamingContentRef.current) {
-          streamingContentRef.current.scrollTop = streamingContentRef.current.scrollHeight;
+    // 使用统一的SSE管理器创建连接
+    const cleanup = createConnection(
+      chatId,
+      (event) => {
+        console.log('LangGraphInputNode: 收到SSE事件:', event.type);
+        
+        switch (event.type) {
+          case 'token':
+            setStreamingContent(prev => prev + event.data);
+            setProcessingStage('正在生成任务列表...');
+            // 自动滚动到底部
+            setTimeout(() => {
+              if (streamingContentRef.current) {
+                streamingContentRef.current.scrollTop = streamingContentRef.current.scrollHeight;
+              }
+            }, 50);
+            break;
+            
+          case 'tool_start':
+            setProcessingStage(`正在执行: ${event.data.name || '工具处理'}...`);
+            break;
+            
+          case 'tool_end':
+            setProcessingStage('正在生成任务列表...');
+            break;
+            
+          case 'stream_end':
+            setIsProcessing(false);
+            setProcessingStage('');
+            currentChatIdRef.current = null;
+            // 3秒后清除流式内容
+            setTimeout(() => {
+              setStreamingContent('');
+            }, 3000);
+            break;
+            
+          case 'error':
+            console.error('LangGraphInputNode: SSE错误:', event.data);
+            setProcessingStage('处理出错');
+            break;
         }
-      }, 50);
-    });
+      },
+      (error) => {
+        console.error('LangGraphInputNode: SSE连接错误:', error);
+        setIsProcessing(false);
+        setProcessingStage('连接失败');
+        setStreamingContent(prev => prev + '\n\n[连接失败，请重试]');
+        currentChatIdRef.current = null;
+      },
+      () => {
+        console.log('LangGraphInputNode: SSE连接已关闭');
+        setIsProcessing(false);
+        setProcessingStage('');
+        currentChatIdRef.current = null;
+      }
+    );
 
-    eventSource.addEventListener('tool_start', (event) => {
-      const toolData = JSON.parse(event.data);
-      console.log('工具开始:', toolData);
-      setProcessingStage(`正在执行: ${toolData.name || '工具处理'}...`);
-    });
-
-    eventSource.addEventListener('tool_end', (event) => {
-      const toolData = JSON.parse(event.data);
-      console.log('工具结束:', toolData);
-      setProcessingStage('正在生成任务列表...');
-    });
-
-    eventSource.addEventListener('stream_end', (event) => {
-      console.log('流式输出结束');
-      setIsProcessing(false);
-      setProcessingStage('');
-      eventSource.close();
-      eventSourceRef.current = null;
-      
-      // 3秒后清除流式内容
-      setTimeout(() => {
-        setStreamingContent('');
-      }, 3000);
-    });
-
-    eventSource.addEventListener('error', (event) => {
-      console.error('SSE连接错误:', event);
-      setIsProcessing(false);
-      setProcessingStage('处理出错');
-      setStreamingContent(prev => prev + '\n\n[连接错误，请重试]');
-      eventSource.close();
-      eventSourceRef.current = null;
-    });
-
-    eventSource.onerror = (error) => {
-      console.error('SSE错误:', error);
-      setIsProcessing(false);
-      setProcessingStage('');
-      eventSource.close();
-      eventSourceRef.current = null;
-    };
-  }, []);
+    return cleanup;
+  }, [createConnection, closeConnection]);
 
   // 清理SSE连接
   useEffect(() => {
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
+      console.log('LangGraphInputNode组件卸载，清理SSE连接');
+      if (currentChatIdRef.current) {
+        closeConnection(currentChatIdRef.current);
+        currentChatIdRef.current = null;
       }
+      setIsProcessing(false);
+      setStreamingContent('');
+      setProcessingStage('');
     };
-  }, []);
+  }, [closeConnection]);
 
   // 新增：原生DOM事件处理滚轮事件
   useEffect(() => {
@@ -186,14 +193,22 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   const handleSubmit = useCallback(() => {
     if (!input.trim()) return;
     
+    // 确保清理之前的连接
+    if (currentChatIdRef.current) {
+      console.log('清理之前的SSE连接');
+      closeConnection(currentChatIdRef.current);
+      currentChatIdRef.current = null;
+    }
+    
     // 使用flowId作为虚拟chatId启动流式监听
     const virtualChatId = data.flowId;
+    console.log('开始新的SSE连接，chatId:', virtualChatId);
     startStreamListener(virtualChatId);
     
     updateUserInput(input);
     setIsEditing(false);
     setShowAddForm(false);
-  }, [input, updateUserInput, data.flowId, startStreamListener]);
+  }, [input, updateUserInput, data.flowId, startStreamListener, closeConnection]);
 
   const handleEdit = useCallback(() => {
     setInput(data.currentUserRequest || '');
@@ -215,6 +230,19 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
 
   return (
     <>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ 
+          background: '#ff9800',
+          width: '12px',
+          height: '12px',
+          bottom: '-6px',
+          border: '2px solid #f57c00',
+          transition: 'all 0.2s ease',
+          borderRadius: '6px'
+        }}
+      />
       <Card 
         ref={cardRef}
         sx={{ 
