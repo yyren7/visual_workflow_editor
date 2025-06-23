@@ -164,6 +164,13 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
 
   // Auto-sync when agent state changes
   useEffect(() => {
+    // Added detailed log
+    console.log(
+      `🔄 useLangGraphNodes: EFFECT TRIGGERED. Current Flow ID: ${currentFlowId}. AgentState tasks:`, 
+      agentState?.sas_step1_generated_tasks || 'No tasks in agentState', 
+      'Full agentState:', agentState
+    );
+
     if (agentState && currentFlowId) {
       console.log('🔄 useLangGraphNodes: Agent state changed, analyzing...', {
         currentFlowId,
@@ -211,7 +218,7 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
         hasCurrentFlowId: !!currentFlowId
       });
     }
-  }, [agentState, currentFlowId]); // Remove syncLangGraphNodes from deps to avoid infinite loop
+  }, [agentState, currentFlowId, syncLangGraphNodes]); // Added syncLangGraphNodes back as it's a function used inside and should be a dependency if it's stable (useCallback)
 
   return {
     syncLangGraphNodes,

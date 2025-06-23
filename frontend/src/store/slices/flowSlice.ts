@@ -253,22 +253,24 @@ const flowSlice = createSlice({
   },
   extraReducers: (builder: ActionReducerMapBuilder<FlowState>) => {
     builder
-      .addCase(fetchFlowById.pending, (state: FlowState) => {
+      .addCase(fetchFlowById.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         console.log('Redux: Fetching flow pending...');
       })
       .addCase(fetchFlowById.fulfilled, (state: FlowState, action: PayloadAction<FetchFlowByIdPayload>) => {
         state.isLoading = false;
-        state.currentFlowId = action.payload.id ?? null;
+        state.currentFlowId = action.payload.id; // Ensure currentFlowId matches the payload
         state.flowName = action.payload.name;
         state.nodes = action.payload.nodes;
         state.edges = action.payload.edges;
         state.agentState = action.payload.agent_state || {};
         state.error = null;
-        console.log('Redux: Fetching flow fulfilled');
-        // Set lastSaveTime based on loaded data if available?
-        // Or assume loaded state is the last saved state initially.
+        // Added detailed log
+        console.log(
+          `Redux: Fetching flow ${action.payload.id} fulfilled. Nodes count: ${action.payload.nodes.length}, AgentState tasks:`, 
+          action.payload.agent_state?.sas_step1_generated_tasks || 'No tasks in agentState'
+        );
         state.lastSaveTime = new Date().toISOString(); // Or from flowData if backend provides it
         state.isSaving = false;
         state.saveError = null;
