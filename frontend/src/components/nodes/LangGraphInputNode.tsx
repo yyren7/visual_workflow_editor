@@ -18,10 +18,14 @@ import {
   Add as AddIcon,
   Check as CheckIcon,
   Close as CloseIcon,
-  AutoFixHigh as ProcessingIcon
+  AutoFixHigh as ProcessingIcon,
+  ErrorOutline as ErrorIcon,
+  InfoOutlined as InfoIcon
 } from '@mui/icons-material';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
 import { useSSEManager } from '../../hooks/useSSEManager';
+import { useSelector } from 'react-redux';
+import { selectAgentState, selectCurrentFlowId } from '../../store/slices/flowSlice';
 
 interface LangGraphInputNodeData {
   label: string;
@@ -36,539 +40,511 @@ interface LangGraphInputNodeProps {
   selected: boolean;
 }
 
+interface ReviewContextData {
+  clarification_question?: string;
+  originalRequest?: string;
+  tasks?: any[];
+  details?: any;
+  dialog_state?: string;
+}
+
+const parseReviewContext = (clarificationQuestion: string): ReviewContextData | null => {
+  if (!clarificationQuestion) return null;
+
+  const originalRequestRegex = /Original Request:\s*```text\s*([\s\S]*?)\s*```/m;
+  const generatedTasksRegex = /Generated Tasks(?: \(Iteration \d+\))?:\s*```json\s*([\s\S]*?)\s*```/m;
+  const userFeedbackRegex = /Your Feedback:\s*```text\s*([\s\S]*?)\s*```/m;
+  const instructionalTextRegex = /```\s*Your Feedback:[\s\S]*?```\s*([\s\S]*)/m;
+
+
+  const originalRequestMatch = clarificationQuestion.match(originalRequestRegex);
+  const generatedTasksMatch = clarificationQuestion.match(generatedTasksRegex);
+  const userFeedbackMatch = clarificationQuestion.match(userFeedbackRegex);
+  const instructionalTextMatch = clarificationQuestion.match(instructionalTextRegex);
+
+  if (originalRequestMatch && originalRequestMatch[1] && generatedTasksMatch && generatedTasksMatch[1] && userFeedbackMatch && userFeedbackMatch[1]) {
+    // Attempt to parse tasks if it's JSON, otherwise keep as string or handle error
+    let parsedTasks: any[] | string = generatedTasksMatch[1].trim();
+    try {
+      parsedTasks = JSON.parse(parsedTasks);
+    } catch (e) {
+      console.warn('parseReviewContext: generatedTasks content is not valid JSON, keeping as string. Content:', parsedTasks);
+      // Decide if you want to return null or the string itself for tasks
+      // For now, let's assume if it's not parsable JSON for tasks, the context is invalid for 'tasks: any[]'
+      // return null; // Or handle differently, e.g. tasks: parsedTasks (as string)
+    }
+
+    return {
+      originalRequest: originalRequestMatch[1].trim(),
+      tasks: parsedTasks,
+      dialog_state: instructionalTextMatch && instructionalTextMatch[1] ? instructionalTextMatch[1].trim() : "Please provide a complete revised task description in the input field. You can also choose to 'approve' the generated tasks.",
+    };
+  }
+  console.warn("parseReviewContext: Failed to match all expected parts or parse tasks. Question:", clarificationQuestion);
+  return null;
+};
+
 export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data, selected }) => {
   const [input, setInput] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   
-  // 新增：流式输出相关状态
   const [isProcessing, setIsProcessing] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [processingStage, setProcessingStage] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const streamingContentRef = useRef<HTMLDivElement>(null);
-  const currentChatIdRef = useRef<string | null>(null);
+  const uiSseUnsubscribeFnsRef = useRef<(() => void)[]>([]);
   
-  // 新增：滚动区域的refs
   const taskDescriptionRef = useRef<HTMLDivElement>(null);
   const editTextFieldRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   
-  const { updateUserInput } = useAgentStateSync();
-  const { createConnection, closeConnection } = useSSEManager();
+  const { updateUserInput, startLangGraphProcessing } = useAgentStateSync();
+  const { subscribe, closeConnection: closeSSEConnectionByManager } = useSSEManager();
+  const agentState = useSelector(selectAgentState);
+  const reduxCurrentFlowId = useSelector(selectCurrentFlowId);
 
-  // 初始化状态
+  const [isInReviewMode, setIsInReviewMode] = useState(false);
+  const [reviewContext, setReviewContext] = useState<ReviewContextData | null>(null);
+
+  const operationChatId = data.flowId || reduxCurrentFlowId;
+
+  const cleanupUISseSubscriptions = useCallback(() => {
+    if (uiSseUnsubscribeFnsRef.current.length > 0) {
+      console.log(`LangGraphInputNode (${id}): Cleaning up ${uiSseUnsubscribeFnsRef.current.length} UI SSE subscriptions for chat: ${operationChatId}`);
+      uiSseUnsubscribeFnsRef.current.forEach(unsub => unsub());
+      uiSseUnsubscribeFnsRef.current = [];
+    }
+  }, [id, operationChatId]);
+
   useEffect(() => {
-    if (data.currentUserRequest) {
-      setInput(data.currentUserRequest);
+    if (agentState?.dialog_state === 'sas_clarification_needed' && agentState?.clarification_question) {
+      setIsInReviewMode(true);
+      setReviewContext({
+        clarification_question: agentState.clarification_question,
+        originalRequest: agentState.current_user_request || data.currentUserRequest || '',
+      });
+      setInput('');
+      setIsEditing(false); 
+      setShowAddForm(false);
+      cleanupUISseSubscriptions();
+    } else if (agentState?.dialog_state === 'sas_awaiting_task_list_review' && agentState?.sas_step1_generated_tasks) {
+      setIsInReviewMode(true);
+      setReviewContext({
+        originalRequest: agentState.current_user_request || data.currentUserRequest || '',
+        tasks: agentState.sas_step1_generated_tasks,
+        dialog_state: agentState.dialog_state,
+      });
+      setInput(agentState.current_user_request || data.currentUserRequest || '');
+      setIsEditing(false);
+      setShowAddForm(false);
+      cleanupUISseSubscriptions();
     } else {
-      // 如果没有现有的用户请求，默认显示添加表单
+      if (!isEditing && !showAddForm && !isInReviewMode) {
+        setInput(agentState?.current_user_request || data.currentUserRequest || '');
+      }
+      if (isInReviewMode && agentState?.dialog_state !== 'sas_clarification_needed' && agentState?.dialog_state !== 'sas_awaiting_task_list_review') {
+        setIsInReviewMode(false);
+        setReviewContext(null);
+      }
+    }
+
+    if (!agentState?.current_user_request && !data.currentUserRequest && !isEditing && !isInReviewMode) {
       setShowAddForm(true);
-    }
-  }, [data.currentUserRequest]);
-
-  // 新增：启动SSE监听流式输出的函数
-  const startStreamListener = useCallback((chatId: string) => {
-    // 清理之前的连接
-    if (currentChatIdRef.current) {
-      closeConnection(currentChatIdRef.current);
+    } else if (agentState?.current_user_request || data.currentUserRequest) {
+      setShowAddForm(false);
     }
 
-    console.log('LangGraphInputNode: 开始监听流式输出，chatId:', chatId);
-    
+  }, [agentState, data.currentUserRequest, isEditing, showAddForm, isInReviewMode, cleanupUISseSubscriptions, id]);
+
+  const handleSend = useCallback(async (overrideInput?: string) => {
+    const contentToSend = overrideInput !== undefined ? overrideInput : input;
+    if (!contentToSend.trim() && overrideInput === undefined) {
+      console.warn(`LangGraphInputNode (${id}): Input is empty, not sending.`);
+      return;
+    }
+    if (!operationChatId) {
+        console.error(`LangGraphInputNode (${id}): No operationChatId (flowId) available. Cannot send.`);
+        setErrorMessage('Error: Flow ID is missing. Cannot process request.');
+        return;
+    }
+
+    cleanupUISseSubscriptions();
+
     setIsProcessing(true);
     setStreamingContent('');
-    setProcessingStage('正在连接...');
-    
-    currentChatIdRef.current = chatId;
-
-    // 使用统一的SSE管理器创建连接
-    const cleanup = createConnection(
-      chatId,
-      (event) => {
-        console.log('LangGraphInputNode: 收到SSE事件:', event.type);
-        
-        switch (event.type) {
-          case 'token':
-            setStreamingContent(prev => prev + event.data);
-            setProcessingStage('正在生成任务列表...');
-            // 自动滚动到底部
-            setTimeout(() => {
-              if (streamingContentRef.current) {
-                streamingContentRef.current.scrollTop = streamingContentRef.current.scrollHeight;
-              }
-            }, 50);
-            break;
-            
-          case 'tool_start':
-            setProcessingStage(`正在执行: ${event.data.name || '工具处理'}...`);
-            break;
-            
-          case 'tool_end':
-            setProcessingStage('正在生成任务列表...');
-            break;
-            
-          case 'stream_end':
-            setIsProcessing(false);
-            setProcessingStage('');
-            currentChatIdRef.current = null;
-            // 3秒后清除流式内容
-            setTimeout(() => {
-              setStreamingContent('');
-            }, 3000);
-            break;
-            
-          case 'error':
-            console.error('LangGraphInputNode: SSE错误:', event.data);
-            setProcessingStage('处理出错');
-            break;
-        }
-      },
-      (error) => {
-        console.error('LangGraphInputNode: SSE连接错误:', error);
-        setIsProcessing(false);
-        setProcessingStage('连接失败');
-        setStreamingContent(prev => prev + '\n\n[连接失败，请重试]');
-        currentChatIdRef.current = null;
-      },
-      () => {
-        console.log('LangGraphInputNode: SSE连接已关闭');
-        setIsProcessing(false);
-        setProcessingStage('');
-        currentChatIdRef.current = null;
-      }
-    );
-
-    return cleanup;
-  }, [createConnection, closeConnection]);
-
-  // 清理SSE连接
-  useEffect(() => {
-    return () => {
-      console.log('LangGraphInputNode组件卸载，清理SSE连接');
-      if (currentChatIdRef.current) {
-        closeConnection(currentChatIdRef.current);
-        currentChatIdRef.current = null;
-      }
-      setIsProcessing(false);
-      setStreamingContent('');
-      setProcessingStage('');
-    };
-  }, [closeConnection]);
-
-  // 新增：原生DOM事件处理滚轮事件
-  useEffect(() => {
-    const handleNativeWheel = (e: Event) => {
-      const wheelEvent = e as WheelEvent;
-      // 只阻止事件传播到ReactFlow，但保留元素的滚动功能
-      wheelEvent.stopPropagation();
-      console.log('滚轮事件传播被阻止，但保留滚动功能:', wheelEvent.target);
-    };
-
-    // 为所有滚动区域添加原生事件监听
-    const refs = [streamingContentRef, taskDescriptionRef, editTextFieldRef];
-    
-    refs.forEach(ref => {
-      if (ref.current) {
-        // 直接对滚动元素添加事件监听
-        const element = ref.current;
-        // 查找实际的滚动元素（可能是textarea或子元素）
-        const scrollableElement = element.querySelector('textarea') || element;
-        
-        scrollableElement.addEventListener('wheel', handleNativeWheel, { passive: true });
-        console.log('为元素添加滚轮事件监听:', scrollableElement);
-      }
-    });
-
-    return () => {
-      refs.forEach(ref => {
-        if (ref.current) {
-          const element = ref.current;
-          const scrollableElement = element.querySelector('textarea') || element;
-          scrollableElement.removeEventListener('wheel', handleNativeWheel);
-        }
-      });
-    };
-  }, [isEditing, showAddForm, isProcessing]); // 依赖状态变化重新绑定事件
-
-  const handleSubmit = useCallback(() => {
-    if (!input.trim()) return;
-    
-    // 确保清理之前的连接
-    if (currentChatIdRef.current) {
-      console.log('清理之前的SSE连接');
-      closeConnection(currentChatIdRef.current);
-      currentChatIdRef.current = null;
+    setProcessingStage('Initializing...');
+    setErrorMessage(null);
+    if (streamingContentRef.current) {
+      streamingContentRef.current.scrollTop = streamingContentRef.current.scrollHeight;
     }
-    
-    // 使用flowId作为虚拟chatId启动流式监听
-    const virtualChatId = data.flowId;
-    console.log('开始新的SSE连接，chatId:', virtualChatId);
-    startStreamListener(virtualChatId);
-    
-    updateUserInput(input);
-    setIsEditing(false);
-    setShowAddForm(false);
-  }, [input, updateUserInput, data.flowId, startStreamListener, closeConnection]);
 
-  const handleEdit = useCallback(() => {
-    setInput(data.currentUserRequest || '');
+    try {
+      await updateUserInput(contentToSend);
+      console.log(`LangGraphInputNode (${id}): updateUserInput called for chat: ${operationChatId}`);
+
+      const newUnsubs: (() => void)[] = [];
+
+      newUnsubs.push(subscribe(operationChatId, 'token', (eventData) => {
+        if (typeof eventData === 'string') {
+          setStreamingContent(prev => prev + eventData);
+        } else {
+          console.warn(`LangGraphInputNode (${id}): Received token event with non-string data:`, eventData);
+        }
+      }));
+      
+      newUnsubs.push(subscribe(operationChatId, 'tool_start', (eventData) => {
+        if (eventData && typeof eventData === 'object' && eventData.name) {
+          setProcessingStage(`Tool Started: ${eventData.name}`);
+        } else {
+           setProcessingStage('Tool Started');
+        }
+      }));
+
+      newUnsubs.push(subscribe(operationChatId, 'tool_end', (eventData) => {
+         if (eventData && typeof eventData === 'object' && eventData.name) {
+          setProcessingStage(`Tool Finished: ${eventData.name}`);
+        } else {
+           setProcessingStage('Tool Finished');
+        }
+      }));
+
+      newUnsubs.push(subscribe(operationChatId, 'stream_end', (eventData) => {
+        console.log(`LangGraphInputNode (${id}): Received stream_end for UI for chat: ${operationChatId}`);
+        setIsProcessing(false);
+        setProcessingStage(prev => prev.includes('Error') ? prev : 'Processing Complete');
+        cleanupUISseSubscriptions();
+      }));
+
+      newUnsubs.push(subscribe(operationChatId, 'connection_error', (errorData) => {
+        console.error(`LangGraphInputNode (${id}): SSE Connection Error for chat ${operationChatId}:`, errorData);
+        setErrorMessage('Connection error. Please try again.');
+        setIsProcessing(false);
+        setProcessingStage('Connection Error');
+        cleanupUISseSubscriptions();
+      }));
+      
+      newUnsubs.push(subscribe(operationChatId, 'server_error_event', (errorData) => {
+        console.error(`LangGraphInputNode (${id}): SSE Server Error Event for chat ${operationChatId}:`, errorData);
+        const message = typeof errorData?.message === 'string' ? errorData.message : 'An error occurred during processing.';
+        setStreamingContent(prev => prev + `\nError: ${message}`);
+        setErrorMessage(message);
+        setIsProcessing(false);
+        setProcessingStage('Error Occurred');
+        cleanupUISseSubscriptions();
+      }));
+
+      uiSseUnsubscribeFnsRef.current = newUnsubs;
+
+    } catch (error) {
+      console.error(`LangGraphInputNode (${id}): Error calling updateUserInput or setting up UI subscriptions for chat ${operationChatId}:`, error);
+      setErrorMessage('Failed to initiate processing. Please check console.');
+      setIsProcessing(false);
+      setProcessingStage('Failed to Start');
+      cleanupUISseSubscriptions();
+    }
+
+    setShowAddForm(false);
+    setIsEditing(false);
+  }, [input, data.flowId, reduxCurrentFlowId, updateUserInput, subscribe, cleanupUISseSubscriptions, id]);
+
+  useEffect(() => {
+    if (streamingContentRef.current) {
+      streamingContentRef.current.scrollTop = streamingContentRef.current.scrollHeight;
+    }
+  }, [streamingContent]);
+
+  const handleEdit = () => {
+    const currentReq = agentState?.current_user_request || data.currentUserRequest || '';
+    setInput(currentReq);
     setIsEditing(true);
     setShowAddForm(false);
-  }, [data.currentUserRequest]);
+    setIsInReviewMode(false);
+    setReviewContext(null);
+    cleanupUISseSubscriptions(); 
+    setStreamingContent(''); 
+    setProcessingStage('');
+    setErrorMessage(null);
+  };
 
-  const handleCancel = useCallback(() => {
-    setInput(data.currentUserRequest || '');
-    setIsEditing(false);
-    setShowAddForm(false);
-  }, [data.currentUserRequest]);
+  const handleCancel = () => {
+    cleanupUISseSubscriptions();
+    setStreamingContent(''); 
+    setProcessingStage('');
+    setErrorMessage(null);
+    setIsProcessing(false);
 
-  const handleAddNew = useCallback(() => {
+    if (isInReviewMode && reviewContext) {
+      setInput(reviewContext.originalRequest || '');
+    } else if (isEditing) {
+      setInput(agentState?.current_user_request || data.currentUserRequest || '');
+      setIsEditing(false);
+    } else if (showAddForm) {
+      setInput('');
+      if (agentState?.current_user_request || data.currentUserRequest) {
+        setShowAddForm(false);
+      }
+    } else {
+      setInput(agentState?.current_user_request || data.currentUserRequest || '');
+    }
+  };
+
+  const handleAddNew = () => {
     setInput('');
     setShowAddForm(true);
     setIsEditing(false);
-  }, []);
+    setIsInReviewMode(false);
+    setReviewContext(null);
+    cleanupUISseSubscriptions();
+    setStreamingContent(''); 
+    setProcessingStage('');
+    setErrorMessage(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      console.log(`LangGraphInputNode (${id}): Unmounting. Cleaning up UI SSE subscriptions.`);
+      cleanupUISseSubscriptions();
+    };
+  }, [cleanupUISseSubscriptions, id]);
+
+  const stopPropagation = (e: React.WheelEvent | React.MouseEvent) => e.stopPropagation();
+
+  const cardBackgroundColor = selected ? '#1e2a50' : '#2c3e50';
+  const inputAreaHeight = isInReviewMode ? 'auto' : (isEditing || showAddForm ? 'auto' : 'auto');
+  const taskDisplayHeight = '150px';
+
+  const displayUserRequest = agentState?.current_user_request || data.currentUserRequest;
 
   return (
-    <>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{ 
-          background: '#ff9800',
-          width: '12px',
-          height: '12px',
-          bottom: '-6px',
-          border: '2px solid #f57c00',
-          transition: 'all 0.2s ease',
-          borderRadius: '6px'
-        }}
-      />
-      <Card 
-        ref={cardRef}
-        sx={{ 
-          width: 600, // 固定宽度
-          height: 400, // 固定高度
-          border: '1px solid #555',
-          borderRadius: '8px',
-          boxShadow: selected ? '0 0 0 2px #1976d2, 0 2px 8px rgba(25, 118, 210, 0.4)' : '0 2px 5px rgba(0, 0, 0, 0.2)',
-          backgroundColor: selected ? 'rgba(25, 118, 210, 0.08)' : 'rgba(45, 45, 45, 1)',
-          transition: 'all 0.3s ease',
+    <Card 
+      ref={cardRef}
+      sx={{ 
+        width: 600, 
+        minHeight: isInReviewMode || (isEditing || showAddForm) ? 300 : (displayUserRequest ? 200: 150) , 
+        maxHeight: '80vh',
+        backgroundColor: cardBackgroundColor, 
+        border: selected ? '2px solid #76a9fa' : '2px solid #4a5568',
+        borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'all 0.3s ease',
+        boxShadow: selected ? '0 0 15px rgba(118, 169, 250, 0.5)' : '0 4px 8px rgba(0,0,0,0.3)',
+        overflow: 'hidden'
+      }}
+      onWheelCapture={stopPropagation}
+    >
+      <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+      <CardContent sx={{ 
+        p: 2, 
+        transition: 'all 0.3s ease',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}> 
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} sx={{ flexShrink: 0 }}>
+          <Typography 
+            variant="h6"
+            sx={{ 
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              color: selected ? '#fff' : '#eee',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {isInReviewMode ? (reviewContext?.clarification_question ? "Clarification Needed" : "Review Generated Tasks") : (data.label || 'User Input')}
+          </Typography>
+          <Chip 
+            label={isProcessing ? "Processing" : (isInReviewMode ? "Review Mode" : (isEditing ? "Editing" : (showAddForm ? "New Task" : "Idle")))}
+            size="small" 
+            color={isProcessing ? "success" : (isInReviewMode ? "warning" : (isEditing || showAddForm ? "info" : "primary"))}
+            variant="outlined"
+            icon={isProcessing ? <ProcessingIcon fontSize="small"/> : undefined}
+            sx={{ 
+              fontSize: '0.7rem',
+              height: '20px',
+              '& .MuiChip-label': { px: 1 }
+            }}
+          />
+        </Box>
+        
+        <Box sx={{ 
+          mt: 1, 
+          flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden', // 防止整个Card溢出
-          // 移除transform缩放，始终保持正常大小
-          '&:hover': {
-            boxShadow: selected 
-              ? '0 0 0 2px #1976d2, 0 4px 10px rgba(25, 118, 210, 0.5)'
-              : '0 0 0 2px #1976d2, 0 4px 8px rgba(0, 0, 0, 0.3)',
-            backgroundColor: selected 
-              ? 'rgba(25, 118, 210, 0.12)'
-              : 'rgba(45, 45, 45, 1)',
-            border: '1px solid transparent',
-            // 移除hover时的缩放
-          }
-        }}
-        // 移除onWheel处理，使用原生事件监听
-      >
-        <CardContent sx={{ 
-          p: 2, 
-          transition: 'all 0.3s ease',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}> 
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} sx={{ flexShrink: 0 }}> {/* 标题栏不收缩 */}
-            <Typography 
-              variant="h6"
-              sx={{ 
-                fontSize: '1rem', // 固定字体大小
-                fontWeight: 'bold',
-                color: selected ? '#fff' : '#eee',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {data.label || '机器人任务描述'}
-            </Typography>
-            <Chip 
-              label={isProcessing ? "处理中" : "用户输入"} 
-              size="small" 
-              color={isProcessing ? "success" : "primary"}
-              variant="outlined"
-              icon={isProcessing ? <ProcessingIcon /> : undefined}
-              sx={{ 
-                fontSize: '0.7rem',
-                height: '20px',
-                '& .MuiChip-label': { px: 1 }
-              }}
-            />
-          </Box>
-          
-          {/* 内容区域 - 移除整体滚动，让各个组件自己处理滚动 */}
-          <Box sx={{ 
-            mt: 1, 
-            flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden', // 防止溢出，但不添加滚动条
-          }}>
-            {/* 流式输出显示区域 */}
-            {isProcessing && (
-              <Box sx={{ mb: 2, flexShrink: 0 }}> {/* 添加flexShrink: 0确保不被压缩 */}
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
+          overflow: 'hidden',
+        }}>
+          {errorMessage && (
+            <Paper elevation={2} sx={{ p: 1.5, mb: 1.5, backgroundColor: '#ffebee', color: '#c62828', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+              <ErrorIcon fontSize="small" />
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{errorMessage}</Typography>
+            </Paper>
+          )}
+
+          {(isProcessing || streamingContent) && !isInReviewMode && (
+            <Box sx={{ mb: 1, flexShrink: 0, border: '1px solid #444', borderRadius: 1, p:1, maxHeight: '150px', overflowY: 'auto' }} ref={streamingContentRef}>
+              {isProcessing && !streamingContent && (
+                <Box display="flex" alignItems="center" gap={1} mb={0.5}>
                   <ProcessingIcon sx={{ fontSize: '1rem', color: '#4caf50' }} />
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      color: '#4caf50', 
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {processingStage || '正在处理...'}
+                  <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    {processingStage || 'Processing...'}
                   </Typography>
                 </Box>
-                <LinearProgress 
-                  color="success" 
-                  sx={{ 
-                    mb: 1,
-                    height: 3,
-                    borderRadius: 1.5
-                  }} 
-                />
-                {streamingContent && (
-                  <Paper 
-                    ref={streamingContentRef}
-                    // 移除onWheel处理，使用原生事件监听
-                    sx={{ 
-                      p: 1.5, 
-                      bgcolor: 'rgba(76, 175, 80, 0.1)', 
-                      borderRadius: 1,
-                      border: '1px solid rgba(76, 175, 80, 0.3)',
-                      height: '120px', // 固定合适的高度
-                      maxHeight: '120px', // 确保不会超出
-                      overflowY: 'auto', // 流式内容区域的滚动条
-                      overflowX: 'hidden',
-                      fontSize: '0.75rem',
-                      fontFamily: 'monospace',
-                      whiteSpace: 'pre-wrap',
-                      color: '#e8f5e8',
-                      // 自定义滚动条样式
-                      '&::-webkit-scrollbar': {
-                        width: '6px',
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: '3px',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: 'rgba(255, 255, 255, 0.3)',
-                        borderRadius: '3px',
-                        '&:hover': {
-                          background: 'rgba(255, 255, 255, 0.5)',
-                        },
-                      },
-                    }}
-                  >
-                    <Typography 
-                      variant="body2" 
-                      component="div"
-                      sx={{ 
-                        fontSize: '0.75rem',
-                        lineHeight: 1.4,
-                        color: 'inherit'
-                      }}
+              )}
+              {isProcessing && streamingContent && (
+                 <Typography variant="caption" sx={{ color: '#aaa', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>{processingStage}</Typography>
+              )}
+              <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.85rem', color: '#e0e0e0' }}>
+                {streamingContent || (isProcessing ? 'Waiting for response...' : '')}
+              </Typography>
+            </Box>
+          )}
+          {isProcessing && <LinearProgress color="success" sx={{ mb: 1, height: 3, borderRadius: 1.5, flexShrink: 0 }} /> }
+
+          {isInReviewMode && reviewContext && (
+            <Box sx={{ mb: 1, flexGrow: 1, overflowY: 'auto' }}>
+              {reviewContext.clarification_question && (
+                <Paper elevation={1} sx={{ p: 1.5, mb: 1, backgroundColor: '#1c2733'}}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#ffc107', mb:0.5}}>Question from Assistant:</Typography>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#eee' }}>{reviewContext.clarification_question}</Typography>
+                </Paper>
+              )}
+              {reviewContext.tasks && (
+                <Paper elevation={1} sx={{ p: 1.5, mb: 1, backgroundColor: '#1c2733'}}>
+                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#ffc107', mb:0.5}}>Proposed Tasks for Review:</Typography>
+                   <Box sx={{maxHeight: taskDisplayHeight, overflowY: 'auto'}}>
+                    {reviewContext.tasks.map((task, index) => (
+                        <Typography key={index} variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#eee', mb: 0.5 }}>
+                            {`${index + 1}. ${task.name} (${task.type})`}
+                        </Typography>
+                    ))}
+                   </Box>
+                </Paper>
+              )}
+              <TextField
+                fullWidth
+                variant="outlined"
+                label={reviewContext.clarification_question ? "Your Response / Clarification" : "Revise Task Description (Optional)"}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                multiline
+                rows={3}
+                disabled={isProcessing}
+                sx={{ 
+                  mb: 1,
+                  textarea: { color: '#fff', fontSize: '0.9rem' },
+                  label: { color: '#bbb' },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: '#555' },
+                    '&:hover fieldset': { borderColor: '#777' },
+                  }
+                }}
+              />
+              <Box display="flex" justifyContent="flex-end" gap={1} sx={{ flexShrink: 0 }}>
+                {reviewContext.dialog_state === 'sas_awaiting_task_list_review' && (
+                    <Button 
+                        size="small" variant="contained" color="success"
+                        onClick={() => handleSend("accept_tasks")}
+                        startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
                     >
-                      {streamingContent}
-                    </Typography>
-                  </Paper>
+                        Approve Tasks
+                    </Button>
                 )}
-              </Box>
-            )}
-
-            {/* 显示现有的用户请求 */}
-            {data.currentUserRequest && !isEditing && !showAddForm && (
-              <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: 'rgba(255, 255, 255, 0.7)', 
-                    fontSize: '0.9rem',
-                    mb: 1,
-                    flexShrink: 0 // 标签不收缩
-                  }}
-                >
-                  当前任务描述：
-                </Typography>
-                <Box 
-                  ref={taskDescriptionRef}
-                  // 移除onWheel处理，使用原生事件监听
-                  sx={{ 
-                    p: 2, 
-                    bgcolor: 'rgba(33, 150, 243, 0.1)', 
-                    borderRadius: 1, 
-                    mb: 2,
-                    border: '1px solid rgba(33, 150, 243, 0.3)',
-                    flexGrow: 1, // 占据剩余空间
-                    minHeight: '120px', // 设置最小高度
-                    maxHeight: '200px', // 设置最大高度，确保按钮可见
-                    overflowY: 'auto', // 任务描述显示区域的滚动条
-                    overflowX: 'hidden',
-                    // 自定义滚动条样式
-                    '&::-webkit-scrollbar': {
-                      width: '6px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: '3px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: 'rgba(255, 255, 255, 0.3)',
-                      borderRadius: '3px',
-                      '&:hover': {
-                        background: 'rgba(255, 255, 255, 0.5)',
-                      },
-                    },
-                  }}
-                >
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      whiteSpace: 'pre-wrap',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      lineHeight: 1.5,
-                      wordBreak: 'break-word', // 添加自动换行
-                    }}
-                  >
-                    {data.currentUserRequest}
-                  </Typography>
-                </Box>
-                <Box display="flex" gap={1} sx={{ flexShrink: 0 }}>
-                  <Button 
-                    size="small" 
-                    startIcon={<EditIcon />}
-                    onClick={handleEdit}
-                    variant="outlined"
-                    disabled={isProcessing}
-                    sx={{ fontSize: '0.8rem', py: 0.8, px: 2 }}
-                  >
-                    修改
-                  </Button>
-                  {/* 移除新建按钮 */}
-                </Box>
-              </Box>
-            )}
-
-            {/* 编辑/新建表单 */}
-            {(isEditing || showAddForm) && !isProcessing && (
-              <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: 'rgba(255, 255, 255, 0.7)', 
-                    fontSize: '0.9rem',
-                    mb: 1,
-                    flexShrink: 0
-                  }}
-                >
-                  {isEditing ? '修改任务描述：' : '输入机器人任务描述：'}
-                </Typography>
-                <TextField
-                  ref={editTextFieldRef}
-                  fullWidth
-                  multiline
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="请详细描述机器人任务..."
-                  // 移除onWheel处理，使用原生事件监听
-                  sx={{ 
-                    mb: 2,
-                    flexGrow: 1, // 占据剩余空间
-                    minHeight: '120px', // 设置最小高度
-                    maxHeight: '200px', // 设置最大高度，确保按钮可见
-                    '& .MuiOutlinedInput-root': {
-                      fontSize: '0.9rem',
-                      height: '100%', // 占满父容器
-                      '& textarea': {
-                        height: '100% !important', // 文本区域占满
-                        overflow: 'auto !important', // 文本框的滚动条
-                        resize: 'none', // 禁止手动调整大小
-                      }
-                    }
-                  }}
-                  autoFocus
-                />
-                <Box display="flex" gap={1} justifyContent="flex-end" sx={{ flexShrink: 0 }}>
-                  <Button 
-                    size="small"
-                    startIcon={<CloseIcon />}
-                    onClick={handleCancel}
-                    variant="outlined"
-                    sx={{ fontSize: '0.8rem', py: 0.8, px: 2 }}
-                  >
-                    取消
-                  </Button>
-                  <Button 
-                    size="small"
-                    startIcon={<CheckIcon />}
-                    onClick={handleSubmit}
-                    disabled={!input.trim()}
-                    variant="contained"
-                    color="primary"
-                    sx={{ fontSize: '0.8rem', py: 0.8, px: 2 }}
-                  >
-                    {isEditing ? '更新' : '提交'}
-                  </Button>
-                </Box>
-              </Box>
-            )}
-
-            {/* 空状态 - 当没有任何内容时显示 */}
-            {!data.currentUserRequest && !isEditing && !showAddForm && !isProcessing && (
-              <Box textAlign="center" py={3} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: 'rgba(255, 255, 255, 0.5)', 
-                    fontSize: '0.9rem',
-                    mb: 2 
-                  }}
-                >
-                  还没有任务描述
-                </Typography>
                 <Button 
-                  startIcon={<AddIcon />}
-                  onClick={handleAddNew}
-                  variant="contained"
-                  color="primary"
-                  size="medium"
-                  sx={{ fontSize: '0.8rem', py: 1, px: 3 }}
+                  size="small" variant="contained" 
+                  onClick={() => handleSend()}
+                  startIcon={<SendIcon />} disabled={isProcessing || !input.trim()}
+                  sx={{ fontSize: '0.8rem'}}
                 >
-                  添加任务描述
+                  {reviewContext.clarification_question ? 'Send Response' : 'Submit Revised Description'}
                 </Button>
               </Box>
-            )}
+            </Box>
+          )}
 
-            {/* 处理状态显示 */}
-            {!data.currentUserRequest && isProcessing && (
-              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.9rem',
-                    fontStyle: 'italic',
-                    textAlign: 'center'
-                  }}
-                >
-                  正在处理...
-                </Typography>
+          {!isEditing && !showAddForm && !isInReviewMode && !isProcessing && displayUserRequest && (
+            <Box sx={{ overflowY: 'auto', flexGrow: 1, mb:1, border: '1px dashed #444', borderRadius:1, p:1 }} ref={taskDescriptionRef}>
+              <Typography variant="caption" sx={{color: '#aaa', fontStyle:'italic', display:'block', mb:0.5}}>Current Task Description:</Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#fff', fontSize: '0.9rem', lineHeight: 1.5, wordBreak: 'break-word'}}>
+                {displayUserRequest}
+              </Typography>
+            </Box>
+          )}
+          {!isEditing && !showAddForm && !isInReviewMode && !isProcessing && displayUserRequest && (
+             <Box display="flex" gap={1} sx={{ flexShrink: 0, mt: 'auto' }}>
+                <Button size="small" startIcon={<EditIcon />} onClick={handleEdit} variant="outlined" disabled={isProcessing} sx={{ fontSize: '0.8rem'}}>
+                  Edit
+                </Button>
               </Box>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-    </>
+          )}
+
+          {(isEditing || showAddForm) && !isInReviewMode && !isProcessing && (
+            <Box sx={{ height: inputAreaHeight, display: 'flex', flexDirection: 'column', flexGrow:1, overflowY:'auto' }} ref={editTextFieldRef}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label={isEditing ? "Edit Task Description" : "New Task Description"}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                multiline
+                rows={showAddForm ? 5 : 3}
+                autoFocus={showAddForm || isEditing}
+                sx={{ 
+                  mb: 1, 
+                  flexGrow: 1,
+                  textarea: { color: '#fff', fontSize: '0.9rem' },
+                  label: { color: '#bbb' },
+                  '& .MuiOutlinedInput-root': {
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    '& fieldset': { borderColor: '#555' },
+                    '&:hover fieldset': { borderColor: '#777' },
+                    '&.Mui-focused fieldset': { borderColor: '#76a9fa' },
+                    '& .MuiInputBase-inputMultiline': {
+                        flexGrow: 1,
+                        overflowY: 'auto'
+                    }
+                  }
+                }}
+              />
+              <Box display="flex" justifyContent="flex-end" gap={1} sx={{flexShrink:0}}>
+                {(isEditing || showAddForm) && ( 
+                  <Button size="small" onClick={handleCancel} disabled={isProcessing} sx={{ fontSize: '0.8rem'}} variant="outlined">
+                    Cancel
+                  </Button>
+                )}
+                <Button 
+                  size="small" variant="contained" 
+                  onClick={() => handleSend()} 
+                  startIcon={isEditing ? <CheckIcon /> : <SendIcon />}
+                  disabled={isProcessing || !input.trim()}
+                  sx={{ fontSize: '0.8rem'}}
+                >
+                  {isEditing ? 'Confirm Edit' : 'Send'}
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {!displayUserRequest && !isEditing && !showAddForm && !isInReviewMode && !isProcessing && (
+            <Box textAlign="center" py={3} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+              <InfoIcon sx={{fontSize: '2rem', color: 'rgba(255, 255, 255, 0.3)', mb:1 }}/>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.9rem', mb: 2 }}>
+                No task description yet.
+              </Typography>
+              <Button startIcon={<AddIcon />} onClick={handleAddNew} variant="contained" color="primary" size="medium" sx={{ fontSize: '0.8rem'}}>
+                Add Task Description
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </CardContent>
+      <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
+    </Card>
   );
 }; 

@@ -49,10 +49,6 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
     state.is_error = False
     # state.error_message = None # Keep existing error message if any
 
-    # 新增：检查是否启用自动接受模式
-    auto_accept_enabled = state.config.get("auto_accept_tasks", False)  # 默认禁用自动接受，让流程正常执行任务分解
-    logger.info(f"Auto accept mode: {auto_accept_enabled}")
-
     # --- This initial determination of reviewing_task_list/steps is primarily for when user_input IS PRESENT ---
     # --- to know what their feedback pertains to. ---
     # --- When user_input IS NONE, we will re-evaluate directly below. ---
@@ -78,17 +74,6 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
         if not state.task_list_accepted and not state.module_steps_accepted:
             logger.info("Presenting for review: TASK LIST (since task_list_accepted is False).")
             if state.sas_step1_generated_tasks:
-                # 新增：如果启用自动接受，直接接受任务列表
-                if auto_accept_enabled:
-                    logger.info("Auto-accepting task list (auto_accept_tasks=True)")
-                    state.task_list_accepted = True
-                    state.dialog_state = "sas_step1_tasks_generated"
-                    state.clarification_question = None
-                    state.user_advice = None
-                    if not any("Task list automatically accepted" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-                        state.messages = (state.messages or []) + [AIMessage(content="Task list automatically accepted. Generating detailed module steps next.")]
-                    return state.model_dump()
-                
                 # 原有逻辑：等待用户确认
                 tasks_simple = []
                 for task in state.sas_step1_generated_tasks:
@@ -107,17 +92,6 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
         elif state.task_list_accepted and not state.module_steps_accepted:
             logger.info("Presenting for review: MODULE STEPS (since task_list_accepted is True and module_steps_accepted is False).")
             if state.sas_step1_generated_tasks and any(getattr(task, 'details', None) for task in state.sas_step1_generated_tasks): # Ensure details (module steps) exist
-                # 新增：如果启用自动接受，直接接受模块步骤
-                if auto_accept_enabled:
-                    logger.info("Auto-accepting module steps (auto_accept_tasks=True)")
-                    state.module_steps_accepted = True
-                    state.dialog_state = "sas_module_steps_accepted_proceeding"
-                    state.clarification_question = None
-                    state.user_advice = None
-                    if not any("Module steps automatically accepted" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-                        state.messages = (state.messages or []) + [AIMessage(content="Module steps automatically accepted. Preparing to generate XML program.")]
-                    return state.model_dump()
-                
                 # 原有逻辑：等待用户确认
                 tasks_with_details = []
                 for task in state.sas_step1_generated_tasks:
@@ -185,20 +159,20 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
 
         if is_accepted:
             state.clarification_question = None
-            state.user_advice = None
+            # state.user_advice = None # Keep user_advice as it was the acceptance command
 
             if reviewing_task_list_for_feedback_context:
                 logger.info("User accepted the TASK LIST.")
                 state.task_list_accepted = True
-                state.dialog_state = "sas_step1_tasks_generated"
+                state.dialog_state = "sas_step1_tasks_generated" # This state will route to module step generation
                 if not any("Task list confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-                    state.messages = (state.messages or []) + [AIMessage(content="Task list confirmed. Generating detailed module steps next.")]
+                    state.messages = (state.messages or []) + [AIMessage(content="Task list confirmed by user. Generating detailed module steps next.")]
             elif reviewing_module_steps_for_feedback_context:
                 logger.info("User accepted the MODULE STEPS.")
                 state.module_steps_accepted = True
-                state.dialog_state = "sas_module_steps_accepted_proceeding"
+                state.dialog_state = "sas_module_steps_accepted_proceeding" # This state will route to XML generation
                 if not any("Module steps confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-                    state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed. Preparing to generate XML program.")]
+                    state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed by user. Preparing to generate XML program.")]
             else:
                 logger.error("CRITICAL: Acceptance received but review context was undefined during processing.")
                 state.is_error = True
@@ -206,19 +180,81 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
                 if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
                     state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         else:
-            # User provided modifications - for simplicity, accept the feedback and continue
-            logger.info("User provided modifications. For now, accepting to continue the flow.")
-            if reviewing_task_list_for_feedback_context:
-                state.task_list_accepted = True
-                state.dialog_state = "sas_step1_tasks_generated"
-                state.messages = (state.messages or []) + [AIMessage(content="Feedback noted. Proceeding with task generation.")]
-            elif reviewing_module_steps_for_feedback_context:
-                state.module_steps_accepted = True
-                state.dialog_state = "sas_module_steps_accepted_proceeding"
-                state.messages = (state.messages or []) + [AIMessage(content="Feedback noted. Proceeding with XML generation.")]
+            # User provided modifications.
+            # The graph will now hang, waiting for the user to submit a revised full description via the frontend.
+            # The frontend will use the original description, the generated tasks, and this feedback to help the user.
+            logger.info(f"User provided feedback/modifications: '{feedback_for_processing[:200]}...'. Awaiting revised input from frontend.")
             
-            state.clarification_question = None
-            state.user_advice = None
+            current_data_for_review_json_str = ""
+            if reviewing_task_list_for_feedback_context and state.sas_step1_generated_tasks:
+                tasks_simple = []
+                for task in state.sas_step1_generated_tasks:
+                    tasks_simple.append({"name": task.name, "type": task.type, "description": task.description})
+                current_data_for_review_json_str = json.dumps(tasks_simple, indent=2, ensure_ascii=False)
+                state.dialog_state = "sas_awaiting_task_list_revision_input" # New state to indicate waiting for full revised input
+                question_for_user = (
+                    f"Original Request:\n```text\n{state.current_user_request}\n```\n\n"
+                    f"Generated Tasks (Iteration {state.revision_iteration}):\n```json\n{current_data_for_review_json_str}\n```\n\n"
+                    f"Your Feedback:\n```text\n{feedback_for_processing}\n```\n\n"
+                    f"Please provide a **complete revised task description** in the input field. You can also choose to 'approve' the generated tasks if they are now satisfactory after considering your feedback."
+                )
+            elif reviewing_module_steps_for_feedback_context and state.sas_step1_generated_tasks:
+                 # Similar logic for module steps if needed, for now focusing on task list
+                tasks_with_details = []
+                for task in state.sas_step1_generated_tasks:
+                    tasks_with_details.append({
+                        "name": task.name,
+                        "type": task.type,
+                        "description": task.description,
+                        "details": task.details if task.details else ["No module steps generated for this task."]
+                    })
+                current_data_for_review_json_str = json.dumps(tasks_with_details, indent=2, ensure_ascii=False)
+                state.dialog_state = "sas_awaiting_module_steps_revision_input" # New state
+                question_for_user = (
+                    f"Original Task List was accepted.\n\n"
+                    f"Generated Module Steps (Iteration {state.revision_iteration}):\n```json\n{current_data_for_review_json_str}\n```\n\n"
+                    f"Your Feedback:\n```text\n{feedback_for_processing}\n```\n\n"
+                    f"Please provide **complete revised module steps or overall task description** as needed. You can also 'approve'."
+                )
+            else:
+                logger.warning("Feedback received, but context for review (task list/module steps) or generated data is missing.")
+                # Fallback: Treat as general feedback, ask to clarify or resubmit full description
+                state.dialog_state = "sas_awaiting_task_list_review" # Revert to a general waiting state
+                question_for_user = (
+                    f"I have received your feedback: '{feedback_for_processing}'.\n"
+                    f"However, I'm unsure about the context. Please provide a complete new task description, or clarify your previous request."
+                )
+
+            state.clarification_question = question_for_user
+            state.revision_iteration += 1 # Increment iteration as feedback was given
+            state.task_list_accepted = False # Still needs explicit approval later
+            state.module_steps_accepted = False # Still needs explicit approval later
+
+            # Add feedback to messages as HumanMessage, and an AI message indicating it's waiting
+            if not any(feedback_for_processing in msg.content for msg in (state.messages or []) if isinstance(msg, HumanMessage)): # Avoid duplicate if already added
+                 state.messages = (state.messages or []) + [HumanMessage(content=feedback_for_processing)]
+            state.messages = (state.messages or []) + [AIMessage(content=f"Received your feedback for iteration {state.revision_iteration}. Please provide the revised input or approve.")]
+            
+            # The graph will naturally end here because dialog_state (e.g., "sas_awaiting_task_list_revision_input")
+            # will be routed to END by route_after_sas_review_and_refine, with subgraph_completion_status = "needs_clarification".
+            # Frontend will then get this state and allow user to submit a new full request.
+            # That new full request will come in as state.user_input in the *next* invocation of the graph.
+            # initialize_state_node will then set state.current_user_request = state.user_input,
+            # and the flow will go to user_input_to_task_list_node for fresh generation.
+            
+    logger.info(f"--- SAS: Review and Refine Node PRE-RETURN ---")
+    logger.info(f"    FINAL dialog_state before return: '{state.dialog_state}'")
+    if state.sas_step1_generated_tasks:
+        logger.info(f"    FINAL sas_step1_generated_tasks count before return: {len(state.sas_step1_generated_tasks)}")
+        # Log first task name if exists for quick check
+        try:
+            logger.info(f"    FINAL first task name: {state.sas_step1_generated_tasks[0].name if state.sas_step1_generated_tasks else 'N/A'}")
+        except Exception as e_log:
+            logger.error(f"Error logging first task name: {e_log}")
+    else:
+        logger.info(f"    FINAL sas_step1_generated_tasks before return: IS EMPTY OR NONE")
+    logger.info(f"    FINAL clarification_question before return: '{str(state.clarification_question)[:100]}...'")
+    logger.info(f"    FINAL subgraph_completion_status before return: '{state.subgraph_completion_status}'") # Check if it's set or passed through
 
     return state.model_dump()
 

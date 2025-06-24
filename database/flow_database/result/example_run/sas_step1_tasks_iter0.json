@@ -1,9 +1,143 @@
 [
   {
-    "name": "Main_Task",
+    "name": "Main_Assembly_Process",
     "type": "MainTask",
     "details": [],
+    "sub_tasks": [
+      "Grasp_Bearing_BRG",
+      "Grasp_BearingHousing_BH",
+      "Place_BearingHousing_BH_To_RMC",
+      "Place_Bearing_BRG_Into_BH_For_Assembly",
+      "Grasp_AssembledPart_From_RMC",
+      "Place_AssembledPart_To_LMC_TemporaryStorage",
+      "Grasp_Empty_Pallet_PLT",
+      "Place_Pallet_PLT_To_Conveyor_CNV",
+      "Grasp_AssembledPart_From_LMC",
+      "Place_AssembledPart_To_Pallet_On_Conveyor"
+    ],
+    "description": "Overall process for assembling and handling bearings, bearing housings, and pallets."
+  },
+  {
+    "name": "Grasp_Bearing_BRG",
+    "type": "GraspTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BRG_PLT_Clamp",
+      "Close_BRG_PLT_Clamp"
+    ],
+    "description": "Acquire a bearing (BRG) from its initial position using the shared BRG/PLT clamp."
+  },
+  {
+    "name": "Open_BRG_PLT_Clamp",
+    "type": "OpenClampTask",
+    "details": [],
     "sub_tasks": [],
-    "description": "Overall process that utilizes a clamp shared by bearings and pallets (PLT), and another clamp shared by bearing housings and assembled parts."
+    "description": "Open the clamp used for bearings and pallets."
+  },
+  {
+    "name": "Close_BRG_PLT_Clamp",
+    "type": "CloseClampTask",
+    "details": [],
+    "sub_tasks": [],
+    "description": "Close the clamp used for bearings and pallets to secure the bearing."
+  },
+  {
+    "name": "Grasp_BearingHousing_BH",
+    "type": "GraspTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BH_Assembly_Clamp",
+      "Close_BH_Assembly_Clamp"
+    ],
+    "description": "Acquire a bearing housing (BH) from its initial position using the shared BH/Assembly clamp."
+  },
+  {
+    "name": "Open_BH_Assembly_Clamp",
+    "type": "OpenClampTask",
+    "details": [],
+    "sub_tasks": [],
+    "description": "Open the clamp used for bearing housings and assembled parts."
+  },
+  {
+    "name": "Close_BH_Assembly_Clamp",
+    "type": "CloseClampTask",
+    "details": [],
+    "sub_tasks": [],
+    "description": "Close the clamp used for bearing housings and assembled parts to secure the bearing housing."
+  },
+  {
+    "name": "Place_BearingHousing_BH_To_RMC",
+    "type": "PlaceTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BH_Assembly_Clamp"
+    ],
+    "description": "Place the bearing housing (BH) into the Right Machining Center (RMC)."
+  },
+  {
+    "name": "Place_Bearing_BRG_Into_BH_For_Assembly",
+    "type": "PlaceTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BRG_PLT_Clamp"
+    ],
+    "description": "Place the bearing (BRG) into the bearing housing (BH) in the RMC for press-fit assembly."
+  },
+  {
+    "name": "Grasp_AssembledPart_From_RMC",
+    "type": "GraspTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BH_Assembly_Clamp",
+      "Close_BH_Assembly_Clamp"
+    ],
+    "description": "Retrieve the assembled part from the Right Machining Center (RMC)."
+  },
+  {
+    "name": "Place_AssembledPart_To_LMC_TemporaryStorage",
+    "type": "PlaceTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BH_Assembly_Clamp"
+    ],
+    "description": "Transfer the assembled part to the Left Machining Center (LMC) for temporary storage."
+  },
+  {
+    "name": "Grasp_Empty_Pallet_PLT",
+    "type": "GraspTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BRG_PLT_Clamp",
+      "Close_BRG_PLT_Clamp"
+    ],
+    "description": "Acquire an empty pallet (PLT) using the bearing-shared clamp."
+  },
+  {
+    "name": "Place_Pallet_PLT_To_Conveyor_CNV",
+    "type": "PlaceTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BRG_PLT_Clamp"
+    ],
+    "description": "Place the empty pallet (PLT) onto the designated station on the conveyor (CNV)."
+  },
+  {
+    "name": "Grasp_AssembledPart_From_LMC",
+    "type": "GraspTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BH_Assembly_Clamp",
+      "Close_BH_Assembly_Clamp"
+    ],
+    "description": "Retrieve the previously stored assembled part from the Left Machining Center (LMC)."
+  },
+  {
+    "name": "Place_AssembledPart_To_Pallet_On_Conveyor",
+    "type": "PlaceTask",
+    "details": [],
+    "sub_tasks": [
+      "Open_BH_Assembly_Clamp"
+    ],
+    "description": "Precisely place the assembled part onto the pallet on the conveyor, completing the cycle."
   }
 ]

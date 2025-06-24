@@ -198,12 +198,22 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     into specific, executable module steps using task-type-specific prompts.
     """
     logger.info(f"--- Entering SAS Step 2: Process Description to Module Steps (dialog_state: {state.dialog_state}) ---")
+    
+    # +++ ADDED DIAGNOSTIC LOGGING START +++
+    if state.sse_event_queue is None:
+        logger.error("[SSE QUEUE CHECK] state.sse_event_queue is None at the start of process_description_to_module_steps_node.")
+    else:
+        logger.info(f"[SSE QUEUE CHECK] state.sse_event_queue is PRESENT at the start. Queue type: {type(state.sse_event_queue)}. Qsize approx: {state.sse_event_queue.qsize() if hasattr(state.sse_event_queue, 'qsize') else 'N/A'}")
+    # +++ ADDED DIAGNOSTIC LOGGING END +++
+    
     logger.info(f"    Initial state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
     state.current_step_description = "SAS Step 2: Converting individual task descriptions to specific module steps (parallel execution)."
     state.is_error = False
     state.error_message = None
     aggregate_error_messages = []
     all_generated_module_steps_for_logging = []
+
+    sse_event_queue = state.sse_event_queue
 
     if not state.sas_step1_generated_tasks:
         logger.error("state.sas_step1_generated_tasks is missing. Cannot perform SAS Step 2.")
@@ -216,11 +226,20 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     node_descriptions = load_node_descriptions()
     available_blocks_markdown = _generate_available_blocks_markdown(node_descriptions)
 
-    # Create a list of coroutines for processing each task
     coroutines = []
     for i, task_def in enumerate(state.sas_step1_generated_tasks):
-        # Initialize/clear details for the current task before starting async processing
         task_def.details = [] 
+        
+        if sse_event_queue:
+            try:
+                logger.info(f"[SSE QUEUE] Putting task_detail_generation_start for taskIndex: {i}")
+                await sse_event_queue.put({
+                    "type": "task_detail_generation_start",
+                    "data": {"taskIndex": i, "taskName": getattr(task_def, 'name', f'Task {i+1}') }
+                })
+            except Exception as e_queue:
+                logger.error(f"Error putting task_detail_generation_start on SSE queue for taskIndex {i}: {e_queue}")
+
         coroutines.append(
             _generate_steps_for_single_task_async(
                 task_def=task_def,
@@ -230,39 +249,51 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
             )
         )
 
-    # Run all task processing coroutines concurrently
     logger.info(f"Starting parallel generation of module steps for {len(coroutines)} tasks.")
-    # return_exceptions=True allows us to gather all results, even if some tasks fail
     results = await asyncio.gather(*coroutines, return_exceptions=True)
     logger.info(f"Finished parallel generation. Received {len(results)} results.")
 
-    # Process results
     for i, result_or_exception in enumerate(results):
-        task_def_to_update = state.sas_step1_generated_tasks[i] # Get the original task object
+        task_def_to_update = state.sas_step1_generated_tasks[i]
         task_name_for_log = getattr(task_def_to_update, 'name', f"Unnamed Task {i+1}")
         task_type_for_log = getattr(task_def_to_update, 'type', 'UnknownType')
 
+        task_status = "success"
+        task_error_message = None
+
         if isinstance(result_or_exception, Exception):
-            # Handle exceptions raised by _generate_steps_for_single_task_async explicitly
             error_msg = f"Exception during module step generation for task '{task_name_for_log}': {str(result_or_exception)}"
-            logger.error(error_msg, exc_info=result_or_exception) # Log with exc_info
+            logger.error(error_msg, exc_info=result_or_exception)
             task_def_to_update.details = [f"Error: Exception occurred - {str(result_or_exception)[:150]}"]
             aggregate_error_messages.append(f"Error for {task_name_for_log}: {str(result_or_exception)}")
             state.is_error = True
+            task_status = "failure"
+            task_error_message = str(result_or_exception)
         else:
-            # Result is a tuple: (task_name, list_of_details, error_message_or_none)
             _processed_task_name, processed_details, individual_task_error_msg = result_or_exception
-            
-            task_def_to_update.details = processed_details # Update the original task_def's details
-            
+            task_def_to_update.details = processed_details
             if individual_task_error_msg:
-                # This means the LLM call itself or parsing within the helper function had an issue, but didn't raise an unhandled exception to gather
                 aggregate_error_messages.append(f"Error for {_processed_task_name} (reported by helper): {individual_task_error_msg}")
-                state.is_error = True # Mark overall error
+                state.is_error = True
                 logger.warning(f"Task '{_processed_task_name}' completed with reported error: {individual_task_error_msg}")
+                task_status = "failure"
+                task_error_message = individual_task_error_msg
             else:
                 all_generated_module_steps_for_logging.append(f"### Module Steps for Task: {task_name_for_log} (Type: {task_type_for_log})\\n{json.dumps(processed_details, indent=2)}")
                 logger.info(f"Successfully processed and updated details for task '{task_name_for_log}'.")
+        
+        if sse_event_queue:
+            try:
+                logger.info(f"[SSE QUEUE] Putting task_detail_generation_end for taskIndex: {i}, status: {task_status}")
+                event_to_send = {
+                    "type": "task_detail_generation_end",
+                    "data": {"taskIndex": i, "status": task_status, "taskName": task_name_for_log}
+                }
+                if task_error_message:
+                    event_to_send["data"]["error_message"] = task_error_message
+                await sse_event_queue.put(event_to_send)
+            except Exception as e_queue:
+                logger.error(f"Error putting task_detail_generation_end on SSE queue for taskIndex {i}: {e_queue}")
 
     if state.is_error:
         final_error_detail = "; ".join(aggregate_error_messages) if aggregate_error_messages else "Unknown error during parallel module step generation."

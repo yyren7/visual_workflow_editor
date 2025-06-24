@@ -10,6 +10,7 @@ import time  # 添加时间模块导入
 from datetime import datetime # <--- 修改此行
 from collections import defaultdict # 导入 defaultdict
 from backend.langgraphchat.context import current_flow_id_var # <--- Import context variable
+import uuid # 确保导入
 
 from backend.app import schemas
 from database.connection import get_db, get_db_context
@@ -65,7 +66,6 @@ async def create_chat(
     """
     创建新的聊天记录，必须登录并且只能为自己的流程图创建聊天
     """
-    print(f"成功进入 create_chat 函数: {request.method} {request.url.path}")
     logger.info(f"成功进入 create_chat 函数: {request.method} {request.url.path}")
 
     try:
@@ -402,224 +402,149 @@ async def add_message(
 
 @router.get("/{chat_id}/events")
 async def get_chat_events(chat_id: str, request: Request):
-    """
-    用于客户端通过 EventSource 连接以接收聊天事件。
-    支持虚拟Chat ID（flow_id作为chat_id）。
-    """
-    logger.info(f"收到对 chat {chat_id} 事件流的 GET 请求 from IP: {request.client.host if request.client else 'unknown'}")
+    route_hit_id = str(uuid.uuid4())
+    logger.info(f"➡️ Route /events hit for chat_id: {chat_id}, HIT_ID: {route_hit_id}, Client: {request.client.host if request.client else 'unknown'}")
 
     if chat_id not in active_chat_queues:
-        logger.warning(f"请求 chat {chat_id} 的事件流，但队列不存在或已清理")
-        # It's possible the client is trying to connect after the stream has ended and queue cleaned up.
-        # Return a specific SSE event indicating this rather than a 404, so client can handle gracefully.
+        logger.warning(f"➡️ Route /events: No active event queue for chat {chat_id} (HIT_ID: {route_hit_id}). Sending immediate end.")
         async def immediate_end_stream():
-            yield {
-                "event": "stream_end", # Or a custom "already_closed" event type
-                "data": json.dumps({"message": f"No active event stream for chat {chat_id}. It may have already finished or was never started."})
-            }
-            logger.info(f"Sent immediate stream_end for non-existent/cleaned queue {chat_id}")
+            yield {"event": "stream_end", "data": json.dumps({"message": f"No active event stream for chat {chat_id}."})}
         return EventSourceResponse(immediate_end_stream())
 
     event_queue = active_chat_queues[chat_id]
-    logger.info(f"找到 chat {chat_id} 的事件队列，准备发送 SSE 事件")
+    logger.info(f"➡️ Route /events: Found event queue for chat {chat_id} (HIT_ID: {route_hit_id})")
 
-    async def sse_event_sender():
-        # 追踪连接数
-        active_sse_connections[chat_id] += 1
-        connection_count = active_sse_connections[chat_id]
-        logger.info(f"🔴 Starting SSE event sender #{connection_count} for chat {chat_id}")
-        
-        # 如果已经有连接，发出警告
-        if connection_count > 1:
-            logger.warning(f"🔴 WARNING: Multiple SSE connections detected for chat {chat_id}! Count: {connection_count}")
+    async def sse_event_generator(current_chat_id: str, req: Request, hit_id_from_route: str):
+        sse_instance_id = str(uuid.uuid4())
+        logger.error(f"🚀🚀🚀 SSE_GENERATOR_INSTANCE_STARTED for chat_id: {current_chat_id}, HIT_ID: {hit_id_from_route}, INSTANCE_ID: {sse_instance_id}, URL: {req.url}")
+
+        active_sse_connections[current_chat_id] += 1
+        connection_count = active_sse_connections[current_chat_id]
+        logger.info(f"🔴 Running SSE event sender #{connection_count} for chat {current_chat_id} (HIT_ID: {hit_id_from_route}, Instance: {sse_instance_id})")
         
         client_disconnected = False
-        event_data = None # Initialize event_data
-
-        async def check_disconnect():
+        
+        async def check_disconnect_internal():
             nonlocal client_disconnected
+            if client_disconnected:
+                return True
             try:
-                # 更可靠的断开检测：检查连接状态
-                is_disconnected = await request.is_disconnected()
+                is_disconnected = await req.is_disconnected()
                 if is_disconnected:
                     client_disconnected = True
-                    logger.info(f"SSE client for chat {chat_id} disconnected (detected via request.is_disconnected()).")
+                    logger.info(f"🔴 SSE client for chat {current_chat_id} DISCONNECTED (Instance: {sse_instance_id}, HIT_ID: {hit_id_from_route}).")
                     return True
                 return False
-            except Exception as e:
-                # 如果检测失败，假设连接仍然活跃，但记录警告
-                logger.warning(f"Could not check client disconnect status for chat {chat_id}: {e}")
+            except Exception as e_disconnect:
+                logger.warning(f"🔴 Could not check client disconnect status for chat {current_chat_id} (Instance: {sse_instance_id}, HIT_ID: {hit_id_from_route}): {e_disconnect}")
                 return False
 
+        last_ping_time = 0
+
         try:
-            # 发送初始的心跳/连接确认事件
-            logger.debug(f"SSE sender for {chat_id}: Sending initial ping.")
-            yield {
-                "event": "ping",
-                "data": json.dumps({"timestamp": datetime.utcnow().isoformat(), "message": "SSE connection established"})
-            }
+            logger.debug(f"SSE sender for {current_chat_id}: Sending initial ping (Instance: {sse_instance_id}).")
+            yield {"event": "ping", "data": json.dumps({"timestamp": datetime.utcnow().isoformat(), "message": "SSE connection established"})}
 
             while not client_disconnected:
-                event_data = None # Reset event_data at the start of each iteration
+                event_data_item = None
                 try:
-                    # 缩短超时时间，更快检测断开
-                    logger.debug(f"[SSE {chat_id}] Waiting for event from queue...")
-                    event_data = await asyncio.wait_for(event_queue.get(), timeout=0.5) 
-                    logger.debug(f"[SSE {chat_id}] Got event: {str(event_data)[:100]}")
+                    logger.debug(f"[SSE {current_chat_id} Instance {sse_instance_id}] Waiting for event from queue...")
+                    event_data_item = await asyncio.wait_for(event_queue.get(), timeout=1.0)
+                    logger.debug(f"[SSE {current_chat_id} Instance {sse_instance_id}] Got event: {str(event_data_item)[:100]}")
                 except asyncio.TimeoutError:
-                    # 先检查断开状态
-                    is_disconnected = await check_disconnect()
-                    if is_disconnected or client_disconnected:
-                        logger.info(f"[SSE {chat_id}] Client disconnected after timeout. Breaking loop.")
-                        break 
-                    
-                    # 减少ping频率，每5秒发送一次
-                    current_time = time.time()
-                    if not hasattr(check_disconnect, '_last_ping_time'):
-                        check_disconnect._last_ping_time = 0
-                    
-                    time_since_ping = current_time - check_disconnect._last_ping_time
-                    if time_since_ping < 5.0:  # 5秒内不重复发送ping
-                        continue
-                    
-                    # Send ping if not disconnected
-                    logger.debug(f"[SSE {chat_id}] Client still connected. Sending ping.")
-                    try:
-                        yield {
-                            "event": "ping",
-                            "data": json.dumps({"timestamp": datetime.utcnow().isoformat(), "message": "keep-alive"})
-                        }
-                        check_disconnect._last_ping_time = current_time
-                    except Exception as ping_err:
-                        logger.error(f"[SSE {chat_id}] Error sending ping: {ping_err}", exc_info=True)
-                        # ping发送失败通常意味着客户端已断开
-                        client_disconnected = True
-                        break
+                    if await check_disconnect_internal(): break
+                    current_time_for_ping = time.time()
+                    if (current_time_for_ping - last_ping_time) >= 5.0:
+                        logger.debug(f"[SSE {current_chat_id} Instance {sse_instance_id}] Client still connected. Sending ping.")
+                        try:
+                            yield {"event": "ping", "data": json.dumps({"timestamp": datetime.utcnow().isoformat(), "message": "keep-alive"})}
+                            last_ping_time = current_time_for_ping
+                        except Exception as ping_err:
+                            logger.error(f"[SSE {current_chat_id} Instance {sse_instance_id}] Error sending ping: {ping_err}", exc_info=True)
+                            client_disconnected = True
+                            break
                     continue
                 except asyncio.CancelledError:
-                    logger.info(f"SSE event sender for chat {chat_id} was cancelled (likely client disconnect or task shutdown).")
-                    client_disconnected = True # Ensure flag is set
-                    break # Exit loop
-                except Exception as e_get:
-                    logger.error(f"[SSE {chat_id}] Error getting event from queue: {e_get}", exc_info=True)
-                    await check_disconnect() # Check if this error caused disconnect
-                    if client_disconnected:
-                        break
-                    # If still connected, report error and continue or break based on severity?
-                    # For now, let's try to send an error and break to be safe.
+                    logger.info(f"SSE event sender for chat {current_chat_id} was CANCELLED (Instance: {sse_instance_id}).")
+                    client_disconnected = True
+                    break
+                except Exception as e_get_q:
+                    logger.error(f"[SSE {current_chat_id} Instance {sse_instance_id}] Error getting event from queue: {e_get_q}", exc_info=True)
+                    if await check_disconnect_internal(): break
                     try:
-                        yield {"event": "error", "data": json.dumps({"message": f"Error fetching event from queue: {str(e_get)}", "stage": "sse_queue_read_error"})}
-                    except Exception as send_q_err:
-                        logger.error(f"[SSE {chat_id}] Failed to send queue read error to client: {send_q_err}")
-                    client_disconnected = True # Assume critical error, stop processing
+                        yield {"event": "error", "data": json.dumps({"message": f"Error fetching event: {str(e_get_q)}", "stage": "sse_queue_read"})}
+                    except Exception as send_q_err_e:
+                        logger.error(f"[SSE {current_chat_id} Instance {sse_instance_id}] Failed to send queue read error: {send_q_err_e}")
+                    client_disconnected = True
+                    break
+                
+                if event_data_item is STREAM_END_SENTINEL:
+                    logger.info(f"[SSE {current_chat_id} Instance {sse_instance_id}] Received STREAM_END_SENTINEL. Sending final event.")
+                    try:
+                        yield {"event": STREAM_END_SENTINEL["type"], "data": json.dumps(STREAM_END_SENTINEL["data"])}
+                        if not event_queue.empty():
+                             event_queue.task_done()
+                    except Exception as send_final_err_e:
+                        logger.error(f"[SSE {current_chat_id} Instance {sse_instance_id}] Error sending stream_end sentinel: {send_final_err_e}", exc_info=True)
+                    client_disconnected = True
                     break
 
-                if event_data is None: # Should not happen if loop logic is correct, but as a safeguard
-                    logger.warning(f"[SSE {chat_id}] event_data is None after queue.get() succeeded without timeout/exception. This is unexpected. Skipping.")
-                    continue
-                
-                if event_data is STREAM_END_SENTINEL:
-                    logger.info(f"[SSE {chat_id}] Received stream end sentinel. Sending final event and closing.")
-                    try:
-                        yield {
-                            "event": STREAM_END_SENTINEL.get("type", "stream_end"),
-                            "data": json.dumps(STREAM_END_SENTINEL.get("data", {}))
-                        }
-                        event_queue.task_done()
-                    except Exception as send_final_err:
-                        logger.error(f"[SSE {chat_id}] Error sending stream_end sentinel: {send_final_err}", exc_info=True)
-                    
-                    # 强制标记为断开连接
-                    client_disconnected = True
-                    logger.info(f"[SSE {chat_id}] Marking as disconnected after stream_end")
-                    
-                    # 只在没有其他连接时清理队列
-                    current_connections = active_sse_connections.get(chat_id, 0)
-                    logger.info(f"🔴 [SSE {chat_id}] Current SSE connections after stream_end: {current_connections}")
-                    
-                    if current_connections <= 1:  # 只有当前这一个连接时
-                        if chat_id in active_chat_queues:
-                            active_chat_queues.pop(chat_id, None)
-                            logger.info(f"[SSE {chat_id}] Immediately removed queue from active_chat_queues")
-                    else:
-                        logger.warning(f"🔴 [SSE {chat_id}] NOT removing queue - still have {current_connections} connections")
-                    
-                    break 
-
-                if isinstance(event_data, dict) and "type" in event_data and "data" in event_data:
-                    event_type = event_data.get("type", "message")
-                    data_payload = event_data.get("data", {})
-                    
-                    if isinstance(data_payload, str): 
-                        formatted_data = data_payload
-                    else:
-                        try:
-                            formatted_data = json.dumps(data_payload)
-                        except TypeError:
-                            logger.error(f"序列化事件数据为 JSON 失败 (type: {event_type}, chat: {chat_id})", exc_info=True)
-                            event_type = "error"
-                            formatted_data = json.dumps({"message": f"Failed to serialize event data for type {event_type}", "stage": "sse_formatting"})
-                    
-                    logger.debug(f"SSE Sender for {chat_id}: Sending event type '{event_type}'")
-                    yield {
-                        "event": event_type,
-                        "data": formatted_data
-                    }
+                if isinstance(event_data_item, dict) and "type" in event_data_item and "data" in event_data_item:
+                    event_type_to_send = event_data_item["type"]
+                    data_payload_to_send = event_data_item["data"]
+                    formatted_data_to_send = json.dumps(data_payload_to_send) if not isinstance(data_payload_to_send, str) else data_payload_to_send
+                    logger.debug(f"SSE Sender for {current_chat_id} (Instance {sse_instance_id}): Sending event type '{event_type_to_send}'")
+                    yield {"event": event_type_to_send, "data": formatted_data_to_send}
                 else:
-                    logger.warning(f"从队列中获取的事件格式不正确 (chat: {chat_id}): {event_data}")
-                    yield {
-                        "event": "error",
-                        "data": json.dumps({"message": "Received malformed event from queue.", "stage": "sse_formatting"})
-                    }
-                event_queue.task_done()
-                await asyncio.sleep(0.01) # Tiny sleep to allow other tasks, prevent tight loop if queue fills fast
-        
-        except asyncio.CancelledError: # Typically when client disconnects and server cancels the task
-            logger.info(f"SSE event sender for chat {chat_id} was explicitly cancelled (outer). Client disconnected: {client_disconnected}")
-            # No need to raise, just exit gracefully
-        except Exception as e_outer:
-            logger.error(f"SSE event sender for chat {chat_id} encountered an UNHANDLED (outer) error: {e_outer}", exc_info=True)
-            if not client_disconnected : 
-                try:
-                    logger.debug(f"[SSE {chat_id}] Attempting to send critical error to client: {e_outer}")
-                    yield {
-                        "event": "error",
-                        "data": json.dumps({"message": f"SSE sender encountered a critical error: {str(e_outer)}", "stage": "sse_sending_critical_outer"})
-                    }
-                except Exception as send_outer_err:
-                    logger.error(f"[SSE {chat_id}] Failed to send final critical (outer) error to client: {send_outer_err}")
-        finally:
-            # 减少连接计数
-            active_sse_connections[chat_id] -= 1
-            remaining_connections = active_sse_connections[chat_id]
-            logger.info(f"🔴 SSE event sender for chat {chat_id} is cleaning up. Remaining connections: {remaining_connections}, client_disconnected: {client_disconnected}")
-            
-            # 只有当没有其他连接时才清理队列
-            if remaining_connections == 0:
-                logger.info(f"🔴 No more SSE connections for chat {chat_id}, cleaning up queue")
-                active_sse_connections.pop(chat_id, None)  # 清理连接计数
+                    logger.warning(f"[SSE {current_chat_id} Instance {sse_instance_id}] Malformed event from queue: {event_data_item}")
+                    yield {"event": "error", "data": json.dumps({"message": "Malformed event from queue.", "stage": "sse_formatting"})}
                 
-                if chat_id in active_chat_queues and active_chat_queues[chat_id] is event_queue:
-                    # Check if queue is empty, if not, log warning as some events might be lost
+                if not event_queue.empty():
+                    event_queue.task_done()
+                await asyncio.sleep(0.01)
+
+        except asyncio.CancelledError:
+            logger.info(f"SSE event sender for chat {current_chat_id} (Instance {sse_instance_id}) was EXPLICITLY CANCELLED (outer).")
+            client_disconnected = True
+        except Exception as e_outer_gen:
+            logger.error(f"SSE event sender for chat {current_chat_id} (Instance {sse_instance_id}) UNHANDLED outer error: {e_outer_gen}", exc_info=True)
+            if not client_disconnected:
+                try:
+                    yield {"event": "error", "data": json.dumps({"message": f"Critical SSE sender error: {str(e_outer_gen)}", "stage": "sse_critical_outer"})}
+                except Exception as send_outer_final_err:
+                     logger.error(f"[SSE {current_chat_id} Instance {sse_instance_id}] Failed to send final critical outer error: {send_outer_final_err}")
+        finally:
+            logger.info(f"🔴 SSE event sender for chat {current_chat_id} (Instance {sse_instance_id}, HIT_ID: {hit_id_from_route}) entering FINALLY block. Client disconnected: {client_disconnected}")
+            if active_sse_connections[current_chat_id] > 0:
+                 active_sse_connections[current_chat_id] -= 1
+            else:
+                 logger.warning(f"🔴 SSE Cleanup for {current_chat_id} (Instance {sse_instance_id}): Connection count was already 0 or less before decrementing!")
+
+            remaining_connections = active_sse_connections.get(current_chat_id, 0)
+            logger.info(f"🔴 SSE event sender for chat {current_chat_id} (Instance {sse_instance_id}, HIT_ID: {hit_id_from_route}) CLEANING UP. Remaining connections: {remaining_connections}")
+
+            if remaining_connections == 0:
+                logger.info(f"🔴 No more SSE connections for chat {current_chat_id} (Instance {sse_instance_id}, HIT_ID: {hit_id_from_route}). Cleaning up queue and connection count entry.")
+                active_sse_connections.pop(current_chat_id, None)
+                
+                if current_chat_id in active_chat_queues and active_chat_queues[current_chat_id] is event_queue:
                     if not event_queue.empty():
-                        logger.warning(f"Cleaning up queue for chat {chat_id} but it's not empty. {event_queue.qsize()} items remaining.")
-                        # Drain the queue to prevent tasks from hanging on put() if this queue instance is reused (though defaultdict should create new)
+                        logger.warning(f"🔴 Cleaning up queue for chat {current_chat_id} (Instance {sse_instance_id}) but it's not empty. {event_queue.qsize()} items remaining (will be lost).")
                         while not event_queue.empty():
                             try:
                                 event_queue.get_nowait()
                                 event_queue.task_done()
                             except asyncio.QueueEmpty:
                                 break
-                    
-                    removed_queue = active_chat_queues.pop(chat_id, None)
-                    if removed_queue:
-                        logger.info(f"已成功从 active_chat_queues 中移除 chat {chat_id} 的队列 (Final cleanup).")
+                    active_chat_queues.pop(current_chat_id, None)
+                    logger.info(f"🔴 Queue for chat {current_chat_id} (Instance {sse_instance_id}) removed from active_chat_queues.")
                 else:
-                    logger.warning(f"在 SSE 清理阶段，chat {chat_id} 的队列已不在 active_chat_queues 中或不匹配当前实例，可能已被其他地方清理。")
+                    logger.warning(f"🔴 Queue for chat {current_chat_id} (Instance {sse_instance_id}) was not found in active_chat_queues or was not the expected instance during final cleanup. Might have been cleaned by another process or a re-entrant call.")
             else:
-                logger.warning(f"🔴 Still have {remaining_connections} SSE connections for chat {chat_id}, NOT cleaning up queue")
-            
-    return EventSourceResponse(sse_event_sender())
+                logger.warning(f"🔴 Still have {remaining_connections} SSE connections for chat {current_chat_id} (Instance {sse_instance_id}, HIT_ID: {hit_id_from_route}), NOT cleaning up queue or connection count entry fully.")
+            logger.info(f"🔴 SSE event sender for chat {current_chat_id} (Instance {sse_instance_id}, HIT_ID: {hit_id_from_route}) FINISHED.")
+
+    return EventSourceResponse(sse_event_generator(chat_id, request, route_hit_id))
 
 
 @router.delete("/{chat_id}", response_model=bool)
@@ -665,17 +590,16 @@ async def _process_and_publish_chat_events(
     """
     后台任务：处理聊天逻辑（添加消息，调用LangGraph），并通过队列发布SSE事件。
     """
-    logger.debug(f"[Chat {chat_id}] Background task started (is_edit_flow: {is_edit_flow}). Initial content (if any): {initial_user_message_content}")
+    logger.info(f"[Chat {chat_id}] Background task started (is_edit_flow: {is_edit_flow}). Initial content (if any): {initial_user_message_content}")
     is_error = False
     error_data = {}
     final_reply_accumulator = ""
     final_state = None
-    # Declare token_cv here to ensure it's in scope for the finally block
     token_cv = None 
 
     try:
         with get_db_context() as db_session_bg:
-            logger.debug(f"[Chat {chat_id}] Acquired DB session for background task.")
+            logger.info(f"[Chat {chat_id}] Acquired DB session for background task.")
             chat_service_bg = ChatService(db_session_bg)
             flow_service_bg = FlowService(db_session_bg)
 
@@ -685,32 +609,26 @@ async def _process_and_publish_chat_events(
                 await event_queue.put({"type": "error", "data": {"message": "Chat not found.", "stage": "setup"}})
                 return
             
-            # If it's a new message flow (not an edit), add the user message to DB.
-            # For an edit flow, edit_user_message_and_truncate already updated the DB.
             if not is_edit_flow and initial_user_message_content is not None:
-                logger.debug(f"[Chat {chat_id}] Attempting to save user message to DB before agent call: {initial_user_message_content[:100]}...")
-                # chat_service_bg.add_message_to_chat 返回 (Chat, str) 或 (None, None)
+                logger.info(f"[Chat {chat_id}] Attempting to save user message to DB before agent call: {initial_user_message_content[:100]}...")
                 saved_chat_obj, server_message_timestamp = chat_service_bg.add_message_to_chat(
                     chat_id=chat_id, 
                     role="user", 
                     content=initial_user_message_content
                 )
                 if saved_chat_obj and server_message_timestamp:
-                    logger.debug(f"[Chat {chat_id}] User message saved to DB with server_timestamp: {server_message_timestamp}.")
-                    # 如果有 client_message_id，则推送事件告知前端时间戳对应关系
+                    logger.info(f"[Chat {chat_id}] User message saved to DB with server_timestamp: {server_message_timestamp}.")
                     if client_message_id:
                         await event_queue.put({
                             "type": "user_message_saved", 
                             "data": {
                                 "client_message_id": client_message_id,
                                 "server_message_timestamp": server_message_timestamp,
-                                "content": initial_user_message_content # 可以选择性包含内容以供前端校验
+                                "content": initial_user_message_content
                             }
                         })
                         logger.info(f"[Chat {chat_id}] Sent user_message_saved event for client_id: {client_message_id} -> server_ts: {server_message_timestamp}")
                     
-                    # Re-fetch chat to ensure chat_data is up-to-date for history formatting
-                    # 使用返回的 saved_chat_obj 即可，无需重新查询
                     chat = saved_chat_obj 
                 else:
                     logger.error(f"[Chat {chat_id}] Failed to save user message to DB.")
@@ -718,12 +636,12 @@ async def _process_and_publish_chat_events(
                         "type": "error", 
                         "data": {"message": "Failed to save user message.", "stage": "setup"}
                     })
-                    return # 如果消息保存失败，则终止后续处理
+                    return
 
 
             flow_id = chat.flow_id
             token_cv = current_flow_id_var.set(flow_id) 
-            logger.debug(f"[Chat {chat_id}] Set current_flow_id_var to {flow_id}")
+            logger.info(f"[Chat {chat_id}] Set current_flow_id_var to {flow_id}")
 
             flow = flow_service_bg.get_flow_instance(flow_id)
             if not flow:
@@ -735,44 +653,41 @@ async def _process_and_publish_chat_events(
             flow_data = flow.flow_data or {}
             logger.debug(f"[Chat {chat_id}] Flow data for context: {str(flow_data)[:200]}...")
 
-            logger.debug(f"[Chat {chat_id}] Getting compiled LangGraph from ChatService.")
+            logger.info(f"[Chat {chat_id}] Getting compiled LangGraph from ChatService.")
             compiled_graph = chat_service_bg.compiled_workflow_graph
-            logger.debug(f"[Chat {chat_id}] Successfully got compiled LangGraph.")
+            logger.info(f"[Chat {chat_id}] Successfully got compiled LangGraph.")
 
             chat_history_raw = chat.chat_data.get("messages", [])
             
-            # The graph input should be ALL messages from history.
-            # The last message in chat_history_raw is the one the agent needs to respond to.
             graph_input_messages = _format_messages_to_langchain(chat_history_raw)
             
-            # Determine the current user input based on the last message in the formatted history
             current_user_input_content = ""
             if graph_input_messages and isinstance(graph_input_messages[-1], HumanMessage):
                 current_user_input_content = graph_input_messages[-1].content
-            else: # Should not happen if history is well-formed and ends with a user message
+            else:
                 logger.warning(f"[Chat {chat_id}] Could not determine current user input from chat history. Last message: {graph_input_messages[-1] if graph_input_messages else 'No messages'}")
-                # Fallback, though this indicates an issue upstream (e.g. after edit, no user message is last)
-                if initial_user_message_content and not is_edit_flow: # Use initial content if new message
+                if initial_user_message_content and not is_edit_flow:
                      current_user_input_content = initial_user_message_content
-                elif is_edit_flow and chat_history_raw: # If edit, try to get last message from raw data
+                elif is_edit_flow and chat_history_raw:
                     last_raw_msg = chat_history_raw[-1]
                     if last_raw_msg.get("role") == "user":
                         current_user_input_content = last_raw_msg.get("content", "")
 
 
             graph_input = {
-                "messages": graph_input_messages, # Full history including the latest user message
-                "input": current_user_input_content, # The content of the latest user message
+                "messages": graph_input_messages,
+                "input": current_user_input_content,
                 "flow_context": flow_data.get("graphContextVars", {}),
                 "current_flow_id": flow_id,
+                "sse_event_queue": event_queue
             }
             
             messages_count_val = len(graph_input["messages"])
             input_len_val = len(graph_input["input"])
             flow_id_val = graph_input["current_flow_id"]
-            logger.debug(f"[Chat {chat_id}] Prepared graph input: messages_count={messages_count_val}, input_len={input_len_val}, input_content='{current_user_input_content[:50]}...', flow_id={flow_id_val}")
+            logger.info(f"[Chat {chat_id}] Prepared graph input: messages_count={messages_count_val}, input_len={input_len_val}, input_content='{current_user_input_content[:50]}...', flow_id={flow_id_val}")
 
-            logger.debug(f"[Chat {chat_id}] Invoking compiled_graph.astream_events (version='v2')...")
+            logger.info(f"[Chat {chat_id}] Invoking compiled_graph.astream_events (version='v2')...")
             
             event_include_names = None
 
@@ -781,20 +696,17 @@ async def _process_and_publish_chat_events(
                 event_data = event.get("data", {})
                 run_name = event.get("name", "unknown_run")
 
-                # 添加更详细的事件日志
-                logger.info(f"[Chat {chat_id}] 🔍 Received event: '{event_name}' from '{run_name}', Data keys: {list(event_data.keys())}")
+                logger.debug(f"[Chat {chat_id}] Received event: '{event_name}' from '{run_name}', Data keys: {list(event_data.keys())}")
                 
-                # 特别关注Chain End事件
                 if event_name == "on_chain_end":
                     logger.info(f"[Chat {chat_id}] 🚨 CHAIN END DETECTED: run_name='{run_name}', compiled_graph.name='{compiled_graph.name}'")
-                    logger.info(f"[Chat {chat_id}] 🚨 Output data type: {type(event_data.get('output', 'NO_OUTPUT'))}")
+                    logger.debug(f"[Chat {chat_id}] 🚨 Output data type: {type(event_data.get('output', 'NO_OUTPUT'))}")
                     if isinstance(event_data.get('output'), dict):
                         output_keys = list(event_data.get('output', {}).keys())
-                        logger.info(f"[Chat {chat_id}] 🚨 Output keys: {output_keys}")
+                        logger.debug(f"[Chat {chat_id}] 🚨 Output keys: {output_keys}")
                 
-                # 记录所有不同类型的事件
-                if event_name not in ["on_chat_model_stream"]:  # 避免token流的日志过多
-                    logger.info(f"[Chat {chat_id}] 📋 Event details - Name: {event_name}, Run: {run_name}, Data type: {type(event_data)}")
+                if event_name not in ["on_chat_model_stream"]:
+                    logger.debug(f"[Chat {chat_id}] 📋 Event details - Name: {event_name}, Run: {run_name}, Data type: {type(event_data)}")
 
                 if event_name == "on_chat_model_stream":
                     chunk = event_data.get("chunk")
@@ -804,19 +716,16 @@ async def _process_and_publish_chat_events(
                         await event_queue.put({"type": "token", "data": token})
                         final_reply_accumulator += token 
                     elif chunk:
-                        logger.debug(f"[Chat {chat_id}] Received on_chat_model_stream chunk from '{run_name}' but no content or not AIMessageChunk. Chunk: {chunk}")
+                        logger.warning(f"[Chat {chat_id}] Received on_chat_model_stream chunk from '{run_name}' but no content or not AIMessageChunk. Chunk: {chunk}")
 
                 elif event_name == "on_llm_end":
                     output = event_data.get("output")
                     if output and isinstance(output, AIMessage) and output.content:
-                        logger.info(f"[Chat {chat_id}] LLM End from '{run_name}'. Full output (for verification): '{output.content[:100]}...'")
-                        # This check might be too strict if streaming involves minor post-processing.
-                        # Consider if the primary source of truth for final_reply_accumulator should be this on_llm_end if available.
-                        # For now, it just logs a warning.
+                        logger.debug(f"[Chat {chat_id}] LLM End from '{run_name}'. Full output (for verification): '{output.content[:100]}...'")
                         if final_reply_accumulator != output.content and not final_reply_accumulator.endswith(output.content):
                             logger.warning(f"[Chat {chat_id}] Discrepancy between accumulated stream and on_llm_end output from '{run_name}'. Accum: '{final_reply_accumulator[:100]}...', Output: '{output.content[:100]}...'")
                     elif output:
-                         logger.debug(f"[Chat {chat_id}] Received on_llm_end from '{run_name}' but no content or not AIMessage. Output: {output}")
+                         logger.warning(f"[Chat {chat_id}] Received on_llm_end from '{run_name}' but no content or not AIMessage. Output: {output}")
 
                 elif event_name == "on_tool_start":
                     tool_name = event_data.get("name")
@@ -833,15 +742,12 @@ async def _process_and_publish_chat_events(
                     logger.info(f"[Chat {chat_id}] Tool End: '{tool_name}' from '{run_name}' with output: {output_summary}")
                     await event_queue.put({"type": "tool_end", "data": {"name": tool_name, "output_summary": output_summary, "full_output": tool_output}})
                     
-                    # 检查特定工具是否需要触发状态同步
                     if tool_name and "sas" in tool_name.lower() and isinstance(tool_output, dict):
-                        # 检查工具输出是否包含重要状态
                         important_keys = ['sas_step1_generated_tasks', 'sas_step2_generated_task_details', 'dialog_state']
                         if any(key in tool_output for key in important_keys):
                             logger.info(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 输出包含重要状态，触发同步")
                             sync_result = _sync_langgraph_state_to_flow(tool_output, flow_id, flow_service_bg)
                             
-                            # 如果同步成功且需要前端更新，发送通知事件
                             if sync_result and sync_result.get("needs_frontend_update"):
                                 logger.info(f"[Chat {chat_id}] 🎯 工具结束后发送agent_state_updated事件到前端")
                                 await event_queue.put({
@@ -855,30 +761,26 @@ async def _process_and_publish_chat_events(
                                     }
                                 })
                             else:
-                                logger.warning(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 同步未产生前端更新需求")
+                                logger.info(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 同步未产生前端更新需求")
                         else:
-                            logger.info(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 输出不包含重要状态键: {list(tool_output.keys())}")
+                            logger.debug(f"[Chat {chat_id}] 🎯 工具 '{tool_name}' 输出不包含重要状态键: {list(tool_output.keys())}")
 
                 elif event_name == "on_chain_end":
                     outputs_from_chain = event_data.get("output", {})
                     logger.info(f"[Chat {chat_id}] 🚨 Chain End: '{run_name}'. Output keys: {list(outputs_from_chain.keys()) if isinstance(outputs_from_chain, dict) else 'Not a dict'}")
-                    logger.info(f"[Chat {chat_id}] 🚨 Chain End output type: {type(outputs_from_chain)}")
-                    logger.info(f"[Chat {chat_id}] 🚨 Chain End output content: {str(outputs_from_chain)[:500]}...")
+                    logger.debug(f"[Chat {chat_id}] 🚨 Chain End output type: {type(outputs_from_chain)}")
+                    logger.debug(f"[Chat {chat_id}] 🚨 Chain End output content: {str(outputs_from_chain)[:500]}...")
                     
-                    # 多种同步触发条件
                     should_sync = False
                     sync_reason = ""
                     
-                    # 1. 主图结束时同步（原有逻辑）
                     if run_name == compiled_graph.name or run_name == "__graph__":
                         should_sync = True
                         sync_reason = "主图执行结束"
                         final_state = outputs_from_chain
                         logger.info(f"[Chat {chat_id}] 🎯 触发条件1: 主图结束 (run_name: {run_name}, graph_name: {compiled_graph.name})")
                         
-                    # 2. SAS子图重要节点执行完成时同步
                     elif "sas" in run_name.lower() and isinstance(outputs_from_chain, dict):
-                        # 检查是否包含需要同步的重要状态
                         important_keys = [
                             'sas_step1_generated_tasks',
                             'sas_step2_generated_task_details', 
@@ -894,11 +796,10 @@ async def _process_and_publish_chat_events(
                             sync_reason = f"SAS子图状态更新 (run_name: {run_name}, found_keys: {found_keys})"
                             final_state = outputs_from_chain
                             logger.info(f"[Chat {chat_id}] 🎯 触发条件2: SAS子图状态更新")
-                            logger.info(f"[Chat {chat_id}] 🎯 发现重要键: {found_keys}")
+                            logger.debug(f"[Chat {chat_id}] 🎯 发现重要键: {found_keys}")
                         else:
-                            logger.info(f"[Chat {chat_id}] 🎯 SAS子图结束但无重要状态: {run_name}, keys: {list(outputs_from_chain.keys())}")
+                            logger.debug(f"[Chat {chat_id}] 🎯 SAS子图结束但无重要状态: {run_name}, keys: {list(outputs_from_chain.keys())}")
                     
-                    # 3. 机器人流程调用节点完成时同步
                     elif "robot_flow_invoker" in run_name.lower() and isinstance(outputs_from_chain, dict):
                         if "sas_planner_subgraph_state" in outputs_from_chain:
                             should_sync = True
@@ -906,21 +807,18 @@ async def _process_and_publish_chat_events(
                             final_state = outputs_from_chain
                             logger.info(f"[Chat {chat_id}] 🎯 触发条件3: 机器人流程节点完成")
                         else:
-                            logger.info(f"[Chat {chat_id}] 🎯 机器人流程节点结束但无子图状态: {run_name}")
+                            logger.debug(f"[Chat {chat_id}] 🎯 机器人流程节点结束但无子图状态: {run_name}")
                     
-                    # 记录未触发同步的情况
                     if not should_sync:
-                        logger.info(f"[Chat {chat_id}] 🎯 Chain End不满足同步条件: run_name='{run_name}', graph_name='{compiled_graph.name}', is_dict={isinstance(outputs_from_chain, dict)}")
+                        logger.debug(f"[Chat {chat_id}] 🎯 Chain End不满足同步条件: run_name='{run_name}', graph_name='{compiled_graph.name}', is_dict={isinstance(outputs_from_chain, dict)}")
                     
-                    # 执行同步
                     if should_sync:
                         logger.info(f"[Chat {chat_id}] 🎯 触发同步 - 原因: {sync_reason}")
-                        logger.info(f"[Chat {chat_id}] 🎯 Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Content: {str(final_state)[:500]}...")
+                        logger.debug(f"[Chat {chat_id}] 🎯 Final state keys: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}. Content: {str(final_state)[:500]}...")
                         
                         if isinstance(final_state, dict):
                             sync_result = _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg)
                             
-                            # 如果同步成功且需要前端更新，发送通知事件
                             if sync_result and sync_result.get("needs_frontend_update"):
                                 logger.info(f"[Chat {chat_id}] 🎯 发送agent_state_updated事件到前端")
                                 await event_queue.put({
@@ -933,17 +831,16 @@ async def _process_and_publish_chat_events(
                                     }
                                 })
                             else:
-                                logger.warning(f"[Chat {chat_id}] 🎯 同步完成但无需前端更新: sync_result={sync_result}")
+                                logger.info(f"[Chat {chat_id}] 🎯 同步完成但无需前端更新: sync_result={sync_result}")
                         else:
                             logger.warning(f"[Chat {chat_id}] 🎯 final_state不是字典类型，跳过同步。类型: {type(final_state)}")
                     
-                    # 主图结束时的特殊处理（保持原有逻辑）
                     if run_name == compiled_graph.name or run_name == "__graph__":
 
                         latest_ai_message_from_state: Optional[str] = None
                         if isinstance(final_state, dict) and "messages" in final_state and isinstance(final_state["messages"], list):
                             
-                            for msg_state in reversed(final_state["messages"]): # Original loop
+                            for msg_state in reversed(final_state["messages"]):
                                 content_candidate: Optional[str] = None
                                 is_ai_message = False
 
@@ -960,9 +857,10 @@ async def _process_and_publish_chat_events(
                                         latest_ai_message_from_state = content_candidate
                                         logger.info(f"[Chat {chat_id}] Found latest AI message (type: {type(msg_state)}) in final graph state: '{latest_ai_message_from_state[:100]}...'")
                                     else:
-                                        logger.info(f"[Chat {chat_id}] Found AI-like message (type: {type(msg_state)}) in final state, but content is None, not string, or empty/whitespace. Original content: '{str(content_candidate)[:100]}...'")
-                                    break # Found the latest AI-like message, break from loop
-                                # If not an AI message, continue to the next older message
+                                        logger.warning(f"[Chat {chat_id}] Found AI-like message (type: {type(msg_state)}) in final state, but content is None, not string, or empty/whitespace. Original content: '{str(content_candidate)[:100]}...'")
+                                    break
+                                if not is_ai_message:
+                                    continue
                         
                         if latest_ai_message_from_state:
                             if not final_reply_accumulator:
@@ -973,18 +871,12 @@ async def _process_and_publish_chat_events(
                                 logger.warning(f"[Chat {chat_id}] Accumulated stream reply ('{final_reply_accumulator[:100]}...') differs from final graph state AIMessage ('{latest_ai_message_from_state[:100]}...').")
                                 logger.info(f"[Chat {chat_id}] Overwriting accumulated stream with final AIMessage from graph state for frontend and saving.")
                                 final_reply_accumulator = latest_ai_message_from_state
-                                # Send this authoritative message. If frontend simply appends tokens, this might lead to duplication
-                                # or mixed messages if not handled carefully by client.
-                                # A more robust solution might involve a special event type e.g., "final_message" or "replace_content".
-                                # For now, sending as "token" to ensure it's displayed.
                                 await event_queue.put({"type": "token", "data": latest_ai_message_from_state})
-                            # If final_reply_accumulator == latest_ai_message_from_state, it means stream matched final state, no action needed.
-                        else: # No valid AIMessage found in final_state
+                        else:
                             if final_reply_accumulator:
                                 logger.info(f"[Chat {chat_id}] Graph ended. No new AIMessage in final state. Using previously accumulated stream as final reply: '{final_reply_accumulator[:100]}...'")
                             else:
                                 logger.warning(f"[Chat {chat_id}] Graph ended. No AIMessage in final state and no accumulated stream. Reply will be empty/null if no default is set later.")
-                                # final_reply_accumulator remains empty or None.
                 
                 elif event_name == "on_chain_error" or event_name == "on_llm_error" or event_name == "on_tool_error":
                     error_content = str(event_data.get("error", "Unknown error"))
@@ -1012,32 +904,27 @@ async def _process_and_publish_chat_events(
     finally:
         if token_cv is not None: 
             current_flow_id_var.reset(token_cv)
-            logger.debug(f"[Chat {chat_id}] Reset current_flow_id context variable in finally block.")
+            logger.info(f"[Chat {chat_id}] Reset current_flow_id context variable in finally block.")
         else:
-            logger.debug(f"[Chat {chat_id}] current_flow_id_var might not have been set or was already reset, skipping reset in finally.")
+            logger.warning(f"[Chat {chat_id}] current_flow_id_var might not have been set or was already reset, skipping reset in finally.")
 
-        # --- 新增：处理会话结束时的默认回复 ---
         session_should_end = False
         if isinstance(final_state, dict) and final_state.get("output") == "__end__":
             session_should_end = True
-        elif isinstance(final_state, str) and final_state == "__end__": # Fallback for simpler __end__ signal
+        elif isinstance(final_state, str) and final_state == "__end__":
             session_should_end = True
-        # You might have other ways to check if the session should end based on your specific final_state structure
-        # For example, if final_state has a specific key from your graph like final_state.get('next_node') == '__end__'
 
         if session_should_end and not final_reply_accumulator and not is_error:
             default_goodbye_message = "好的，再见！如果您还有其他问题，随时可以再次联系我。"
             logger.info(f"[Chat {chat_id}] Session is ending and no AI reply was generated. Using default goodbye: '{default_goodbye_message}'")
             final_reply_accumulator = default_goodbye_message
             try:
-                # Ensure this default message is also sent as a token to the client
                 await event_queue.put({"type": "token", "data": default_goodbye_message})
-                logger.debug(f"[Chat {chat_id}] Sent default goodbye message to event queue.")
+                logger.info(f"[Chat {chat_id}] Sent default goodbye message to event queue.")
             except asyncio.QueueFull:
                 logger.error(f"[Chat {chat_id}] Failed to put default goodbye message in full queue.")
             except Exception as qe_goodbye:
                 logger.error(f"[Chat {chat_id}] Failed to put default goodbye message in queue: {qe_goodbye}")
-        # --- 结束新增 ---
 
         if not is_error and final_reply_accumulator:
             try:
@@ -1055,25 +942,22 @@ async def _process_and_publish_chat_events(
         elif is_error:
             logger.warning(f"[Chat {chat_id}] Skipping AI reply save due to an error during processing. Error: {error_data}")
         else:
-            logger.warning(f"[Chat {chat_id}] Skipping save because final reply was empty or null. Accumulator content: '{final_reply_accumulator}'")
+            logger.info(f"[Chat {chat_id}] Skipping save because final reply was empty or null. Accumulator content: '{final_reply_accumulator}'")
         
         try:
-            logger.debug(f"[Chat {chat_id}] Putting STREAM_END_SENTINEL into queue.")
+            logger.info(f"[Chat {chat_id}] Putting STREAM_END_SENTINEL into queue.")
             await event_queue.put(STREAM_END_SENTINEL)
-            logger.debug(f"[Chat {chat_id}] Stream end sentinel sent.")
+            logger.info(f"[Chat {chat_id}] Stream end sentinel sent.")
         except asyncio.QueueFull:
             logger.error(f"[Chat {chat_id}] Failed to put STREAM_END_SENTINEL in full queue.")
         except Exception as qe:
             logger.error(f"[Chat {chat_id}] Failed to put STREAM_END_SENTINEL in queue: {qe}")
         
-        # --- 新增：确保向所有可能的队列发送STREAM_END_SENTINEL ---
-        # 检查是否有活跃的队列，如果有，确保发送结束信号
         if chat_id in active_chat_queues and active_chat_queues[chat_id] is not event_queue:
             try:
                 current_queue = active_chat_queues[chat_id]
                 logger.info(f"[Chat {chat_id}] Found active queue during cleanup. Queue size: {current_queue.qsize()}")
                 
-                # 检查队列中是否已经有STREAM_END_SENTINEL
                 has_end_sentinel = False
                 temp_items = []
                 while not current_queue.empty():
@@ -1087,17 +971,13 @@ async def _process_and_publish_chat_events(
                     except asyncio.QueueEmpty:
                         break
                 
-                # 将临时取出的项目放回队列
                 for item in temp_items:
                     await current_queue.put(item)
                 
-                # 如果没有结束标记，添加一个
                 if not has_end_sentinel:
                     logger.info(f"[Chat {chat_id}] No STREAM_END_SENTINEL found in queue, adding one now")
                     await current_queue.put(STREAM_END_SENTINEL)
                     logger.info(f"[Chat {chat_id}] STREAM_END_SENTINEL added to queue during cleanup")
-                else:
-                    logger.info(f"[Chat {chat_id}] STREAM_END_SENTINEL already exists in queue, skipping duplicate")
                     
             except asyncio.QueueFull:
                 logger.error(f"[Chat {chat_id}] Failed to add STREAM_END_SENTINEL during cleanup - queue is full")
@@ -1109,31 +989,23 @@ async def _process_and_publish_chat_events(
         logger.info(f"[Chat {chat_id}] Background task (is_edit_flow: {is_edit_flow}) final cleanup completed.")
 
 def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
-    """
-    将LangGraph执行的final_state同步到主Flow的agent_state
-    支持多种重要状态的同步，包括任务生成、详情生成等
-    **新增**：支持从sas_planner_subgraph_state中提取SAS子图数据
-    """
     try:
         logger.info(f"[Flow {flow_id}] 🎯 开始同步LangGraph状态到Flow agent_state...")
-        logger.info(f"[Flow {flow_id}] 🎯 final_state键值: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}")
-        logger.info(f"[Flow {flow_id}] 🎯 final_state内容摘要: {str(final_state)[:1000]}...")
+        logger.debug(f"[Flow {flow_id}] 🎯 final_state键值: {list(final_state.keys()) if isinstance(final_state, dict) else 'Not a dict'}")
+        logger.debug(f"[Flow {flow_id}] 🎯 final_state内容摘要: {str(final_state)[:1000]}...")
         
-        # 获取当前Flow的agent_state
         flow = flow_service_bg.get_flow_instance(flow_id)
         if not flow:
             logger.error(f"[Flow {flow_id}] 无法找到Flow，同步失败")
             return None
         
         current_agent_state = flow.agent_state or {}
-        logger.info(f"[Flow {flow_id}] 🎯 当前agent_state键值: {list(current_agent_state.keys())}")
+        logger.debug(f"[Flow {flow_id}] 🎯 当前agent_state键值: {list(current_agent_state.keys())}")
         
-        # 检查需要同步的状态变化
         needs_sync = False
         sync_updates = {}
         update_types = []
         
-        # 1. 检查主图状态中的直接字段
         important_fields = [
             'sas_step1_generated_tasks',
             'sas_step2_generated_task_details', 
@@ -1150,19 +1022,29 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
             if field in final_state:
                 current_value = current_agent_state.get(field)
                 new_value = final_state[field]
+
+                # <<< START DEBUG LOGGING >>>
+                if field == 'dialog_state' or field == 'sas_step1_generated_tasks':
+                    logger.info(f"[SYNC_DEBUG] Comparing field: {field}")
+                    logger.info(f"[SYNC_DEBUG]   current_value ('{type(current_value)}'): {str(current_value)[:300]}")
+                    logger.info(f"[SYNC_DEBUG]   new_value     ('{type(new_value)}'): {str(new_value)[:300]}")
+                    is_different = current_value != new_value
+                    logger.info(f"[SYNC_DEBUG]   Comparison result (current_value != new_value): {is_different}")
+                # <<< END DEBUG LOGGING >>>
+
                 if current_value != new_value:
-                    logger.info(f"[Flow {flow_id}] 🎯 检测到{field}变化: {current_value} -> {new_value}")
+                    current_value_str = str(current_value)[:50] + ('...' if len(str(current_value)) > 50 else '')
+                    new_value_str = str(new_value)[:50] + ('...' if len(str(new_value)) > 50 else '')
+                    logger.info(f"[Flow {flow_id}] 🎯 检测到{field}变化: {current_value_str} -> {new_value_str}")
                     sync_updates[field] = new_value
                     update_types.append(field)
                     needs_sync = True
         
-        # 2. **新增**：检查sas_planner_subgraph_state（关键修复）
         sas_subgraph_state = final_state.get('sas_planner_subgraph_state')
         if sas_subgraph_state and isinstance(sas_subgraph_state, dict):
             logger.info(f"[Flow {flow_id}] 🎯 发现SAS子图状态，开始提取数据...")
-            logger.info(f"[Flow {flow_id}] 🎯 SAS子图状态键值: {list(sas_subgraph_state.keys())}")
+            logger.debug(f"[Flow {flow_id}] 🎯 SAS子图状态键值: {list(sas_subgraph_state.keys())}")
             
-            # 提取SAS子图中的重要数据
             sas_important_fields = [
                 'sas_step1_generated_tasks',
                 'sas_step2_generated_task_details',
@@ -1180,30 +1062,30 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
                     current_value = current_agent_state.get(field)
                     new_value = sas_subgraph_state[field]
                     if current_value != new_value:
-                        logger.info(f"[Flow {flow_id}] 🎯 从SAS子图检测到{field}变化: {current_value} -> {new_value}")
+                        current_value_str_sas = str(current_value)[:50] + ('...' if len(str(current_value)) > 50 else '')
+                        new_value_str_sas = str(new_value)[:50] + ('...' if len(str(new_value)) > 50 else '')
+                        logger.info(f"[Flow {flow_id}] 🎯 从SAS子图检测到{field}变化: {current_value_str_sas} -> {new_value_str_sas}")
                         sync_updates[field] = new_value
                         update_types.append(f"sas_{field}")
                         needs_sync = True
             
-            # 特别处理任务数据的详细检查
             sas_tasks = sas_subgraph_state.get('sas_step1_generated_tasks')
             if sas_tasks:
                 logger.info(f"[Flow {flow_id}] 🎯 SAS子图包含 {len(sas_tasks)} 个任务:")
                 for i, task in enumerate(sas_tasks):
                     if isinstance(task, dict):
-                        logger.info(f"[Flow {flow_id}] 🎯   任务{i+1}: {task.get('name', 'Unknown')} (类型: {task.get('type', 'Unknown')})")
+                        logger.debug(f"[Flow {flow_id}] 🎯   任务{i+1}: {task.get('name', 'Unknown')} (类型: {task.get('type', 'Unknown')})")
                     else:
-                        logger.info(f"[Flow {flow_id}] 🎯   任务{i+1}: {task}")
+                        logger.debug(f"[Flow {flow_id}] 🎯   任务{i+1}: {task}")
             
             sas_details = sas_subgraph_state.get('sas_step2_generated_task_details')
             if sas_details:
-                logger.info(f"[Flow {flow_id}] 🎯 SAS子图包含任务详情: {len(sas_details)} 项")
+                logger.info(f"[Flow {flow_id}] SAS子图包含任务详情: {len(sas_details)} 项")
                 for task_key, details in sas_details.items():
                     if isinstance(details, dict) and 'details' in details:
                         detail_count = len(details['details']) if isinstance(details['details'], list) else 1
-                        logger.info(f"[Flow {flow_id}] 🎯   {task_key}: {detail_count} 个详情")
+                        logger.debug(f"[Flow {flow_id}] 🎯   {task_key}: {detail_count} 个详情")
         
-        # 3. 强制检查是否需要前端节点更新（关键逻辑）
         has_task_data = (
             sync_updates.get('sas_step1_generated_tasks') or 
             current_agent_state.get('sas_step1_generated_tasks') or
@@ -1222,17 +1104,14 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
             update_types.append("frontend_nodes")
             needs_sync = True
         
-        # 4. 执行同步更新
         if needs_sync:
             logger.info(f"[Flow {flow_id}] 🎯 执行状态同步，更新 {len(sync_updates)} 个字段:")
             for key, value in sync_updates.items():
-                logger.info(f"[Flow {flow_id}] 🎯   {key}: {str(value)[:200]}...")
+                logger.debug(f"[Flow {flow_id}] 🎯   {key}: {str(value)[:200]}...")
             
-            # 更新Flow的agent_state
             current_agent_state.update(sync_updates)
             flow.agent_state = current_agent_state
             
-            # 准备返回结果
             result = {
                 "needs_frontend_update": needs_frontend_update,
                 "update_types": update_types,

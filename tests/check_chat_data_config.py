@@ -37,14 +37,6 @@ def query_chat_data_config():
                     print("\n--- config within persisted_sas_graph_state ---")
                     if config and isinstance(config, dict):
                         print(json.dumps(config, indent=2, ensure_ascii=False))
-                        auto_accept_tasks = config.get("auto_accept_tasks")
-                        print(f"\nValue of 'auto_accept_tasks' in persisted_sas_graph_state.config: {auto_accept_tasks}")
-                        if auto_accept_tasks is True:
-                            print("\n>>> !!! auto_accept_tasks is True in persisted chat state !!! <<<")
-                        elif auto_accept_tasks is False:
-                            print("\n>>> auto_accept_tasks is False in persisted chat state.")
-                        else:
-                            print("\n>>> auto_accept_tasks key not found or has unexpected value in persisted chat state config.")
                     else:
                         print("No 'config' dictionary found in persisted_sas_graph_state, or it's not a dictionary.")
                 else:

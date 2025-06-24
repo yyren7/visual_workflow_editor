@@ -199,7 +199,7 @@ if __name__ == "__main__":
         "app.main:app",  # 使用app目录下的main.py入口
         host="0.0.0.0",
         port=args.port,
-        reload=True,
+        reload=False,
         reload_dirs=reload_dirs,  # 只监视后端代码目录
         reload_excludes=["*.git*", "*.pyc", "__pycache__"]  # 排除不需要监视的目录和文件
     )

@@ -178,14 +178,60 @@ async def robot_flow_invoker_node(state: AgentState, llm: BaseChatModel, sas_sub
     }
 
     if completion_status == "needs_clarification":
-        logger.info("Subgraph needs clarification. Preserving task_route_decision and user_request_for_router. Storing SAS subgraph state.")
+        logger.info("Subgraph needs clarification. Preserving task_route_decision and user_request_for_router. Storing SAS subgraph state and promoting key fields.")
         # Preserve routing decision for re-entry
         if state.get("task_route_decision") is not None:
             update_dict["task_route_decision"] = state.get("task_route_decision")
         if state.get("user_request_for_router") is not None:
             update_dict["user_request_for_router"] = state.get("user_request_for_router")
-        # Store the full state of the SAS subgraph for persistence
+        
         update_dict["sas_planner_subgraph_state"] = final_subgraph_state_dict 
+
+        # Promote key fields from subgraph state to main state for UI updates
+        if isinstance(final_subgraph_state_dict, dict):
+            # Extract tasks
+            if "sas_step1_generated_tasks" in final_subgraph_state_dict:
+                update_dict["sas_step1_generated_tasks"] = final_subgraph_state_dict["sas_step1_generated_tasks"]
+                logger.info(f"Promoting {len(final_subgraph_state_dict['sas_step1_generated_tasks'])} tasks from SAS subgraph (needs_clarification)")
+            
+            # Extract details (though less common for task list review stage, good to be consistent)
+            if "sas_step2_generated_task_details" in final_subgraph_state_dict:
+                update_dict["sas_step2_generated_task_details"] = final_subgraph_state_dict["sas_step2_generated_task_details"]
+                logger.info(f"Promoting {len(final_subgraph_state_dict['sas_step2_generated_task_details'])} task details from SAS subgraph (needs_clarification)")
+
+            # Extract other important state fields
+            important_fields_to_promote = ["current_user_request", "dialog_state", "task_list_accepted", "module_steps_accepted", "clarification_question"]
+            for field in important_fields_to_promote:
+                if field in final_subgraph_state_dict:
+                    update_dict[field] = final_subgraph_state_dict[field]
+                    logger.info(f"Promoting {field}: {final_subgraph_state_dict[field]} (needs_clarification)")
+                elif field in update_dict and update_dict[field] is None: # If already in update_dict as None (e.g. from state), avoid overwriting with absence unless subgraph explicitly has it
+                    pass
+                # else: # If not in subgraph and not already None in update_dict, it will retain main agent state value if any.
+                #    logger.debug(f"Field {field} not found in final_subgraph_state for promotion (needs_clarification).")
+
+    elif completion_status == "completed_partial":
+        logger.info(f"Subgraph returned 'completed_partial'. Promoting key fields and preserving SAS state for sync.")
+        update_dict["sas_planner_subgraph_state"] = final_subgraph_state_dict # Preserve full subgraph state
+
+        # Promote key fields from subgraph state to main state for UI updates
+        if isinstance(final_subgraph_state_dict, dict):
+            if "sas_step1_generated_tasks" in final_subgraph_state_dict:
+                update_dict["sas_step1_generated_tasks"] = final_subgraph_state_dict["sas_step1_generated_tasks"]
+                logger.info(f"Promoting {len(final_subgraph_state_dict['sas_step1_generated_tasks'])} tasks from SAS subgraph (completed_partial)")
+            
+            if "sas_step2_generated_task_details" in final_subgraph_state_dict:
+                update_dict["sas_step2_generated_task_details"] = final_subgraph_state_dict["sas_step2_generated_task_details"]
+                logger.info(f"Promoting {len(final_subgraph_state_dict['sas_step2_generated_task_details'])} task details from SAS subgraph (completed_partial)")
+
+            important_fields_to_promote = ["current_user_request", "dialog_state", "task_list_accepted", "module_steps_accepted", "clarification_question"]
+            for field in important_fields_to_promote:
+                if field in final_subgraph_state_dict:
+                    update_dict[field] = final_subgraph_state_dict[field]
+                    logger.info(f"Promoting {field}: {final_subgraph_state_dict[field]} (completed_partial)")
+                elif field in update_dict and update_dict[field] is None:
+                    pass
+
     elif completion_status == "completed_success":
         logger.info(f"Subgraph completed successfully. Extracting important data and preserving SAS state for sync.")
         # Clear routing decision as workflow is complete

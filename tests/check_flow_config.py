@@ -41,14 +41,6 @@ def query_agent_state():
                 print("\n--- config ---")
                 if config and isinstance(config, dict):
                     print(json.dumps(config, indent=2, ensure_ascii=False))
-                    auto_accept_tasks = config.get("auto_accept_tasks")
-                    print(f"\nValue of 'auto_accept_tasks': {auto_accept_tasks}")
-                    if auto_accept_tasks is True:
-                        print("\n>>> !!! auto_accept_tasks is set to True !!! <<<")
-                    elif auto_accept_tasks is False:
-                        print("\n>>> auto_accept_tasks is set to False.")
-                    else:
-                        print("\n>>> auto_accept_tasks key not found in config or has an unexpected value.")
                 else:
                     print("No 'config' dictionary found in agent_state, or it's not a dictionary.")
             else:

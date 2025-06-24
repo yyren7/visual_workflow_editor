@@ -1,3 +1,4 @@
+import asyncio
 from typing import TypedDict, List, Dict, Any, Optional, Literal
 from pydantic import BaseModel, Field
 from langchain_core.messages import BaseMessage
@@ -24,6 +25,7 @@ class RobotFlowAgentState(BaseModel):
     Represents the state of the Robot Flow Agent.
     """
     messages: List[BaseMessage] = Field(default_factory=list, description="The history of messages in the conversation.")
+    sse_event_queue: Optional[asyncio.Queue] = Field(default=None, exclude=True, description="SSE event queue for real-time updates from graph nodes.")
     
     user_input: Optional[str] = Field(None, description="The latest input from the user, consumed after processing by a node.")
     current_user_request: Optional[str] = Field(None, description="The active user request (initialized from first user_input, then revised by feedback) that serves as the basis for the current flow or sub-flow.")

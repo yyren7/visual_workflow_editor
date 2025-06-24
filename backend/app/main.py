@@ -8,6 +8,8 @@ import logging
 from pathlib import Path
 import logging.handlers
 import time # 导入 time
+import uuid # ADDED
+import datetime # ADDED
 
 # --- 新增：启用 LangChain 的详细日志 ---
 import langchain
@@ -46,7 +48,8 @@ general_console_handler.setFormatter(app_main_formatter)
 general_console_handler.setLevel(logging.DEBUG) # 确保处理器本身也允许 DEBUG
 
 backend_app_logger.addHandler(general_console_handler)
-# 不需要设置 backend_app_logger.propagate = False，让 app.main 等子记录器可以进一步自定义行为
+backend_app_logger.propagate = False # ADDED THIS LINE
+# 不需要设置 backend_app_logger.propagate = False，让 app.main 等子记录器可以进一步自定义行为 # This comment is now outdated by the line above
 # --- END MODIFICATION ---
 
 # 创建单独的DeepSeek日志记录器
@@ -242,9 +245,13 @@ async def startup_event():
     应用启动时执行的事件
     预加载节点模板数据
     """
+    log_id = str(uuid.uuid4())
+    current_time = datetime.datetime.now().isoformat()
+    logger.info(f"🚀 STARTUP EVENT 1 (startup_event) CALLED - ID: {log_id} at {current_time}")
     # 预加载节点模板
     template_service = get_node_template_service()
-    print("节点模板加载成功")
+    # print("节点模板加载成功") # REPLACED
+    logger.info(f"Node templates loaded by startup_event (ID: {log_id}).")
     
     # 不再需要初始化节点类型提示服务
     # 它将在langgraphchat/prompts/chat_prompts.py中按需创建
@@ -270,32 +277,35 @@ async def version(request: Request):
 @app.on_event("startup")
 async def validate_api_configuration():
     """验证API配置，确保必要的服务可以正常工作"""
-    import logging
-    logger = logging.getLogger("backend.app.startup")
+    log_id = str(uuid.uuid4())
+    current_time = datetime.datetime.now().isoformat()
+    logger.info(f"🚀 STARTUP EVENT 2 (validate_api_configuration) CALLED - ID: {log_id} at {current_time}")
+    import logging # This import is fine here or at top
+    logger_local = logging.getLogger("backend.app.startup") # Use a more specific logger or the global one
     
     from backend.config import APP_CONFIG, AI_CONFIG, DB_CONFIG
     
     # 验证DeepSeek配置
     if AI_CONFIG['USE_DEEPSEEK']:
-        logger.info("正在验证DeepSeek API配置")
+        logger_local.info("正在验证DeepSeek API配置")
         
         invalid_key = not AI_CONFIG['DEEPSEEK_API_KEY'] or AI_CONFIG['DEEPSEEK_API_KEY'] == "your_deepseek_api_key_here" or AI_CONFIG['DEEPSEEK_API_KEY'].startswith("sk-if-you-see-this")
         
         if invalid_key:
-            logger.warning("⚠️ 未设置有效的DeepSeek API密钥，请设置DEEPSEEK_API_KEY环境变量")
-            logger.warning("⚠️ 当前API密钥值不是有效的密钥，API调用将失败")
+            logger_local.warning("⚠️ 未设置有效的DeepSeek API密钥，请设置DEEPSEEK_API_KEY环境变量")
+            logger_local.warning("⚠️ 当前API密钥值不是有效的密钥，API调用将失败")
         else:
-            logger.info(f"✓ DeepSeek API密钥已设置 (前4位: {AI_CONFIG['DEEPSEEK_API_KEY'][:4]}***)")
+            logger_local.info(f"✓ DeepSeek API密钥已设置 (前4位: {AI_CONFIG['DEEPSEEK_API_KEY'][:4]}***)")
             
         # 检查基础URL是否正确
         base_url = AI_CONFIG['DEEPSEEK_BASE_URL'].rstrip('/')
-        logger.info(f"DeepSeek API基础URL: {base_url}")
+        logger_local.info(f"DeepSeek API基础URL: {base_url}")
         
         if '/v1/' in base_url or base_url.endswith('/v1'):
-            logger.warning(f"⚠️ 检测到基础URL中包含/v1路径: {base_url}")
-            logger.warning("⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions")
+            logger_local.warning(f"⚠️ 检测到基础URL中包含/v1路径: {base_url}")
+            logger_local.warning("⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions")
             
-        logger.info(f"DeepSeek模型: {AI_CONFIG['DEEPSEEK_MODEL']}")
+        logger_local.info(f"DeepSeek模型: {AI_CONFIG['DEEPSEEK_MODEL']}")
         
         # 尝试验证 DeepSeek 客户端模块
         try:
@@ -303,22 +313,22 @@ async def validate_api_configuration():
             from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
             # 之前获取实例的代码不再需要
             # logger.info("✓ DeepSeek客户端服务初始化成功") # 旧日志
-            logger.info("✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功") # 新日志
+            logger_local.info("✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功") # 新日志
         except Exception as e:
             # logger.error(f"⚠️ DeepSeek客户端服务初始化失败: {str(e)}") # 旧日志
-            logger.error(f"⚠️ DeepSeek客户端模块 (DeepSeekLLM) 导入或验证失败: {str(e)}") # 新日志
+            logger_local.error(f"⚠️ DeepSeek客户端模块 (DeepSeekLLM) 导入或验证失败: {str(e)}") # 新日志
     
     # 验证数据库配置
-    logger.info(f"数据库URL: {DB_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in DB_CONFIG and DB_CONFIG['DATABASE_URL'] else '未设置'}")
+    logger_local.info(f"数据库URL: {DB_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in DB_CONFIG and DB_CONFIG['DATABASE_URL'] else '未设置'}")
     
     # 记录调试模式状态
     if APP_CONFIG['DEBUG']:
-        logger.info("⚠️ 调试模式已启用")
+        logger_local.info("⚠️ 调试模式已启用")
     else:
-        logger.info("✓ 调试模式已禁用")
+        logger_local.info("✓ 调试模式已禁用")
         
     # 记录API前缀
-    logger.info(f"API前缀: {APP_CONFIG['API_PREFIX']}")
+    logger_local.info(f"API前缀: {APP_CONFIG['API_PREFIX']}")
     
     # 验证CORS配置
-    logger.info(f"CORS允许的源: {', '.join(APP_CONFIG['CORS_ORIGINS'])}")
+    logger_local.info(f"CORS允许的源: {', '.join(APP_CONFIG['CORS_ORIGINS'])}")

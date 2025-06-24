@@ -1,17 +1,12 @@
 import { useCallback, useRef, useEffect } from 'react';
 
-interface SSEConnection {
-  eventSource: EventSource | null;
-  chatId: string | null;
-  cleanup: (() => void) | null;
-}
-
-// 全局SSE连接管理器，确保同一时间只有一个连接
+// 全局SSE连接管理器
 class SSEConnectionManager {
   private static instance: SSEConnectionManager;
   private activeConnections: Map<string, EventSource> = new Map();
+  private subscribers: Map<string, Map<string, Set<(data: any) => void>>> = new Map();
   private cleanupTimers: Map<string, NodeJS.Timeout> = new Map();
-  private connectionPromises: Map<string, Promise<EventSource>> = new Map();
+  // private connectionPromises: Map<string, Promise<EventSource>> = new Map(); // Potentially useful for concurrent subscriptions to the same new connection, but adds complexity. Let's omit for now.
 
   static getInstance(): SSEConnectionManager {
     if (!SSEConnectionManager.instance) {
@@ -20,138 +15,172 @@ class SSEConnectionManager {
     return SSEConnectionManager.instance;
   }
 
-  createConnection(
-    chatId: string, 
-    onEvent: (event: any) => void,
-    onError: (error: Error) => void,
-    onClose: () => void
-  ): () => void {
-    // 如果已经有连接，直接返回清理函数
+  private dispatchEvent(chatId: string, eventType: string, data: any): void {
+    const eventSubscribers = this.subscribers.get(chatId)?.get(eventType);
+    if (eventSubscribers) {
+      eventSubscribers.forEach(callback => {
+        try {
+          callback(data);
+        } catch (e) {
+          console.error('SSEManager: Error in subscriber callback', e);
+        }
+      });
+    }
+  }
+
+  private _ensureConnection(chatId: string): EventSource {
     if (this.activeConnections.has(chatId)) {
-      console.warn('SSEManager: Connection already exists for chat:', chatId, '- returning existing cleanup function');
-      return () => this.closeConnection(chatId);
+      return this.activeConnections.get(chatId)!;
     }
 
-    console.log('SSEManager: Creating new connection for chat:', chatId);
-
+    console.log('SSEManager: Creating new EventSource for chat:', chatId);
     const eventSource = new EventSource(
       `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/events`
     );
-
-    // 保存连接引用
     this.activeConnections.set(chatId, eventSource);
 
-    // 设置事件监听器
     eventSource.onopen = () => {
       console.log('SSEManager: Connection opened for chat:', chatId);
+      this.dispatchEvent(chatId, 'open', { chatId }); // Dispatch an 'open' event
     };
 
-    eventSource.addEventListener('token', (event) => {
-      onEvent({ type: 'token', data: event.data });
-    });
-
-    eventSource.addEventListener('tool_start', (event) => {
+    const genericEventListener = (eventType: string) => (event: MessageEvent) => {
+      let parsedData: any = event.data;
       try {
-        const data = JSON.parse(event.data);
-        onEvent({ type: 'tool_start', data });
+        // Attempt to parse if data looks like JSON
+        if (typeof event.data === 'string' && (event.data.startsWith('{') || event.data.startsWith('['))) {
+          parsedData = JSON.parse(event.data);
+        }
       } catch (e) {
-        console.error('SSEManager: Error parsing tool_start data:', e);
+        console.warn(`SSEManager: Data for event type '${eventType}' for chat ${chatId} is not valid JSON, using raw data. Error:`, e);
+        // parsedData remains event.data
       }
+      this.dispatchEvent(chatId, eventType, parsedData);
+
+      // REMOVED: Do not automatically close connection on stream_end here.
+      // The connection should close if all subscribers are gone, or if explicitly closed.
+      // if (eventType === 'stream_end') {
+      //   console.log('SSEManager: Stream ended by event for chat:', chatId, '. Closing connection.');
+      //   this.closeConnection(chatId); 
+      // }
+    };
+
+    // Standard event types from your previous implementation
+    eventSource.addEventListener('token', genericEventListener('token'));
+    eventSource.addEventListener('tool_start', genericEventListener('tool_start'));
+    eventSource.addEventListener('tool_end', genericEventListener('tool_end'));
+    eventSource.addEventListener('stream_end', genericEventListener('stream_end'));
+    // Add listener for 'agent_state_updated' and any other custom server events
+    eventSource.addEventListener('agent_state_updated', genericEventListener('agent_state_updated'));
+    // Generic error event from SSE standard
+    eventSource.addEventListener('error', (event: MessageEvent) => { // This is for server-sent named 'error' events
+        console.error('SSEManager: Received server-sent "error" event for chat:', chatId, event.data);
+        let parsedErrorData: any = event.data;
+        try {
+            if (typeof event.data === 'string') {
+                parsedErrorData = JSON.parse(event.data);
+            }
+        } catch (e) {
+            // use raw data if not parsable
+        }
+        this.dispatchEvent(chatId, 'server_error_event', parsedErrorData); // Distinguish from connection error
     });
 
-    eventSource.addEventListener('tool_end', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onEvent({ type: 'tool_end', data });
-      } catch (e) {
-        console.error('SSEManager: Error parsing tool_end data:', e);
-      }
-    });
 
-    eventSource.addEventListener('stream_end', (event) => {
-      console.log('SSEManager: Stream ended for chat:', chatId);
-      try {
-        const data = JSON.parse(event.data);
-        onEvent({ type: 'stream_end', data });
-      } catch (e) {
-        console.error('SSEManager: Error parsing stream_end data:', e);
-      }
-      
-      // 立即强制关闭连接，确保后端能检测到断开
-      console.log('SSEManager: Force closing connection immediately after stream_end');
-      this.closeConnection(chatId);
-      onClose();
-    });
-
-    eventSource.addEventListener('error', (event) => {
-      try {
-        const data = JSON.parse((event as any).data);
-        onEvent({ type: 'error', data });
-      } catch (e) {
-        console.error('SSEManager: Error parsing error event data:', e);
-      }
-    });
-
-    eventSource.onerror = (error) => {
+    eventSource.onerror = (error) => { // This is for connection errors
       console.error('SSEManager: Connection error for chat:', chatId, error);
-      
+      this.dispatchEvent(chatId, 'connection_error', { chatId, error });
       if (eventSource.readyState === EventSource.CLOSED) {
-        this.closeConnection(chatId);
-        onError(new Error(`SSE connection closed for chat ${chatId}`));
+        console.log('SSEManager: Connection error led to CLOSED state for chat:', chatId, '. Cleaning up.');
+        this.closeConnection(chatId); // Ensure cleanup if error leads to closed state
       }
     };
 
-    // 设置自动清理定时器（5分钟）
+    // Clear any existing timer before setting a new one
+    const existingTimer = this.cleanupTimers.get(chatId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
     const cleanupTimer = setTimeout(() => {
-      console.log('SSEManager: Auto-cleanup connection for chat:', chatId);
+      console.log('SSEManager: Auto-cleanup connection for chat (timeout):', chatId);
       this.closeConnection(chatId);
-      onClose();
-    }, 5 * 60 * 1000);
-
+    }, 5 * 60 * 1000); // 5 minutes
     this.cleanupTimers.set(chatId, cleanupTimer);
 
-    // 返回手动关闭函数
-    return () => this.closeConnection(chatId);
+    return eventSource;
+  }
+
+  subscribe(
+    chatId: string,
+    eventType: string,
+    callback: (data: any) => void
+  ): () => void {
+    this._ensureConnection(chatId); // Ensure connection exists or is created
+
+    if (!this.subscribers.has(chatId)) {
+      this.subscribers.set(chatId, new Map());
+    }
+    const chatEventSubscribers = this.subscribers.get(chatId)!;
+
+    if (!chatEventSubscribers.has(eventType)) {
+      chatEventSubscribers.set(eventType, new Set());
+    }
+    const callbackSet = chatEventSubscribers.get(eventType)!;
+    callbackSet.add(callback);
+
+    console.log(`SSEManager: Subscribed to [${eventType}] for chat [${chatId}]. Total subscribers for this event: ${callbackSet.size}`);
+
+    return () => {
+      const currentChatEventSubscribers = this.subscribers.get(chatId);
+      if (currentChatEventSubscribers) {
+        const currentCallbackSet = currentChatEventSubscribers.get(eventType);
+        if (currentCallbackSet) {
+          currentCallbackSet.delete(callback);
+          console.log(`SSEManager: Unsubscribed from [${eventType}] for chat [${chatId}]. Remaining for this event: ${currentCallbackSet.size}`);
+          if (currentCallbackSet.size === 0) {
+            currentChatEventSubscribers.delete(eventType);
+            console.log(`SSEManager: No more subscribers for [${eventType}] on chat [${chatId}].`);
+          }
+        }
+        // Check if there are any subscribers left for this chat ID at all
+        let totalSubscribersForChat = 0;
+        currentChatEventSubscribers.forEach(set => totalSubscribersForChat += set.size);
+        
+        if (totalSubscribersForChat === 0) {
+          console.log(`SSEManager: No more subscribers for any event on chat [${chatId}]. Closing connection.`);
+          this.closeConnection(chatId); // Close if no subscribers left for this chat at all
+        }
+      }
+    };
   }
 
   closeConnection(chatId: string): void {
     const eventSource = this.activeConnections.get(chatId);
     if (eventSource) {
       console.log('SSEManager: Closing connection for chat:', chatId);
-      console.log('SSEManager: Active connections before close:', Array.from(this.activeConnections.keys()));
       eventSource.close();
       this.activeConnections.delete(chatId);
-      console.log('SSEManager: Active connections after close:', Array.from(this.activeConnections.keys()));
+      this.dispatchEvent(chatId, 'close', { chatId }); // Dispatch a 'close' event
     }
 
-    // 清理定时器
     const timer = this.cleanupTimers.get(chatId);
     if (timer) {
       clearTimeout(timer);
       this.cleanupTimers.delete(chatId);
     }
     
-    // 清理 promise
-    this.connectionPromises.delete(chatId);
+    // Clear subscribers for this chat ID
+    this.subscribers.delete(chatId);
+    console.log('SSEManager: Cleared subscribers for chat:', chatId);
   }
 
   closeAllConnections(): void {
     console.log('SSEManager: Closing all connections, count:', this.activeConnections.size);
     const chatIds = Array.from(this.activeConnections.keys());
     chatIds.forEach(chatId => {
-      this.closeConnection(chatId);
+      this.closeConnection(chatId); // This will also clear subscribers
     });
-    
-    // 清理所有定时器
-    this.cleanupTimers.forEach((timer) => {
-      clearTimeout(timer);
-    });
-    this.cleanupTimers.clear();
-    
-    // 清理所有promises
-    this.connectionPromises.clear();
-    
-    console.log('SSEManager: All connections closed');
+    // Timers are cleared within closeConnection
   }
 
   hasActiveConnection(chatId: string): boolean {
@@ -162,13 +191,29 @@ class SSEConnectionManager {
 export const useSSEManager = () => {
   const managerRef = useRef<SSEConnectionManager>(SSEConnectionManager.getInstance());
 
-  const createConnection = useCallback((
+  // useEffect to ensure closeAllConnections is called on hook unmount (e.g. app closes)
+  // This is a bit broad, usually cleanup is tied to component lifecycle that uses the hook.
+  // If the manager is a true singleton, this might close connections unexpectedly if another part of the app still uses it.
+  // For a true singleton app-wide manager, explicit close or per-chat close via unsubscribe is better.
+  // Let's keep it for now but with a comment.
+  useEffect(() => {
+    const manager = managerRef.current; // Capture manager instance
+    return () => {
+      // This will close ALL connections when a component *using* this hook unmounts.
+      // This might not be desired if the manager is meant to persist connections across component lifecycles.
+      // Consider if closeAllConnections here is appropriate or if cleanup should be more granular.
+      // manager.closeAllConnections(); 
+      // console.log("useSSEManager: Hook unmounted. Called closeAllConnections - review if this is intended behavior.");
+    };
+  }, []); // Empty dependency means this runs once on mount and cleanup on unmount of the component that *first* uses the hook.
+
+
+  const subscribe = useCallback((
     chatId: string,
-    onEvent: (event: any) => void,
-    onError: (error: Error) => void = () => {},
-    onClose: () => void = () => {}
-  ) => {
-    return managerRef.current.createConnection(chatId, onEvent, onError, onClose);
+    eventType: string,
+    callback: (data: any) => void
+  ): (() => void) => {
+    return managerRef.current.subscribe(chatId, eventType, callback);
   }, []);
 
   const closeConnection = useCallback((chatId: string) => {
@@ -179,16 +224,11 @@ export const useSSEManager = () => {
     return managerRef.current.hasActiveConnection(chatId);
   }, []);
 
-  // 组件卸载时清理所有连接
-  useEffect(() => {
-    return () => {
-      managerRef.current.closeAllConnections();
-    };
-  }, []);
-
   return {
-    createConnection,
+    subscribe,
     closeConnection,
-    hasActiveConnection
+    hasActiveConnection,
+    // Expose closeAllConnections if manual global cleanup is needed, e.g. on user logout
+    // closeAllConnections: () => managerRef.current.closeAllConnections() 
   };
 }; 

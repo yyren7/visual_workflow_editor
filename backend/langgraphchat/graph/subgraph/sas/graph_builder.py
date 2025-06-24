@@ -964,12 +964,12 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
         return GENERATE_INDIVIDUAL_XMLS
 
     # Priority 1: Handling states indicating the node is waiting for external user input
-    if state.dialog_state == "sas_awaiting_task_list_review":
-        logger.info("Awaiting user feedback on the TASK LIST. Ending graph run for clarification.")
+    if state.dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_task_list_revision_input"]:
+        logger.info(f"Awaiting user feedback on the TASK LIST (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
         state.subgraph_completion_status = "needs_clarification"
         return END
-    elif state.dialog_state == "sas_awaiting_module_steps_review":
-        logger.info("Awaiting user feedback on the MODULE STEPS. Ending graph run for clarification.")
+    elif state.dialog_state in ["sas_awaiting_module_steps_review", "sas_awaiting_module_steps_revision_input"]:
+        logger.info(f"Awaiting user feedback on the MODULE STEPS (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
         state.subgraph_completion_status = "needs_clarification"
         return END
 

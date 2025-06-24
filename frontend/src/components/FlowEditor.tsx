@@ -31,6 +31,7 @@ import { LangGraphTaskNode } from './nodes/LangGraphTaskNode';
 import { LangGraphDetailNode } from './nodes/LangGraphDetailNode';
 import { debounce } from 'lodash';
 import { getNodeTemplates, NodeTemplatesResponse } from '../api/nodeTemplates'; // Import API function and type
+import _isEqual from 'lodash/isEqual'; // Added import
 
 // --- Redux Imports ---
 import { useSelector, useDispatch } from 'react-redux';
@@ -130,6 +131,18 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   // Ref to track if it's the initial load to prevent immediate save
   const isInitialLoad = useRef(true);
   
+  // Ref to store the state of the last successful save or fetch
+  const lastSuccessfulSaveStateRef = useRef({ nodes, edges, flowName });
+
+  // Effect to update lastSuccessfulSaveStateRef when data is successfully saved or fetched
+  useEffect(() => {
+    // This effect runs when lastSaveTime changes (indicating a save/fetch success)
+    // or when nodes/edges/flowName themselves change (e.g. initial fetch).
+    // It effectively snapshots the state that is considered "committed".
+    console.log("FlowEditor: lastSaveTime, nodes, edges, or flowName changed. Updating lastSuccessfulSaveStateRef.");
+    lastSuccessfulSaveStateRef.current = { nodes, edges, flowName };
+  }, [lastSaveTime, nodes, edges, flowName]); // lastSaveTime is crucial here
+  
   // Use LangGraph nodes hook
   const { syncLangGraphNodes } = useLangGraphNodes(agentState);
   
@@ -194,8 +207,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         ...(isLangGraphNode && {
           style: {
             ...node.style,
-            width: node.type === 'langgraph_input' ? 600 : (node.type === 'langgraph_detail' ? 350 : 400),
-            height: node.type === 'langgraph_input' ? 400 : (node.type === 'langgraph_detail' ? 400 : 300),
             pointerEvents: 'auto' as const, // 修复类型错误
           },
           selectable: true, // 仍然可选择
@@ -212,7 +223,10 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         deletable: processedNode.deletable !== false, // 如果没有明确设置为 false，则为 true
         selectable: processedNode.selectable !== false,
         draggable: processedNode.draggable,
-        selected: processedNode.selected // 添加选择状态的日志
+        selected: processedNode.selected, // 添加选择状态的日志
+        actualWidth: node.width, 
+        actualHeight: node.height,
+        styleFromNode: node.style,
       });
       
       return processedNode;
@@ -308,35 +322,46 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
         isInitialLoad.current = false;
         console.log("FlowEditor: Initial load flag set to false (ID matched or fetch completed).");
     }
-  }, [flowIdFromProps, currentFlowId, dispatch, isLoading]); // Add isLoading dependency
+  }, [flowIdFromProps, currentFlowId, dispatch, isLoading, syncLangGraphNodes]); // Add isLoading dependency
 
   // --- Debounced Save Function ---
   const debouncedSave = useCallback(
-      debounce(() => {
-          if (!isInitialLoad.current) { // Only save after initial load
-                console.log("FlowEditor: Debounced save triggered.");
-                dispatch(saveFlow());
-          } else {
-              console.log("FlowEditor: Debounced save skipped (initial load).");
-          }
-      }, SAVE_DEBOUNCE_MS),
-      [dispatch] // Dispatch function is stable
+    debounce(() => {
+      if (isInitialLoad.current) { // isInitialLoad is already a ref
+        console.log("FlowEditor: Debounced save skipped (initial load).");
+        return;
+      }
+
+      // Compare current data with the snapshot of the last successful save/fetch
+      const dataHasChanged =
+        !_isEqual(nodes, lastSuccessfulSaveStateRef.current.nodes) ||
+        !_isEqual(edges, lastSuccessfulSaveStateRef.current.edges) ||
+        flowName !== lastSuccessfulSaveStateRef.current.flowName;
+
+      if (dataHasChanged) {
+        console.log("FlowEditor: Debounced save triggered due to actual data changes.");
+        dispatch(saveFlow()); // saveFlow thunk already uses latest state from Redux
+      } else {
+        console.log("FlowEditor: Debounced save skipped (no actual data change since last successful save/fetch).");
+      }
+    }, SAVE_DEBOUNCE_MS),
+    [dispatch, nodes, edges, flowName, isInitialLoad] // isInitialLoad is a ref. nodes, edges, flowName are needed for comparison.
   );
 
   // --- Effect to trigger debounced save on changes ---
   useEffect(() => {
-    // Don't trigger save immediately after load or if loading/saving
-    // AND Don't trigger save while a node is being dragged
+    // isInitialLoad is a ref, its .current value is used.
     if (!isInitialLoad.current && currentFlowId && !isLoading && !isSaving && !isDraggingNode) {
-      console.log("FlowEditor: Detected change and not dragging. Debouncing save...");
+      console.log("FlowEditor: Conditions met for potential save. Calling debouncedSave.");
       debouncedSave();
     }
-    // Cleanup function to cancel debounce if component unmounts or dependencies change
+    // Cleanup function to cancel debounce if component unmounts or dependencies change (like debouncedSave itself)
     return () => {
       debouncedSave.cancel();
     };
-    // Remove isSaving from dependency array, keep isLoading for safety? Keep others.
-  }, [nodes, edges, flowName, currentFlowId, debouncedSave, isLoading, isDraggingNode]);
+    // nodes, edges, flowName are removed from here because their change will recreate debouncedSave,
+    // and debouncedSave is already a dependency.
+  }, [currentFlowId, debouncedSave, isLoading, isSaving, isDraggingNode]);
 
   // --- Effect to show save errors ---
    useEffect(() => {

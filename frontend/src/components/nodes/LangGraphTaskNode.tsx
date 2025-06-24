@@ -7,7 +7,8 @@ import {
   Typography, 
   Box, 
   IconButton,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -15,6 +16,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
+import { useSSEManager } from '../../hooks/useSSEManager';
 
 interface TaskDefinition {
   name: string;
@@ -40,33 +42,30 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<TaskDefinition>(data.task);
   const { updateTask } = useAgentStateSync();
+  const { subscribe } = useSSEManager();
 
-  // 新增：滚动区域的refs
+  const [isProcessingDetail, setIsProcessingDetail] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+
   const taskContentRef = useRef<HTMLDivElement>(null);
   const editFormRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // 新增：原生DOM事件处理滚轮事件
   useEffect(() => {
     const handleNativeWheel = (e: Event) => {
       const wheelEvent = e as WheelEvent;
-      // 只阻止事件传播到ReactFlow，但保留元素的滚动功能
       wheelEvent.stopPropagation();
       console.log('TaskNode滚轮事件传播被阻止:', wheelEvent.target);
     };
 
-    // 为所有滚动区域添加原生事件监听
     const refs = [taskContentRef, editFormRef];
     
     refs.forEach(ref => {
       if (ref.current) {
-        // 直接对滚动元素添加事件监听
         const element = ref.current;
-        // 查找实际的滚动元素（可能是textarea或子元素）
         const textareas = element.querySelectorAll('textarea');
         const scrollableElement = element;
         
-        // 为容器和所有textarea添加监听
         scrollableElement.addEventListener('wheel', handleNativeWheel, { passive: true });
         textareas.forEach(textarea => {
           textarea.addEventListener('wheel', handleNativeWheel, { passive: true });
@@ -90,11 +89,52 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
         }
       });
     };
-  }, [isEditing, selected]); // 依赖状态变化重新绑定事件
+  }, [isEditing, selected]);
+
+  useEffect(() => {
+    if (!data.flowId || data.taskIndex === undefined) {
+      return;
+    }
+
+    const sseChatId = data.flowId; 
+
+    console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Subscribing to detail events on sseChatId: ${sseChatId}`);
+
+    const unsubs: (()=>void)[] = [];
+
+    unsubs.push(subscribe(sseChatId, 'task_detail_generation_start', (eventData) => {
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Received task_detail_generation_start`, eventData);
+      if (eventData && eventData.taskIndex === data.taskIndex) {
+        setIsProcessingDetail(true);
+        setDetailError(null);
+        console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Detail processing STARTED.`);
+      }
+    }));
+
+    unsubs.push(subscribe(sseChatId, 'task_detail_generation_end', (eventData) => {
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Received task_detail_generation_end`, eventData);
+      if (eventData && eventData.taskIndex === data.taskIndex) {
+        setIsProcessingDetail(false);
+        if (eventData.status === 'failure') {
+          setDetailError(eventData.error_message || 'Failed to generate details.');
+          console.error(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Detail processing FAILED:`, eventData.error_message);
+        } else {
+          setDetailError(null);
+          console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Detail processing ENDED successfully.`);
+        }
+      }
+    }));
+
+    return () => {
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Unsubscribing from detail events on sseChatId: ${sseChatId}`);
+      unsubs.forEach(unsub => unsub());
+    };
+  }, [data.flowId, data.taskIndex, id, subscribe]);
 
   const handleEdit = useCallback(() => {
+    if (isProcessingDetail) return;
     setIsEditing(true);
-  }, []);
+  }, [isProcessingDetail]);
 
   const handleSave = useCallback(() => {
     updateTask(data.taskIndex, editedTask);
@@ -104,6 +144,10 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
   const handleCancel = useCallback(() => {
     setEditedTask(data.task);
     setIsEditing(false);
+  }, [data.task]);
+
+  useEffect(() => {
+    setEditedTask(data.task);
   }, [data.task]);
 
   return (
@@ -138,7 +182,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
         sx={{ 
           width: 400,
           height: 300,
-          border: '1px solid #555',
+          border: isProcessingDetail ? '2px dashed #ff9800' : (selected ? '2px solid #1976d2' : '1px solid #555'),
           borderRadius: '8px',
           boxShadow: selected ? '0 0 0 2px #1976d2, 0 2px 8px rgba(25, 118, 210, 0.4)' : '0 2px 5px rgba(0, 0, 0, 0.2)',
           backgroundColor: selected ? 'rgba(25, 118, 210, 0.08)' : 'rgba(45, 45, 45, 1)',
@@ -146,6 +190,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          opacity: isProcessingDetail ? 0.7 : 1,
           '&:hover': {
             boxShadow: selected 
               ? '0 0 0 2px #1976d2, 0 4px 10px rgba(25, 118, 210, 0.5)'
@@ -153,7 +198,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
             backgroundColor: selected 
               ? 'rgba(25, 118, 210, 0.12)'
               : 'rgba(45, 45, 45, 1)',
-            border: '1px solid transparent'
+            border: isProcessingDetail ? '2px dashed #ff9800' : '1px solid transparent'
           }
         }}
         ref={cardRef}
@@ -163,9 +208,29 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative'
         }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} sx={{ flexShrink: 0 }}>
+          {isProcessingDetail && (
+            <Box sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              borderRadius: 'inherit'
+            }}>
+              <CircularProgress size={30} color="warning" />
+              <Typography variant="caption" sx={{ml:1, color: '#ff9800'}}>Generating Details...</Typography>
+            </Box>
+          )}
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} sx={{ flexShrink: 0, opacity: isProcessingDetail ? 0.5 : 1 }}>
             <Typography 
               variant="h6"
               sx={{ 
@@ -194,6 +259,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
+            opacity: isProcessingDetail ? 0.5 : 1 
           }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={selected ? 1 : 0.5} sx={{ flexShrink: 0 }}>
               <Typography 
@@ -211,28 +277,16 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                 <Box display="flex" gap={0.5}>
                   {!isEditing ? (
                     <>
-                      <Chip 
-                        label="任务" 
-                        size="small" 
-                        color="secondary" 
-                        variant="outlined"
-                        sx={{ 
-                          mr: 1,
-                          fontSize: '0.7rem',
-                          height: '20px',
-                          '& .MuiChip-label': { px: 1 }
-                        }}
-                      />
-                      <IconButton size="small" onClick={handleEdit}>
+                      <IconButton size="small" onClick={handleEdit} disabled={isProcessingDetail}>
                         <EditIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
                     </>
                   ) : (
                     <>
-                      <IconButton size="small" onClick={handleCancel}>
+                      <IconButton size="small" onClick={handleCancel} disabled={isProcessingDetail}>
                         <CloseIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
-                      <IconButton size="small" onClick={handleSave} color="primary">
+                      <IconButton size="small" onClick={handleSave} color="primary" disabled={isProcessingDetail}>
                         <CheckIcon sx={{ fontSize: '1rem' }} />
                       </IconButton>
                     </>
@@ -426,6 +480,16 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                   </Typography>
                 )}
               </Box>
+            )}
+
+            {detailError && selected && !isEditing && (
+              <Typography 
+                variant="caption" 
+                color="error" 
+                sx={{ mt: 1, fontSize: '0.75rem', flexShrink: 0, border: '1px solid red', p:0.5, borderRadius:1, backgroundColor: 'rgba(255,0,0,0.1)'}}
+              >
+                Error generating details: {detailError}
+              </Typography>
             )}
           </Box>
         </CardContent>

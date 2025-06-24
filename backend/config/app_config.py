@@ -24,6 +24,7 @@ def get_cors_origins() -> list[str]:
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "http://localhost:3001", # 确保开发时常用的端口也被包含
+            "http://127.0.0.1:3001", # 新增：允许来自127.0.0.1:3001的请求
             "http://workflow-editor-frontend:3000", # Docker Compose 服务名
             "http://localhost:8000", # 后端自己
             "http://127.0.0.1:8000"  # 后端自己

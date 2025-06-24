@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { Node, Edge } from 'reactflow';
 import { useSelector, useDispatch } from 'react-redux';
+import _isEqual from 'lodash/isEqual';
 import { AppDispatch } from '../store/store';
 import {
   selectCurrentFlowId,
@@ -35,8 +36,8 @@ interface AgentState {
 export const useLangGraphNodes = (agentState?: AgentState) => {
   const dispatch = useDispatch<AppDispatch>();
   const currentFlowId = useSelector(selectCurrentFlowId);
-  const nodes = useSelector(selectNodes);
-  const edges = useSelector(selectEdges);
+  const nodesFromStore = useSelector(selectNodes);
+  const edgesFromStore = useSelector(selectEdges);
 
   const generateLangGraphNodes = useCallback((state: AgentState, flowId: string): { nodes: Node[], edges: Edge[] } => {
     const newNodes: Node[] = [];
@@ -47,7 +48,8 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     const INPUT_NODE_HEIGHT = 400;
     const TASK_NODE_WIDTH = 400;
     const TASK_NODE_HEIGHT = 300;
-    const DETAIL_NODE_HEIGHT = 250;
+    const DETAIL_NODE_WIDTH = TASK_NODE_WIDTH; // Detail node usually aligns with task node width
+    const DETAIL_NODE_HEIGHT = 250; 
     
     // 间距定义
     const VERTICAL_SPACING = 100; // 垂直间距
@@ -63,6 +65,8 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
         flowId: flowId,
         currentUserRequest: state.current_user_request || '',
       },
+      width: INPUT_NODE_WIDTH,
+      height: INPUT_NODE_HEIGHT,
     };
     newNodes.push(inputNode);
 
@@ -94,6 +98,8 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
           taskIndex: i,
           task: task,
         },
+        width: TASK_NODE_WIDTH,
+        height: TASK_NODE_HEIGHT,
       };
       newNodes.push(taskNode);
 
@@ -125,6 +131,8 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
             taskName: task.name,
             details: details,
           },
+          width: DETAIL_NODE_WIDTH,
+          height: DETAIL_NODE_HEIGHT,
         };
         newNodes.push(detailNode);
 
@@ -143,82 +151,70 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
   }, []);
 
   const syncLangGraphNodes = useCallback(() => {
-    if (!agentState || !currentFlowId) return;
+    if (!agentState || !currentFlowId) {
+        // console.log('SYNC: Aborting, no agentState or currentFlowId');
+        return;
+    }
 
-    const { nodes: langGraphNodes, edges: langGraphEdges } = generateLangGraphNodes(agentState, currentFlowId);
+    const { nodes: langGraphNodesGenerated, edges: langGraphEdgesGenerated } = generateLangGraphNodes(agentState, currentFlowId);
     
-    // Filter out existing LangGraph nodes
-    const nonLangGraphNodes = nodes.filter(node => !node.id.startsWith('langgraph_'));
-    const nonLangGraphEdges = edges.filter(edge => 
+    const finalEnhancedLangGraphNodes = langGraphNodesGenerated.map(genNode => {
+        const existingNode = nodesFromStore.find(n => n.id === genNode.id);
+        if (existingNode) {
+            // Node exists: Start with the existing node from the store to preserve all its React Flow managed properties
+            // (like position, width, height, selected, dragging, positionAbsolute etc.).
+            // Then, only update the data and type from the agentState-driven generation.
+            return {
+                ...existingNode, // Preserves React Flow's state for position, width, height etc.
+                data: genNode.data, // Update data from agentState generation
+                type: genNode.type  // Update type from agentState generation (if it can change)
+            };
+        } else {
+            // New node: use the generated node as is. 
+            // This includes its initial position, width, and height as defined in generateLangGraphNodes.
+            return genNode; 
+        }
+    });
+    
+    const nonLangGraphNodes = nodesFromStore.filter(node => !node.id.startsWith('langgraph_'));
+    const nonLangGraphEdges = edgesFromStore.filter(edge => 
       !edge.source.startsWith('langgraph_') && !edge.target.startsWith('langgraph_')
     );
 
-    // Combine with new LangGraph nodes
-    const updatedNodes = [...nonLangGraphNodes, ...langGraphNodes];
-    const updatedEdges = [...nonLangGraphEdges, ...langGraphEdges];
+    const updatedNodes = [...nonLangGraphNodes, ...finalEnhancedLangGraphNodes];
+    const updatedEdges = [...nonLangGraphEdges, ...langGraphEdgesGenerated]; 
 
-    // Update the store
-    dispatch(setNodes(updatedNodes));
-    dispatch(setEdges(updatedEdges));
-  }, [agentState, currentFlowId, nodes, edges, generateLangGraphNodes, dispatch]);
+    let changed = false;
+    if (!_isEqual(updatedNodes, nodesFromStore)) {
+        dispatch(setNodes(updatedNodes));
+        changed = true;
+    }
 
-  // Auto-sync when agent state changes
+    if (!_isEqual(updatedEdges, edgesFromStore)) {
+        dispatch(setEdges(updatedEdges));
+        changed = true;
+    }
+
+    if (changed) {
+        console.log('SYNC: Dispatched node/edge updates because content changed.');
+    } else {
+        // console.log('SYNC: No actual content change in nodes/edges, dispatch skipped.');
+    }
+
+  }, [agentState, currentFlowId, nodesFromStore, edgesFromStore, generateLangGraphNodes, dispatch]);
+
+  // Auto-sync when agent state changes, or if nodes/edges themselves change from other sources
   useEffect(() => {
-    // Added detailed log
-    console.log(
-      `🔄 useLangGraphNodes: EFFECT TRIGGERED. Current Flow ID: ${currentFlowId}. AgentState tasks:`, 
-      agentState?.sas_step1_generated_tasks || 'No tasks in agentState', 
-      'Full agentState:', agentState
-    );
+    // Minimal logging for effect trigger
+    // console.log(`🔄 useLangGraphNodes: EFFECT TRIGGERED. Flow ID: ${currentFlowId}, AgentState present: ${!!agentState}`);
 
     if (agentState && currentFlowId) {
-      console.log('🔄 useLangGraphNodes: Agent state changed, analyzing...', {
-        currentFlowId,
-        hasTasks: !!(agentState.sas_step1_generated_tasks?.length),
-        taskCount: agentState.sas_step1_generated_tasks?.length || 0,
-        hasDetails: !!(agentState.sas_step2_generated_task_details && Object.keys(agentState.sas_step2_generated_task_details).length),
-        detailCount: agentState.sas_step2_generated_task_details ? Object.keys(agentState.sas_step2_generated_task_details).length : 0,
-        dialogState: agentState.dialog_state,
-        currentUserRequest: agentState.current_user_request
-      });
-      
-      // 详细记录任务信息
-      if (agentState.sas_step1_generated_tasks?.length) {
-        console.log('🔄 Tasks found:');
-        agentState.sas_step1_generated_tasks.forEach((task, index) => {
-          console.log(`🔄   Task ${index + 1}: ${task.name} (${task.type})`);
-        });
-      }
-      
-      // 详细记录任务详情信息
-      if (agentState.sas_step2_generated_task_details && Object.keys(agentState.sas_step2_generated_task_details).length) {
-        console.log('🔄 Task details found:');
-        Object.entries(agentState.sas_step2_generated_task_details).forEach(([taskIdx, details]) => {
-          if (details && details.details) {
-            console.log(`🔄   Task ${taskIdx}: ${details.details.length} details`);
-          }
-        });
-      }
-      
-      console.log('🔄 Current nodes count:', nodes.length);
-      console.log('🔄 Current LangGraph nodes:', nodes.filter(node => node.id.startsWith('langgraph_')).map(n => n.id));
-      
-      // 同步节点
-      console.log('🔄 Calling syncLangGraphNodes...');
+      // console.log('🔄 Calling syncLangGraphNodes...');
       syncLangGraphNodes();
-      
-      // 验证同步结果
-      setTimeout(() => {
-        console.log('🔄 Node sync completed. Verifying results...');
-        // 这个延迟确保Redux状态已经更新
-      }, 50);
     } else {
-      console.log('🔄 useLangGraphNodes: Conditions not met for syncing', {
-        hasAgentState: !!agentState,
-        hasCurrentFlowId: !!currentFlowId
-      });
+      // console.log('🔄 useLangGraphNodes: Conditions not met for syncing.');
     }
-  }, [agentState, currentFlowId, syncLangGraphNodes]); // Added syncLangGraphNodes back as it's a function used inside and should be a dependency if it's stable (useCallback)
+  }, [agentState, currentFlowId, nodesFromStore, edgesFromStore, syncLangGraphNodes, dispatch]);
 
   return {
     syncLangGraphNodes,
