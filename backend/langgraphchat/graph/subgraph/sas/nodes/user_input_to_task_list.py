@@ -22,6 +22,9 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
     state.error_message = None
     state.sas_step1_generated_tasks = None # Clear previous tasks at the beginning
 
+    # Boolean flag to control saving of iteration data
+    save_debug_data = False
+
     # This node now uses state.current_user_request as the source for task generation.
     # state.user_input should have been cleared by initialize_state_node or review_and_refine_node.
     # if state.user_input is not None: # MODIFIED: Commented out this block
@@ -177,14 +180,15 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
             state.is_error = False # Explicitly clear error if parsing succeeds
             state.error_message = None
 
-            tasks_to_save = [task.model_dump() for task in generated_tasks]
-            save_iteration_data_as_json(
-                run_output_directory=state.run_output_directory,
-                revision_iteration=state.revision_iteration,
-                data_to_save=tasks_to_save,
-                base_filename_prefix="sas_step1_tasks",
-                file_description="SAS Step 1 generated task list"
-            )
+            if save_debug_data:
+                tasks_to_save = [task.model_dump() for task in generated_tasks]
+                save_iteration_data_as_json(
+                    run_output_directory=state.run_output_directory,
+                    revision_iteration=state.revision_iteration,
+                    data_to_save=tasks_to_save,
+                    base_filename_prefix="sas_step1_tasks",
+                    file_description="SAS Step 1 generated task list"
+                )
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode LLM JSON output for task list (stream {stream_id}): {e}. Output: {raw_json_output}", exc_info=True)
