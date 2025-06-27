@@ -3,6 +3,10 @@
 
 import sys
 from pathlib import Path
+from backend.langgraphchat.graph.agent_state import AgentState
+from backend.langgraphchat.graph.nodes.teaching_node import teaching_node, POINT_FIELD_SCHEMA
+from backend.sas.nodes.parameter_mapping import ParameterMapper
+from backend.langgraphchat.utils.llm_utils import create_llm
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).resolve().parent
@@ -13,7 +17,9 @@ def test_semantic_mapping():
     """测试语义点位映射功能"""
     
     try:
-        from backend.langgraphchat.graph.subgraph.sas.nodes.parameter_mapping import ParameterMapper
+        current_file_dir = Path(__file__).parent
+        # sys.path.append(str(current_file_dir.parent.parent))  # Add project root to sys.path
+        from backend.sas.nodes.parameter_mapping import ParameterMapper
         
         print("🔍 测试语义点位映射...")
         

@@ -7,7 +7,6 @@ import logging
 
 # 获取日志记录器 - 这对于查看 compile_workflow_graph 内部的日志可能有用
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO) # 基本配置，以便看到日志
 
 # Create a dummy LLM for graph instantiation
 # This is often sufficient for visualization as the graph structure itself is what we want to see.

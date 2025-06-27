@@ -14,6 +14,15 @@ from ..llm_utils import invoke_llm_for_text_output
 
 logger = logging.getLogger(__name__)
 
+# 引入事件广播器（如果存在的话）
+try:
+    from backend.app.routers.sas_chat import event_broadcaster
+    EVENT_BROADCASTER_AVAILABLE = True
+    logger.info("SAS Step 2 Node: Event broadcaster imported successfully")
+except ImportError:
+    EVENT_BROADCASTER_AVAILABLE = False
+    logger.warning("SAS Step 2 Node: Event broadcaster not available, progress events will not be sent")
+
 # Directory for task-specific Step 2 prompts
 STEP2_PROMPT_DIR = Path("/workspace/database/prompt_database/task_based_prompt/step2_task_type_prompts")
 DEFAULT_FALLBACK_PROMPT_TEXT = """\
@@ -29,6 +38,58 @@ Example Input:
 Expected Output:
 ["Step 1 for Example_Task", "Step 2 for Example_Task"]
 """
+
+async def _send_task_progress_event(chat_id: str, task_index: int, task_name: str, status: str, details: str = None):
+    """发送任务进度事件到前端，匹配前端TaskNode期望的事件格式"""
+    if EVENT_BROADCASTER_AVAILABLE and chat_id:
+        try:
+            if status == "processing":
+                # 发送开始事件
+                event_data = {
+                    "type": "task_detail_generation_start",
+                    "data": {
+                        "taskIndex": task_index,
+                        "task_name": task_name,
+                        "details": details,
+                        "timestamp": asyncio.get_event_loop().time()
+                    }
+                }
+                await event_broadcaster.broadcast_event(chat_id, event_data)
+                logger.debug(f"[TASK_PROGRESS] 发送开始事件: 任务{task_index} ({task_name})")
+            elif status in ["completed", "error"]:
+                # 发送结束事件
+                event_data = {
+                    "type": "task_detail_generation_end", 
+                    "data": {
+                        "taskIndex": task_index,
+                        "task_name": task_name,
+                        "status": "success" if status == "completed" else "failure",
+                        "error_message": details if status == "error" else None,
+                        "details": details if status == "completed" else None,
+                        "timestamp": asyncio.get_event_loop().time()
+                    }
+                }
+                await event_broadcaster.broadcast_event(chat_id, event_data)
+                logger.debug(f"[TASK_PROGRESS] 发送结束事件: 任务{task_index} ({task_name}) - {status}")
+        except Exception as e:
+            logger.warning(f"[TASK_PROGRESS] 发送进度事件失败: {e}")
+
+async def _send_step_overall_event(chat_id: str, status: str, details: str = None):
+    """发送SAS Step 2整体进度事件"""
+    if EVENT_BROADCASTER_AVAILABLE and chat_id:
+        try:
+            event_data = {
+                "type": "sas_step2_progress",
+                "data": {
+                    "status": status,
+                    "details": details,
+                    "timestamp": asyncio.get_event_loop().time()
+                }
+            }
+            await event_broadcaster.broadcast_event(chat_id, event_data)
+            logger.debug(f"[SAS_STEP2] 发送整体进度事件: {status}")
+        except Exception as e:
+            logger.warning(f"[SAS_STEP2] 发送整体进度事件失败: {e}")
 
 def _generate_available_blocks_markdown(node_descriptions: Dict[str, str]) -> str:
     """
@@ -113,10 +174,14 @@ async def _generate_steps_for_single_task_async(
     task_def: TaskDefinition,
     llm: BaseChatModel,
     available_blocks_markdown: str,
-    node_index: int # For logging
+    node_index: int, # For logging
+    chat_id: str = None  # 新增: 用于发送进度事件
 ) -> Tuple[str, List[str], Optional[str]]: # Returns (task_name, list_of_details, error_message_or_none)
     task_name = getattr(task_def, 'name', f"Unnamed Task {node_index+1}")
     task_type = getattr(task_def, 'type', 'UnknownType')
+
+    # 发送开始处理事件
+    await _send_task_progress_event(chat_id, node_index, task_name, "processing", f"开始为任务 '{task_name}' (类型: {task_type}) 生成模块步骤")
 
     prompt_file_name = f"step2_{task_type.lower()}_prompt_en.md"
     prompt_file_path = STEP2_PROMPT_DIR / prompt_file_name
@@ -183,6 +248,8 @@ CRITICAL REQUIREMENTS:
             
         if isinstance(parsed_details, list) and all(isinstance(s, str) for s in parsed_details):
             logger.info(f"SAS Step 2 LLM call successful for task '{task_name}'. {len(parsed_details)} module steps generated.")
+            # 发送成功完成事件
+            await _send_task_progress_event(chat_id, node_index, task_name, "completed", f"成功生成 {len(parsed_details)} 个模块步骤")
             return task_name, parsed_details, None
         else:
             raise ValueError("Parsed JSON is not a list of strings.")
@@ -190,6 +257,8 @@ CRITICAL REQUIREMENTS:
     except Exception as e:
         error_msg = f"Error processing task '{task_name}': {e}. Raw LLM output hint: {llm_response_content[:200]}..."
         logger.error(error_msg, exc_info=True)
+        # 发送错误事件
+        await _send_task_progress_event(chat_id, node_index, task_name, "error", f"处理失败: {str(e)[:100]}")
         return task_name, [f"Error: Could not generate module steps. Details: {str(e)[:100]}"], error_msg
 
 async def process_description_to_module_steps_node(state: RobotFlowAgentState, llm: BaseChatModel) -> Dict[str, Any]:
@@ -199,12 +268,11 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     """
     logger.info(f"--- Entering SAS Step 2: Process Description to Module Steps (dialog_state: {state.dialog_state}) ---")
     
-    # +++ ADDED DIAGNOSTIC LOGGING START +++
-    if state.sse_event_queue is None:
-        logger.error("[SSE QUEUE CHECK] state.sse_event_queue is None at the start of process_description_to_module_steps_node.")
-    else:
-        logger.info(f"[SSE QUEUE CHECK] state.sse_event_queue is PRESENT at the start. Queue type: {type(state.sse_event_queue)}. Qsize approx: {state.sse_event_queue.qsize() if hasattr(state.sse_event_queue, 'qsize') else 'N/A'}")
-    # +++ ADDED DIAGNOSTIC LOGGING END +++
+    # 尝试从状态中获取chat_id，如果没有则为None
+    chat_id = getattr(state, 'current_chat_id', None) or getattr(state, 'thread_id', None)
+    
+    # SSE事件队列已移除，不再进行队列检查
+    logger.info("[SSE] SSE事件队列功能已在新架构中通过其他方式处理")
     
     logger.info(f"    Initial state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
     state.current_step_description = "SAS Step 2: Converting individual task descriptions to specific module steps (parallel execution)."
@@ -212,8 +280,6 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     state.error_message = None
     aggregate_error_messages = []
     all_generated_module_steps_for_logging = []
-
-    sse_event_queue = state.sse_event_queue
 
     if not state.sas_step1_generated_tasks:
         logger.error("state.sas_step1_generated_tasks is missing. Cannot perform SAS Step 2.")
@@ -223,6 +289,9 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         state.subgraph_completion_status = "error"
         return state.dict(exclude_none=True)
 
+    # 发送Step 2开始事件
+    await _send_step_overall_event(chat_id, "processing", f"开始并行处理 {len(state.sas_step1_generated_tasks)} 个任务的模块步骤生成")
+
     node_descriptions = load_node_descriptions()
     available_blocks_markdown = _generate_available_blocks_markdown(node_descriptions)
 
@@ -230,28 +299,25 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     for i, task_def in enumerate(state.sas_step1_generated_tasks):
         task_def.details = [] 
         
-        if sse_event_queue:
-            try:
-                logger.info(f"[SSE QUEUE] Putting task_detail_generation_start for taskIndex: {i}")
-                await sse_event_queue.put({
-                    "type": "task_detail_generation_start",
-                    "data": {"taskIndex": i, "taskName": getattr(task_def, 'name', f'Task {i+1}') }
-                })
-            except Exception as e_queue:
-                logger.error(f"Error putting task_detail_generation_start on SSE queue for taskIndex {i}: {e_queue}")
+        # SSE事件现在通过外部SSE处理器发送，不再通过状态队列
+        logger.info(f"[SAS Step 2] 开始为任务 {i}: {getattr(task_def, 'name', f'Task {i+1}')} 生成模块步骤")
 
         coroutines.append(
             _generate_steps_for_single_task_async(
                 task_def=task_def,
                 llm=llm,
                 available_blocks_markdown=available_blocks_markdown,
-                node_index=i
+                node_index=i,
+                chat_id=chat_id  # 传递chat_id用于进度事件
             )
         )
 
     logger.info(f"Starting parallel generation of module steps for {len(coroutines)} tasks.")
     results = await asyncio.gather(*coroutines, return_exceptions=True)
     logger.info(f"Finished parallel generation. Received {len(results)} results.")
+
+    successful_tasks = 0
+    failed_tasks = 0
 
     for i, result_or_exception in enumerate(results):
         task_def_to_update = state.sas_step1_generated_tasks[i]
@@ -269,6 +335,7 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
             state.is_error = True
             task_status = "failure"
             task_error_message = str(result_or_exception)
+            failed_tasks += 1
         else:
             _processed_task_name, processed_details, individual_task_error_msg = result_or_exception
             task_def_to_update.details = processed_details
@@ -278,22 +345,19 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
                 logger.warning(f"Task '{_processed_task_name}' completed with reported error: {individual_task_error_msg}")
                 task_status = "failure"
                 task_error_message = individual_task_error_msg
+                failed_tasks += 1
             else:
                 all_generated_module_steps_for_logging.append(f"### Module Steps for Task: {task_name_for_log} (Type: {task_type_for_log})\\n{json.dumps(processed_details, indent=2)}")
                 logger.info(f"Successfully processed and updated details for task '{task_name_for_log}'.")
+                successful_tasks += 1
         
-        if sse_event_queue:
-            try:
-                logger.info(f"[SSE QUEUE] Putting task_detail_generation_end for taskIndex: {i}, status: {task_status}")
-                event_to_send = {
-                    "type": "task_detail_generation_end",
-                    "data": {"taskIndex": i, "status": task_status, "taskName": task_name_for_log}
-                }
-                if task_error_message:
-                    event_to_send["data"]["error_message"] = task_error_message
-                await sse_event_queue.put(event_to_send)
-            except Exception as e_queue:
-                logger.error(f"Error putting task_detail_generation_end on SSE queue for taskIndex {i}: {e_queue}")
+        # SSE事件现在通过外部SSE处理器发送，不再通过状态队列
+        logger.info(f"[SAS Step 2] 任务 {i} ({task_name_for_log}) 处理完成，状态: {task_status}")
+
+    # 发送Step 2完成汇总事件
+    completion_status = "completed" if not state.is_error else "error"
+    completion_details = f"并行处理完成: {successful_tasks} 个任务成功, {failed_tasks} 个任务失败"
+    await _send_step_overall_event(chat_id, completion_status, completion_details)
 
     if state.is_error:
         final_error_detail = "; ".join(aggregate_error_messages) if aggregate_error_messages else "Unknown error during parallel module step generation."
@@ -330,7 +394,7 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         )
         if not any(review_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=review_message)]
-        state.subgraph_completion_status = "completed_partial" 
+        state.subgraph_completion_status = "completed_partial"
         
     logger.info(f"    Final state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
     return state.dict(exclude_none=True) 

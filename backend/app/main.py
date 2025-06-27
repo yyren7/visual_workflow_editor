@@ -1,198 +1,164 @@
 ## backend/app/main.py
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+# from fastapi.responses import JSONResponse # Not used directly in provided snippet, keep if used elsewhere
 import sys
 import os
-import logging
+import logging # Keep for getting logger instances
 from pathlib import Path
-import logging.handlers
+# import logging.handlers # No longer directly used here
 import time # 导入 time
 import uuid # ADDED
 import datetime # ADDED
+from typing import Optional # ADDED
+from fastapi import HTTPException # ADDED
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver # ADDED
+from backend.config import DB_CONFIG # ADDED - Assuming DB_CONFIG is here or accessible
 
-# --- 新增：启用 LangChain 的详细日志 ---
-import langchain
-langchain.debug = True
-logger = logging.getLogger(__name__) # 获取一个logger实例，确保在这之前定义了langchain.debug
-logger.info("LangChain debug mode enabled.") # 记录一下我们启用了它
-# --- 结束新增 ---
+# --- REMOVE OLD LangChain debug ---
+# import langchain
+# langchain.debug = True
+# logger = logging.getLogger(__name__)
+# logger.info("LangChain debug mode enabled.")
+# --- END REMOVE ---
 
-# 添加项目根目录到Python路径
+# 添加项目根目录到Python路径 (Keep this)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
 
-# 导入配置
-from backend.config.base import LOG_DIR
+# --- NEW: Import and call centralized logging configuration ---
+from backend.logging_config import setup_app_logging
+setup_app_logging() # Configure logging for the entire backend
+# --- END NEW ---
+
+# Get a logger instance for this module (backend.app.main)
+# This logger will inherit configuration from the 'backend' logger setup in logging_config
+logger = logging.getLogger(__name__)
+
+# Imports for Checkpointer
+from typing import Optional # ADDED
+from fastapi import HTTPException, FastAPI as FastAPIInstance # MODIFIED: Added FastAPIInstance for app.state type hint if needed below
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver # ADDED
+from backend.config import DB_CONFIG # ADDED - Assuming DB_CONFIG is here or accessible
+
+# No longer need global CHECKPOINTER_INSTANCE if app.state is used consistently
+# CHECKPOINTER_INSTANCE: Optional[AsyncPostgresSaver] = None
+
+# 导入配置 (Keep this)
+from backend.config.base import LOG_DIR # LOG_DIR is now primarily for reference if needed
 from backend.config.app_config import APP_CONFIG
 
-# 创建logs目录
-log_dir = Path(LOG_DIR) # 使用配置中的 LOG_DIR
-log_dir.mkdir(parents=True, exist_ok=True)
+# 创建logs目录 (This is now handled by logging_config.py or base.py, can be removed or kept for explicitness if preferred)
+# log_dir = Path(LOG_DIR)
+# log_dir.mkdir(parents=True, exist_ok=True)
 
-# 为 app.main logger 创建格式化器
-app_main_formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# --- REMOVE OLD分散的日志配置 ---
+# # 为 app.main logger 创建格式化器
+# app_main_formatter = logging.Formatter(
+#     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# )
+# # 配置 \'backend.app\' 命名空间下的日志记录器...
+# backend_app_logger = logging.getLogger("backend.app")
+# backend_app_logger.setLevel(logging.DEBUG)
+# general_console_handler = logging.StreamHandler()
+# general_console_handler.setFormatter(app_main_formatter)
+# general_console_handler.setLevel(logging.DEBUG)
+# backend_app_logger.addHandler(general_console_handler)
+# backend_app_logger.propagate = False
+# # 创建单独的DeepSeek日志记录器
+# deepseek_logger = logging.getLogger("backend.deepseek")
+# # ... (all old deepseek_logger, workflow_logger, app_main logger (__name__), sas_logger configurations) ...
+# logger.propagate = False # 防止 app.main 日志被根记录器（如果将来配置了）重复处理
+# # +++ BEGINN ADDITION FOR SAS LOGGER CONFIGURATION +++
+# # ... (sas_logger configuration) ...
+# # +++ END ADDITION FOR SAS LOGGER CONFIGURATION +++
+# logger.info("日志系统已配置 (app.main)，将记录到 %s 和控制台", log_dir)
+# --- END REMOVE OLD ---
 
-# --- BEGIN MODIFICATION ---
-# 配置 'backend.app' 命名空间下的日志记录器，使其将 DEBUG 及以上级别日志输出到控制台
-# 这将覆盖 backend.app.routers.chat 等子模块的日志记录器
-backend_app_logger = logging.getLogger("backend.app")
-backend_app_logger.setLevel(logging.DEBUG)
+logger.info("Logging system configured via backend.logging_config.py.") # New log message
 
-# 创建或复用一个控制台处理器
-# 复用 app_main_formatter
-general_console_handler = logging.StreamHandler()
-general_console_handler.setFormatter(app_main_formatter)
-general_console_handler.setLevel(logging.DEBUG) # 确保处理器本身也允许 DEBUG
-
-backend_app_logger.addHandler(general_console_handler)
-backend_app_logger.propagate = False # ADDED THIS LINE
-# 不需要设置 backend_app_logger.propagate = False，让 app.main 等子记录器可以进一步自定义行为 # This comment is now outdated by the line above
-# --- END MODIFICATION ---
-
-# 创建单独的DeepSeek日志记录器
-deepseek_logger = logging.getLogger("backend.deepseek")
-deepseek_logger.setLevel(logging.DEBUG)
-deepseek_file_handler = logging.handlers.RotatingFileHandler(
-    log_dir / "deepseek_api.log", # 使用 log_dir 变量
-    maxBytes=20*1024*1024,  # 20MB
-    backupCount=10,
-    encoding='utf-8'
-)
-deepseek_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-deepseek_logger.addHandler(deepseek_file_handler)
-# deepseek_logger.propagate = False # 可选：如果 deepseek 日志不应传播到根
-
-# 工作流处理日志记录器
-workflow_logger = logging.getLogger("backend.workflow")
-workflow_logger.setLevel(logging.DEBUG)
-workflow_file_handler = logging.handlers.RotatingFileHandler(
-    log_dir / "workflow.log", # 使用 log_dir 变量
-    maxBytes=20*1024*1024,  # 20MB
-    backupCount=10,
-    encoding='utf-8'
-)
-workflow_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-workflow_logger.addHandler(workflow_file_handler)
-# workflow_logger.propagate = False # 可选：如果 workflow 日志不应传播到根
-
-logger = logging.getLogger(__name__) # 此处的 __name__ 通常是 "app.main"
-logger.setLevel(logging.DEBUG) # 为 app.main logger 设置级别
-
-# 为 app.main logger 添加控制台处理器
-app_main_console_handler = logging.StreamHandler()
-app_main_console_handler.setFormatter(app_main_formatter)
-logger.addHandler(app_main_console_handler)
-
-# 为 app.main logger 添加文件处理器 (app.log)
-app_main_file_handler = logging.handlers.RotatingFileHandler(
-    log_dir / "app.log",
-    maxBytes=1*1024*1024,
-    backupCount=1,
-    encoding='utf-8'
-)
-app_main_file_handler.setFormatter(app_main_formatter)
-logger.addHandler(app_main_file_handler)
-
-logger.propagate = False # 防止 app.main 日志被根记录器（如果将来配置了）重复处理
-
-logger.info("日志系统已配置 (app.main)，将记录到 %s 和控制台", log_dir) # 使用 log_dir 变量
-
-# 检查是否使用最小模式
+# 检查是否使用最小模式 (Keep this section)
 MINIMAL_MODE = os.environ.get("SKIP_COMPLEX_ROUTERS", "0") == "1"
 if MINIMAL_MODE:
-    logger.info("使用最小模式启动，将跳过某些复杂路由")
+    logger.info("Using minimal mode, skipping some complex routers.")
 
-# 确保 base 模块的 LOG_DIR 已经加载
-logger.info(f"从配置加载的 LOG_DIR: {LOG_DIR}")
+# 确保 base 模块的 LOG_DIR 已经加载 (Keep for verification if needed)
+logger.info(f"LOG_DIR from config: {LOG_DIR}")
 
-logger.info("开始导入模块...")
+logger.info("Importing modules...") # Keep
 
-# 首先导入数据库模型
+# 首先导入数据库模型 (Keep this section)
 try:
-    from database.connection import Base 
-    logger.info("导入database成功")
-    
-    # 导入数据库模型
+    from database.connection import Base
+    logger.info("Successfully imported database.connection.Base")
     from database.models import User, Flow, FlowVariable, VersionInfo, Chat
-    logger.info("导入models成功")
-    
-    # 导入embeddings模型
-    # 注释掉不存在的embeddings模块
-    # from backend.app.embeddings.models import JsonEmbedding
-    # logger.info("导入embedding模型成功")
-    
-    # 现在可以导入backend包
-    from backend.config import APP_CONFIG
-    logger.info("导入config成功")
+    logger.info("Successfully imported database.models")
+    from backend.config import APP_CONFIG # Keep, though imported earlier too
+    logger.info("Successfully imported backend.config.APP_CONFIG")
     from backend.app.routers import (
         user, flow, email, auth, node_templates,
-        flow_variables, chat, langgraph_chat
+        flow_variables, chat, langgraph_chat, sas_chat
     )
-    logger.info("导入基本路由成功")
-    
-    # 只在非最小模式下导入复杂路由
+    logger.info("Successfully imported basic routers.")
     if not MINIMAL_MODE:
         try:
-            # from backend.app.routers import workflow_router
-            logger.info("导入workflow_router成功")
+            # from backend.app.routers import workflow_router # Example, keep if used
+            logger.info("Successfully imported workflow_router (if applicable).")
         except ImportError as e:
-            logger.error(f"导入workflow_router失败: {e}")
-    
+            logger.error(f"Failed to import workflow_router: {e}")
     from backend.app.utils import get_version, get_version_info
-    logger.info("导入utils成功")
+    logger.info("Successfully imported backend.app.utils.")
     from backend.app.dependencies import get_node_template_service
-    logger.info("导入dependencies成功")
+    logger.info("Successfully imported backend.app.dependencies.")
 except Exception as e:
-    logger.error(f"导入模块时出错: {e}")
+    logger.error(f"Error during module imports: {e}", exc_info=True)
     raise
 
-# --- 新增：导入 Pydantic 模型和依赖 --- 
+# --- 新增：导入 Pydantic 模型和依赖 --- (Keep if relevant)
 from backend.langgraphchat.memory.db_chat_memory import DbChatMemory
-from backend.app.services.chat_service import ChatService # 确保 ChatService 已导入
+from backend.app.services.chat_service import ChatService
 
-# --- 新增：解析 Pydantic 前向引用 --- 
+# --- 新增：解析 Pydantic 前向引用 --- (Keep if relevant)
 try:
-    logger.info("尝试重建 Pydantic 模型以解析前向引用...")
+    logger.info("Rebuilding Pydantic models to resolve forward references...")
     DbChatMemory.model_rebuild()
-    # 如果 ChatService 或其他模型也使用了前向引用，也在此调用
-    # ChatService.model_rebuild()
-    logger.info("Pydantic 模型重建成功")
+    # ChatService.model_rebuild() # If needed
+    logger.info("Pydantic models rebuilt successfully.")
 except Exception as e:
-    logger.error(f"重建 Pydantic 模型时出错: {e}", exc_info=True)
-    # 根据需要处理错误，例如退出应用。目前仅记录错误。
+    logger.error(f"Error rebuilding Pydantic models: {e}", exc_info=True)
 
-logger.info("初始化FastAPI应用...")
-# Initialize FastAPI app
+logger.info("Initializing FastAPI application...") # Keep
+# Initialize FastAPI app (Keep this section)
 app = FastAPI(
     title=APP_CONFIG['PROJECT_NAME'],
-    version=get_version(),  # 动态读取版本号
+    version=get_version(),
 )
 
-# 添加这个中间件来记录所有请求
+# 添加这个中间件来记录所有请求 (Modify to use a specific logger)
 @app.middleware("http")
 async def log_requests_detailed(request: Request, call_next):
-    client_host = request.client.host if request.client else "Unknown"
-    logger.info(f"收到请求: {request.method} {request.url.path} (来自: {client_host})")
-    logger.debug(f"请求头: {dict(request.headers)}") # 打印请求头 (DEBUG级别)
+    # Get a specific logger for HTTP requests, it will inherit from 'backend.app' -> 'backend'
+    http_logger = logging.getLogger("backend.app.http_requests") # Specific logger for http requests
+    
+    # client_host = request.client.host if request.client else "Unknown" # Covered by logger format
+    http_logger.info(f"REQUEST: {request.method} {request.url.path} from {request.client.host if request.client else 'Unknown Client'}")
+    # For more detail, use DEBUG level:
+    # http_logger.debug(f"Headers: {dict(request.headers)}")
 
     start_time = time.time()
     try:
         response = await call_next(request) # 调用后续处理或路由
         process_time = time.time() - start_time
-        logger.info(f"请求完成: {request.method} {request.url.path} - {response.status_code} (耗时: {process_time:.4f}s)")
-        # 如果需要，可以记录响应头 (DEBUG级别)
-        # logger.debug(f"响应头: {dict(response.headers)}")
+        http_logger.info(f"RESPONSE: {request.method} {request.url.path} - STATUS {response.status_code} (took: {process_time:.4f}s)")
+        # http_logger.debug(f"Response Headers: {dict(response.headers)}")
     except Exception as e:
         process_time = time.time() - start_time
-        logger.error(f"请求处理出错: {request.method} {request.url.path} - {e} (耗时: {process_time:.4f}s)", exc_info=True) # 记录异常信息
-        # 重新抛出异常，让 FastAPI 的错误处理接管
-        raise e from None
+        # Log error with exception info
+        http_logger.error(f"ERROR: {request.method} {request.url.path} - Exception {type(e).__name__} (took: {process_time:.4f}s)", exc_info=True)
+        raise e from None # Re-raise to let FastAPI handle it
     return response
 
-# CORS configuration - 配置更加明确的CORS
+# CORS configuration (Keep this section)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=APP_CONFIG['CORS_ORIGINS'],
@@ -202,133 +168,174 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-logger.info("注册路由...")
-# Include routers
+logger.info("Registering routers...") # Keep
+# Include routers (Keep this section)
 try:
     app.include_router(user.router)
-    logger.info("注册user路由成功")
+    logger.info("Registered user router.")
     app.include_router(flow.router)
-    logger.info("注册flow路由成功")
+    logger.info("Registered flow router.")
     app.include_router(email.router)
-    logger.info("注册email路由成功")
+    logger.info("Registered email router.")
     app.include_router(auth.router)
-    logger.info("注册auth路由成功")
-    app.include_router(node_templates.router)  # 添加节点模板路由
-    logger.info("注册node_templates路由成功")
+    logger.info("Registered auth router.")
+    app.include_router(node_templates.router)
+    logger.info("Registered node_templates router.")
     
-    # 只在非最小模式下注册复杂路由
     if not MINIMAL_MODE:
         try:
-            # app.include_router(workflow_router.router)  # 添加工作流路由
-            logger.info("注册workflow路由成功")
+            # app.include_router(workflow_router.router) # Example
+            logger.info("Registered workflow router (if applicable).")
         except Exception as e:
-            logger.error(f"注册workflow路由失败: {e}")
+            logger.error(f"Failed to register workflow router: {e}")
     else:
-        logger.info("跳过注册workflow路由")
+        logger.info("Skipped registering workflow router (minimal mode).")
 
-    # 加载API路由
-    app.include_router(flow_variables.router)  # 添加流程图变量路由
-    app.include_router(chat.router)  # 添加聊天路由
-    app.include_router(langgraph_chat.router)  # 添加LangGraph聊天路由
-    logger.info("注册flow_variables路由成功")
-    logger.info("注册chat路由成功")
-    logger.info("注册langgraph_chat路由成功")
+    app.include_router(flow_variables.router)
+    logger.info("Registered flow_variables router.")
+    app.include_router(chat.router)
+    logger.info("Registered chat router.")
+    app.include_router(langgraph_chat.router)
+    logger.info("Registered langgraph_chat router.")
+    app.include_router(sas_chat.router)
+    logger.info("Registered sas_chat router.")
 except Exception as e:
-    logger.error(f"注册路由时出错: {e}")
+    logger.error(f"Error registering routers: {e}", exc_info=True)
     raise
 
-logger.info("FastAPI应用初始化完成，准备开始处理请求...")
+logger.info("FastAPI application initialization complete. Ready for requests...") # Keep
 
-@app.on_event("startup")
+@app.on_event("startup") # Keep this section
 async def startup_event():
-    """
-    应用启动时执行的事件
-    预加载节点模板数据
-    """
     log_id = str(uuid.uuid4())
     current_time = datetime.datetime.now().isoformat()
-    logger.info(f"🚀 STARTUP EVENT 1 (startup_event) CALLED - ID: {log_id} at {current_time}")
-    # 预加载节点模板
+    # Use the main app logger or a specific startup logger
+    startup_logger = logging.getLogger("backend.app.startup_event")
+    startup_logger.info(f"🚀 STARTUP EVENT 1 (startup_event) CALLED - ID: {log_id} at {current_time}")
     template_service = get_node_template_service()
-    # print("节点模板加载成功") # REPLACED
-    logger.info(f"Node templates loaded by startup_event (ID: {log_id}).")
-    
-    # 不再需要初始化节点类型提示服务
-    # 它将在langgraphchat/prompts/chat_prompts.py中按需创建
+    startup_logger.info(f"Node templates loaded by startup_event (ID: {log_id}).")
 
-@app.get("/")
+@app.on_event("startup")
+async def initialize_checkpointer():
+    """
+    Initializes the LangGraph AsyncPostgresSaver checkpointer instance at application startup
+    and stores both the context manager and the instance in app.state.
+    """
+    checkpointer_logger = logging.getLogger("backend.app.checkpointer_init")
+    app.state.saver_context_manager = None  # Initialize to None
+    app.state.checkpointer_instance = None  # Initialize to None
+    try:
+        db_url = DB_CONFIG.get('DATABASE_URL')
+        # Log the actual DB_URL being used
+        checkpointer_logger.info(f"Attempting to initialize checkpointer with DATABASE_URL: {db_url}")
+        if db_url:
+            # Convert SQLAlchemy format to standard PostgreSQL format for AsyncPostgresSaver
+            # Remove the "+psycopg2" dialect from the URL
+            if db_url.startswith('postgresql+psycopg2://'):
+                db_url_for_checkpointer = db_url.replace('postgresql+psycopg2://', 'postgresql://')
+                checkpointer_logger.info(f"Converted URL for AsyncPostgresSaver: {db_url_for_checkpointer}")
+            else:
+                db_url_for_checkpointer = db_url
+            
+            # Get the async context manager
+            app.state.saver_context_manager = AsyncPostgresSaver.from_conn_string(db_url_for_checkpointer)
+            # Enter the context manager to get the actual instance
+            app.state.checkpointer_instance = await app.state.saver_context_manager.__aenter__()
+            # Now call setup on the actual instance
+            await app.state.checkpointer_instance.setup()
+            checkpointer_logger.info("Successfully initialized AsyncPostgresSaver (checkpointer) and stored in app.state.")
+        else:
+            checkpointer_logger.error("DATABASE_URL not found in DB_CONFIG. Checkpointer cannot be initialized.")
+    except Exception as e:
+        checkpointer_logger.error(f"Error initializing AsyncPostgresSaver (checkpointer): {e}", exc_info=True)
+        # If initialization failed, ensure instance is None so get_checkpointer dependency fails cleanly
+        app.state.checkpointer_instance = None 
+        if app.state.saver_context_manager: # If context manager was created but enter/setup failed
+            try:
+                # Attempt to clean up the context manager if __aenter__ was called or partially succeeded
+                # This might not be strictly necessary if __aenter__ itself failed, but good for robustness
+                await app.state.saver_context_manager.__aexit__(type(e), e, e.__traceback__)
+            except Exception as exit_e:
+                checkpointer_logger.error(f"Error during __aexit__ in checkpointer initialization failure: {exit_e}", exc_info=True)
+            app.state.saver_context_manager = None # Ensure it's None after failed attempt
+
+@app.on_event("shutdown")
+async def shutdown_checkpointer():
+    """
+    Cleans up the LangGraph checkpointer resources on application shutdown.
+    """
+    shutdown_logger = logging.getLogger("backend.app.checkpointer_shutdown")
+    if hasattr(app.state, 'saver_context_manager') and app.state.saver_context_manager is not None:
+        shutdown_logger.info("Shutting down AsyncPostgresSaver (checkpointer)...")
+        try:
+            # Call __aexit__ on the stored context manager
+            # Pass None, None, None for a clean exit
+            await app.state.saver_context_manager.__aexit__(None, None, None)
+            shutdown_logger.info("AsyncPostgresSaver (checkpointer) shutdown successfully.")
+        except Exception as e:
+            shutdown_logger.error(f"Error during AsyncPostgresSaver (checkpointer) shutdown: {e}", exc_info=True)
+        finally:
+            app.state.saver_context_manager = None
+            app.state.checkpointer_instance = None
+    else:
+        shutdown_logger.info("AsyncPostgresSaver (checkpointer) context manager not found in app.state, skipping shutdown.")
+
+@app.get("/") # Keep this section
 async def root():
     return {"message": "Flow Editor API"}
 
-# 添加一个新的端点，提供版本信息
-@app.get("/api/version")
+@app.get("/version") # 移除 /api 前缀
 async def version(request: Request):
-    # 记录请求信息以便调试
-    origin = request.headers.get("origin", "未知来源")
-    print(f"接收到版本请求，来源: {origin}")
-    
+    version_logger = logging.getLogger("backend.app.version_endpoint")
+    origin = request.headers.get("origin", "Unknown Origin")
+    # version_logger.info(f"Version request received from: {origin}") # Example of logging
     version_data = get_version_info()
-    print(f"返回版本信息: {version_data}")
-    
-    # 返回版本信息，使用全局CORS配置
+    # version_logger.info(f"Returning version info: {version_data}") # Example of logging
     return version_data
 
-# 在应用启动前验证API配置
-@app.on_event("startup")
+@app.on_event("startup") # Keep this section (ensure it's distinct if multiple startup events)
 async def validate_api_configuration():
-    """验证API配置，确保必要的服务可以正常工作"""
     log_id = str(uuid.uuid4())
     current_time = datetime.datetime.now().isoformat()
-    logger.info(f"🚀 STARTUP EVENT 2 (validate_api_configuration) CALLED - ID: {log_id} at {current_time}")
-    import logging # This import is fine here or at top
-    logger_local = logging.getLogger("backend.app.startup") # Use a more specific logger or the global one
+    config_validation_logger = logging.getLogger("backend.app.config_validation")
+    config_validation_logger.info(f"🚀 STARTUP EVENT 2 (validate_api_configuration) CALLED - ID: {log_id} at {current_time}")
     
-    from backend.config import APP_CONFIG, AI_CONFIG, DB_CONFIG
+    from backend.config import APP_CONFIG as app_cfg, AI_CONFIG, DB_CONFIG # Renamed to avoid conflict
     
-    # 验证DeepSeek配置
-    if AI_CONFIG['USE_DEEPSEEK']:
-        logger_local.info("正在验证DeepSeek API配置")
-        
-        invalid_key = not AI_CONFIG['DEEPSEEK_API_KEY'] or AI_CONFIG['DEEPSEEK_API_KEY'] == "your_deepseek_api_key_here" or AI_CONFIG['DEEPSEEK_API_KEY'].startswith("sk-if-you-see-this")
+    if AI_CONFIG.get('USE_DEEPSEEK', False): # Use .get for safety
+        config_validation_logger.info("Validating DeepSeek API configuration...")
+        api_key = AI_CONFIG.get('DEEPSEEK_API_KEY')
+        invalid_key = not api_key or api_key == "your_deepseek_api_key_here" or api_key.startswith("sk-if-you-see-this")
         
         if invalid_key:
-            logger_local.warning("⚠️ 未设置有效的DeepSeek API密钥，请设置DEEPSEEK_API_KEY环境变量")
-            logger_local.warning("⚠️ 当前API密钥值不是有效的密钥，API调用将失败")
+            config_validation_logger.warning("⚠️ No valid DeepSeek API key set. Please set DEEPSEEK_API_KEY environment variable.")
         else:
-            logger_local.info(f"✓ DeepSeek API密钥已设置 (前4位: {AI_CONFIG['DEEPSEEK_API_KEY'][:4]}***)")
+            config_validation_logger.info(f"✓ DeepSeek API key is set (ends with: ...{api_key[-4:] if api_key else 'N/A'}).") # Masked
             
-        # 检查基础URL是否正确
-        base_url = AI_CONFIG['DEEPSEEK_BASE_URL'].rstrip('/')
-        logger_local.info(f"DeepSeek API基础URL: {base_url}")
+        base_url = AI_CONFIG.get('DEEPSEEK_BASE_URL', '').rstrip('/')
+        config_validation_logger.info(f"DeepSeek API Base URL: {base_url}")
         
         if '/v1/' in base_url or base_url.endswith('/v1'):
-            logger_local.warning(f"⚠️ 检测到基础URL中包含/v1路径: {base_url}")
-            logger_local.warning("⚠️ 这可能会导致API路径重复，因为代码中会自动添加/v1/chat/completions")
+            config_validation_logger.warning(f"⚠️ Base URL contains /v1: {base_url}. This might cause duplicate paths as code often adds /v1/chat/completions.")
             
-        logger_local.info(f"DeepSeek模型: {AI_CONFIG['DEEPSEEK_MODEL']}")
+        config_validation_logger.info(f"DeepSeek Model: {AI_CONFIG.get('DEEPSEEK_MODEL')}")
         
-        # 尝试验证 DeepSeek 客户端模块
         try:
-            # 尝试导入新的 DeepSeekLLM 类来验证模块是否存在
-            from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
-            # 之前获取实例的代码不再需要
-            # logger.info("✓ DeepSeek客户端服务初始化成功") # 旧日志
-            logger_local.info("✓ DeepSeek客户端模块 (DeepSeekLLM) 导入成功") # 新日志
+            from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM # Verify import
+            config_validation_logger.info("✓ DeepSeekLLM client module imported successfully.")
         except Exception as e:
-            # logger.error(f"⚠️ DeepSeek客户端服务初始化失败: {str(e)}") # 旧日志
-            logger_local.error(f"⚠️ DeepSeek客户端模块 (DeepSeekLLM) 导入或验证失败: {str(e)}") # 新日志
+            config_validation_logger.error(f"⚠️ Failed to import or validate DeepSeekLLM client module: {str(e)}", exc_info=True)
     
-    # 验证数据库配置
-    logger_local.info(f"数据库URL: {DB_CONFIG['DATABASE_URL'] if 'DATABASE_URL' in DB_CONFIG and DB_CONFIG['DATABASE_URL'] else '未设置'}")
+    db_url = DB_CONFIG.get('DATABASE_URL')
+    config_validation_logger.info(f"Database URL: {'Set' if db_url else 'Not Set (Using default or in-memory if applicable)'}") # Simplified
     
-    # 记录调试模式状态
-    if APP_CONFIG['DEBUG']:
-        logger_local.info("⚠️ 调试模式已启用")
+    if app_cfg.get('DEBUG', False): # Use .get for safety
+        config_validation_logger.info("⚠️ Debug mode is ENABLED.")
     else:
-        logger_local.info("✓ 调试模式已禁用")
+        config_validation_logger.info("✓ Debug mode is DISABLED.")
         
-    # 记录API前缀
-    logger_local.info(f"API前缀: {APP_CONFIG['API_PREFIX']}")
-    
-    # 验证CORS配置
-    logger_local.info(f"CORS允许的源: {', '.join(APP_CONFIG['CORS_ORIGINS'])}")
+    config_validation_logger.info(f"API Prefix: {app_cfg.get('API_PREFIX')}")
+    config_validation_logger.info(f"CORS Allowed Origins: {', '.join(app_cfg.get('CORS_ORIGINS', []))}")
+
+# Ensure all logger calls like print() are replaced with logger.info(), logger.debug() etc.
+# For example, in /api/version, print() statements should be logger calls.

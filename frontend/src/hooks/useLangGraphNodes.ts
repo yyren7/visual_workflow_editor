@@ -18,12 +18,8 @@ interface AgentState {
     type: string;
     description?: string;
     sub_tasks?: string[];
+    details?: string[]; // 添加details字段，包含模块步骤
   }>;
-  sas_step2_generated_task_details?: {
-    [taskIndex: string]: {
-      details: string[];
-    };
-  };
   dialog_state?: string;
   task_list_accepted?: boolean;
   module_steps_accepted?: boolean;
@@ -113,8 +109,8 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
       });
 
       // Create detail nodes for this task
-      const taskDetails = state.sas_step2_generated_task_details?.[i.toString()];
-      const details = taskDetails?.details || [];
+      // 直接从任务对象的details字段获取模块步骤数据
+      const details = task.details || [];
 
       if (details.length > 0) {
         // 详情节点位置 = 任务节点Y + 任务节点高度 + 垂直间距
@@ -159,7 +155,7 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     const { nodes: langGraphNodesGenerated, edges: langGraphEdgesGenerated } = generateLangGraphNodes(agentState, currentFlowId);
     
     const finalEnhancedLangGraphNodes = langGraphNodesGenerated.map(genNode => {
-        const existingNode = nodesFromStore.find(n => n.id === genNode.id);
+        const existingNode = nodesFromStore?.find(n => n.id === genNode.id);
         if (existingNode) {
             // Node exists: Start with the existing node from the store to preserve all its React Flow managed properties
             // (like position, width, height, selected, dragging, positionAbsolute etc.).
@@ -176,10 +172,10 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
         }
     });
     
-    const nonLangGraphNodes = nodesFromStore.filter(node => !node.id.startsWith('langgraph_'));
-    const nonLangGraphEdges = edgesFromStore.filter(edge => 
+    const nonLangGraphNodes = nodesFromStore?.filter(node => !node.id.startsWith('langgraph_')) || [];
+    const nonLangGraphEdges = edgesFromStore?.filter(edge => 
       !edge.source.startsWith('langgraph_') && !edge.target.startsWith('langgraph_')
-    );
+    ) || [];
 
     const updatedNodes = [...nonLangGraphNodes, ...finalEnhancedLangGraphNodes];
     const updatedEdges = [...nonLangGraphEdges, ...langGraphEdgesGenerated]; 
@@ -203,18 +199,12 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
 
   }, [agentState, currentFlowId, nodesFromStore, edgesFromStore, generateLangGraphNodes, dispatch]);
 
-  // Auto-sync when agent state changes, or if nodes/edges themselves change from other sources
+  // Auto-sync when agent state changes
   useEffect(() => {
-    // Minimal logging for effect trigger
-    // console.log(`🔄 useLangGraphNodes: EFFECT TRIGGERED. Flow ID: ${currentFlowId}, AgentState present: ${!!agentState}`);
-
     if (agentState && currentFlowId) {
-      // console.log('🔄 Calling syncLangGraphNodes...');
       syncLangGraphNodes();
-    } else {
-      // console.log('🔄 useLangGraphNodes: Conditions not met for syncing.');
     }
-  }, [agentState, currentFlowId, nodesFromStore, edgesFromStore, syncLangGraphNodes, dispatch]);
+  }, [agentState, currentFlowId, syncLangGraphNodes]);
 
   return {
     syncLangGraphNodes,

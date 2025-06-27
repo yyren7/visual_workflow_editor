@@ -39,14 +39,6 @@ from backend.config import AI_CONFIG, get_log_file_path
 # 使用专门的deepseek日志记录器
 logger = logging.getLogger("backend.deepseek")
 
-# (保持日志文件设置)
-DEEPSEEK_LOG_FILE = get_log_file_path("deepseek_api.log")
-file_handler = logging.FileHandler(DEEPSEEK_LOG_FILE)
-file_handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-
 # Helper function to convert BaseMessage to OpenAI compatible dict
 def _convert_message_to_dict(message: BaseMessage) -> ChatCompletionMessageParam:
     if isinstance(message, HumanMessage):

@@ -15,7 +15,7 @@ from langchain_core.output_parsers import JsonOutputParser # For parsing new tas
 # Import state and prompt_loader which might be used by shared functions or are essential
 from .state import RobotFlowAgentState, GeneratedXmlFile, TaskDefinition # GeneratedXmlFile might be used if helper functions constructing it remain
 from .prompt_loader import get_filled_prompt, load_node_descriptions, append_node_description, get_sas_step1_formatted_prompt
-from ....prompts.shared_constants import USER_INTERACTION_TEXTS, KNOWN_ROBOT_MODELS # Import from shared constants
+from ..langgraphchat.prompts.shared_constants import USER_INTERACTION_TEXTS, KNOWN_ROBOT_MODELS # Import from shared constants
 
 # Import nodes from the new submodule
 from .nodes import (

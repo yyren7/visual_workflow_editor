@@ -385,6 +385,7 @@ async def add_message(
     
     event_queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE) 
     active_chat_queues[event_queue_key] = event_queue  # 使用原始chat_id作为key
+    logger.debug(f"Current keys in active_chat_queues after setting for {event_queue_key}: {list(active_chat_queues.keys())}")
     logger.info(f"为 chat {event_queue_key} (actual: {actual_processing_chat_id}) 创建/设置了新的事件队列")
 
     background_tasks.add_task(
@@ -403,6 +404,7 @@ async def add_message(
 @router.get("/{chat_id}/events")
 async def get_chat_events(chat_id: str, request: Request):
     route_hit_id = str(uuid.uuid4())
+    logger.debug(f"Checking for {chat_id} in active_chat_queues. Current keys: {list(active_chat_queues.keys())}")
     logger.info(f"➡️ Route /events hit for chat_id: {chat_id}, HIT_ID: {route_hit_id}, Client: {request.client.host if request.client else 'unknown'}")
 
     if chat_id not in active_chat_queues:
@@ -530,13 +532,14 @@ async def get_chat_events(chat_id: str, request: Request):
                 if current_chat_id in active_chat_queues and active_chat_queues[current_chat_id] is event_queue:
                     if not event_queue.empty():
                         logger.warning(f"🔴 Cleaning up queue for chat {current_chat_id} (Instance {sse_instance_id}) but it's not empty. {event_queue.qsize()} items remaining (will be lost).")
-                        while not event_queue.empty():
-                            try:
-                                event_queue.get_nowait()
-                                event_queue.task_done()
-                            except asyncio.QueueEmpty:
-                                break
-                    active_chat_queues.pop(current_chat_id, None)
+                        # Original logic to drain queue (can be intensive if queue is large and not processed):
+                        # while not event_queue.empty():
+                        #     try:
+                        #         event_queue.get_nowait()
+                        #         event_queue.task_done()
+                        #     except asyncio.QueueEmpty:
+                        #         break
+                    active_chat_queues.pop(current_chat_id, None) 
                     logger.info(f"🔴 Queue for chat {current_chat_id} (Instance {sse_instance_id}) removed from active_chat_queues.")
                 else:
                     logger.warning(f"🔴 Queue for chat {current_chat_id} (Instance {sse_instance_id}) was not found in active_chat_queues or was not the expected instance during final cleanup. Might have been cleaned by another process or a re-entrant call.")

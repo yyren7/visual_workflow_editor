@@ -15,7 +15,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 
 from backend.langgraphchat.config import settings
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 from backend.database.connection import get_db
 from backend.langgraphchat.tools.flow_tools import get_active_flow_id
 

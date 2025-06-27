@@ -3,20 +3,20 @@ if __name__ == '__main__' and (__package__ is None or __package__ == ''):
     import sys
     from pathlib import Path
     # Calculate the path to the project root ('/workspace')
-    # This file is backend/langgraphchat/graph/subgraph/sas/visualize_graph.py
-    # Relative path from this file to /workspace is ../../../../..
-    project_root = Path(__file__).resolve().parents[5]
+    # This file is backend/sas/visualize_graph.py
+    # Relative path from this file to /workspace is ../../..
+    project_root = Path(__file__).resolve().parents[3]
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
     
     # Optional: Set __package__ if visualize_graph.py itself had relative imports
     # For now, its main import 'from backend...' is absolute from project root
-    # __package__ = "backend.langgraphchat.graph.subgraph.sas" 
+    # __package__ = "backend.sas" 
 # ---- END PATCH FOR DIRECT EXECUTION ----
 
 from IPython.display import Image, display
 # Import the function to create the graph
-from backend.langgraphchat.graph.subgraph.sas.graph_builder import create_robot_flow_graph
+from backend.sas.graph_builder import create_robot_flow_graph
 from langchain_core.language_models import BaseChatModel # For type hinting and dummy model
 from langchain_core.outputs import ChatResult, ChatGeneration # For dummy model
 
@@ -36,9 +36,9 @@ dummy_llm = DummyChatModel()
 # This assumes create_robot_flow_graph does not require a fully functional LLM for basic compilation for visualization
 try:
     graph = create_robot_flow_graph(llm=dummy_llm)
-    print("Successfully created graph instance from backend.langgraphchat.graph.subgraph.sas.graph_builder.py")
+    print("Successfully created graph instance from backend.sas.graph_builder.py")
 except Exception as e:
-    print(f"Error creating graph instance from backend.langgraphchat.graph.subgraph.sas.graph_builder.py: {e}")
+    print(f"Error creating graph instance from backend.sas.graph_builder.py: {e}")
     print("Falling back to the example graph for demonstration.")
     # Пример создания простого графа для демонстрации, если основной граф не загрузился
     from langgraph.graph import StateGraph, END
@@ -105,4 +105,4 @@ if __name__ == "__main__":
         visualize_langgraph(graph, "sas_subgraph_visualization.png")
     else:
         print("Error: 'graph' instance was not successfully created or found.")
-        print("Ensure 'create_robot_flow_graph' from 'backend.langgraphchat.graph.subgraph.sas.graph_builder.py' can be called or the example graph is used.") 
+        print("Ensure 'create_robot_flow_graph' from 'backend.sas.graph_builder.py' can be called or the example graph is used.") 

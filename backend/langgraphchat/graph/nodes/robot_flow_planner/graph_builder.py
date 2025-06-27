@@ -578,7 +578,7 @@ async def main_test_run():
     from langchain_openai import ChatOpenAI
     import json
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # REMOVE THIS LINE: logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     # Ensure OPENAI_API_KEY is set in your environment or .env file
     # For DeepSeek, ensure appropriate API key and base URL are set if not using OpenAI models

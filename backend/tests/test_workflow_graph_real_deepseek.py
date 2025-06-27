@@ -12,7 +12,7 @@ from backend.langgraphchat.tools import flow_tools # Import the actual tools
 import logging
 
 # Configure basic logging for tests to see output
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Helper function similar to the one in test_workflow_graph_advanced.py

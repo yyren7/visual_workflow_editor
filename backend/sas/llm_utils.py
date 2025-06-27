@@ -12,18 +12,6 @@ from .prompt_loader import get_filled_prompt
 
 logger = logging.getLogger(__name__)
 
-# --- BEGIN TEMP DEBUG LOGGING CONFIG FOR THIS MODULE ---
-if not logger.handlers:
-    _debug_console_handler = logging.StreamHandler()
-    _debug_console_handler.setLevel(logging.DEBUG)
-    _debug_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - [SAS LLM_UTILS DEBUG] - %(message)s')
-    _debug_console_handler.setFormatter(_debug_formatter)
-    logger.addHandler(_debug_console_handler)
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = False # Prevent double logging if parent is also configured, FOR DEBUG ONLY
-    logger.info("Temporary debug logging configured for sas.llm_utils.")
-# --- END TEMP DEBUG LOGGING CONFIG FOR THIS MODULE ---
-
 async def invoke_llm_for_text_output(
     llm: BaseChatModel,
     system_prompt_content: str,

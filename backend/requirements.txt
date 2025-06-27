@@ -6,6 +6,8 @@ langchain-community
 langchain-core
 langchain-openai
 langchain-deepseek
+langgraph-checkpoint-postgres
+asyncpg
 openai>=1.0.0  # DeepSeek支持OpenAI SDK格式，但我们使用它来调用DeepSeek API
 bcrypt
 fastapi

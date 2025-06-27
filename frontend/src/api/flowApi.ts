@@ -6,7 +6,7 @@ export interface FlowData {
     id?: string; // UUID字符串
     name: string;
     flow_data?: any;
-    agent_state?: any; // LangGraph agent state
+    sas_state?: any; // 修改字段名
     user_id?: string; // UUID字符串
     created_at?: string;
     updated_at?: string;

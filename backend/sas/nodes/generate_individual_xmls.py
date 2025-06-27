@@ -31,9 +31,9 @@ if __name__ == "__main__" and __package__ is None:
     file_path_for_preamble = Path(__file__).resolve()
     print(f"[Preamble] Attempting to set up for direct execution. Script path: {file_path_for_preamble}") 
 
-    # Assuming the script is in: backend/langgraphchat/graph/subgraph/sas/nodes/generate_individual_xmls.py
-    # The project root /workspace is 6 levels up.
-    project_root_for_preamble = file_path_for_preamble.parents[6] 
+    # Assuming the script is in: backend/sas/nodes/generate_individual_xmls.py
+    # The project root /workspace is 4 levels up.
+    project_root_for_preamble = file_path_for_preamble.parents[4] 
     print(f"[Preamble] Calculated project root: {project_root_for_preamble}")
 
     if str(project_root_for_preamble) not in sys.path:
@@ -751,7 +751,7 @@ if __name__ == "__main__":
 
     # Configure logging to show messages from this script's logger and potentially others
     log_format = '%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(message)s'
-    logging.basicConfig(level=logging.DEBUG, format=log_format)
+    # REMOVE THIS LINE: logging.basicConfig(level=logging.DEBUG, format=log_format)
     # If you want to see DEBUG logs from your script for finer details:
     logger.setLevel(logging.DEBUG) # Sets this script's logger to DEBUG
     # logging.getLogger('__main__').setLevel(logging.DEBUG) # Also useful if logger name isn't caught by basicConfig

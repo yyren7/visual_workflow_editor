@@ -1,5 +1,6 @@
 import uuid
-from backend.langgraphchat.utils.logging import logger
+import logging
+logger = logging.getLogger(__name__)
 from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM # For consistent interface
 from ..definitions import ConnectionParams, ToolResult # Relative import
 

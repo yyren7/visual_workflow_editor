@@ -12,12 +12,14 @@ class TokenData(BaseModel):
 
 class UserBase(BaseModel):
     username: str
+    email: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
 
 class User(UserBase):
     id: str
+    is_active: str
     
     class Config:
         from_attributes = True
@@ -46,23 +48,21 @@ class FlowEdgeBase(BaseModel):
 
 # 调整Flow相关模型以匹配models.py中的定义
 class FlowBase(BaseModel):
-    name: str
-
-class FlowCreate(FlowBase):
-    flow_data: Dict[str, Any] = {}
-
-class FlowUpdate(BaseModel):
     name: Optional[str] = None
     flow_data: Optional[Dict[str, Any]] = None
+
+class FlowCreate(FlowBase):
+    pass
+
+class FlowUpdate(FlowBase):
+    pass
 
 class Flow(FlowBase):
     id: str
     owner_id: str
-    flow_data: Dict[str, Any]
-    agent_state: Optional[Dict[str, Any]] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    last_interacted_chat_id: Optional[str] = None
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    last_interacted_chat_id: Optional[str]
     
     class Config:
         from_attributes = True
@@ -165,3 +165,69 @@ class LangGraphInitializeResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class FlowDetail(FlowBase):
+    """流程图详情（包含 SAS 状态）"""
+    id: str
+    owner_id: str
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    last_interacted_chat_id: Optional[str]
+    sas_state: Optional[Dict[str, Any]] = None  # LangGraph state
+
+    class Config:
+        from_attributes = True
+
+class SASInput(BaseModel):
+    """SAS 运行输入"""
+    user_input: str
+    config: Optional[Dict[str, Any]] = None
+
+class SASRunResponse(BaseModel):
+    """SAS 运行响应"""
+    flow_id: str
+    status: str
+    dialog_state: Optional[str] = None
+    clarification_question: Optional[str] = None
+    error_message: Optional[str] = None
+    final_xml_path: Optional[str] = None
+    generated_tasks: List[Dict[str, Any]] = []
+    messages: List[str] = []
+
+# Agent state schemas
+class AgentStateUpdate(BaseModel):
+    """Agent 状态更新"""
+    agent_state: Dict[str, Any]
+
+# Response schemas
+class SuccessResponse(BaseModel):
+    """成功响应"""
+    success: bool
+    message: str
+
+# Flow variable schemas
+class FlowVariable(BaseModel):
+    id: int
+    flow_id: str
+    variable_name: str
+    variable_value: Any
+    variable_type: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class FlowVariableCreate(BaseModel):
+    variable_name: str
+    variable_value: Any
+    variable_type: str
+
+class FlowVariableUpdate(BaseModel):
+    variable_value: Any
+    variable_type: Optional[str] = None
+
+# Version info schema
+class VersionInfo(BaseModel):
+    version: str
+    lastUpdated: str

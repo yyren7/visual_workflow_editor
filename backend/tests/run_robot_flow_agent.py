@@ -20,9 +20,6 @@ from langchain_core.messages import HumanMessage, AIMessageChunk # Added AIMessa
 from backend.langgraphchat.graph.nodes.robot_flow_planner.graph_builder import create_robot_flow_graph 
 from backend.langgraphchat.graph.nodes.robot_flow_planner.state import RobotFlowAgentState # Import the state model
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
 # Helper function to save content to a file
 def save_to_md(filepath: str, content: str, title: Optional[str] = None):
     try:
@@ -117,7 +114,7 @@ async def main():
     # Initialize current_state as a RobotFlowAgentState Pydantic model instance
     current_state = RobotFlowAgentState(
         messages=[],
-        user_input=initial_user_input,
+        user_input=initial_input,
         config={
             "OUTPUT_DIR_PATH": session_log_dir,
             "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new",

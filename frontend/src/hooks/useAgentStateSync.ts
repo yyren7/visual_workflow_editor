@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
-import { updateAgentState, selectCurrentFlowId, selectAgentState, fetchFlowById } from '../store/slices/flowSlice';
+import { updateAgentState, selectCurrentFlowId, selectAgentState, fetchFlowById, setActiveLangGraphStreamFlowId } from '../store/slices/flowSlice';
 import { updateLangGraphState } from '../api/langgraphApi';
 import { chatApi } from '../api/chatApi';
 import { debounce } from 'lodash';
@@ -11,36 +11,28 @@ export const useAgentStateSync = () => {
   const dispatch = useDispatch<AppDispatch>();
   const currentFlowId = useSelector(selectCurrentFlowId);
   const agentState = useSelector(selectAgentState);
-  const { subscribe } = useSSEManager();
+  const { subscribe, closeConnection: closeSseConnection } = useSSEManager();
   
-  const isFirstRender = useRef(true);
   const currentChatIdForSSESubscriptions = useRef<string | null>(null);
   const activeUnsubscribeFunctions = useRef<Array<() => void>>([]);
 
-  const syncToBackend = useRef(
-    debounce(async (flowId: string, state: any) => {
-      if (!flowId) return;
-      try {
-        const stateUpdateRequest = {
-          action_type: 'direct_update',
-          data: state
-        };
-        await updateLangGraphState(flowId, stateUpdateRequest);
-        console.log('useAgentStateSync: Agent state synced to backend for flowId:', flowId);
-      } catch (error) {
-        console.error('useAgentStateSync: Failed to sync agent state to backend:', error);
-      }
-    }, 1000)
-  ).current;
-
   const cleanupSseSubscriptions = useCallback(() => {
+    const chatIdToClose = currentChatIdForSSESubscriptions.current;
+
     if (activeUnsubscribeFunctions.current.length > 0) {
-      console.log('useAgentStateSync: Cleaning up existing SSE subscriptions for chat ID:', currentChatIdForSSESubscriptions.current);
+      console.log('[AGENT_SYNC_LOG] Cleaning up existing SSE subscriptions for chat ID:', chatIdToClose);
       activeUnsubscribeFunctions.current.forEach(unsub => unsub());
       activeUnsubscribeFunctions.current = [];
     }
+    
     currentChatIdForSSESubscriptions.current = null;
-  }, []);
+    dispatch(setActiveLangGraphStreamFlowId(null));
+
+    if (chatIdToClose) {
+      console.log(`[AGENT_SYNC_LOG] Explicitly closing SSE connection for chat ID: ${chatIdToClose} after its stream ended/errored or context changed.`);
+      closeSseConnection(chatIdToClose);
+    }
+  }, [dispatch, closeSseConnection]);
 
   useEffect(() => {
     return () => {
@@ -50,8 +42,9 @@ export const useAgentStateSync = () => {
   }, [cleanupSseSubscriptions]);
 
   const startLangGraphProcessing = useCallback(async (content: string, taskIndex?: number, detailIndex?: number) => {
+    console.log(`[AGENT_SYNC_LOG] startLangGraphProcessing called with content: "${content?.substring(0, 50)}...", taskIndex: ${taskIndex}, detailIndex: ${detailIndex}`);
     if (!currentFlowId) {
-      console.error('useAgentStateSync: No current flow ID, cannot start LangGraph processing.');
+      console.error('[AGENT_SYNC_LOG] No current flow ID, cannot start LangGraph processing.');
       return;
     }
 
@@ -62,92 +55,147 @@ export const useAgentStateSync = () => {
         dynamicChatId += `_detail_${detailIndex}`;
       }
     }
-    console.log(`useAgentStateSync: Preparing to start LangGraph processing for dynamicChatId: ${dynamicChatId}`);
+    console.log(`[AGENT_SYNC_LOG] Preparing for dynamicChatId: ${dynamicChatId}`);
 
     if (currentChatIdForSSESubscriptions.current && currentChatIdForSSESubscriptions.current !== dynamicChatId) {
-        console.log(`useAgentStateSync: Chat ID context changing from ${currentChatIdForSSESubscriptions.current} to ${dynamicChatId}. Cleaning old subscriptions.`);
+        console.log(`[AGENT_SYNC_LOG] Chat ID context changing from ${currentChatIdForSSESubscriptions.current} to ${dynamicChatId}. Cleaning old subscriptions.`);
         cleanupSseSubscriptions();
     }
 
     try {
       const token = localStorage.getItem('access_token');
-      const initialPostUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${dynamicChatId}/messages`;
-      let response = await fetch(initialPostUrl, {
+      const sseUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${dynamicChatId}/events`;
+      console.log(`[AGENT_SYNC_LOG] Starting processing with POST to SSE endpoint: ${sseUrl} with content: "${content?.substring(0,50)}..."`);
+      
+      let response = await fetch(sseUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ content, role: 'user' }),
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({ input: content }),
       });
+      console.log(`[AGENT_SYNC_LOG] POST to SSE endpoint response status: ${response.status}, ok: ${response.ok}`);
 
       let finalChatIdForSSE = dynamicChatId;
 
       if (!response.ok) {
+        const isBaseFlowIdAttempt = (dynamicChatId === currentFlowId);
         if (response.status === 404) {
-          console.warn(`useAgentStateSync: Virtual chat ${dynamicChatId} not found. Attempting to create a real chat as fallback using currentFlowId: ${currentFlowId}.`);
-          let chatName = `LangGraph Input - ${new Date().toLocaleTimeString()}`;
-          if (taskIndex !== undefined) {
-            chatName = `Task ${taskIndex + 1} Input${detailIndex !== undefined ? ` Detail ${detailIndex + 1}` : ''}`;
-          }          
-          const chatResponse = await chatApi.createChat(currentFlowId, chatName);
-          finalChatIdForSSE = chatResponse.id;
-          console.log(`useAgentStateSync: Fallback chat created: ${finalChatIdForSSE}. Resending message.`);
+          if (isBaseFlowIdAttempt) {
+            console.error(`[AGENT_SYNC_LOG] Critical Error: POST to base flowId ${currentFlowId}/events returned 404. This flow may be inactive or deleted on the backend.`);
+            dispatch(setActiveLangGraphStreamFlowId(null));
+            throw new Error(`Base flow ${currentFlowId} not found by backend for new events.`);
+          } else {
+            console.warn(`[AGENT_SYNC_LOG] Virtual chat ${dynamicChatId} not found (404). Attempting to create a real chat as fallback using currentFlowId: ${currentFlowId}.`);
+            dispatch(setActiveLangGraphStreamFlowId(null));
+            let chatName = `LangGraph Fallback - ${new Date().toLocaleTimeString()}`;
+            if (taskIndex !== undefined) { 
+              chatName = `Task ${taskIndex + 1} Fallback${detailIndex !== undefined ? ` Detail ${detailIndex + 1}` : ''}`;
+            }
+            
+            const chatResponse = await chatApi.createChat(currentFlowId, chatName);
+            finalChatIdForSSE = chatResponse.id;
+            console.log(`[AGENT_SYNC_LOG] Fallback chat created with ID: ${finalChatIdForSSE} (context: original flow ${currentFlowId}). Resending message to this new chat.`);
 
-          const fallbackPostUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${finalChatIdForSSE}/messages`;
-          response = await fetch(fallbackPostUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ content, role: 'user' }),
-          });
-          if (!response.ok) throw new Error(`Fallback HTTP Error: ${response.status} ${response.statusText}`);
+            const fallbackSseUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${finalChatIdForSSE}/events`;
+            console.log(`[AGENT_SYNC_LOG] Attempting fallback POST to SSE endpoint: ${fallbackSseUrl} with content: "${content?.substring(0,50)}..."`);
+            response = await fetch(fallbackSseUrl, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'text/event-stream'
+              },
+              body: JSON.stringify({ input: content }),
+            });
+            console.log(`[AGENT_SYNC_LOG] Fallback POST to SSE endpoint response status: ${response.status}, ok: ${response.ok}`);
+            if (!response.ok) throw new Error(`Fallback HTTP Error: ${response.status} ${response.statusText}`);
+          }
         } else {
           throw new Error(`Initial HTTP Error: ${response.status} ${response.statusText}`);
         }
       }
-      console.log(`useAgentStateSync: Message POST successful for effective chat: ${finalChatIdForSSE}`);
+      console.log(`[AGENT_SYNC_LOG] POST to SSE endpoint successful for effective chat ID: ${finalChatIdForSSE}`);
+      dispatch(setActiveLangGraphStreamFlowId(finalChatIdForSSE));
 
       if (currentChatIdForSSESubscriptions.current !== finalChatIdForSSE || activeUnsubscribeFunctions.current.length === 0 ) {
-        console.log(`useAgentStateSync: Setting up new subscriptions for chat ID: ${finalChatIdForSSE}. Previous: ${currentChatIdForSSESubscriptions.current}`);
+        console.log(`[AGENT_SYNC_LOG] Setting up new SSE subscriptions for chat ID: ${finalChatIdForSSE}. Previous SSE chat ID: ${currentChatIdForSSESubscriptions.current}`);
         cleanupSseSubscriptions();
         currentChatIdForSSESubscriptions.current = finalChatIdForSSE;
         
         const newUnsubs: Array<() => void> = [];
-        newUnsubs.push(subscribe(finalChatIdForSSE, 'agent_state_updated', (eventData) => {
-          console.log('[DEBUG] useAgentStateSync: Received an SSE event. Type: agent_state_updated');
-          console.log('[DEBUG] useAgentStateSync: Event Data Raw:', JSON.stringify(eventData, null, 2));
+        const eventsToSubscribe: string[] = ['agent_state_updated', 'stream_end', 'connection_error', 'server_error_event', 'token', 'tool_start', 'tool_end', 'user_message_saved', 'ping', 'task_progress'];
+        
+        eventsToSubscribe.forEach(eventType => {
+          console.log(`[AGENT_SYNC_LOG] Subscribing to SSE event type: '${eventType}' for chat ID: ${finalChatIdForSSE}`);
+          const eventCallback = (eventData: any) => {
+            console.log(`[AGENT_SYNC_LOG] Received SSE event '${eventType}' for chat ${finalChatIdForSSE}. Data:`, eventData);
+            const isActiveStream = finalChatIdForSSE === currentChatIdForSSESubscriptions.current;
 
-          if (eventData && typeof eventData === 'object' && eventData.flow_id && eventData.agent_state) {
-            console.log('[DEBUG] useAgentStateSync: Event data is valid object with flow_id and agent_state.');
-            console.log('[DEBUG] useAgentStateSync:   eventData.flow_id:', eventData.flow_id);
-            console.log('[DEBUG] useAgentStateSync:   currentFlowId (from Redux):', currentFlowId);
-
-            if (eventData.flow_id === currentFlowId) {
-              console.log('[DEBUG] useAgentStateSync: flow_id MATCHES. Dispatching updateAgentState.');
-              console.log('[DEBUG] useAgentStateSync:   Agent state keys received:', Object.keys(eventData.agent_state));
-              if (eventData.agent_state.dialog_state) {
-                console.log('[DEBUG] useAgentStateSync:   Received dialog_state:', eventData.agent_state.dialog_state);
+            if (eventType === 'agent_state_updated') {
+              if (eventData && typeof eventData === 'object' && eventData.flow_id && eventData.agent_state) {
+                console.log('[DEBUG] useAgentStateSync: Event data is valid object with flow_id and agent_state.');
+                console.log('[DEBUG] useAgentStateSync:   eventData.flow_id:', eventData.flow_id);
+                console.log('[DEBUG] useAgentStateSync:   currentFlowId (from Redux):', currentFlowId);
+                if (eventData.flow_id === currentFlowId) {
+                  console.log('[DEBUG] useAgentStateSync: flow_id MATCHES. Dispatching updateAgentState.');
+                  console.log('[DEBUG] useAgentStateSync:   Agent state keys received:', Object.keys(eventData.agent_state));
+                  if (eventData.agent_state.dialog_state) {
+                    console.log('[DEBUG] useAgentStateSync:   Received dialog_state:', eventData.agent_state.dialog_state);
+                  }
+                  if (eventData.agent_state.sas_step1_generated_tasks) {
+                    console.log('[DEBUG] useAgentStateSync:   Received sas_step1_generated_tasks count:', eventData.agent_state.sas_step1_generated_tasks.length);
+                  }
+                  dispatch(updateAgentState(eventData.agent_state));
+                } else {
+                  console.warn('[DEBUG] useAgentStateSync: flow_id MISMATCH on agent_state_updated. Current flow in Redux:', currentFlowId, 'Received from event for stream ', finalChatIdForSSE, 'eventData.flow_id:', eventData.flow_id);
+                }
+              } else {
+                console.warn('[DEBUG] useAgentStateSync: Received MALFORMED agent_state_updated event (missing flow_id or agent_state field). EventData:', JSON.stringify(eventData, null, 2));
               }
-              if (eventData.agent_state.sas_step1_generated_tasks) {
-                console.log('[DEBUG] useAgentStateSync:   Received sas_step1_generated_tasks count:', eventData.agent_state.sas_step1_generated_tasks.length);
+            } else if (eventType === 'task_progress') {
+              // 处理任务进度事件
+              if (eventData && typeof eventData === 'object') {
+                const { task_index, task_name, status, details } = eventData;
+                const progressMessage = `[TASK_PROGRESS] 任务 ${task_index >= 0 ? task_index : 'Overall'}: ${task_name} - ${status}${details ? ` (${details})` : ''}`;
+                
+                if (status === 'processing') {
+                  console.log(`🟡 ${progressMessage}`);
+                } else if (status === 'completed') {
+                  console.log(`🟢 ${progressMessage}`);
+                } else if (status === 'error') {
+                  console.error(`🔴 ${progressMessage}`);
+                } else {
+                  console.log(`⚪ ${progressMessage}`);
+                }
+                
+                // 这里可以添加更多的UI更新逻辑，例如更新进度条、状态指示器等
+                // 暂时先在控制台显示，后续可以扩展到UI组件
               }
-              dispatch(updateAgentState(eventData.agent_state));
+            } else if (eventType === 'stream_end') {
+              console.log(`[AGENT_SYNC_LOG] SSE stream_end for chat ${finalChatIdForSSE}. Data:`, eventData);
+              if (isActiveStream) {
+                console.log(`[AGENT_SYNC_LOG] Main stream ${finalChatIdForSSE} ended. Cleaning up subscriptions.`);
+                cleanupSseSubscriptions();
+              }
+            } else if (eventType === 'connection_error' || eventType === 'server_error_event') {
+              console.error(`[AGENT_SYNC_LOG] SSE ${eventType} for chat ${finalChatIdForSSE}. Data:`, eventData);
+              if (isActiveStream) { 
+                console.warn(`[AGENT_SYNC_LOG] Error ('${eventType}') on active stream ${finalChatIdForSSE}. Cleaning up subscriptions.`);
+                cleanupSseSubscriptions();
+              }
+            } else if (eventType === 'ping') {
+              // Typically, pings don't carry data or require action other than keeping connection alive.
+              // console.log(`[AGENT_SYNC_LOG] Ping received for chat ${finalChatIdForSSE}`);
             } else {
-              console.warn('[DEBUG] useAgentStateSync: flow_id MISMATCH. Ignored agent_state_updated. Current in hook:', currentFlowId, 'Received from event:', eventData.flow_id);
+              // Handle other event types like 'token', 'tool_start', 'tool_end', 'user_message_saved' if necessary
+              // For now, they are mostly for logging or direct display elsewhere.
             }
-          } else {
-            console.warn('[DEBUG] useAgentStateSync: Received MALFORMED agent_state_updated event (missing flow_id or agent_state field). EventData:', JSON.stringify(eventData, null, 2));
-          }
-        }));
-
-        newUnsubs.push(subscribe(finalChatIdForSSE, 'stream_end', (eventData) => {
-          console.log('useAgentStateSync: Received stream_end for chat:', finalChatIdForSSE, 'Data:', eventData);
-        }));
-
-        newUnsubs.push(subscribe(finalChatIdForSSE, 'connection_error', (errorData) => {
-          console.error('useAgentStateSync: SSE connection_error via SSEManager for chat:', finalChatIdForSSE, errorData);
-        }));
-
-        newUnsubs.push(subscribe(finalChatIdForSSE, 'server_error_event', (errorData) => {
-          console.error('useAgentStateSync: SSE server_error_event via SSEManager for chat:', finalChatIdForSSE, errorData);
-        }));
+          };
+          newUnsubs.push(subscribe(finalChatIdForSSE, eventType, eventCallback));
+        });
         
         activeUnsubscribeFunctions.current = newUnsubs;
       } else {
@@ -156,25 +204,15 @@ export const useAgentStateSync = () => {
 
     } catch (error) {
       console.error('useAgentStateSync: Failed in startLangGraphProcessing:', error);
-    }
-  }, [currentFlowId, dispatch, subscribe, cleanupSseSubscriptions, agentState]);
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    if (currentFlowId && agentState) {
-      const hasRelevantState = agentState.current_user_request || 
-                               (agentState.sas_step1_generated_tasks && agentState.sas_step1_generated_tasks.length > 0) ||
-                               agentState.dialog_state;
-      if (hasRelevantState) {
-        console.log('useAgentStateSync: agentState changed, syncing to backend for flowId:', currentFlowId);
-        syncToBackend(currentFlowId, agentState);
+      dispatch(setActiveLangGraphStreamFlowId(null));
+      if(currentChatIdForSSESubscriptions.current){
+        console.warn('[AGENT_SYNC_LOG] Error during startLangGraphProcessing. Cleaning up subscriptions for potentially related chat ID:', currentChatIdForSSESubscriptions.current );
+        cleanupSseSubscriptions();
       }
+      throw error;
     }
-  }, [agentState, currentFlowId, syncToBackend]);
-  
+  }, [currentFlowId, dispatch, subscribe, cleanupSseSubscriptions, closeSseConnection]);
+
   const updateUserInput = useCallback(async (content: string, taskIndex?: number, detailIndex?: number) => {
     dispatch(updateAgentState({ current_user_request: content })); 
     await startLangGraphProcessing(content, taskIndex, detailIndex);

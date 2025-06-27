@@ -2,8 +2,9 @@ import uuid
 from typing import Dict, Any, Optional, Tuple
 from pydantic import BaseModel, Field
 import asyncio
+import logging
 
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM # For consistent interface
 from ..definitions import ToolResult # Relative import assuming definitions.py is in the parent tools directory
 

@@ -22,7 +22,7 @@ const getAuthHeaders = () => {
 export const updateLangGraphState = async (chatId: string, stateUpdate: any) => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/langgraph-chats/${chatId}/update-state`,
+      `${API_BASE_URL}/sas/${chatId}/update-state`,
       stateUpdate,
       { headers: getAuthHeaders() }
     );
@@ -39,7 +39,7 @@ export const updateLangGraphState = async (chatId: string, stateUpdate: any) => 
 export const getLangGraphState = async (flowId: string) => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/langgraph-chats/${flowId}/state`,
+      `${API_BASE_URL}/sas/${flowId}/state`,
       { headers: getAuthHeaders() }
     );
     return response.data;
@@ -55,8 +55,8 @@ export const getLangGraphState = async (flowId: string) => {
 export const initializeLangGraphNodes = async (flowId: string) => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/langgraph-chats/${flowId}/initialize-langgraph`,
-      {},
+      `${API_BASE_URL}/sas/${flowId}/messages`,
+      { "input": "" },
       { headers: getAuthHeaders() }
     );
     return response.data;

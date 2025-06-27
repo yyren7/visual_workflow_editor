@@ -1,4 +1,6 @@
-from backend.langgraphchat.utils.logging import logger
+import logging
+logger = logging.getLogger(__name__)
+
 from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
 from ..definitions import PropertyParams, ToolResult # Relative import
 

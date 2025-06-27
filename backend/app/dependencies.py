@@ -1,6 +1,9 @@
 import os # 导入 os 模块以使用 getenv
 from dotenv import load_dotenv # 导入 load_dotenv
 from backend.app.services.node_template_service import NodeTemplateService
+from fastapi import Request, HTTPException
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver # Or BaseCheckpointSaver if more general type is needed
+import logging
 
 load_dotenv() # 加载 .env 文件中的环境变量
 
@@ -23,3 +26,27 @@ def get_node_template_service() -> NodeTemplateService:
         _node_template_service = NodeTemplateService(template_dir=template_dir_from_env)
         _node_template_service.load_templates()
     return _node_template_service 
+
+logger = logging.getLogger(__name__)
+
+def get_checkpointer(request: Request) -> AsyncPostgresSaver:
+    """
+    Dependency provider for the LangGraph checkpointer.
+    Retrieves the checkpointer instance from request.app.state.
+    Raises an HTTPException if the checkpointer is not available.
+    """
+    if not hasattr(request.app.state, 'checkpointer_instance') or request.app.state.checkpointer_instance is None:
+        logger.error("get_checkpointer called but checkpointer_instance is not found in app.state or is None. Initialization likely failed.")
+        raise HTTPException(
+            status_code=503, 
+            detail="Persistence service (checkpointer) is not available or not initialized."
+        )
+    return request.app.state.checkpointer_instance
+
+# You can add other shared dependencies here in the future, like get_node_template_service
+# from backend.app.services.node_template_service import NodeTemplateService
+# from database.connection import get_db
+# from sqlalchemy.orm import Session
+
+# def get_node_template_service(db: Session = Depends(get_db)) -> NodeTemplateService:
+#     return NodeTemplateService(db=db) 

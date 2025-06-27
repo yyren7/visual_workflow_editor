@@ -12,6 +12,8 @@ from backend.config import APP_CONFIG
 import json
 import os
 import logging
+import uuid
+from backend.sas.state import RobotFlowAgentState
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 token URL
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
 
 SECRET_KEY = APP_CONFIG['SECRET_KEY']
 ALGORITHM = APP_CONFIG['ALGORITHM']
@@ -184,65 +186,16 @@ def get_version():
 
 def get_default_agent_state():
     """
-    返回一个包含所有必需字段的默认 agent_state
-    与 RobotFlowAgentState 保持一致
+    返回一个严格遵循 backend.sas.state.RobotFlowAgentState 定义的默认状态字典。
+    这确保了新创建的流程图状态与 LangGraph 子图的期望完全一致。
     """
-    return {
-        # 基础消息和输入
-        "messages": [],
-        "user_input": None,
-        "current_user_request": "",
-        "user_advice": None,
-        "active_plan_basis": None,
-        
-        # 对话状态
-        "dialog_state": "initial",
-        "clarification_question": None,
-        "proposed_enriched_text": None,
-        "enriched_structured_text": None,
-        
-        # 配置
-        "config": {},
-        
-        # SAS 步骤1：任务列表生成
-        "sas_step1_generated_tasks": [],
-        "parsed_flow_steps": None,
-        
-        # SAS 步骤2：模块步骤生成
-        "sas_step2_module_steps": None,
-        "sas_step2_generated_task_details": {},
-        
-        # SAS 步骤3：参数映射
-        "sas_step3_parameter_mapping": None,
-        "sas_step3_mapping_report": None,
-        
-        # XML 生成相关
-        "generated_node_xmls": [],
-        "relation_xml_content": "",
-        "relation_xml_path": "",
-        "final_flow_xml_content": None,
-        "final_flow_xml_path": None,
-        "merged_xml_file_paths": [],
-        
-        # 运行时信息
-        "run_output_directory": None,
-        "task_list_accepted": False,
-        "module_steps_accepted": False,
-        "revision_iteration": 0,
-        "current_step_description": None,
-        
-        # 错误处理
-        "error_message": None,
-        "upload_status": None,
-        "is_error": False,
-        
-        # 其他
-        "language": "zh",
-        "subgraph_completion_status": None,
-        
-        # 这些字段用于主图，但不在 SAS 中
-        "sas_planner_subgraph_state": None,
-        "task_route_decision": None,
-        "user_request_for_router": None,
-        "input_processed": False,
-    }
+    # 这个实现通过编程方式从Pydantic模型获取默认值，以确保一致性。
+    # 我们实例化模型，然后将其转换为字典。
+    # 字段 'sse_event_queue' 被排除，因为它不应被持久化。
+    default_state_model = RobotFlowAgentState()
+    default_state_dict = default_state_model.model_dump(exclude_none=False) # 使用 .model_dump()
+    
+    # 手动移除不应包含在持久化状态中的运行时字段
+    # sse_event_queue 已经在 Pydantic 模型中通过 exclude=True 处理
+    
+    return default_state_dict

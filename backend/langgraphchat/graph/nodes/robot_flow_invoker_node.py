@@ -8,7 +8,7 @@ from langgraph.errors import GraphRecursionError
 # 主图的状态
 from ..agent_state import AgentState 
 # 机器人流程子图的创建函数和状态 (假设其状态也是 AgentState 或兼容的)
-from ..subgraph.sas.graph_builder import create_robot_flow_graph, RobotFlowAgentState
+from backend.sas.graph_builder import create_robot_flow_graph, RobotFlowAgentState
 # 机器人流程子图使用的 LLM 实例需要从某个地方获取，这里我们假设可以传递主 LLM
 # 或者子图内部会实例化自己的 LLM (目前 create_robot_flow_graph 需要一个 llm)
 

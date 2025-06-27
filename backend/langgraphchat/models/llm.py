@@ -33,7 +33,7 @@ from tenacity import (
 )
 
 from backend.langgraphchat.config import settings
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 import os
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, ChatOpenAI

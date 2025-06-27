@@ -2,12 +2,12 @@ import sys
 from pathlib import Path
 _FILE_PATH_FOR_PREAMBLE = Path(__file__).resolve()
 if __name__ == "__main__" and __package__ is None:
-    # This script is in: backend/langgraphchat/graph/subgraph/sas/nodes/generate_relation_xml.py
-    # The project root is /workspace, which is 6 levels up from the script's directory.
-    _project_root_for_preamble = _FILE_PATH_FOR_PREAMBLE.parents[6] # Should resolve to /workspace
+    # This script is in: backend/sas/nodes/generate_relation_xml.py
+    # The project root is /workspace, which is 4 levels up from the script's directory.
+    _project_root_for_preamble = _FILE_PATH_FOR_PREAMBLE.parents[4] # Should resolve to /workspace
     sys.path.insert(0, str(_project_root_for_preamble))
     import os # os.sep is used here for platform-independent path component replacement
-    # Set __package__ to the expected package string, e.g., backend.langgraphchat.graph.subgraph.sas.nodes
+    # Set __package__ to the expected package string, e.g., backend.sas.nodes
     __package__ = str(_FILE_PATH_FOR_PREAMBLE.parent.relative_to(_project_root_for_preamble)).replace(os.sep, '.')
 
 import logging
@@ -313,7 +313,7 @@ if __name__ == "__main__":
         # Path to the test JSON file that contains a dictionary, where tasks are in "parsed_flow_steps"
         # test_json_path = script_dir.parent.parent.parent.parent.parent / "tests" / "llm_sas_test" / "run_20250609_071825_821008" / "sas_step2_module_steps_iter2.json"
         # Updated test path as per user request
-        project_root_dir = script_dir.parents[5] # backend/langgraphchat/graph/subgraph/sas/nodes -> /workspace
+        project_root_dir = script_dir.parents[3] # backend/sas/nodes -> /workspace
         test_json_path = project_root_dir / "backend" / "tests" / "llm_sas_test" / "1_sample" / "step2_output_sample.json"
 
 
@@ -395,7 +395,6 @@ if __name__ == "__main__":
             config=mock_config
         )
 
-        logging.basicConfig(level=logging.INFO) # Set to DEBUG for more verbose XML block processing logs
         logger.info(f"Starting test run for generate_relation_xml_node (multi-task file output) with {len(initial_state.parsed_flow_steps)} task(s) queued...")
         
         final_state = await generate_relation_xml_node(initial_state)

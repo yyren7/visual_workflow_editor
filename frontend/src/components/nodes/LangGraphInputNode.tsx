@@ -40,49 +40,12 @@ interface LangGraphInputNodeProps {
   selected: boolean;
 }
 
-interface ReviewContextData {
-  clarification_question?: string;
-  originalRequest?: string;
-  tasks?: any[];
-  details?: any;
-  dialog_state?: string;
+// 为 sas_step1_generated_tasks 中的任务对象定义类型
+interface Task {
+  name: string;
+  type: string;
+  // 可以根据需要添加其他字段，如 description, sub_tasks
 }
-
-const parseReviewContext = (clarificationQuestion: string): ReviewContextData | null => {
-  if (!clarificationQuestion) return null;
-
-  const originalRequestRegex = /Original Request:\s*```text\s*([\s\S]*?)\s*```/m;
-  const generatedTasksRegex = /Generated Tasks(?: \(Iteration \d+\))?:\s*```json\s*([\s\S]*?)\s*```/m;
-  const userFeedbackRegex = /Your Feedback:\s*```text\s*([\s\S]*?)\s*```/m;
-  const instructionalTextRegex = /```\s*Your Feedback:[\s\S]*?```\s*([\s\S]*)/m;
-
-
-  const originalRequestMatch = clarificationQuestion.match(originalRequestRegex);
-  const generatedTasksMatch = clarificationQuestion.match(generatedTasksRegex);
-  const userFeedbackMatch = clarificationQuestion.match(userFeedbackRegex);
-  const instructionalTextMatch = clarificationQuestion.match(instructionalTextRegex);
-
-  if (originalRequestMatch && originalRequestMatch[1] && generatedTasksMatch && generatedTasksMatch[1] && userFeedbackMatch && userFeedbackMatch[1]) {
-    // Attempt to parse tasks if it's JSON, otherwise keep as string or handle error
-    let parsedTasks: any[] | string = generatedTasksMatch[1].trim();
-    try {
-      parsedTasks = JSON.parse(parsedTasks);
-    } catch (e) {
-      console.warn('parseReviewContext: generatedTasks content is not valid JSON, keeping as string. Content:', parsedTasks);
-      // Decide if you want to return null or the string itself for tasks
-      // For now, let's assume if it's not parsable JSON for tasks, the context is invalid for 'tasks: any[]'
-      // return null; // Or handle differently, e.g. tasks: parsedTasks (as string)
-    }
-
-    return {
-      originalRequest: originalRequestMatch[1].trim(),
-      tasks: parsedTasks,
-      dialog_state: instructionalTextMatch && instructionalTextMatch[1] ? instructionalTextMatch[1].trim() : "Please provide a complete revised task description in the input field. You can also choose to 'approve' the generated tasks.",
-    };
-  }
-  console.warn("parseReviewContext: Failed to match all expected parts or parse tasks. Question:", clarificationQuestion);
-  return null;
-};
 
 export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data, selected }) => {
   const [input, setInput] = useState('');
@@ -101,15 +64,38 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   const editTextFieldRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   
-  const { updateUserInput, startLangGraphProcessing } = useAgentStateSync();
-  const { subscribe, closeConnection: closeSSEConnectionByManager } = useSSEManager();
+  const { updateUserInput } = useAgentStateSync();
+  const { subscribe } = useSSEManager();
   const agentState = useSelector(selectAgentState);
   const reduxCurrentFlowId = useSelector(selectCurrentFlowId);
 
-  const [isInReviewMode, setIsInReviewMode] = useState(false);
-  const [reviewContext, setReviewContext] = useState<ReviewContextData | null>(null);
-
   const operationChatId = data.flowId || reduxCurrentFlowId;
+
+  // --- 派生状态 (Derived State) ---
+  // 直接从 agentState 计算出当前是否处于审查模式
+  const isInReviewMode = 
+    agentState?.dialog_state === 'sas_awaiting_task_list_review' ||
+    agentState?.dialog_state === 'sas_awaiting_module_steps_review' ||
+    agentState?.dialog_state === 'sas_awaiting_task_list_revision_input' ||
+    agentState?.dialog_state === 'sas_awaiting_module_steps_revision_input';
+
+  // 副作用和状态初始化
+  useEffect(() => {
+    // 当不处于任何编辑或审查模式时，输入框的内容应该反映后端的状态
+    if (!isEditing && !showAddForm && !isInReviewMode) {
+      setInput(agentState?.current_user_request || data.currentUserRequest || '');
+    }
+
+    // 当后端没有任务描述时，自动进入添加新任务的模式
+    if (!agentState?.current_user_request && !data.currentUserRequest && !isEditing && !isInReviewMode && !isProcessing) {
+      setShowAddForm(true);
+    } else if (agentState?.current_user_request || data.currentUserRequest) {
+      // 如果有任务了，确保添加表单是关闭的 (除非用户手动点击编辑)
+      if (!isEditing) {
+        setShowAddForm(false);
+      }
+    }
+  }, [agentState?.current_user_request, data.currentUserRequest, isEditing, isInReviewMode, isProcessing]);
 
   const cleanupUISseSubscriptions = useCallback(() => {
     if (uiSseUnsubscribeFnsRef.current.length > 0) {
@@ -119,47 +105,20 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     }
   }, [id, operationChatId]);
 
+  // 监听 agentState 变化，当进入审查模式时停止 processing 状态
   useEffect(() => {
-    if (agentState?.dialog_state === 'sas_clarification_needed' && agentState?.clarification_question) {
-      setIsInReviewMode(true);
-      setReviewContext({
-        clarification_question: agentState.clarification_question,
-        originalRequest: agentState.current_user_request || data.currentUserRequest || '',
-      });
-      setInput('');
-      setIsEditing(false); 
-      setShowAddForm(false);
+    if (isInReviewMode && isProcessing) {
+      console.log(`LangGraphInputNode (${id}): Agent state changed to review mode (${agentState?.dialog_state}), stopping processing`);
+      setIsProcessing(false);
       cleanupUISseSubscriptions();
-    } else if (agentState?.dialog_state === 'sas_awaiting_task_list_review' && agentState?.sas_step1_generated_tasks) {
-      setIsInReviewMode(true);
-      setReviewContext({
-        originalRequest: agentState.current_user_request || data.currentUserRequest || '',
-        tasks: agentState.sas_step1_generated_tasks,
-        dialog_state: agentState.dialog_state,
-      });
-      setInput(agentState.current_user_request || data.currentUserRequest || '');
-      setIsEditing(false);
-      setShowAddForm(false);
-      cleanupUISseSubscriptions();
-    } else {
-      if (!isEditing && !showAddForm && !isInReviewMode) {
-        setInput(agentState?.current_user_request || data.currentUserRequest || '');
-      }
-      if (isInReviewMode && agentState?.dialog_state !== 'sas_clarification_needed' && agentState?.dialog_state !== 'sas_awaiting_task_list_review') {
-        setIsInReviewMode(false);
-        setReviewContext(null);
-      }
     }
+  }, [isInReviewMode, isProcessing, agentState?.dialog_state, id, cleanupUISseSubscriptions]);
 
-    if (!agentState?.current_user_request && !data.currentUserRequest && !isEditing && !isInReviewMode) {
-      setShowAddForm(true);
-    } else if (agentState?.current_user_request || data.currentUserRequest) {
-      setShowAddForm(false);
-    }
-
-  }, [agentState, data.currentUserRequest, isEditing, showAddForm, isInReviewMode, cleanupUISseSubscriptions, id]);
 
   const handleSend = useCallback(async (overrideInput?: string) => {
+    // 在发送时，如果处于审查模式，确保输入框内容被一并发送
+    // 如果用户只点击"Approve"，overrideInput 会是 'accept_tasks'，input 会被忽略
+    // 如果用户输入了修改意见并点击"Submit"，overrideInput 是 undefined, input 的内容会被发送
     const contentToSend = overrideInput !== undefined ? overrideInput : input;
     if (!contentToSend.trim() && overrideInput === undefined) {
       console.warn(`LangGraphInputNode (${id}): Input is empty, not sending.`);
@@ -177,13 +136,13 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setStreamingContent('');
     setProcessingStage('Initializing...');
     setErrorMessage(null);
-    if (streamingContentRef.current) {
-      streamingContentRef.current.scrollTop = streamingContentRef.current.scrollHeight;
-    }
+
+    console.log(`LangGraphInputNode (${id}): handleSend: Attempting to process with content: "${String(contentToSend).substring(0,30)}..." for operationChatId: ${operationChatId}`);
 
     try {
+      // 这里的 updateUserInput 将会触发整个 LangGraph 流程
       await updateUserInput(contentToSend);
-      console.log(`LangGraphInputNode (${id}): updateUserInput called for chat: ${operationChatId}`);
+      console.log(`LangGraphInputNode (${id}): handleSend: updateUserInput call completed successfully for ${operationChatId}.`);
 
       const newUnsubs: (() => void)[] = [];
 
@@ -212,43 +171,48 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
       }));
 
       newUnsubs.push(subscribe(operationChatId, 'stream_end', (eventData) => {
-        console.log(`LangGraphInputNode (${id}): Received stream_end for UI for chat: ${operationChatId}`);
-        setIsProcessing(false);
+        console.log(`LangGraphInputNode (${id}): handleSend: UI received stream_end for chat: ${operationChatId}`);
         setProcessingStage(prev => prev.includes('Error') ? prev : 'Processing Complete');
-        cleanupUISseSubscriptions();
+      }));
+
+      newUnsubs.push(subscribe(operationChatId, 'agent_state_updated', (eventData) => {
+        console.log(`LangGraphInputNode (${id}): handleSend: UI received agent_state_updated for chat: ${operationChatId}`, eventData);
+        // Note: Processing state will be managed by the useEffect that monitors isInReviewMode
       }));
 
       newUnsubs.push(subscribe(operationChatId, 'connection_error', (errorData) => {
-        console.error(`LangGraphInputNode (${id}): SSE Connection Error for chat ${operationChatId}:`, errorData);
-        setErrorMessage('Connection error. Please try again.');
+        console.error(`LangGraphInputNode (${id}): handleSend: UI SSE Connection Error for chat ${operationChatId}:`, errorData);
+        setErrorMessage('Connection error with UI event stream. Please try again.');
         setIsProcessing(false);
-        setProcessingStage('Connection Error');
+        setProcessingStage('UI Stream Connection Error');
         cleanupUISseSubscriptions();
       }));
       
       newUnsubs.push(subscribe(operationChatId, 'server_error_event', (errorData) => {
-        console.error(`LangGraphInputNode (${id}): SSE Server Error Event for chat ${operationChatId}:`, errorData);
-        const message = typeof errorData?.message === 'string' ? errorData.message : 'An error occurred during processing.';
-        setStreamingContent(prev => prev + `\nError: ${message}`);
+        console.error(`LangGraphInputNode (${id}): handleSend: UI SSE Server Error Event for chat ${operationChatId}:`, errorData);
+        const message = typeof errorData?.message === 'string' ? errorData.message : 'An error occurred in UI event stream.';
+        setStreamingContent(prev => prev + `\nStream Error: ${message}`);
         setErrorMessage(message);
         setIsProcessing(false);
-        setProcessingStage('Error Occurred');
+        setProcessingStage('UI Stream Server Error');
         cleanupUISseSubscriptions();
       }));
 
       uiSseUnsubscribeFnsRef.current = newUnsubs;
 
     } catch (error) {
-      console.error(`LangGraphInputNode (${id}): Error calling updateUserInput or setting up UI subscriptions for chat ${operationChatId}:`, error);
-      setErrorMessage('Failed to initiate processing. Please check console.');
-      setIsProcessing(false);
-      setProcessingStage('Failed to Start');
-      cleanupUISseSubscriptions();
+      console.error(`LangGraphInputNode (${id}): handleSend: SUCCESSFULLY CAUGHT ERROR from updateUserInput for ${operationChatId}:`, error);
+      requestAnimationFrame(() => {
+        setErrorMessage(error instanceof Error ? error.message : 'Failed to initiate processing. Please check console.');
+        setIsProcessing(false);
+        setProcessingStage('Failed to Start or Error During Processing');
+      });
     }
 
+    // 成功发起后，重置编辑状态
     setShowAddForm(false);
     setIsEditing(false);
-  }, [input, data.flowId, reduxCurrentFlowId, updateUserInput, subscribe, cleanupUISseSubscriptions, id]);
+  }, [input, operationChatId, updateUserInput, subscribe, cleanupUISseSubscriptions, id]);
 
   useEffect(() => {
     if (streamingContentRef.current) {
@@ -261,8 +225,6 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setInput(currentReq);
     setIsEditing(true);
     setShowAddForm(false);
-    setIsInReviewMode(false);
-    setReviewContext(null);
     cleanupUISseSubscriptions(); 
     setStreamingContent(''); 
     setProcessingStage('');
@@ -276,18 +238,12 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setErrorMessage(null);
     setIsProcessing(false);
 
-    if (isInReviewMode && reviewContext) {
-      setInput(reviewContext.originalRequest || '');
-    } else if (isEditing) {
-      setInput(agentState?.current_user_request || data.currentUserRequest || '');
-      setIsEditing(false);
-    } else if (showAddForm) {
-      setInput('');
-      if (agentState?.current_user_request || data.currentUserRequest) {
-        setShowAddForm(false);
-      }
+    setIsEditing(false);
+    // 如果之前没有任务描述，取消后应该回到 "Add Task" 状态
+    if (!agentState?.current_user_request && !data.currentUserRequest) {
+      setShowAddForm(true);
     } else {
-      setInput(agentState?.current_user_request || data.currentUserRequest || '');
+      setShowAddForm(false);
     }
   };
 
@@ -295,8 +251,6 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setInput('');
     setShowAddForm(true);
     setIsEditing(false);
-    setIsInReviewMode(false);
-    setReviewContext(null);
     cleanupUISseSubscriptions();
     setStreamingContent(''); 
     setProcessingStage('');
@@ -317,6 +271,24 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   const taskDisplayHeight = '150px';
 
   const displayUserRequest = agentState?.current_user_request || data.currentUserRequest;
+
+  // 根据审查模式确定标题
+  const cardTitle = () => {
+    if (isInReviewMode) {
+      switch (agentState.dialog_state) {
+        case 'sas_awaiting_task_list_review':
+          return 'Review Generated Tasks';
+        case 'sas_awaiting_task_list_revision_input':
+          return 'Provide Revised Description';
+        case 'sas_awaiting_module_steps_review':
+        case 'sas_awaiting_module_steps_revision_input':
+          return 'Review Module Steps';
+        default:
+          return 'Review Mode';
+      }
+    }
+    return data.label || 'User Input';
+  };
 
   return (
     <Card 
@@ -355,7 +327,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
               transition: 'all 0.3s ease'
             }}
           >
-            {isInReviewMode ? (reviewContext?.clarification_question ? "Clarification Needed" : "Review Generated Tasks") : (data.label || 'User Input')}
+            {cardTitle()}
           </Typography>
           <Chip 
             label={isProcessing ? "Processing" : (isInReviewMode ? "Review Mode" : (isEditing ? "Editing" : (showAddForm ? "New Task" : "Idle")))}
@@ -405,63 +377,82 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
           {isProcessing && <LinearProgress color="success" sx={{ mb: 1, height: 3, borderRadius: 1.5, flexShrink: 0 }} /> }
 
-          {isInReviewMode && reviewContext && (
-            <Box sx={{ mb: 1, flexGrow: 1, overflowY: 'auto' }}>
-              {reviewContext.clarification_question && (
+          {isInReviewMode && agentState && (
+            <Box sx={{ mb: 1, flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {/* Top part for displaying information */}
+              <Box sx={{ flexShrink: 0 }}>
+                {/* Display clarification question or instruction */}
                 <Paper elevation={1} sx={{ p: 1.5, mb: 1, backgroundColor: '#1c2733'}}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#ffc107', mb:0.5}}>Question from Assistant:</Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#eee' }}>{reviewContext.clarification_question}</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#ffc107', mb:0.5}}>
+                    {agentState.dialog_state === 'sas_awaiting_task_list_revision_input' 
+                      ? 'Assistant requires a revised description:' 
+                      : 'Assistant Needs Your Input:'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#eee' }}>
+                    {agentState.clarification_question || 'Please review the generated tasks below and approve or provide feedback.'}
+                  </Typography>
                 </Paper>
-              )}
-              {reviewContext.tasks && (
-                <Paper elevation={1} sx={{ p: 1.5, mb: 1, backgroundColor: '#1c2733'}}>
-                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#ffc107', mb:0.5}}>Proposed Tasks for Review:</Typography>
-                   <Box sx={{maxHeight: taskDisplayHeight, overflowY: 'auto'}}>
-                    {reviewContext.tasks.map((task, index) => (
-                        <Typography key={index} variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#eee', mb: 0.5 }}>
-                            {`${index + 1}. ${task.name} (${task.type})`}
-                        </Typography>
-                    ))}
-                   </Box>
-                </Paper>
-              )}
-              <TextField
-                fullWidth
-                variant="outlined"
-                label={reviewContext.clarification_question ? "Your Response / Clarification" : "Revise Task Description (Optional)"}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                multiline
-                rows={3}
-                disabled={isProcessing}
-                sx={{ 
-                  mb: 1,
-                  textarea: { color: '#fff', fontSize: '0.9rem' },
-                  label: { color: '#bbb' },
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: '#555' },
-                    '&:hover fieldset': { borderColor: '#777' },
-                  }
-                }}
-              />
-              <Box display="flex" justifyContent="flex-end" gap={1} sx={{ flexShrink: 0 }}>
-                {reviewContext.dialog_state === 'sas_awaiting_task_list_review' && (
-                    <Button 
-                        size="small" variant="contained" color="success"
-                        onClick={() => handleSend("accept_tasks")}
-                        startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
-                    >
-                        Approve Tasks
-                    </Button>
+
+                {/* Display tasks only in task list review state */}
+                {agentState.dialog_state === 'sas_awaiting_task_list_review' && agentState.sas_step1_generated_tasks && (
+                  <Paper elevation={1} sx={{ p: 1.5, mb: 1, backgroundColor: '#1c2733'}}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#90caf9', mb:0.5}}>Proposed Tasks for Review:</Typography>
+                    <Box sx={{maxHeight: taskDisplayHeight, overflowY: 'auto'}}>
+                      {agentState.sas_step1_generated_tasks.map((task: Task, index: number) => (
+                          <Typography key={index} variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#eee', mb: 0.5, fontSize: '0.8rem' }}>
+                              {`${index + 1}. ${task.name} (${task.type})`}
+                          </Typography>
+                      ))}
+                    </Box>
+                  </Paper>
                 )}
-                <Button 
-                  size="small" variant="contained" 
-                  onClick={() => handleSend()}
-                  startIcon={<SendIcon />} disabled={isProcessing || !input.trim()}
-                  sx={{ fontSize: '0.8rem'}}
-                >
-                  {reviewContext.clarification_question ? 'Send Response' : 'Submit Revised Description'}
-                </Button>
+              </Box>
+
+              {/* Bottom part for user input and actions */}
+              <Box sx={{ mt: 'auto', flexShrink: 0 }}>
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  label={
+                    agentState.dialog_state === 'sas_awaiting_task_list_review' 
+                      ? "Provide feedback or modifications (optional)" 
+                      : "Your Response / Revised Description"
+                  }
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  multiline
+                  rows={3}
+                  disabled={isProcessing}
+                  sx={{ 
+                    mb: 1,
+                    textarea: { color: '#fff', fontSize: '0.9rem' },
+                    label: { color: '#bbb' },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#555' },
+                      '&:hover fieldset': { borderColor: '#777' },
+                    }
+                  }}
+                />
+                <Box display="flex" justifyContent="flex-end" gap={1}>
+                  {agentState.dialog_state === 'sas_awaiting_task_list_review' && (
+                      <Button 
+                          size="small" variant="contained" color="success"
+                          onClick={() => handleSend("accept_tasks")}
+                          startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
+                      >
+                          Approve Tasks
+                      </Button>
+                  )}
+                  <Button 
+                    size="small" variant="contained" 
+                    onClick={() => handleSend()}
+                    startIcon={<SendIcon />} 
+                    disabled={isProcessing || (agentState.dialog_state !== 'sas_awaiting_task_list_review' && !input.trim())}
+                    sx={{ fontSize: '0.8rem'}}
+                  >
+                    {agentState.dialog_state === 'sas_awaiting_task_list_review' ? 'Submit Feedback' : 'Send Response'}
+                  </Button>
+                </Box>
               </Box>
             </Box>
           )}

@@ -38,7 +38,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import {
   fetchFlowById,
-  ensureFlowAgentStateThunk,
   setCurrentFlowId,
   setNodes as setFlowNodes,
   setEdges as setFlowEdges,
@@ -116,8 +115,8 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   // --- Get State from Redux ---
   const currentFlowId = useSelector(selectCurrentFlowId);
   const flowName = useSelector(selectFlowName);
-  const nodes = useSelector(selectNodes);
-  const edges = useSelector(selectEdges);
+  const nodes = useSelector(selectNodes) ?? [];
+  const edges = useSelector(selectEdges) ?? [];
   const agentState = useSelector(selectAgentState);
   const isLoading = useSelector(selectIsFlowLoading);
   const error = useSelector(selectFlowError);
@@ -294,35 +293,19 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   // --- Effect to handle flowId changes (fetch) ---
   useEffect(() => {
     const targetFlowId = flowIdFromProps || null;
-    if (targetFlowId !== currentFlowId) {
-      isInitialLoad.current = true; // Reset flag when flow ID changes
-      console.log(`FlowEditor: Prop flowId changed. Dispatching fetch...`);
-      dispatch(setCurrentFlowId(targetFlowId));
-      if (targetFlowId) {
-        dispatch(fetchFlowById(targetFlowId))
-          .then(() => {
-            // After fetching, ensure agent_state is complete
-            console.log("FlowEditor: Ensuring agent state after fetch...");
-            return dispatch(ensureFlowAgentStateThunk(targetFlowId));
-          })
-          .then(() => {
-            // After ensuring agent state, sync LangGraph nodes
-            console.log("FlowEditor: Syncing LangGraph nodes after agent state ensure...");
-            syncLangGraphNodes();
-          })
-          .finally(() => {
-            // Set initial load complete *after* fetch finishes (success or fail)
-            setTimeout(() => { isInitialLoad.current = false; }, 100); // Small delay
-            console.log("FlowEditor: Initial fetch finished, allowing saves.");
-        });
+    if (targetFlowId) {
+      // 检查是否需要开始获取流程
+      // 1. 如果当前没有 flowId
+      // 2. 或者目标 flowId 与当前的 flowId 不同
+      if (!currentFlowId || targetFlowId !== currentFlowId) {
+        console.log(`FlowEditor: Dispatching fetch for flowId: ${targetFlowId}`);
+        dispatch(fetchFlowById(targetFlowId));
       }
-    } else if (targetFlowId === currentFlowId && isLoading === false && isInitialLoad.current) {
-        // Handle case where component mounts with correct ID already in redux but hasn't fetched
-        // Or if fetch finished but flag wasn't set due to timing.
-        isInitialLoad.current = false;
-        console.log("FlowEditor: Initial load flag set to false (ID matched or fetch completed).");
+    } else {
+      // 如果没有 flowId from props，可能需要清理状态或导航
+      console.log("FlowEditor: No flowId provided.");
     }
-  }, [flowIdFromProps, currentFlowId, dispatch, isLoading, syncLangGraphNodes]); // Add isLoading dependency
+  }, [flowIdFromProps, currentFlowId, dispatch]);
 
   // --- Debounced Save Function ---
   const debouncedSave = useCallback(
@@ -513,30 +496,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
       // Save is triggered by useEffect watching nodes/isDraggingNode changing AFTER the delay
   }, []);
 
-  // --- Rendering ---
+  // --- Loading and Error States ---
+  // 使用 isLoading 和 nodes 是否为 null 来判断初始加载
+  const isInitiallyLoading = isLoading && nodes === null;
 
-  // Handle template loading/error states
-  if (templatesLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>{t('flowEditor.loadingTemplates')}</Typography>
-      </Box>
-    );
-  }
-
-  if (templatesError) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', p: 3 }}>
-         <Alert severity="error" sx={{ mb: 2 }}>
-           {t('flowEditor.errorLoadingTemplates')}: {templatesError}
-         </Alert>
-         {/* Optionally add a retry button */}
-      </Box>
-    );
-  }
-
-  if (isLoading && !currentFlowId) {
+  if (isInitiallyLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
@@ -545,7 +509,7 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     );
   }
 
-  if (!currentFlowId && !isLoading && !flowIdFromProps) {
+  if (!currentFlowId && !isLoading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', p: 3 }}>
         <Typography variant="h5" gutterBottom>{t('flowEditor.noFlowSelectedTitle')}</Typography>
@@ -556,10 +520,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
     );
   }
 
+  // --- Main Render ---
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <EditorAppBar
-        flowName={flowName}
+        flowName={flowName || ''}
         onFlowNameChange={handleFlowNameChange}
         onSelectFlowClick={handleFlowSelect}
         onToggleSidebar={toggleSidebar}

@@ -50,7 +50,7 @@ from langchain_openai import ChatOpenAI # Added
 from langsmith import Client as LangSmithClient # Added
 from langsmith.utils import LangSmithNotFoundError # Added
 
-import logging # Ensure logging is imported
+import logging
 import os # Make sure os is imported for listing files
 import xml.etree.ElementTree as ET
 import json
@@ -62,14 +62,15 @@ from langchain_core.language_models.fake_chat_models import FakeListChatModel # 
 # from ...app.services.chat_service import ChatService # 路径可能需要调整
 # from ..tools.flow_tools import ... # 具体的工具或工具列表
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+
 # Load environment variables from .env file at the module level
 load_dotenv()
 
 # 获取日志记录器
 logger = logging.getLogger(__name__)
-# Basic logging configuration, can be overridden if the module is imported
-if not logger.handlers:
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # --- 导入节点和条件逻辑实现 --- (这部分应该在 logger 定义之后)
 from .nodes.input_handler import input_handler_node # Will be used
@@ -85,7 +86,7 @@ from .conditions import should_continue, route_after_task_router # RouteDecision
 from .graph_types import RouteDecision # Import RouteDecision from types
 
 # --- 导入SAS子图构建器 ---
-from backend.langgraphchat.graph.subgraph.sas.graph_builder import create_robot_flow_graph
+from backend.sas.graph_builder import create_robot_flow_graph
 # --- END ---
 
 

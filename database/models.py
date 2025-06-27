@@ -26,6 +26,7 @@ class User(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    is_active = Column(String, default="true", nullable=False)  # 添加 is_active 字段
     last_selected_flow_id = Column(String(36), ForeignKey("flows.id", ondelete="SET NULL"), nullable=True)
     flows = relationship("Flow", back_populates="owner", foreign_keys="Flow.owner_id")
     last_selected_flow = relationship("Flow", foreign_keys=[last_selected_flow_id])
@@ -52,6 +53,7 @@ class Flow(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     name = Column(String, nullable=False, default="Untitled Flow")  # Added flow name
     variables = relationship("FlowVariable", back_populates="flow")
+    # graph_type = Column(String, nullable=True, index=True) # REMOVED graph_type field
 
     # --- 修正 'chats' 关系并指定外键 ---
     chats = relationship("Chat", back_populates="flow", foreign_keys="Chat.flow_id")
@@ -61,7 +63,7 @@ class Flow(Base):
     # --- 结束添加 ---
 
     # --- 添加 agent_state 用于存储 LangGraph 状态 ---
-    agent_state = Column(JSON, nullable=True, default={})  # Stores the LangGraph agent state as JSON
+    # agent_state = Column(JSON, nullable=True, default={})  # REMOVED
     # --- 结束添加 ---
 
     def __repr__(self):

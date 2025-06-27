@@ -11,7 +11,6 @@ from pydantic import ValidationError
 from ..state import RobotFlowAgentState, TaskDefinition
 from ..prompt_loader import get_sas_step1_task_list_generation_prompt
 from ..llm_utils import invoke_llm_for_text_output
-from ...tools.iteration_data_saver import save_iteration_data_as_json
 
 logger = logging.getLogger(__name__)
 
@@ -163,32 +162,32 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
                 # Use a more specific error that will be user-facing
                 raise ValueError("LLM output should be a JSON list of tasks, but it was not.")
 
-            generated_tasks: List[TaskDefinition] = []
-            for task_data in parsed_tasks_json:
-                generated_tasks.append(TaskDefinition(**task_data))
-            
-            state.sas_step1_generated_tasks = generated_tasks
-            logger.info(f"SAS Step 1 (Task List Generation) completed successfully for stream {stream_id}. {len(generated_tasks)} tasks generated for request iteration {state.revision_iteration}.")
-            task_names = [task.name for task in generated_tasks]
-            logger.info(f"Generated task names: {task_names}")
+            # Check for empty task list
+            if not parsed_tasks_json:
+                logger.warning(f"LLM generated an empty task list for stream {stream_id}. This might indicate the input was unclear or too complex.")
+                state.is_error = True
+                state.error_message = "抱歉，我无法从您的描述中识别出具体的任务。请提供更清晰、更具体的机器人任务描述，包括具体的操作步骤。"
+                state.dialog_state = "generation_failed"
+                state.subgraph_completion_status = "error"
+                final_message_content_for_this_node = state.error_message
+                final_message_is_error = True
+            else:
+                generated_tasks: List[TaskDefinition] = []
+                for task_data in parsed_tasks_json:
+                    generated_tasks.append(TaskDefinition(**task_data))
+                
+                state.sas_step1_generated_tasks = generated_tasks
+                logger.info(f"SAS Step 1 (Task List Generation) completed successfully for stream {stream_id}. {len(generated_tasks)} tasks generated for request iteration {state.revision_iteration}.")
+                task_names = [task.name for task in generated_tasks]
+                logger.info(f"Generated task names: {task_names}")
 
-            state.dialog_state = "sas_step1_tasks_generated"
-            state.current_step_description = f"SAS Step 1: Structured task list generated successfully (Iteration {state.revision_iteration})."
-            
-            final_message_content_for_this_node = f"成功为请求 (迭代 {state.revision_iteration}) 生成了包含 {len(generated_tasks)} 个任务的任务列表: {', '.join(task_names[:3])}{'...' if len(task_names) > 3 else ''}."
-            state.subgraph_completion_status = "completed_partial"
-            state.is_error = False # Explicitly clear error if parsing succeeds
-            state.error_message = None
-
-            if save_debug_data:
-                tasks_to_save = [task.model_dump() for task in generated_tasks]
-                save_iteration_data_as_json(
-                    run_output_directory=state.run_output_directory,
-                    revision_iteration=state.revision_iteration,
-                    data_to_save=tasks_to_save,
-                    base_filename_prefix="sas_step1_tasks",
-                    file_description="SAS Step 1 generated task list"
-                )
+                state.dialog_state = "sas_step1_tasks_generated"
+                state.current_step_description = f"SAS Step 1: Structured task list generated successfully (Iteration {state.revision_iteration})."
+                
+                final_message_content_for_this_node = f"成功为请求 (迭代 {state.revision_iteration}) 生成了包含 {len(generated_tasks)} 个任务的任务列表: {', '.join(task_names[:3])}{'...' if len(task_names) > 3 else ''}."
+                state.subgraph_completion_status = "completed_partial"
+                state.is_error = False # Explicitly clear error if parsing succeeds
+                state.error_message = None
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode LLM JSON output for task list (stream {stream_id}): {e}. Output: {raw_json_output}", exc_info=True)

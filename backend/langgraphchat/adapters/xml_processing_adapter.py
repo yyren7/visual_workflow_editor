@@ -3,7 +3,8 @@ import json
 from typing import Dict, Any
 from backend.app.services.flow_service import FlowService
 from database.connection import get_db_context
-from backend.langgraphchat.utils.logging import logger
+import logging
+logger = logging.getLogger(__name__)
 
 def convert_xml_to_json(xml_string: str) -> Dict[str, Any]:
     try:

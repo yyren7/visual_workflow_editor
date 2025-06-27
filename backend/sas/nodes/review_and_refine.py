@@ -147,15 +147,25 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
         state.user_advice = state.user_input 
         state.user_input = None 
         
+        # +++ ADDED DIAGNOSTIC LOGGING START +++
+        logger.info(f"[REVIEW_NODE_INPUT] User advice received: \'{state.user_advice}\'")
+        # +++ ADDED DIAGNOSTIC LOGGING END +++
+        
         if not state.messages or not (isinstance(state.messages[-1], HumanMessage) and state.messages[-1].content == state.user_advice):
             state.messages = (state.messages or []) + [HumanMessage(content=state.user_advice)]
 
         feedback_for_processing = state.user_advice.strip()
+        # +++ ADDED DIAGNOSTIC LOGGING START +++
+        logger.info(f"[REVIEW_NODE_INPUT] Feedback for processing (stripped): \'{feedback_for_processing}\'")
+        # +++ ADDED DIAGNOSTIC LOGGING END +++
         
         # Check for acceptance
-        acceptance_keywords = ["accept", "yes", "ok", "agree", "fine", "alright", "proceed", "同意", "接受", "可以", "好的", "没问题", "行"]
+        acceptance_keywords = ["accept", "accept_tasks", "approve", "yes", "ok", "agree", "fine", "alright", "proceed", "同意", "接受", "可以", "好的", "没问题", "行"]
         is_accepted = any(feedback_for_processing.lower() == keyword for keyword in acceptance_keywords) or \
                      any(keyword in feedback_for_processing.lower() for keyword in acceptance_keywords if len(feedback_for_processing) <= 20)
+        # +++ ADDED DIAGNOSTIC LOGGING START +++
+        logger.info(f"[REVIEW_NODE_ACCEPTANCE] Feedback \'{feedback_for_processing}\' - is_accepted: {is_accepted}")
+        # +++ ADDED DIAGNOSTIC LOGGING END +++
 
         if is_accepted:
             state.clarification_question = None
@@ -165,12 +175,18 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
                 logger.info("User accepted the TASK LIST.")
                 state.task_list_accepted = True
                 state.dialog_state = "sas_step1_tasks_generated" # This state will route to module step generation
+                # +++ ADDED DIAGNOSTIC LOGGING START +++
+                logger.info(f"[REVIEW_NODE_ACCEPTANCE] TASK LIST ACCEPTED. New dialog_state: \'{state.dialog_state}\', task_list_accepted: {state.task_list_accepted}")
+                # +++ ADDED DIAGNOSTIC LOGGING END +++
                 if not any("Task list confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
                     state.messages = (state.messages or []) + [AIMessage(content="Task list confirmed by user. Generating detailed module steps next.")]
             elif reviewing_module_steps_for_feedback_context:
                 logger.info("User accepted the MODULE STEPS.")
                 state.module_steps_accepted = True
                 state.dialog_state = "sas_module_steps_accepted_proceeding" # This state will route to XML generation
+                # +++ ADDED DIAGNOSTIC LOGGING START +++
+                logger.info(f"[REVIEW_NODE_ACCEPTANCE] MODULE STEPS ACCEPTED. New dialog_state: \'{state.dialog_state}\', module_steps_accepted: {state.module_steps_accepted}")
+                # +++ ADDED DIAGNOSTIC LOGGING END +++
                 if not any("Module steps confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
                     state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed by user. Preparing to generate XML program.")]
             else:

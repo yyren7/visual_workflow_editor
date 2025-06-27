@@ -15,8 +15,10 @@ import {
   Check as CheckIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
 import { useSSEManager } from '../../hooks/useSSEManager';
+import { selectActiveLangGraphStreamFlowId } from '../../store/slices/flowSlice';
 
 interface TaskDefinition {
   name: string;
@@ -38,11 +40,27 @@ interface LangGraphTaskNodeProps {
   selected: boolean;
 }
 
+// =================================================================================
+// TODO (未来功能): 单个任务的详情更新流程
+//
+// 当前组件只在用户点击"编辑"时，在本地 state 中修改任务的元数据（名称，类型等）。
+// 未来的增强方向是：
+// 1. 在卡片上提供一个 "Regenerate Details" 或 "Update Details" 按钮。
+// 2. 当用户修改了任务的描述（description）并点击该按钮时，触发一个新的工作流。
+// 3. 这个工作流将使用 `useAgentStateSync` 中的一个新函数（例如 `regenerateDetailsForTask`）。
+// 4. 该函数会向后端发送一个特定的请求，其中包含 `taskIndex` 和修改后的任务描述。
+// 5. 后端接收到后，会进入 `sas_awaiting_module_steps_revision_input` 状态，
+//    并只针对这一个任务重新运行 "process_description_to_module_steps" 节点。
+// 6. 这个节点在运行时，会通过 SSE 推送 `task_detail_generation_start` 和 `task_detail_generation_end` 事件，
+//    当前的 SSE 监听逻辑可以被复用，来显示加载状态。
+// =================================================================================
+
 export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<TaskDefinition>(data.task);
   const { updateTask } = useAgentStateSync();
   const { subscribe } = useSSEManager();
+  const activeStreamingFlowId = useSelector(selectActiveLangGraphStreamFlowId);
 
   const [isProcessingDetail, setIsProcessingDetail] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -55,7 +73,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
     const handleNativeWheel = (e: Event) => {
       const wheelEvent = e as WheelEvent;
       wheelEvent.stopPropagation();
-      console.log('TaskNode滚轮事件传播被阻止:', wheelEvent.target);
+      // console.log('TaskNode滚轮事件传播被阻止:', wheelEvent.target); // 可以取消注释以调试
     };
 
     const refs = [taskContentRef, editFormRef];
@@ -70,8 +88,6 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
         textareas.forEach(textarea => {
           textarea.addEventListener('wheel', handleNativeWheel, { passive: true });
         });
-        
-        console.log('为TaskNode元素添加滚轮事件监听:', scrollableElement, textareas);
       }
     });
 
@@ -91,19 +107,20 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
     };
   }, [isEditing, selected]);
 
+  // 新的 SSE 订阅逻辑
   useEffect(() => {
-    if (!data.flowId || data.taskIndex === undefined) {
-      return;
+    if (activeStreamingFlowId !== data.flowId) {
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Skipping SSE for task details. Active stream ID ('${activeStreamingFlowId}') !== Node's flowId ('${data.flowId}'). Node expects to listen on its base flow's main stream.`);
+      return; 
     }
 
-    const sseChatId = data.flowId; 
+    const sseChatIdForTaskDetails = data.flowId; 
+    console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Subscribing to detail events on main flow SSE stream: ${sseChatIdForTaskDetails}`);
 
-    console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Subscribing to detail events on sseChatId: ${sseChatId}`);
+    const unsubs: (() => void)[] = [];
 
-    const unsubs: (()=>void)[] = [];
-
-    unsubs.push(subscribe(sseChatId, 'task_detail_generation_start', (eventData) => {
-      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Received task_detail_generation_start`, eventData);
+    unsubs.push(subscribe(sseChatIdForTaskDetails, 'task_detail_generation_start', (eventData: any) => {
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Received task_detail_generation_start on ${sseChatIdForTaskDetails}`, eventData);
       if (eventData && eventData.taskIndex === data.taskIndex) {
         setIsProcessingDetail(true);
         setDetailError(null);
@@ -111,8 +128,8 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
       }
     }));
 
-    unsubs.push(subscribe(sseChatId, 'task_detail_generation_end', (eventData) => {
-      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Received task_detail_generation_end`, eventData);
+    unsubs.push(subscribe(sseChatIdForTaskDetails, 'task_detail_generation_end', (eventData: any) => {
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Received task_detail_generation_end on ${sseChatIdForTaskDetails}`, eventData);
       if (eventData && eventData.taskIndex === data.taskIndex) {
         setIsProcessingDetail(false);
         if (eventData.status === 'failure') {
@@ -121,15 +138,17 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
         } else {
           setDetailError(null);
           console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Detail processing ENDED successfully.`);
+          // 如果后端在task_detail_generation_end事件中发送了详情数据，可以在这里更新
+          // 例如: if (eventData.details) dispatch(updateTaskDetailsInRedux(data.taskIndex, eventData.details));
         }
       }
     }));
 
     return () => {
-      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Unsubscribing from detail events on sseChatId: ${sseChatId}`);
+      console.log(`LangGraphTaskNode (${id}, TaskIndex: ${data.taskIndex}): Unsubscribing from detail events on sseChatId: ${sseChatIdForTaskDetails}`);
       unsubs.forEach(unsub => unsub());
     };
-  }, [data.flowId, data.taskIndex, id, subscribe]);
+  }, [data.flowId, data.taskIndex, id, subscribe, activeStreamingFlowId]); // 依赖项
 
   const handleEdit = useCallback(() => {
     if (isProcessingDetail) return;
@@ -140,6 +159,20 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
     updateTask(data.taskIndex, editedTask);
     setIsEditing(false);
   }, [data.taskIndex, editedTask, updateTask]);
+
+  // TODO: 未来实现单个任务详情更新时，将使用此函数
+  const handleRegenerateDetails = useCallback(() => {
+    // 1. 从 editedTask state 中获取修改后的任务描述
+    const updatedDescription = editedTask.description;
+    console.log(`TODO: Regenerate details for task ${data.taskIndex} with new description:`, updatedDescription);
+
+    // 2. 调用一个新的来自 useAgentStateSync 的 hook 函数
+    //    例如: regenerateDetailsForTask(data.taskIndex, updatedDescription);
+
+    // 3. UI 进入 isProcessingDetail 状态
+    setIsProcessingDetail(true);
+
+  }, [data.taskIndex, editedTask]);
 
   const handleCancel = useCallback(() => {
     setEditedTask(data.task);

@@ -1,6 +1,6 @@
 # SAS (Step-by-Step Automation System) Subgraph
 
-SAS 子图负责将用户的自然语言描述转换为可执行的机器人工作流程 XML。
+SAS 负责将用户的自然语言描述转换为可执行的机器人工作流程 XML。
 
 ## 目录结构
 
@@ -27,7 +27,6 @@ sas/
 │   ├── __init__.py
 │   ├── xml_utils.py      # XML处理工具
 │   ├── file_utils.py     # 文件操作工具
-│   └── validation.py     # 验证工具
 └── config/               # 配置
     ├── __init__.py
     └── defaults.py       # 默认配置
@@ -91,25 +90,16 @@ sas/
 ## 使用示例
 
 ```python
-from backend.langgraphchat.graph.subgraph.sas.graph_builder import create_robot_flow_graph
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
+import asyncio
+import logging
+import json
 
-# 创建 LLM
-llm = ChatGoogleGenerativeAI(model="gemini-pro")
+# Assuming the graph builder is now directly under backend.sas
+from backend.sas.graph_builder import create_robot_flow_graph
 
-# 创建图
-graph = create_robot_flow_graph(llm)
-
-# 运行图
-initial_state = {
-    "user_input": "创建一个抓取红色方块的任务",
-    "config": {
-        "OUTPUT_DIR_PATH": "/workspace/output",
-        "NODE_TEMPLATE_DIR_PATH": "/workspace/database/node_database/quick-fcpr-new-default"
-    }
-}
-
-result = await graph(initial_state)
+# Configure logging
+// ... existing code ...
 ```
 
 ## 注意事项

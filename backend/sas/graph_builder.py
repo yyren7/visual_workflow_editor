@@ -3,15 +3,15 @@ if __name__ == '__main__' and (__package__ is None or __package__ == ''):
     import sys
     from pathlib import Path
     # Calculate the path to the project root ('/workspace')
-    # This file is backend/langgraphchat/graph/subgraph/sas/graph_builder.py
-    # Relative path from this file to /workspace is ../../../../..
-    project_root = Path(__file__).resolve().parents[5]
+    # This file is backend/sas/graph_builder.py
+    # Relative path from this file to /workspace is ../../../
+    project_root = Path(__file__).resolve().parents[3]
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
     
     # Set __package__ to the expected package name for relative imports to work
-    # The package is 'backend.langgraphchat.graph.subgraph.sas'
-    __package__ = "backend.langgraphchat.graph.subgraph.sas"
+    # The package is 'backend.sas'
+    __package__ = "backend.sas"
 # ---- END PATCH FOR DIRECT EXECUTION ----
 
 import logging
@@ -36,6 +36,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import Client as LangSmithClient
 from langsmith.utils import tracing_is_enabled as langsmith_tracing_is_enabled
 from langchain_core.callbacks import BaseCallbackHandler
+from langgraph.checkpoint.base import BaseCheckpointSaver # ADDED THIS IMPORT
 
 from .state import RobotFlowAgentState, GeneratedXmlFile
 from .nodes import (
@@ -46,7 +47,7 @@ from .nodes import (
     generate_individual_xmls_node
 )
 from .xml_tools import WriteXmlFileTool
-from ....tools.file_share_tool import upload_file
+from ..langgraphchat.tools.file_share_tool import upload_file
 from .prompt_loader import DEFAULT_CONFIG
 
 logger = logging.getLogger(__name__)
@@ -942,11 +943,20 @@ def route_after_sas_step1(state: RobotFlowAgentState) -> str:
 
 # New routing function for SAS Review and Refine Task List
 def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
+    # +++ ADDED DIAGNOSTIC LOGGING START +++
     logger.info(f"--- Routing after SAS Review/Refine Node ---")
-    logger.info(f"    is_error: {state.is_error}")
-    logger.info(f"    dialog_state: '{state.dialog_state}'")
-    logger.info(f"    task_list_accepted: {state.task_list_accepted}")
-    logger.info(f"    module_steps_accepted: {state.module_steps_accepted}")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] is_error: {state.is_error}")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] dialog_state: '{state.dialog_state}'")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] task_list_accepted: {state.task_list_accepted}")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] module_steps_accepted: {state.module_steps_accepted}")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] sas_step1_generated_tasks exists: {bool(state.sas_step1_generated_tasks)}")
+    if state.sas_step1_generated_tasks:
+        logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] sas_step1_generated_tasks count: {len(state.sas_step1_generated_tasks)}")
+    else:
+        logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] sas_step1_generated_tasks is None or empty.")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] user_input: '{str(state.user_input)[:200]}...'")
+    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] clarification_question: '{str(state.clarification_question)[:200]}...'")
+    # +++ ADDED DIAGNOSTIC LOGGING END +++
 
     if state.is_error: 
         logger.warning(f"Error flag is set after Review/Refine node. Error message: {state.error_message}")
@@ -1116,6 +1126,7 @@ def route_after_generate_individual_xmls(state: RobotFlowAgentState) -> str:
 # create_robot_flow_graph function (original was L344, this is a rewrite for the new flow)
 def create_robot_flow_graph(
     llm: BaseChatModel,
+    checkpointer: Optional[BaseCheckpointSaver] = None  # ADDED checkpointer argument
 ) -> Callable[[Dict[str, Any]], Any]: 
     
     workflow = StateGraph(RobotFlowAgentState)
@@ -1219,7 +1230,7 @@ def create_robot_flow_graph(
         }
     )
 
-    app = workflow.compile()
+    app = workflow.compile(checkpointer=checkpointer) # MODIFIED to use checkpointer
     return app
 
 # Removed old should_continue and other unused/placeholder nodes/edges from original file if they existed.

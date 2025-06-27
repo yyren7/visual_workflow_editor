@@ -143,7 +143,6 @@ def get_node_params_from_xml(xml_path: str) -> dict:
     return result
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     # This path is relative to where this script would be if it's in backend/langgraphchat/prompts/
     # Adjust if testing from a different location or ensure the structure matches.
     # For robust testing, consider an absolute path or environment variable for the test path.

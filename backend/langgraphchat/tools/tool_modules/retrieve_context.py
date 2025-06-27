@@ -2,8 +2,9 @@ from typing import Dict, Any
 from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 import asyncio
+import logging
 from database.connection import get_db_context
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 from database.embedding.service import DatabaseEmbeddingService # Specific import
 from backend.langgraphchat.retrievers.embedding_retriever import EmbeddingRetriever # Specific import
 

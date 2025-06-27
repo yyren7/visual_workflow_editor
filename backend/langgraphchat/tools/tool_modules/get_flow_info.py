@@ -1,11 +1,12 @@
 from typing import Dict, Any
 from pydantic import BaseModel
 from langchain_core.tools import StructuredTool
+import logging
 from database.connection import get_db_context
 from backend.app.services.flow_service import FlowService
 from backend.app.services.flow_variable_service import FlowVariableService
 from backend.langgraphchat.context import current_flow_id_var
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 
 def get_flow_info_tool_func() -> Dict[str, Any]:
     """Retrieves information about the current workflow (nodes, connections, variables)."""

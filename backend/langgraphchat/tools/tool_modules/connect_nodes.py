@@ -1,10 +1,11 @@
 from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
+import logging
 from database.connection import get_db_context
 from backend.app.services.flow_service import FlowService
 from backend.langgraphchat.context import current_flow_id_var
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 
 def connect_nodes_tool_func(
     source_id: str,

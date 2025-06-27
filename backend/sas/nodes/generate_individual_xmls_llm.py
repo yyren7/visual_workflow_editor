@@ -14,9 +14,9 @@ from xml.dom import minidom
 # Conditional import for direct script execution vs. package import
 if __name__ == "__main__" and __package__ is None: # pragma: no cover
     file_path_for_preamble = Path(__file__).resolve()
-    # Assuming the script is in: backend/langgraphchat/graph/subgraph/sas/nodes/
-    # The project root /workspace is 6 levels up.
-    project_root_for_preamble = file_path_for_preamble.parents[6] 
+    # Assuming the script is in: backend/sas/nodes/
+    # The project root /workspace is 4 levels up.
+    project_root_for_preamble = file_path_for_preamble.parents[4] 
     if str(project_root_for_preamble) not in sys.path:
         sys.path.insert(0, str(project_root_for_preamble))
     try:
@@ -42,7 +42,7 @@ BLOCKLY_NS = "https://developers.google.com/blockly/xml"
 
 # Define _PROJECT_ROOT at the module level for use in template path resolution
 try:
-    _PROJECT_ROOT = Path(__file__).resolve().parents[6]
+    _PROJECT_ROOT = Path(__file__).resolve().parents[4]
 except IndexError: # pragma: no cover
     _PROJECT_ROOT = Path.cwd()
     logger.warning(
@@ -594,7 +594,6 @@ if __name__ == "__main__": # pragma: no cover
         print("[Test Main] Starting LLM-based XML generation test (conceptual).")
         
         log_format = '%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(message)s'
-        logging.basicConfig(level=logging.INFO, format=log_format) # Changed to INFO for less verbose test output initially
         logger.setLevel(logging.DEBUG) # Node logger can be more verbose
 
         # Path relative to workspace root
@@ -608,9 +607,9 @@ if __name__ == "__main__": # pragma: no cover
             if not resolved_test_json_path.exists(): # Try relative to script if absolute fails from CWD
                  script_dir = Path(__file__).parent.resolve()
                  # This needs to go up several levels to reach /workspace, then down.
-                 # backend/langgraphchat/graph/subgraph/sas/nodes/ -> ../../../../../
+                 # backend/sas/nodes/ -> ../../../
                  # Then backend/tests/llm_sas_test/1_sample/step2_output_sample.json
-                 workspace_root_guess = script_dir.parents[5] # Adjust based on actual structure
+                 workspace_root_guess = script_dir.parents[3] # Adjust based on actual structure
                  resolved_test_json_path = workspace_root_guess / test_json_path_str
         except Exception: # Fallback if path resolution is complex or fails
             resolved_test_json_path = Path(test_json_path_str) # Try as is

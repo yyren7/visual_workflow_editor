@@ -33,15 +33,14 @@ class SSEConnectionManager {
       return this.activeConnections.get(chatId)!;
     }
 
-    console.log('SSEManager: Creating new EventSource for chat:', chatId);
-    const eventSource = new EventSource(
-      `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/chats/${chatId}/events`
-    );
+    const apiUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${chatId}/events`;
+    console.log(`[SSE_MANAGER_LOG] _ensureConnection: Creating new EventSource for chat: ${chatId}, URL: ${apiUrl}`);
+    const eventSource = new EventSource(apiUrl);
     this.activeConnections.set(chatId, eventSource);
 
     eventSource.onopen = () => {
-      console.log('SSEManager: Connection opened for chat:', chatId);
-      this.dispatchEvent(chatId, 'open', { chatId }); // Dispatch an 'open' event
+      console.log('[SSE_MANAGER_LOG] Connection opened for chat:', chatId);
+      this.dispatchEvent(chatId, 'open', { chatId });
     };
 
     const genericEventListener = (eventType: string) => (event: MessageEvent) => {
@@ -115,7 +114,8 @@ class SSEConnectionManager {
     eventType: string,
     callback: (data: any) => void
   ): () => void {
-    this._ensureConnection(chatId); // Ensure connection exists or is created
+    console.log(`[SSE_MANAGER_LOG] subscribe called for chat: ${chatId}, eventType: ${eventType}`);
+    this._ensureConnection(chatId);
 
     if (!this.subscribers.has(chatId)) {
       this.subscribers.set(chatId, new Map());
@@ -155,9 +155,10 @@ class SSEConnectionManager {
   }
 
   closeConnection(chatId: string): void {
+    console.log(`[SSE_MANAGER_LOG] closeConnection called for chat: ${chatId}`);
     const eventSource = this.activeConnections.get(chatId);
     if (eventSource) {
-      console.log('SSEManager: Closing connection for chat:', chatId);
+      console.log('[SSE_MANAGER_LOG] Closing actual EventSource connection for chat:', chatId);
       eventSource.close();
       this.activeConnections.delete(chatId);
       this.dispatchEvent(chatId, 'close', { chatId }); // Dispatch a 'close' event

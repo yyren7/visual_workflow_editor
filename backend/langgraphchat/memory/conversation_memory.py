@@ -12,10 +12,11 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
+import logging
 
 # 导入正确的配置字典
 from backend.config import APP_CONFIG, LANGCHAIN_CONFIG
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 
 class EnhancedConversationMemory(ConversationBufferMemory):
     """

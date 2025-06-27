@@ -27,38 +27,40 @@ class RobotFlowAgentState(BaseModel):
     messages: List[BaseMessage] = Field(default_factory=list, description="The history of messages in the conversation.")
     sse_event_queue: Optional[asyncio.Queue] = Field(default=None, exclude=True, description="SSE event queue for real-time updates from graph nodes.")
     
+    # --- 新增: 用于进度事件通信的字段 ---
+    current_chat_id: Optional[str] = Field(None, description="Current chat/thread ID for sending progress events via SSE.")
+    thread_id: Optional[str] = Field(None, description="Thread ID for LangGraph state management.")
+    
     user_input: Optional[str] = Field(None, description="The latest input from the user, consumed after processing by a node.")
     current_user_request: Optional[str] = Field(None, description="The active user request (initialized from first user_input, then revised by feedback) that serves as the basis for the current flow or sub-flow.")
     user_advice: Optional[str] = Field(None, description="User's feedback/advice for revising the current task description.")
     active_plan_basis: Optional[str] = Field(None, description="The current text basis for planning (can be current_user_request or a revised plan after user feedback).")
 
     dialog_state: Optional[Literal[
-        "initial",                             #Initial state upon entering the subgraph
-        "awaiting_robot_model_input",          #Robot model has been queried, awaiting user reply
-        "awaiting_enrichment_confirmation",    #Enriched plan has been proposed, awaiting user confirmation
-        "awaiting_user_input",                 #General state of waiting for user to provide new flow description or corrections
-        "processing_user_input",               #Actively processing the latest user input (e.g., calling LLM for enrichment or parsing)
-        "input_understood_ready_for_xml",      #User input processed, ready to start generating specific XML steps
-        "generating_xml_individual",           #Generating individual XML nodes (detailed state)
-        "generating_xml_relation",             #Generating relation XML (detailed state)
-        "generating_xml_final",                #Generating final flow XML (detailed state)
-        "generation_failed",                   #Any XML generation step failed, awaiting user correction
-        "final_xml_generated_success",         #Final XML successfully generated, ready to exit subgraph
-        "sub_flow_cancelled_by_user",           #User has indicated to cancel current flow editing (can be added in the future)
-        "sas_step1_tasks_generated",           # SAS step 1 (user_input_to_task_list) completed successfully
-        "sas_step1_completed",                 # SAS step 1 (user_input_to_process) completed successfully - to be deprecated or renamed
-        "sas_step2_module_steps_generated_for_review", # SAS step 2 generated module steps, awaiting review
-        "sas_step2_completed",                 # SAS step 2 (process_description_to_module_steps) completed successfully
-        "sas_module_steps_accepted_proceeding", # SAS: Module steps reviewed and accepted, ready for next step (e.g. param mapping)
-        "sas_step3_completed",                  # SAS step 3 (parameter_mapping) completed successfully
-        "sas_awaiting_task_list_review",        # SAS: System has presented the task list and is awaiting user acceptance or feedback.
-        "sas_awaiting_module_steps_review",     # SAS: System has presented the module steps and is awaiting user acceptance or feedback.
-        "sas_description_updated_for_regeneration", # SAS: User description has been updated and is ready for regeneration of tasks.
-        "sas_step3_to_merge_xml",
-        "sas_merging_completed",
-        "sas_merging_completed_no_files",
-        "sas_merge_to_concatenate_xml",
-        "sas_processing_error"
+        # --- Generic States ---
+        "initial",                                 # Initial state upon entering the subgraph.
+        "error",                                   # A non-recoverable error occurred in a node.
+        "generation_failed",                       # A failure happened during an LLM generation step, might be recoverable.
+        
+        # --- SAS Specific States ---
+        "sas_step1_tasks_generated",               # Step 1 (user_input_to_task_list) completed successfully.
+        "sas_step2_module_steps_generated_for_review", # Step 2 (process_to_module_steps) completed, awaiting review.
+        "sas_step3_completed",                     # Step 3 (parameter_mapping) completed successfully.
+
+        # --- Review & Refine States ---
+        "sas_awaiting_task_list_review",           # System has presented the task list and is awaiting user acceptance or feedback.
+        "sas_awaiting_module_steps_review",        # System has presented the module steps and is awaiting user acceptance or feedback.
+        "sas_awaiting_task_list_revision_input",   # System received feedback on tasks, awaiting full revised description.
+        "sas_awaiting_module_steps_revision_input",# System received feedback on module steps, awaiting full revised description.
+
+        # --- Routing States (internal signals for graph transitions) ---
+        "sas_module_steps_accepted_proceeding",    # User accepted module steps, proceeding to the next phase (e.g., parameter mapping).
+        "sas_all_steps_accepted_proceed_to_xml",   # User accepted all reviewable steps, proceeding to XML generation.
+        
+        # --- XML Generation States ---
+        "generating_xml_relation",                 # Process is currently generating the relation XML.
+        "generating_xml_final"                     # Process is currently generating the final merged XML.
+
     ]] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
     
     clarification_question: Optional[str] = Field(None, description="A question posed to the user for clarification (e.g. about robot model, or ambiguous request).")

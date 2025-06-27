@@ -4,10 +4,11 @@ from langchain_core.tools import StructuredTool
 import os
 import json
 import xml.etree.ElementTree as ET
+import logging
 from database.connection import get_db_context
 from backend.app.services.flow_service import FlowService
 from backend.langgraphchat.context import current_flow_id_var
-from backend.langgraphchat.utils.logging import logger
+logger = logging.getLogger(__name__)
 import uuid
 from backend.langgraphchat.adapters.xml_processing_adapter import process_node_data_and_save_to_db
 
