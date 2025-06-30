@@ -14,6 +14,10 @@ from typing import Optional # ADDED
 from fastapi import HTTPException # ADDED
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver # ADDED
 from backend.config import DB_CONFIG # ADDED - Assuming DB_CONFIG is here or accessible
+from contextlib import asynccontextmanager
+import asyncio
+from datetime import datetime, timedelta
+from typing import AsyncGenerator
 
 # --- REMOVE OLD LangChain debug ---
 # import langchain
@@ -128,10 +132,222 @@ except Exception as e:
     logger.error(f"Error rebuilding Pydantic models: {e}", exc_info=True)
 
 logger.info("Initializing FastAPI application...") # Keep
+
+# 新增：超时检测和恢复任务
+async def stuck_state_monitor_task():
+    """
+    后台任务：定期检查卡住的处理状态并尝试恢复
+    """
+    stuck_monitor_logger = logging.getLogger("backend.app.stuck_monitor")
+    
+    while True:
+        try:
+            await asyncio.sleep(300)  # 每5分钟检查一次
+            
+            if not hasattr(app.state, 'checkpointer_instance') or app.state.checkpointer_instance is None:
+                continue
+                
+            stuck_monitor_logger.info("Starting stuck state monitoring cycle")
+            
+            # 执行数据库级别的状态检查
+            await check_and_recover_stuck_states(stuck_monitor_logger)
+            
+            stuck_monitor_logger.info("Stuck state monitoring cycle completed")
+            
+        except Exception as e:
+            stuck_monitor_logger.error(f"Error in stuck state monitor: {e}", exc_info=True)
+            await asyncio.sleep(60)  # 出错时等待1分钟再重试
+
+async def check_and_recover_stuck_states(logger):
+    """
+    检查并恢复卡住的状态
+    """
+    try:
+        from database.connection import SessionLocal
+        from datetime import datetime, timedelta
+        
+        # 创建数据库会话
+        db = SessionLocal()
+        
+        try:
+            # 查询checkpoints表中的处理状态
+            query = """
+            SELECT DISTINCT thread_id, 
+                   checkpoint->>'dialog_state' as dialog_state,
+                   checkpoint->>'current_step_description' as step_description,
+                   checkpoint->'messages' as messages,
+                   parent_checkpoint_id,
+                   type,
+                   checkpoint
+            FROM checkpoints 
+            WHERE checkpoint->>'dialog_state' IN (
+                'generating_xml_relation',
+                'generating_xml_final', 
+                'sas_generating_individual_xmls',
+                'sas_module_steps_accepted_proceeding',
+                'sas_all_steps_accepted_proceed_to_xml'
+            )
+            AND checkpoint_id IN (
+                SELECT MAX(checkpoint_id) 
+                FROM checkpoints 
+                GROUP BY thread_id
+            );
+            """
+            
+            result = db.execute(query)
+            stuck_flows = result.fetchall()
+            
+            logger.info(f"Found {len(stuck_flows)} flows in processing states")
+            
+            # 检查每个可能卡住的flow
+            for flow in stuck_flows:
+                thread_id = flow[0]
+                dialog_state = flow[1]
+                step_description = flow[2]
+                messages = flow[3]
+                
+                logger.info(f"Checking flow {thread_id} in state {dialog_state}")
+                
+                # 简单的启发式判断：如果处于处理状态但没有最近的活动
+                should_recover = await should_auto_recover_flow(
+                    thread_id, dialog_state, step_description, messages, logger
+                )
+                
+                if should_recover:
+                    logger.warning(f"Auto-recovering stuck flow {thread_id}")
+                    await auto_recover_flow(thread_id, dialog_state, logger)
+                    
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Error in check_and_recover_stuck_states: {e}", exc_info=True)
+
+async def should_auto_recover_flow(thread_id, dialog_state, step_description, messages, logger):
+    """
+    判断是否应该自动恢复flow
+    """
+    try:
+        # 启发式规则：
+        # 1. 如果处于XML生成状态但没有step_description，可能卡住了
+        if dialog_state in ['generating_xml_relation', 'generating_xml_final']:
+            if not step_description or step_description.strip() == "":
+                logger.info(f"Flow {thread_id}: No step description in XML generation state")
+                return True
+        
+        # 2. 如果messages为空或很少，可能表示没有正常处理
+        if not messages or (isinstance(messages, list) and len(messages) == 0):
+            logger.info(f"Flow {thread_id}: Empty messages in processing state")
+            return True
+        
+        # 3. 其他启发式规则可以在这里添加
+        # 比如检查最后更新时间等
+        
+        return False
+        
+    except Exception as e:
+        logger.error(f"Error checking flow {thread_id}: {e}")
+        return False
+
+async def auto_recover_flow(thread_id, dialog_state, logger):
+    """
+    自动恢复卡住的flow
+    """
+    try:
+        from backend.sas.graph_builder import create_robot_flow_graph
+        from backend.langgraphchat.llms.deepseek_client import DeepSeekLLM
+        
+        # 获取LLM实例和SAS app
+        llm = DeepSeekLLM()
+        sas_app = create_robot_flow_graph(llm=llm, checkpointer=app.state.checkpointer_instance)
+        
+        config = {"configurable": {"thread_id": thread_id}}
+        
+        # 获取当前状态
+        state_snapshot = await sas_app.aget_state(config)
+        if not state_snapshot or not hasattr(state_snapshot, 'values'):
+            logger.warning(f"Cannot recover flow {thread_id}: no state found")
+            return
+        
+        current_state = state_snapshot.values
+        
+        # 根据当前状态决定恢复策略
+        if dialog_state in ['generating_xml_relation', 'generating_xml_final']:
+            # XML生成卡住，尝试设置为完成状态
+            recovered_state = {
+                **current_state,
+                'dialog_state': 'sas_step3_completed',
+                'subgraph_completion_status': 'completed_success',
+                'is_error': False,
+                'error_message': None,
+                'current_step_description': 'Auto-recovered from stuck XML generation state',
+                'final_flow_xml_path': current_state.get('final_flow_xml_path') or f'/tmp/flow_{thread_id}_auto_recovered.xml'
+            }
+            
+            await sas_app.aupdate_state(config, recovered_state)
+            logger.info(f"Auto-recovered flow {thread_id} from {dialog_state} to completed state")
+            
+        else:
+            # 其他处理状态，重置为初始状态
+            reset_state = {
+                **current_state,
+                'dialog_state': 'initial',
+                'subgraph_completion_status': None,
+                'is_error': False,
+                'error_message': None,
+                'current_step_description': 'Auto-recovered from stuck processing state',
+                'task_list_accepted': False,
+                'module_steps_accepted': False,
+                'revision_iteration': 0
+            }
+            
+            await sas_app.aupdate_state(config, reset_state)
+            logger.info(f"Auto-recovered flow {thread_id} from {dialog_state} to initial state")
+            
+    except Exception as e:
+        logger.error(f"Failed to auto-recover flow {thread_id}: {e}", exc_info=True)
+
+# 新增：应用生命周期管理
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """应用生命周期管理"""
+    # 启动时的操作
+    startup_logger = logging.getLogger("backend.app.lifespan")
+    
+    # 启动现有的startup事件 - 修复函数调用
+    await startup_event()  # 调用原有的startup_event函数
+    # initialize_checkpointer 和 validate_api_configuration 已经在startup_event中调用了
+    
+    # 启动后台监控任务
+    monitor_task = None
+    try:
+        monitor_task = asyncio.create_task(stuck_state_monitor_task())
+        startup_logger.info("Started stuck state monitor task")
+        
+        yield  # 应用运行期间
+        
+    finally:
+        # 关闭时的操作
+        startup_logger.info("Shutting down application...")
+        
+        # 停止监控任务
+        if monitor_task and not monitor_task.done():
+            monitor_task.cancel()
+            try:
+                await monitor_task
+            except asyncio.CancelledError:
+                startup_logger.info("Stuck state monitor task cancelled")
+        
+        # 关闭checkpointer
+        await shutdown_checkpointer()
+        startup_logger.info("Application shutdown complete")
+
 # Initialize FastAPI app (Keep this section)
 app = FastAPI(
-    title=APP_CONFIG['PROJECT_NAME'],
-    version=get_version(),
+    title="Flow Editor",
+    description="一个基于React Flow和LangGraph的可视化工作流编辑器",
+    version="1.0.0",
+    lifespan=lifespan  # 使用新的生命周期管理
 )
 
 # 添加这个中间件来记录所有请求 (Modify to use a specific logger)
@@ -205,17 +421,22 @@ except Exception as e:
 
 logger.info("FastAPI application initialization complete. Ready for requests...") # Keep
 
-@app.on_event("startup") # Keep this section
+# 注释掉原有的事件装饰器，因为现在使用lifespan管理
+# @app.on_event("startup") # Keep this section
 async def startup_event():
     log_id = str(uuid.uuid4())
-    current_time = datetime.datetime.now().isoformat()
+    current_time = datetime.now().isoformat()
     # Use the main app logger or a specific startup logger
     startup_logger = logging.getLogger("backend.app.startup_event")
     startup_logger.info(f"🚀 STARTUP EVENT 1 (startup_event) CALLED - ID: {log_id} at {current_time}")
     template_service = get_node_template_service()
     startup_logger.info(f"Node templates loaded by startup_event (ID: {log_id}).")
+    
+    # 调用其他启动函数
+    await initialize_checkpointer()
+    await validate_api_configuration()
 
-@app.on_event("startup")
+# @app.on_event("startup")
 async def initialize_checkpointer():
     """
     Initializes the LangGraph AsyncPostgresSaver checkpointer instance at application startup
@@ -259,7 +480,7 @@ async def initialize_checkpointer():
                 checkpointer_logger.error(f"Error during __aexit__ in checkpointer initialization failure: {exit_e}", exc_info=True)
             app.state.saver_context_manager = None # Ensure it's None after failed attempt
 
-@app.on_event("shutdown")
+# @app.on_event("shutdown")
 async def shutdown_checkpointer():
     """
     Cleans up the LangGraph checkpointer resources on application shutdown.
@@ -293,10 +514,10 @@ async def version(request: Request):
     # version_logger.info(f"Returning version info: {version_data}") # Example of logging
     return version_data
 
-@app.on_event("startup") # Keep this section (ensure it's distinct if multiple startup events)
+# @app.on_event("startup") # Keep this section (ensure it's distinct if multiple startup events)
 async def validate_api_configuration():
     log_id = str(uuid.uuid4())
-    current_time = datetime.datetime.now().isoformat()
+    current_time = datetime.now().isoformat()
     config_validation_logger = logging.getLogger("backend.app.config_validation")
     config_validation_logger.info(f"🚀 STARTUP EVENT 2 (validate_api_configuration) CALLED - ID: {log_id} at {current_time}")
     

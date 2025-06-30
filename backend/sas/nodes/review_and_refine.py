@@ -60,6 +60,9 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
             reviewing_task_list_for_feedback_context = True
         elif state.dialog_state == "sas_awaiting_module_steps_review" or (state.task_list_accepted and not state.module_steps_accepted):
             reviewing_module_steps_for_feedback_context = True
+        elif state.dialog_state == "sas_awaiting_xml_generation_approval":
+            # 用户在XML生成确认阶段提供了输入
+            logger.info("User provided input during XML generation approval phase")
     
     logger.info(f"    Context for feedback (if user_input present) - Reviewing task list: {reviewing_task_list_for_feedback_context}")
     logger.info(f"    Context for feedback (if user_input present) - Reviewing module steps: {reviewing_module_steps_for_feedback_context}")
@@ -112,11 +115,62 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
                 logger.warning("Attempting to review module steps, but no tasks with details (module steps) found or no tasks at all. This might be an issue if module steps were expected.")
                 state.clarification_question = "Module steps generation might have resulted in no steps or an issue. Proceeding with caution. If you expected module steps, please indicate a problem with the previous step."
 
-        elif state.task_list_accepted and state.module_steps_accepted:
-            logger.info("Both task list and module steps are already accepted. Passing through.")
+        elif state.task_list_accepted and state.module_steps_accepted and state.dialog_state != "sas_awaiting_xml_generation_approval":
+            logger.info("Both task list and module steps are already accepted. Proceeding to XML generation approval.")
             state.clarification_question = None
             state.user_advice = None
-            state.dialog_state = "sas_all_steps_accepted_proceed_to_xml"
+            state.dialog_state = "sas_awaiting_xml_generation_approval"
+            # 设置确认问题
+            approval_question = """All tasks and module steps have been confirmed. Ready to generate XML files.
+
+**Summary:**
+- Generated Tasks: {} tasks
+- Module Steps: Completed and approved
+- Next Step: Generate XML program files
+
+**Do you want to proceed with XML generation?**
+
+You can respond with:
+- "approve" or "yes" to start XML generation
+- "reset" to restart the task configuration
+- Provide specific feedback for modifications
+
+Please confirm to proceed with XML generation.""".format(len(state.sas_step1_generated_tasks) if state.sas_step1_generated_tasks else 0)
+            
+            state.clarification_question = approval_question
+            if not state.messages or state.messages[-1].content != approval_question:
+                state.messages = (state.messages or []) + [AIMessage(content=approval_question)]
+            return state.model_dump()
+            
+        elif state.dialog_state == "sas_awaiting_xml_generation_approval":
+            logger.info("Presenting XML generation approval confirmation.")
+            if state.sas_step1_generated_tasks:
+                tasks_summary = []
+                for i, task in enumerate(state.sas_step1_generated_tasks):
+                    tasks_summary.append(f"{i+1}. {task.name} ({task.type})")
+                    if task.details:
+                        tasks_summary.append(f"   - {len(task.details)} module steps defined")
+                tasks_summary_str = "\\n".join(tasks_summary)
+                
+                approval_question = f"""Ready to generate XML program files based on the confirmed configuration:
+
+**Tasks Overview:**
+{tasks_summary_str}
+
+**Next Action:** Generate individual XML files and merge them into a complete robot program
+
+**Please confirm:**
+- Say "approve", "yes", or "generate" to start XML generation
+- Say "reset" to restart task configuration  
+- Provide specific feedback for any modifications needed
+
+Do you approve XML generation?"""
+                state.clarification_question = approval_question
+                if not state.messages or state.messages[-1].content != approval_question:
+                    state.messages = (state.messages or []) + [AIMessage(content=approval_question)]
+            else:
+                logger.warning("In XML generation approval state but no tasks found.")
+                state.clarification_question = "No tasks found for XML generation. Please restart the configuration."
             return state.model_dump()
 
         else:
@@ -160,11 +214,17 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
         # +++ ADDED DIAGNOSTIC LOGGING END +++
         
         # Check for acceptance
-        acceptance_keywords = ["accept", "accept_tasks", "approve", "yes", "ok", "agree", "fine", "alright", "proceed", "同意", "接受", "可以", "好的", "没问题", "行"]
+        acceptance_keywords = ["accept", "accept_tasks", "approve", "yes", "ok", "agree", "fine", "alright", "proceed", "generate", "同意", "接受", "可以", "好的", "没问题", "行", "生成"]
         is_accepted = any(feedback_for_processing.lower() == keyword for keyword in acceptance_keywords) or \
                      any(keyword in feedback_for_processing.lower() for keyword in acceptance_keywords if len(feedback_for_processing) <= 20)
+        
+        # Check for reset request
+        reset_keywords = ["reset", "restart", "重新开始", "重置", "重来"]
+        is_reset_request = any(feedback_for_processing.lower() == keyword for keyword in reset_keywords) or \
+                          any(keyword in feedback_for_processing.lower() for keyword in reset_keywords if len(feedback_for_processing) <= 20)
+        
         # +++ ADDED DIAGNOSTIC LOGGING START +++
-        logger.info(f"[REVIEW_NODE_ACCEPTANCE] Feedback \'{feedback_for_processing}\' - is_accepted: {is_accepted}")
+        logger.info(f"[REVIEW_NODE_ACCEPTANCE] Feedback \'{feedback_for_processing}\' - is_accepted: {is_accepted}, is_reset_request: {is_reset_request}")
         # +++ ADDED DIAGNOSTIC LOGGING END +++
 
         if is_accepted:
@@ -183,18 +243,41 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
             elif reviewing_module_steps_for_feedback_context:
                 logger.info("User accepted the MODULE STEPS.")
                 state.module_steps_accepted = True
-                state.dialog_state = "sas_module_steps_accepted_proceeding" # This state will route to XML generation
+                # 修改：不直接进入XML生成，而是等待用户确认XML生成
+                state.dialog_state = "sas_awaiting_xml_generation_approval" 
                 # +++ ADDED DIAGNOSTIC LOGGING START +++
                 logger.info(f"[REVIEW_NODE_ACCEPTANCE] MODULE STEPS ACCEPTED. New dialog_state: \'{state.dialog_state}\', module_steps_accepted: {state.module_steps_accepted}")
                 # +++ ADDED DIAGNOSTIC LOGGING END +++
                 if not any("Module steps confirmed" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-                    state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed by user. Preparing to generate XML program.")]
+                    state.messages = (state.messages or []) + [AIMessage(content="Module steps confirmed by user. Ready to generate XML program with your approval.")]
+            elif state.dialog_state == "sas_awaiting_xml_generation_approval":
+                logger.info("User approved XML GENERATION.")
+                state.dialog_state = "sas_xml_generation_approved"
+                # +++ ADDED DIAGNOSTIC LOGGING START +++
+                logger.info(f"[REVIEW_NODE_ACCEPTANCE] XML GENERATION APPROVED. New dialog_state: \'{state.dialog_state}\'")
+                # +++ ADDED DIAGNOSTIC LOGGING END +++
+                if not any("XML generation approved" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+                    state.messages = (state.messages or []) + [AIMessage(content="XML generation approved by user. Starting XML file generation process...")]
             else:
                 logger.error("CRITICAL: Acceptance received but review context was undefined during processing.")
                 state.is_error = True
                 state.error_message = "Accepted feedback, but review context was unclear internally. Please try again or restart."
                 if not any(state.error_message in m.content for m in (state.messages or []) if isinstance(m, AIMessage)):
                     state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
+        elif is_reset_request:
+            logger.info("User requested RESET.")
+            # 重置所有状态回到初始状态
+            state.task_list_accepted = False
+            state.module_steps_accepted = False
+            state.sas_step1_generated_tasks = None
+            state.dialog_state = "initial"
+            state.clarification_question = None
+            state.revision_iteration = 0
+            # +++ ADDED DIAGNOSTIC LOGGING START +++
+            logger.info(f"[REVIEW_NODE_RESET] RESET REQUESTED. All states reset to initial.")
+            # +++ ADDED DIAGNOSTIC LOGGING END +++
+            if not any("Configuration reset" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+                state.messages = (state.messages or []) + [AIMessage(content="Configuration reset by user request. Please provide a new task description to start over.")]
         else:
             # User provided modifications.
             # The graph will now hang, waiting for the user to submit a revised full description via the frontend.

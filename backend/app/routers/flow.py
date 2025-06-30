@@ -566,6 +566,126 @@ async def update_sas_state(
         logger.error(f"Failed to update SAS state for flow {flow_id}: {e}")
         raise HTTPException(status_code=500, detail=f"更新SAS状态失败: {str(e)}")
 
+@router.post("/{flow_id}/reset-stuck-state", response_model=schemas.SuccessResponse)
+async def reset_stuck_state(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user),
+    sas_app = Depends(get_sas_app)
+):
+    """
+    重置卡住的处理状态，将其恢复到可编辑状态
+    """
+    # 验证所有权
+    verify_flow_ownership(flow_id, current_user, db)
+    
+    try:
+        config = {"configurable": {"thread_id": flow_id}}
+        
+        # 获取当前状态
+        state_snapshot = await sas_app.aget_state(config)
+        if not state_snapshot or not hasattr(state_snapshot, 'values'):
+            raise HTTPException(status_code=404, detail="未找到该流程的状态")
+        
+        current_state = state_snapshot.values
+        
+        # 检查是否处于处理状态
+        processing_states = [
+            'generating_xml_relation',
+            'generating_xml_final', 
+            'sas_generating_individual_xmls',
+            'sas_module_steps_accepted_proceeding',
+            'sas_all_steps_accepted_proceed_to_xml'
+        ]
+        
+        if current_state.get('dialog_state') in processing_states:
+            # 重置为初始状态，但保留已有的任务信息
+            reset_state = {
+                **current_state,
+                'dialog_state': 'initial',
+                'subgraph_completion_status': None,
+                'is_error': False,
+                'error_message': None,
+                'current_step_description': None,
+                'task_list_accepted': False,
+                'module_steps_accepted': False,
+                'revision_iteration': 0
+            }
+            
+            await sas_app.aupdate_state(config, reset_state)
+            
+            logger.info(f"Reset stuck processing state for flow {flow_id}")
+            return {"success": True, "message": "已重置卡住的处理状态"}
+        else:
+            return {"success": True, "message": "当前状态不需要重置"}
+            
+    except Exception as e:
+        logger.error(f"Failed to reset stuck state for flow {flow_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"重置状态失败: {str(e)}")
+
+@router.post("/{flow_id}/force-complete-processing", response_model=schemas.SuccessResponse)
+async def force_complete_processing(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user),
+    sas_app = Depends(get_sas_app)
+):
+    """
+    强制完成当前的处理步骤，跳转到完成状态
+    """
+    # 验证所有权
+    verify_flow_ownership(flow_id, current_user, db)
+    
+    try:
+        config = {"configurable": {"thread_id": flow_id}}
+        
+        # 获取当前状态
+        state_snapshot = await sas_app.aget_state(config)
+        if not state_snapshot or not hasattr(state_snapshot, 'values'):
+            raise HTTPException(status_code=404, detail="未找到该流程的状态")
+        
+        current_state = state_snapshot.values
+        
+        # 根据当前状态强制设置为适当的完成状态
+        current_dialog_state = current_state.get('dialog_state')
+        
+        if current_dialog_state in ['generating_xml_relation', 'generating_xml_final']:
+            # 如果正在生成XML，强制设置为完成状态
+            completed_state = {
+                **current_state,
+                'dialog_state': 'sas_step3_completed',
+                'subgraph_completion_status': 'completed_success',
+                'is_error': False,
+                'error_message': None,
+                'current_step_description': 'Processing forcefully completed by user',
+                # 如果没有XML路径，提供一个默认路径
+                'final_flow_xml_path': current_state.get('final_flow_xml_path') or f'/tmp/flow_{flow_id}_force_completed.xml'
+            }
+        elif current_dialog_state in ['sas_generating_individual_xmls']:
+            # 如果正在生成个体XML，设置为relation生成完成
+            completed_state = {
+                **current_state,
+                'dialog_state': 'generating_xml_final',
+                'current_step_description': 'Individual XMLs forcefully completed, proceeding to final XML'
+            }
+        else:
+            # 其他处理状态，设置为通用完成状态
+            completed_state = {
+                **current_state,
+                'dialog_state': 'sas_step3_completed',
+                'subgraph_completion_status': 'completed_success',
+                'current_step_description': 'Processing forcefully completed by user'
+            }
+        
+        await sas_app.aupdate_state(config, completed_state)
+        
+        logger.info(f"Force completed processing for flow {flow_id} from state {current_dialog_state}")
+        return {"success": True, "message": "已强制完成当前处理步骤"}
+        
+    except Exception as e:
+        logger.error(f"Failed to force complete processing for flow {flow_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"强制完成失败: {str(e)}")
+
 @router.get("/{flow_id}/sas-history")
 async def get_sas_history(
     flow_id: str,

@@ -982,14 +982,18 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
         logger.info(f"Awaiting user feedback on the MODULE STEPS (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
         state.subgraph_completion_status = "needs_clarification"
         return END
+    elif state.dialog_state == "sas_awaiting_xml_generation_approval":
+        logger.info(f"Awaiting user approval for XML GENERATION (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
+        state.subgraph_completion_status = "needs_clarification"
+        return END
 
-    # Priority 2: Handling successful acceptance of module steps
-    if state.module_steps_accepted and state.dialog_state == "sas_module_steps_accepted_proceeding":
-        logger.info("Module steps accepted by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
-        state.current_step_description = "Module steps accepted, preparing to generate individual XMLs."
-        state.dialog_state = "sas_generating_individual_xmls" # New dialog state
+    # Priority 2: Handling user approval for XML generation
+    if state.module_steps_accepted and state.dialog_state == "sas_xml_generation_approved":
+        logger.info("XML generation approved by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
+        state.current_step_description = "XML generation approved, starting to generate individual XMLs."
+        state.dialog_state = "sas_generating_individual_xmls" 
         state.subgraph_completion_status = "processing" 
-        return GENERATE_INDIVIDUAL_XMLS # Changed target
+        return GENERATE_INDIVIDUAL_XMLS
 
     # Priority 3: Handling successful acceptance of task list (and module steps not yet reviewed/accepted)
     if state.task_list_accepted and not state.module_steps_accepted:

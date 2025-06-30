@@ -2,4 +2,785 @@
 > visual-workflow-editor-frontend@0.1.0 start
 > npx craco start
 
-Something is already running on port 3001.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view visual-workflow-editor-frontend in the browser.
+
+  Local:            http://localhost:3001
+  On Your Network:  http://172.18.0.3:3001
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 207:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 88:9:   'isInXmlApprovalMode' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 88:9:   'isInXmlApprovalMode' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 88:9:   'isInXmlApprovalMode' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 88:9:   'isInXmlApprovalMode' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 513:38:  'AccessTimeIcon' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 513:38:  'AccessTimeIcon' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+No issues found.
+Failed to compile.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 513:38:  'AccessTimeIcon' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 211:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 513:38:  'AccessTimeIcon' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/nodes/LangGraphInputNode.tsx
+  Line 9:3:    'IconButton' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 20:12:  'CloseIcon' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  Line 212:6:  React Hook useEffect has a missing dependency: 'showAddForm'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+No issues found.

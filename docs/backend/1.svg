@@ -1,0 +1,29 @@
+graph TB
+subgraph "SAS LangGraph持久化架构"
+A["用户请求<br />chat_id"] --> B["SAS Chat Router<br />/sas/{chat_id}/events"]
+B --> C["get_sas_app()"]
+C --> D["create_robot_flow_graph()"]
+D --> E["LangGraph Workflow<br />+AsyncPostgresSaver"]
+E --> F["PostgreSQL数据库<br />checkpoints表"]
+
+subgraph "关键配置"
+G["thread_id = chat_id"]
+H["config = {configurable: {thread_id}}"]
+end
+
+subgraph "存储内容"
+I["RobotFlowAgentState"]
+J["对话历史messages"]
+K["处理状态dialog_state"]
+L["任务列表sas_step1_generated_tasks"]
+M["模块步骤sas_step2_module_steps"]
+end
+
+E --> G
+E --> H
+F --> I
+F --> J
+F --> K
+F --> L
+F --> M
+end
