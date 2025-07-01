@@ -589,7 +589,7 @@ async def reset_stuck_state(
         
         current_state = state_snapshot.values
         
-        # 检查是否处于处理状态
+        # 检查是否处于处理状态或需要重置的状态
         processing_states = [
             'generating_xml_relation',
             'generating_xml_final', 
@@ -598,24 +598,50 @@ async def reset_stuck_state(
             'sas_all_steps_accepted_proceed_to_xml'
         ]
         
-        if current_state.get('dialog_state') in processing_states:
-            # 重置为初始状态，但保留已有的任务信息
-            reset_state = {
-                **current_state,
-                'dialog_state': 'initial',
-                'subgraph_completion_status': None,
-                'is_error': False,
-                'error_message': None,
-                'current_step_description': None,
-                'task_list_accepted': False,
-                'module_steps_accepted': False,
-                'revision_iteration': 0
-            }
+        # 扩展：也支持重置完成状态和错误状态
+        resettable_states = processing_states + [
+            'sas_step3_completed',
+            'final_xml_generated_success',
+            'error'
+        ]
+        
+        current_dialog_state = current_state.get('dialog_state')
+        is_error_state = current_state.get('is_error', False)
+        
+        if current_dialog_state in resettable_states or is_error_state:
+            # 根据当前状态确定合适的重置策略
+            if current_dialog_state in ['sas_step3_completed', 'final_xml_generated_success']:
+                # 如果是完成状态，回退到step2审查状态
+                reset_state = {
+                    **current_state,
+                    'dialog_state': 'sas_step2_module_steps_generated_for_review',
+                    'subgraph_completion_status': None,
+                    'is_error': False,
+                    'error_message': None,
+                    'current_step_description': 'Reset from completed state for re-review',
+                    'module_steps_accepted': False,  # 重新需要用户确认
+                    'final_flow_xml_path': None,
+                    'generated_xml_files': []
+                }
+                logger.info(f"Reset completed state for flow {flow_id} to step2 review")
+            else:
+                # 对于处理状态和错误状态，重置为初始状态
+                reset_state = {
+                    **current_state,
+                    'dialog_state': 'initial',
+                    'subgraph_completion_status': None,
+                    'is_error': False,
+                    'error_message': None,
+                    'current_step_description': 'Reset from stuck/error state',
+                    'task_list_accepted': False,
+                    'module_steps_accepted': False,
+                    'revision_iteration': 0
+                }
+                logger.info(f"Reset stuck/error state for flow {flow_id} to initial")
             
             await sas_app.aupdate_state(config, reset_state)
             
-            logger.info(f"Reset stuck processing state for flow {flow_id}")
-            return {"success": True, "message": "已重置卡住的处理状态"}
+            return {"success": True, "message": f"已重置状态从 {current_dialog_state} 到 {reset_state['dialog_state']}"}
         else:
             return {"success": True, "message": "当前状态不需要重置"}
             
@@ -751,3 +777,134 @@ async def update_flow_variables(
     variable_service.update_flow_variables(flow_id, variables)
     
     return {"success": True, "message": "变量更新成功"}
+
+@router.post("/{flow_id}/force-reset-state", response_model=schemas.SuccessResponse)
+async def force_reset_state(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user),
+    sas_app = Depends(get_sas_app)
+):
+    """
+    强制重置状态，无论当前处于什么状态都会重置到初始状态
+    """
+    # 验证所有权
+    verify_flow_ownership(flow_id, current_user, db)
+    
+    try:
+        config = {"configurable": {"thread_id": flow_id}}
+        
+        # 获取当前状态以保留有用信息
+        state_snapshot = await sas_app.aget_state(config)
+        current_state = {}
+        if state_snapshot and hasattr(state_snapshot, 'values'):
+            current_state = state_snapshot.values
+        
+        # 强制重置到初始状态，但保留一些基本信息
+        reset_state = {
+            'dialog_state': 'initial',
+            'subgraph_completion_status': None,
+            'is_error': False,
+            'error_message': None,
+            'current_step_description': 'State forcefully reset by user',
+            'task_list_accepted': False,
+            'module_steps_accepted': False,
+            'revision_iteration': 0,
+            'sas_step1_generated_tasks': None,
+            'sas_step2_module_steps': None,
+            'sas_step2_generated_task_details': None,
+            'clarification_question': None,
+            'final_flow_xml_path': None,
+            'generated_xml_files': [],
+            'current_user_request': current_state.get('current_user_request'),  # 保留用户原始请求
+            'active_plan_basis': current_state.get('active_plan_basis'),  # 保留计划基础
+            'user_input': None,
+            'messages': [],  # 清空消息历史
+            'config': current_state.get('config', {})  # 保留配置
+        }
+        
+        await sas_app.aupdate_state(config, reset_state)
+        
+        logger.info(f"Force reset state for flow {flow_id} from {current_state.get('dialog_state')} to initial")
+        return {"success": True, "message": "已强制重置状态到初始状态"}
+        
+    except Exception as e:
+        logger.error(f"Failed to force reset state for flow {flow_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"强制重置状态失败: {str(e)}")
+
+@router.post("/{flow_id}/rollback-to-previous", response_model=schemas.SuccessResponse)
+async def rollback_to_previous_state(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user),
+    sas_app = Depends(get_sas_app)
+):
+    """
+    回退到上一个稳定的状态
+    """
+    # 验证所有权
+    verify_flow_ownership(flow_id, current_user, db)
+    
+    try:
+        config = {"configurable": {"thread_id": flow_id}}
+        
+        # 获取状态历史
+        history = []
+        async for state in sas_app.aget_state_history(config):
+            if hasattr(state, 'values') and state.values:
+                history.append(state)
+        
+        if len(history) < 2:
+            return {"success": False, "message": "没有找到可以回退的历史状态"}
+        
+        # 找到上一个稳定的状态
+        # 排除当前状态（索引0），从索引1开始寻找
+        target_state = None
+        stable_states = [
+            'initial',
+            'sas_step1_tasks_generated',
+            'sas_step2_module_steps_generated_for_review'
+        ]
+        
+        for i in range(1, len(history)):
+            state_values = history[i].values
+            dialog_state = state_values.get('dialog_state')
+            is_error = state_values.get('is_error', False)
+            
+            # 寻找一个稳定且无错误的状态
+            if dialog_state in stable_states and not is_error:
+                target_state = state_values
+                break
+        
+        if not target_state:
+            # 如果没找到稳定状态，回退到初始状态
+            target_state = {
+                'dialog_state': 'initial',
+                'subgraph_completion_status': None,
+                'is_error': False,
+                'error_message': None,
+                'current_step_description': 'Rolled back to initial state',
+                'task_list_accepted': False,
+                'module_steps_accepted': False,
+                'revision_iteration': 0,
+                'current_user_request': history[0].values.get('current_user_request'),
+                'active_plan_basis': history[0].values.get('active_plan_basis'),
+                'user_input': None,
+                'messages': [],
+                'config': history[0].values.get('config', {})
+            }
+            logger.info(f"No stable state found, rolling back to initial state for flow {flow_id}")
+        else:
+            # 清理一些可能导致问题的字段
+            target_state = dict(target_state)
+            target_state['current_step_description'] = f"Rolled back to {target_state['dialog_state']} state"
+            target_state['user_input'] = None
+            logger.info(f"Rolling back to stable state {target_state['dialog_state']} for flow {flow_id}")
+        
+        await sas_app.aupdate_state(config, target_state)
+        
+        return {"success": True, "message": f"已回退到状态: {target_state['dialog_state']}"}
+        
+    except Exception as e:
+        logger.error(f"Failed to rollback state for flow {flow_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"状态回退失败: {str(e)}")

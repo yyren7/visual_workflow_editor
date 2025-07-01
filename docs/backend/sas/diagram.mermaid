@@ -1,0 +1,60 @@
+graph TD
+    %% SAS LangGraph 状态转移图
+    
+    %% 定义节点样式
+    classDef initNode fill:#4CAF50,stroke:#333,stroke-width:3px,color:#fff
+    classDef processNode fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    classDef reviewNode fill:#FF9800,stroke:#333,stroke-width:2px,color:#fff
+    classDef errorNode fill:#f44336,stroke:#333,stroke-width:2px,color:#fff
+    classDef endNode fill:#9C27B0,stroke:#333,stroke-width:3px,color:#fff
+    
+    %% 定义状态节点
+    START(("开始")):::initNode
+    INIT["初始化状态<br/>(initialize_state)"]:::initNode
+    TASK_GEN["生成任务列表<br/>(sas_user_input_to_task_list)"]:::processNode
+    REVIEW["审查和优化<br/>(sas_review_and_refine)"]:::reviewNode
+    MODULE_STEPS["生成模块步骤<br/>(sas_process_to_module_steps)"]:::processNode
+    PARAM_MAP["参数映射<br/>(sas_parameter_mapping)"]:::processNode
+    GEN_XML["生成单个XML<br/>(generate_individual_xmls)"]:::processNode
+    MERGE_XML["合并XML<br/>(sas_merge_xmls)"]:::processNode
+    CONCAT_XML["连接XML<br/>(sas_concatenate_xmls)"]:::processNode
+    ERROR["错误状态"]:::errorNode
+    END(("完成")):::endNode
+    
+    %% 定义状态转换
+    START --> INIT
+    
+    INIT -->|"有用户输入"| TASK_GEN
+    INIT -->|"需要审查"| REVIEW
+    
+    TASK_GEN -->|"生成成功<br/>需要审查"| REVIEW
+    TASK_GEN -->|"生成失败"| ERROR
+    TASK_GEN -->|"直接结束"| END
+    
+    REVIEW -->|"用户批准<br/>继续下一步"| MODULE_STEPS
+    REVIEW -->|"用户修改<br/>重新生成任务"| TASK_GEN
+    REVIEW -->|"用户批准<br/>直接生成XML"| GEN_XML
+    REVIEW -->|"取消/错误"| END
+    
+    MODULE_STEPS -->|"生成成功<br/>需要审查"| REVIEW
+    MODULE_STEPS -->|"生成失败"| ERROR
+    
+    PARAM_MAP -->|"映射成功"| MERGE_XML
+    PARAM_MAP -->|"映射失败"| ERROR
+    
+    GEN_XML -->|"生成成功"| PARAM_MAP
+    GEN_XML -->|"生成失败"| ERROR
+    
+    MERGE_XML -->|"合并成功"| CONCAT_XML
+    MERGE_XML -->|"合并失败"| ERROR
+    
+    CONCAT_XML -->|"完成"| END
+    
+    ERROR -->|"可恢复"| REVIEW
+    ERROR -->|"不可恢复"| END
+    
+    %% 添加对话状态标签
+    TASK_GEN -.->|"dialog_state:<br/>sas_step1_tasks_generated"| TASK_GEN
+    REVIEW -.->|"dialog_state:<br/>sas_awaiting_task_list_review<br/>sas_awaiting_module_steps_review"| REVIEW
+    MODULE_STEPS -.->|"dialog_state:<br/>sas_step2_module_steps_generated"| MODULE_STEPS
+    CONCAT_XML -.->|"dialog_state:<br/>sas_step3_completed"| CONCAT_XML

@@ -1,0 +1,75 @@
+flowchart LR
+    %% SAS LangGraph 数据流程图
+    
+    %% 定义样式
+    classDef frontend fill:#E1F5FE,stroke:#01579B,stroke-width:2px
+    classDef backend fill:#FFF3E0,stroke:#E65100,stroke-width:2px
+    classDef database fill:#F3E5F5,stroke:#4A148C,stroke-width:2px
+    classDef sse fill:#E8F5E9,stroke:#1B5E20,stroke-width:2px
+    classDef llm fill:#FCE4EC,stroke:#880E4F,stroke-width:2px
+    
+    %% 前端组件
+    subgraph Frontend["前端 (React)"]
+        UI["LangGraphInputNode<br/>用户界面"]:::frontend
+        Redux["Redux Store<br/>状态管理"]:::frontend
+        SSEClient["SSE Manager<br/>事件订阅"]:::frontend
+    end
+    
+    %% API层
+    subgraph API["API层 (FastAPI)"]
+        Router["SAS Router<br/>/sas/{chat_id}/events"]:::backend
+        Broadcaster["Event Broadcaster<br/>事件广播器"]:::backend
+        FlowAPI["Flow Router<br/>/flows/{flow_id}"]:::backend
+    end
+    
+    %% LangGraph处理层
+    subgraph LangGraph["LangGraph 引擎"]
+        StateGraph["State Graph<br/>状态图"]:::backend
+        Nodes["处理节点<br/>(8个节点)"]:::backend
+        Checkpointer["Checkpointer<br/>状态持久化"]:::backend
+    end
+    
+    %% LLM服务
+    subgraph LLM["AI 服务"]
+        Gemini["Google Gemini<br/>语言模型"]:::llm
+    end
+    
+    %% 数据存储
+    subgraph Storage["数据存储"]
+        PostgreSQL["PostgreSQL<br/>主数据库"]:::database
+        FileSystem["文件系统<br/>XML文件"]:::database
+    end
+    
+    %% 数据流向
+    UI -->|"用户输入"| Redux
+    Redux -->|"POST请求"| Router
+    Router -->|"启动处理"| StateGraph
+    
+    StateGraph -->|"调用节点"| Nodes
+    Nodes -->|"LLM请求"| Gemini
+    Gemini -->|"AI响应"| Nodes
+    
+    Nodes -->|"状态更新"| Checkpointer
+    Checkpointer -->|"持久化"| PostgreSQL
+    
+    Nodes -->|"生成文件"| FileSystem
+    
+    StateGraph -->|"事件流"| Broadcaster
+    Broadcaster -->|"SSE推送"| SSEClient
+    SSEClient -->|"更新UI"| Redux
+    Redux -->|"渲染"| UI
+    
+    FlowAPI -->|"查询状态"| PostgreSQL
+    FlowAPI -->|"管理流程"| StateGraph
+    
+    %% SSE事件流详情
+    subgraph SSEEvents["SSE 事件类型"]
+        direction TB
+        E1["agent_state_updated"]:::sse
+        E2["token (LLM流)"]:::sse
+        E3["tool_start/end"]:::sse
+        E4["task_progress"]:::sse
+        E5["stream_end"]:::sse
+    end
+    
+    Broadcaster -.->|"事件类型"| SSEEvents 

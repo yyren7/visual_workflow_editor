@@ -167,6 +167,59 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     }
   }, [operationChatId]);
 
+  // 新增：强制重置状态到初始状态
+  const handleForceReset = useCallback(async () => {
+    if (!operationChatId) return;
+    
+    try {
+      const response = await fetch(`/flows/${operationChatId}/force-reset-state`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        console.log(`Successfully force reset state for flow ${operationChatId}`);
+        window.location.reload();
+      } else {
+        console.error('Failed to force reset state:', response.statusText);
+        setErrorMessage('强制重置失败，请刷新页面重试');
+      }
+    } catch (error) {
+      console.error('Error force resetting state:', error);
+      setErrorMessage('强制重置时发生错误');
+    }
+  }, [operationChatId]);
+
+  // 新增：回退到上一个稳定状态
+  const handleRollbackToPrevious = useCallback(async () => {
+    if (!operationChatId) return;
+    
+    try {
+      const response = await fetch(`/flows/${operationChatId}/rollback-to-previous`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`Successfully rolled back state for flow ${operationChatId}:`, result.message);
+        window.location.reload();
+      } else {
+        console.error('Failed to rollback state:', response.statusText);
+        setErrorMessage('状态回退失败，请刷新页面重试');
+      }
+    } catch (error) {
+      console.error('Error rolling back state:', error);
+      setErrorMessage('状态回退时发生错误');
+    }
+  }, [operationChatId]);
+
   // 新增：强制完成当前处理步骤
   const handleForceComplete = useCallback(async () => {
     if (!operationChatId) return;
@@ -589,11 +642,20 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                 <Button
                   size="small"
                   variant="outlined"
+                  color="info"
+                  sx={{ fontSize: '0.7rem', minHeight: '24px' }}
+                  onClick={handleRollbackToPrevious}
+                >
+                  回退状态
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
                   color="error"
                   sx={{ fontSize: '0.7rem', minHeight: '24px' }}
-                  onClick={handleResetStuckState}
+                  onClick={handleForceReset}
                 >
-                  重置任务
+                  重置到初始
                 </Button>
                 <Button
                   size="small"
@@ -730,11 +792,20 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                     <Button
                       size="small"
                       variant="outlined"
+                      color="info"
+                      sx={{ fontSize: '0.7rem', minHeight: '24px' }}
+                      onClick={handleRollbackToPrevious}
+                    >
+                      回退状态
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
                       color="error"
                       sx={{ fontSize: '0.7rem', minHeight: '24px' }}
-                      onClick={handleResetStuckState}
+                      onClick={handleForceReset}
                     >
-                      重置状态
+                      重置到初始
                     </Button>
                     <Button
                       size="small"

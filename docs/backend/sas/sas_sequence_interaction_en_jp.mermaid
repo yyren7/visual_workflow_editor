@@ -1,0 +1,111 @@
+sequenceDiagram
+    %% 🎨 UNIFIED STYLE VERSION / 統一スタイル版
+    %% SAS LangGraph Frontend-Backend Sequence Interaction Diagram
+    %% SAS LangGraph フロントエンド・バックエンド シーケンス相互作用図
+    %% File: sas_sequence_interaction_en_jp.mermaid
+    
+    %%{init: {
+        'theme': 'base',
+        'themeVariables': {
+            'primaryColor': '#2196F3',
+            'primaryTextColor': '#FFFFFF',
+            'primaryBorderColor': '#1976D2',
+            'lineColor': '#424242',
+            'sectionBkgColor': '#F5F5F5',
+            'altSectionBkgColor': '#E3F2FD',
+            'background': '#FFFFFF',
+            'secondaryTextColor': '#212121',
+            'tertiaryTextColor': '#FFFFFF',
+            'sequenceNumberColor': '#FFFFFF',
+            'signalColor': '#1976D2',
+            'signalTextColor': '#212121',
+            'labelBoxBkgColor': '#2196F3',
+            'labelBoxBorderColor': '#0D47A1',
+            'labelTextColor': '#FFFFFF',
+            'loopTextColor': '#212121',
+            'noteBorderColor': '#FF9800',
+            'noteBkgColor': '#FFF8E1',
+            'noteTextColor': '#E65100',
+            'activationBorderColor': '#4CAF50',
+            'activationBkgColor': '#C8E6C9'
+        }
+    }}%%
+    
+    participant User as User<br/>ユーザー
+    participant UI as LangGraphInputNode<br/>入力ノード
+    participant Hook as useAgentStateSync<br/>エージェント状態同期
+    participant Redux as Redux Store<br/>状態ストア
+    participant API as FastAPI Server<br/>APIサーバー
+    participant LG as LangGraph Engine<br/>LangGraphエンジン
+    participant LLM as Gemini LLM<br/>Gemini言語モデル
+    participant DB as PostgreSQL<br/>データベース
+    participant SSE as SSE Stream<br/>SSEストリーム
+    
+    %% User Input Processing Flow / ユーザー入力処理フロー
+    User->>UI: Input task description<br/>タスク説明を入力
+    UI->>Hook: updateUserInput(content)<br/>ユーザー入力更新
+    Hook->>Redux: updateAgentState({current_user_request})<br/>エージェント状態更新
+    Hook->>API: POST /sas/{chat_id}/events<br/>POSTリクエスト送信
+    Note over API: Create async task<br/>非同期タスク作成
+    API->>Hook: Return SSE stream connection<br/>SSEストリーム接続を返す
+    
+    %% LangGraph Processing Flow / LangGraph処理フロー
+    API->>LG: ainvoke(graph_input, config)<br/>グラフ実行開始
+    activate LG
+    
+    LG->>LG: initialize_state_node<br/>状態初期化ノード
+    LG->>DB: Save initial state<br/>初期状態保存
+    
+    LG->>LG: user_input_to_task_list_node<br/>ユーザー入力からタスクリストへ
+    LG->>LLM: Generate task list<br/>タスクリスト生成
+    LLM->>LG: Return JSON tasks<br/>JSONタスクを返す
+    
+    %% SSE Event Stream / SSEイベントストリーム
+    LG-->>SSE: Send token events<br/>トークンイベント送信
+    SSE-->>UI: Display streaming text<br/>ストリーミングテキスト表示
+    
+    LG->>DB: Save task list state<br/>タスクリスト状態保存
+    LG-->>SSE: agent_state_updated<br/>エージェント状態更新
+    SSE-->>Hook: Receive state update<br/>状態更新受信
+    Hook->>Redux: Update agent_state<br/>エージェント状態更新
+    Redux->>UI: Re-render<br/>再レンダリング
+    
+    %% User Review Process / ユーザーレビュープロセス
+    Note over UI: Display task list<br/>Wait for user review<br/>タスクリスト表示<br/>ユーザーレビュー待機
+    UI->>UI: dialog_state = "sas_awaiting_task_list_review"<br/>ダイアログ状態設定
+    
+    alt User approves / ユーザー承認
+        User->>UI: Click "Approve Tasks"<br/>「タスク承認」をクリック
+        UI->>Hook: updateUserInput("accept_tasks")<br/>受諾入力更新
+        Hook->>API: POST /sas/{chat_id}/events<br/>POSTリクエスト送信
+        API->>LG: Continue processing<br/>処理続行
+        LG->>LG: review_and_refine_node<br/>レビュー・改良ノード
+        LG->>LG: process_to_module_steps_node<br/>モジュールステップ処理ノード
+    else User modifies / ユーザー修正
+        User->>UI: Input modification feedback<br/>修正フィードバック入力
+        UI->>Hook: updateUserInput(feedback)<br/>フィードバック入力更新
+        Hook->>API: POST /sas/{chat_id}/events<br/>POSTリクエスト送信
+        API->>LG: Reprocess<br/>再処理
+        LG->>LG: Return to task_list_node<br/>タスクリストノードに戻る
+    end
+    
+    %% XML Generation Flow / XML生成フロー
+    LG->>LG: generate_individual_xmls<br/>個別XML生成
+    loop Each task / 各タスク
+        LG->>LLM: Generate XML<br/>XML生成
+        LLM->>LG: Return XML content<br/>XMLコンテンツを返す
+    end
+    
+    LG->>LG: sas_merge_xmls<br/>XMLマージ
+    LG->>LG: sas_concatenate_xmls<br/>XML連結
+    LG->>DB: Save final state<br/>最終状態保存
+    
+    deactivate LG
+    
+    %% Completion Notification / 完了通知
+    LG-->>SSE: stream_end event<br/>ストリーム終了イベント
+    SSE-->>Hook: Stream ended<br/>ストリーム終了
+    Hook->>Hook: Cleanup subscription<br/>購読クリーンアップ
+    UI->>UI: Display completion status<br/>完了状態表示
+    
+    Note over UI: dialog_state = "sas_step3_completed"<br/>Display XML file path<br/>ダイアログ状態：完了<br/>XMLファイルパス表示 

@@ -1,0 +1,76 @@
+graph TD
+    %% 🎨 UNIFIED STYLE VERSION / 統一スタイル版
+    %% SAS LangGraph State Transition Diagram / SAS LangGraph 状態遷移図
+    %% File: sas_state_transition_en_jp.mermaid
+    
+    %%{init: {
+        'theme': 'base',
+        'themeVariables': {
+            'primaryColor': '#2196F3',
+            'primaryTextColor': '#FFFFFF',
+            'primaryBorderColor': '#1976D2',
+            'lineColor': '#424242',
+            'sectionBkgColor': '#F5F5F5',
+            'background': '#FFFFFF',
+            'secondaryTextColor': '#212121',
+            'tertiaryTextColor': '#FFFFFF'
+        }
+    }}%%
+    
+    %% Define unified node styles / 統一ノードスタイルの定義
+    classDef initNode fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#FFFFFF
+    classDef processNode fill:#2196F3,stroke:#0D47A1,stroke-width:3px,color:#FFFFFF
+    classDef reviewNode fill:#FF9800,stroke:#E65100,stroke-width:3px,color:#FFFFFF
+    classDef errorNode fill:#F44336,stroke:#C62828,stroke-width:3px,color:#FFFFFF
+    classDef endNode fill:#9C27B0,stroke:#4A148C,stroke-width:3px,color:#FFFFFF
+    
+    %% Define state nodes / 状態ノードの定義
+    START(("Start / 開始")):::initNode
+    INIT["Initialize State<br/>(initialize_state)<br/>状態初期化"]:::initNode
+    TASK_GEN["Generate Task List<br/>(sas_user_input_to_task_list)<br/>タスクリスト生成"]:::processNode
+    REVIEW["Review and Refine<br/>(sas_review_and_refine)<br/>レビューと改善"]:::reviewNode
+    MODULE_STEPS["Generate Module Steps<br/>(sas_process_to_module_steps)<br/>モジュールステップ生成"]:::processNode
+    PARAM_MAP["Parameter Mapping<br/>(sas_parameter_mapping)<br/>パラメータマッピング"]:::processNode
+    GEN_XML["Generate Individual XMLs<br/>(generate_individual_xmls)<br/>個別XML生成"]:::processNode
+    MERGE_XML["Merge XMLs<br/>(sas_merge_xmls)<br/>XML結合"]:::processNode
+    CONCAT_XML["Concatenate XMLs<br/>(sas_concatenate_xmls)<br/>XML連結"]:::processNode
+    ERROR["Error State<br/>エラー状態"]:::errorNode
+    END(("Complete / 完了")):::endNode
+    
+    %% Define state transitions / 状態遷移の定義
+    START --> INIT
+    
+    INIT -->|"Has User Input<br/>ユーザー入力あり"| TASK_GEN
+    INIT -->|"Needs Review<br/>レビュー必要"| REVIEW
+    
+    TASK_GEN -->|"Generation Success<br/>Needs Review<br/>生成成功・レビュー必要"| REVIEW
+    TASK_GEN -->|"Generation Failed<br/>生成失敗"| ERROR
+    TASK_GEN -->|"Direct End<br/>直接終了"| END
+    
+    REVIEW -->|"User Approved<br/>Continue Next Step<br/>ユーザー承認・次ステップ継続"| MODULE_STEPS
+    REVIEW -->|"User Modified<br/>Regenerate Tasks<br/>ユーザー修正・タスク再生成"| TASK_GEN
+    REVIEW -->|"User Approved<br/>Direct XML Generation<br/>ユーザー承認・直接XML生成"| GEN_XML
+    REVIEW -->|"Cancel/Error<br/>キャンセル・エラー"| END
+    
+    MODULE_STEPS -->|"Generation Success<br/>Needs Review<br/>生成成功・レビュー必要"| REVIEW
+    MODULE_STEPS -->|"Generation Failed<br/>生成失敗"| ERROR
+    
+    PARAM_MAP -->|"Mapping Success<br/>マッピング成功"| MERGE_XML
+    PARAM_MAP -->|"Mapping Failed<br/>マッピング失敗"| ERROR
+    
+    GEN_XML -->|"Generation Success<br/>生成成功"| PARAM_MAP
+    GEN_XML -->|"Generation Failed<br/>生成失敗"| ERROR
+    
+    MERGE_XML -->|"Merge Success<br/>結合成功"| CONCAT_XML
+    MERGE_XML -->|"Merge Failed<br/>結合失敗"| ERROR
+    
+    CONCAT_XML -->|"Complete<br/>完了"| END
+    
+    ERROR -->|"Recoverable<br/>復旧可能"| REVIEW
+    ERROR -->|"Unrecoverable<br/>復旧不可能"| END
+    
+    %% Add dialog state labels / ダイアログ状態ラベルの追加
+    TASK_GEN -.->|"dialog_state:<br/>sas_step1_tasks_generated"| TASK_GEN
+    REVIEW -.->|"dialog_state:<br/>sas_awaiting_task_list_review<br/>sas_awaiting_module_steps_review"| REVIEW
+    MODULE_STEPS -.->|"dialog_state:<br/>sas_step2_module_steps_generated"| MODULE_STEPS
+    CONCAT_XML -.->|"dialog_state:<br/>sas_step3_completed"| CONCAT_XML 

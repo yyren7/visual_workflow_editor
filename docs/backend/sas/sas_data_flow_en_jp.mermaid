@@ -1,0 +1,103 @@
+flowchart LR
+    %% 🎨 UNIFIED STYLE VERSION / 統一スタイル版
+    %% SAS LangGraph Data Flow Diagram / SAS LangGraph データフロー図  
+    %% File: sas_data_flow_en_jp.mermaid
+    
+    %%{init: {
+        'theme': 'default',
+        'themeVariables': {
+            'primaryColor': '#ffffff',
+            'primaryTextColor': '#333333',
+            'primaryBorderColor': '#2196F3',
+            'lineColor': '#666666',
+            'sectionBkgColor': '#f8f9fa',
+            'background': '#ffffff',
+            'secondaryTextColor': '#555555',
+            'tertiaryTextColor': '#333333',
+            'cScale0': '#E3F2FD',
+            'cScale1': '#BBDEFB',
+            'cScale2': '#90CAF9'
+        }
+    }}%%
+    
+    %% Enhanced Color Scheme / 增强配色方案
+    classDef frontend fill:#E3F2FD,stroke:#2196F3,stroke-width:2px,color:#1565C0
+    classDef backend fill:#FFF3E0,stroke:#FF9800,stroke-width:2px,color:#E65100
+    classDef database fill:#F3E5F5,stroke:#9C27B0,stroke-width:2px,color:#7B1FA2
+    classDef sse fill:#E8F5E8,stroke:#4CAF50,stroke-width:2px,color:#2E7D32
+    classDef llm fill:#FCE4EC,stroke:#E91E63,stroke-width:2px,color:#C2185B
+    classDef subgraphStyle fill:#f8f9fa,stroke:#e0e0e0,stroke-width:1px
+    
+    %% Frontend Components / フロントエンド コンポーネント
+    subgraph Frontend["🖥️ Frontend (React)<br/>フロントエンド (React)"]
+        UI["LangGraphInputNode<br/>📱 User Interface<br/>ユーザーインターフェース"]:::frontend
+        Redux["Redux Store<br/>🏪 State Management<br/>状態管理"]:::frontend
+        SSEClient["SSE Manager<br/>📡 Event Subscription<br/>イベント購読"]:::frontend
+    end
+    
+    %% API Layer / API レイヤー
+    subgraph API["🌐 API Layer (FastAPI)<br/>API レイヤー (FastAPI)"]
+        Router["SAS Router<br/>🔀 /sas/{chat_id}/events<br/>SAS ルーター"]:::backend
+        Broadcaster["Event Broadcaster<br/>📢 イベント ブロードキャスター"]:::backend
+        FlowAPI["Flow Router<br/>🔄 /flows/{flow_id}<br/>フロー ルーター"]:::backend
+    end
+    
+    %% LangGraph Processing Layer / LangGraph 処理レイヤー
+    subgraph LangGraph["⚙️ LangGraph Engine<br/>LangGraph エンジン"]
+        StateGraph["State Graph<br/>📊 ステート グラフ"]:::backend
+        Nodes["Processing Nodes<br/>🔧 (8 nodes)<br/>処理ノード (8個)"]:::backend
+        Checkpointer["Checkpointer<br/>💾 State Persistence<br/>状態永続化"]:::backend
+    end
+    
+    %% LLM Service / LLM サービス
+    subgraph LLM["🤖 AI Service<br/>AI サービス"]
+        Gemini["Google Gemini<br/>🧠 Language Model<br/>言語モデル"]:::llm
+    end
+    
+    %% Data Storage / データストレージ
+    subgraph Storage["💽 Data Storage<br/>データストレージ"]
+        PostgreSQL["PostgreSQL<br/>🗄️ Main Database<br/>メインデータベース"]:::database
+        FileSystem["File System<br/>📁 XML Files<br/>XMLファイル"]:::database
+    end
+    
+    %% Data Flow / データフロー
+    UI -->|"👤 User Input<br/>ユーザー入力"| Redux
+    Redux -->|"📤 POST Request<br/>POSTリクエスト"| Router
+    Router -->|"🚀 Start Processing<br/>処理開始"| StateGraph
+    
+    StateGraph -->|"🔄 Call Nodes<br/>ノード呼び出し"| Nodes
+    Nodes -->|"🤖 LLM Request<br/>LLMリクエスト"| Gemini
+    Gemini -->|"💭 AI Response<br/>AI応答"| Nodes
+    
+    Nodes -->|"📝 State Update<br/>状態更新"| Checkpointer
+    Checkpointer -->|"💾 Persistence<br/>永続化"| PostgreSQL
+    
+    Nodes -->|"📄 Generate Files<br/>ファイル生成"| FileSystem
+    
+    StateGraph -->|"📊 Event Stream<br/>イベントストリーム"| Broadcaster
+    Broadcaster -->|"⚡ SSE Push<br/>SSEプッシュ"| SSEClient
+    SSEClient -->|"🔄 Update UI<br/>UI更新"| Redux
+    Redux -->|"🎨 Render<br/>レンダリング"| UI
+    
+    FlowAPI -->|"❓ Query State<br/>状態照会"| PostgreSQL
+    FlowAPI -->|"⚙️ Manage Flow<br/>フロー管理"| StateGraph
+    
+    %% SSE Event Stream Details / SSE イベントストリーム詳細
+    subgraph SSEEvents["📡 SSE Event Types<br/>SSE イベントタイプ"]
+        direction TB
+        E1["agent_state_updated<br/>📊 エージェント状態更新"]:::sse
+        E2["token (LLM Stream)<br/>💬 トークン (LLMストリーム)"]:::sse
+        E3["tool_start/end<br/>🔧 ツール開始/終了"]:::sse
+        E4["task_progress<br/>📈 タスク進捗"]:::sse
+        E5["stream_end<br/>✅ ストリーム終了"]:::sse
+    end
+    
+    Broadcaster -.->|"📋 Event Types<br/>イベントタイプ"| SSEEvents
+    
+    %% Apply styles to subgraphs
+    Frontend:::subgraphStyle
+    API:::subgraphStyle
+    LangGraph:::subgraphStyle
+    LLM:::subgraphStyle
+    Storage:::subgraphStyle
+    SSEEvents:::subgraphStyle 

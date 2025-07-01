@@ -1,0 +1,81 @@
+sequenceDiagram
+    %% SAS LangGraph 前后端交互序列图
+    
+    participant User as 用户
+    participant UI as LangGraphInputNode
+    participant Hook as useAgentStateSync
+    participant Redux as Redux Store
+    participant API as FastAPI Server
+    participant LG as LangGraph Engine
+    participant LLM as Gemini LLM
+    participant DB as PostgreSQL
+    participant SSE as SSE Stream
+    
+    %% 用户输入处理流程
+    User->>UI: 输入任务描述
+    UI->>Hook: updateUserInput(content)
+    Hook->>Redux: updateAgentState({current_user_request})
+    Hook->>API: POST /sas/{chat_id}/events
+    Note over API: 创建异步任务
+    API->>Hook: 返回SSE流连接
+    
+    %% LangGraph处理流程
+    API->>LG: ainvoke(graph_input, config)
+    activate LG
+    
+    LG->>LG: initialize_state_node
+    LG->>DB: 保存初始状态
+    
+    LG->>LG: user_input_to_task_list_node
+    LG->>LLM: 生成任务列表
+    LLM->>LG: 返回JSON任务
+    
+    %% SSE事件流
+    LG-->>SSE: 发送token事件
+    SSE-->>UI: 显示流式文本
+    
+    LG->>DB: 保存任务列表状态
+    LG-->>SSE: agent_state_updated
+    SSE-->>Hook: 接收状态更新
+    Hook->>Redux: 更新agent_state
+    Redux->>UI: 重新渲染
+    
+    %% 用户审查流程
+    Note over UI: 显示任务列表<br/>等待用户审查
+    UI->>UI: dialog_state = "sas_awaiting_task_list_review"
+    
+    alt 用户批准
+        User->>UI: 点击"Approve Tasks"
+        UI->>Hook: updateUserInput("accept_tasks")
+        Hook->>API: POST /sas/{chat_id}/events
+        API->>LG: 继续处理
+        LG->>LG: review_and_refine_node
+        LG->>LG: process_to_module_steps_node
+    else 用户修改
+        User->>UI: 输入修改意见
+        UI->>Hook: updateUserInput(feedback)
+        Hook->>API: POST /sas/{chat_id}/events
+        API->>LG: 重新处理
+        LG->>LG: 返回task_list_node
+    end
+    
+    %% XML生成流程
+    LG->>LG: generate_individual_xmls
+    loop 每个任务
+        LG->>LLM: 生成XML
+        LLM->>LG: 返回XML内容
+    end
+    
+    LG->>LG: sas_merge_xmls
+    LG->>LG: sas_concatenate_xmls
+    LG->>DB: 保存最终状态
+    
+    deactivate LG
+    
+    %% 完成通知
+    LG-->>SSE: stream_end事件
+    SSE-->>Hook: 流结束
+    Hook->>Hook: 清理订阅
+    UI->>UI: 显示完成状态
+    
+    Note over UI: dialog_state = "sas_step3_completed"<br/>显示XML文件路径
