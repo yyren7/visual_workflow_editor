@@ -26,6 +26,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
+import { useTranslation } from 'react-i18next';
 
 interface LangGraphDetailNodeData {
   label: string;
@@ -42,6 +43,7 @@ interface LangGraphDetailNodeProps {
 }
 
 export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, data, selected }) => {
+  const { t } = useTranslation();
   const [details, setDetails] = useState<string[]>(data.details || []);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -215,7 +217,7 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
               {data.label}
             </Typography>
             <Chip 
-              label="详情步骤" 
+              label={t('nodes.detail.chipLabel')} 
               size="small" 
               color="success" 
               variant="outlined"
@@ -243,12 +245,12 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                   transition: 'all 0.3s ease'
                 }}
               >
-                {data.taskName} - 模块步骤
+                {data.taskName} - {t('nodes.detail.moduleSteps')}
               </Typography>
               {selected && (
                 <Box display="flex" gap={0.5}>
                   <Chip 
-                    label="步骤" 
+                    label={t('nodes.detail.step')}
                     size="small" 
                     color="info" 
                     variant="outlined"
@@ -331,7 +333,7 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                         ) : (
                           <>
                             <ListItemText 
-                              primary={`步骤 ${index + 1}`}
+                              primary={t('nodes.detail.stepNumber', { number: index + 1 })}
                               secondary={detail}
                               primaryTypographyProps={{
                                 sx: { 
@@ -381,7 +383,7 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                         mb: 1
                       }}
                     >
-                      还没有步骤详情
+                      {t('nodes.detail.noStepsYet')}
                     </Typography>
                     <Button 
                       startIcon={<AddIcon />}
@@ -391,7 +393,7 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                       size="small"
                       sx={{ fontSize: '0.7rem', py: 0.5 }}
                     >
-                      添加步骤
+                      {t('nodes.detail.addStep')}
                     </Button>
                   </Box>
                 )}
@@ -412,7 +414,7 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                     WebkitBoxOrient: 'vertical'
                   }}
                 >
-                  {details.length > 0 ? `${details.length} 个步骤` : '点击查看详情'}
+                  {details.length > 0 ? t('nodes.detail.stepsCount', { count: details.length }) : t('nodes.detail.clickToView')}
                 </Typography>
               </Box>
             )}
@@ -423,6 +425,8 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
             onClose={() => setIsAddingNew(false)} 
             maxWidth="sm" 
             fullWidth
+            disableEnforceFocus={true}
+            disableRestoreFocus={true}
             PaperProps={{
               sx: {
                 backgroundColor: 'rgba(45, 45, 45, 0.95)',
@@ -431,14 +435,14 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
             }}
             ref={dialogRef}
           >
-            <DialogTitle sx={{ color: '#fff' }}>添加新步骤</DialogTitle>
+            <DialogTitle sx={{ color: '#fff' }}>{t('nodes.detail.addNewStep')}</DialogTitle>
             <DialogContent>
               <TextField
                 autoFocus
                 fullWidth
                 multiline
                 rows={3}
-                label="步骤描述"
+                label={t('nodes.detail.stepDescription')}
                 value={newDetail}
                 onChange={(e) => setNewDetail(e.target.value)}
                 sx={{ 
@@ -458,10 +462,10 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setIsAddingNew(false)} sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                取消
+                {t('nodes.detail.cancel')}
               </Button>
               <Button onClick={handleAddDetail} variant="contained">
-                添加
+                {t('nodes.detail.add')}
               </Button>
             </DialogActions>
           </Dialog>

@@ -56,14 +56,31 @@ async def create_flow(
         flow_id = str(new_db_flow.id)
         config = {"configurable": {"thread_id": flow_id}}
         
-        # 创建默认的 SAS 状态
-        default_state_model = RobotFlowAgentState()
-        initial_state_dict = default_state_model.model_dump(exclude_none=False)
+        # 检查是否传递了sas_state，如果有则使用它，否则使用默认状态
+        if flow_data.sas_state:
+            # 使用传递的sas_state
+            logger.info(f"Using provided sas_state for new flow {flow_id}")
+            initial_state_dict = flow_data.sas_state
+            
+            # 验证传递的状态是否有效，如果无效则使用默认状态
+            try:
+                validated_state = RobotFlowAgentState(**initial_state_dict)
+                initial_state_dict = validated_state.model_dump(exclude_none=False)
+                logger.info(f"Validated provided sas_state for flow {flow_id} (dialog_state: {initial_state_dict.get('dialog_state')})")
+            except Exception as validation_error:
+                logger.warning(f"Invalid sas_state provided for flow {flow_id}: {validation_error}. Using default state.")
+                default_state_model = RobotFlowAgentState()
+                initial_state_dict = default_state_model.model_dump(exclude_none=False)
+        else:
+            # 使用默认的 SAS 状态
+            default_state_model = RobotFlowAgentState()
+            initial_state_dict = default_state_model.model_dump(exclude_none=False)
+            logger.info(f"Using default sas_state for new flow {flow_id} (dialog_state: {initial_state_dict.get('dialog_state')})")
         
         # 保存到 LangGraph checkpointer
         await sas_app.aupdate_state(config, initial_state_dict)
         
-        logger.info(f"Created new flow {flow_id} for user {current_user.id} with initial SAS state (dialog_state: {initial_state_dict.get('dialog_state')})")
+        logger.info(f"Created new flow {flow_id} for user {current_user.id} with SAS state")
         
     except Exception as e:
         # 如果 LangGraph 状态初始化失败，记录错误但不影响流程图创建
@@ -458,114 +475,6 @@ async def ensure_agent_state(
         flow_data["sas_state"] = RobotFlowAgentState().model_dump(exclude_none=False)
         return schemas.FlowDetail(**flow_data)
 
-@router.post("/{flow_id}/run-sas", response_model=schemas.SASRunResponse)
-async def run_sas_flow(
-    flow_id: str,
-    sas_input: schemas.SASInput,
-    db: Session = Depends(get_db),
-    current_user: schemas.User = Depends(get_current_user),
-    sas_app = Depends(get_sas_app)
-):
-    """
-    运行 SAS 工作流。使用 flow_id 作为 thread_id 进行状态管理。
-    """
-    # 验证所有权
-    verify_flow_ownership(flow_id, current_user, db)
-    
-    try:
-        # 准备 SAS graph 输入
-        graph_input = {
-            "user_input": sas_input.user_input,
-            "messages": [],
-            "config": sas_input.config or {}
-        }
-        
-        # 使用 flow_id 作为 thread_id 运行 SAS graph
-        config = {"configurable": {"thread_id": flow_id}}
-        
-        logger.info(f"Running SAS for flow {flow_id} with input: {sas_input.user_input}")
-        
-        # 调用 graph 并获取最终状态
-        final_state = await sas_app.ainvoke(graph_input, config=config)
-        
-        # 提取相关信息
-        response = {
-            "flow_id": flow_id,
-            "status": final_state.get("subgraph_completion_status", "unknown"),
-            "dialog_state": final_state.get("dialog_state"),
-            "clarification_question": final_state.get("clarification_question"),
-            "error_message": final_state.get("error_message"),
-            "final_xml_path": final_state.get("final_flow_xml_path"),
-            "generated_tasks": final_state.get("sas_step1_generated_tasks", []),
-            "messages": [
-                msg.content if hasattr(msg, 'content') else str(msg) 
-                for msg in final_state.get("messages", [])
-            ]
-        }
-        
-        logger.info(f"SAS completed for flow {flow_id} with status: {response['status']}")
-        return response
-        
-    except Exception as e:
-        logger.error(f"Failed to run SAS for flow {flow_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"运行SAS流程失败: {str(e)}")
-
-@router.get("/{flow_id}/sas-state")
-async def get_sas_state(
-    flow_id: str,
-    db: Session = Depends(get_db),
-    current_user: schemas.User = Depends(get_current_user),
-    sas_app = Depends(get_sas_app)
-):
-    """
-    获取流程图的当前 SAS 状态
-    """
-    # 验证所有权
-    verify_flow_ownership(flow_id, current_user, db)
-    
-    try:
-        config = {"configurable": {"thread_id": flow_id}}
-        state_snapshot = await sas_app.aget_state(config)
-        
-        if state_snapshot and hasattr(state_snapshot, 'values'):
-            return {
-                "flow_id": flow_id,
-                "state": state_snapshot.values,
-                "checkpoint_id": state_snapshot.config.get("configurable", {}).get("checkpoint_id"),
-                "created_at": state_snapshot.created_at.isoformat() if hasattr(state_snapshot, 'created_at') else None
-            }
-        else:
-            return {"flow_id": flow_id, "state": None}
-            
-    except Exception as e:
-        logger.error(f"Failed to get SAS state for flow {flow_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"获取SAS状态失败: {str(e)}")
-
-@router.put("/{flow_id}/sas-state", response_model=schemas.SuccessResponse)
-async def update_sas_state(
-    flow_id: str,
-    state_update: schemas.AgentStateUpdate,
-    db: Session = Depends(get_db),
-    current_user: schemas.User = Depends(get_current_user),
-    sas_app = Depends(get_sas_app)
-):
-    """
-    更新流程图的 SAS 状态
-    """
-    # 验证所有权
-    verify_flow_ownership(flow_id, current_user, db)
-    
-    try:
-        config = {"configurable": {"thread_id": flow_id}}
-        await sas_app.aupdate_state(config, state_update.agent_state)
-        
-        logger.info(f"Updated SAS state for flow {flow_id}")
-        return {"success": True, "message": "SAS状态更新成功"}
-        
-    except Exception as e:
-        logger.error(f"Failed to update SAS state for flow {flow_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"更新SAS状态失败: {str(e)}")
-
 @router.post("/{flow_id}/reset-stuck-state", response_model=schemas.SuccessResponse)
 async def reset_stuck_state(
     flow_id: str,
@@ -711,38 +620,6 @@ async def force_complete_processing(
     except Exception as e:
         logger.error(f"Failed to force complete processing for flow {flow_id}: {e}")
         raise HTTPException(status_code=500, detail=f"强制完成失败: {str(e)}")
-
-@router.get("/{flow_id}/sas-history")
-async def get_sas_history(
-    flow_id: str,
-    db: Session = Depends(get_db),
-    current_user: schemas.User = Depends(get_current_user),
-    sas_app = Depends(get_sas_app)
-):
-    """
-    获取流程图的 SAS 状态历史
-    """
-    # 验证所有权
-    verify_flow_ownership(flow_id, current_user, db)
-    
-    try:
-        config = {"configurable": {"thread_id": flow_id}}
-        
-        # 获取状态历史
-        history = []
-        async for state in sas_app.aget_state_history(config):
-            history.append({
-                "checkpoint_id": state.config.get("configurable", {}).get("checkpoint_id"),
-                "created_at": state.created_at.isoformat() if hasattr(state, 'created_at') else None,
-                "values": state.values if hasattr(state, 'values') else None,
-                "next": state.next if hasattr(state, 'next') else None
-            })
-        
-        return {"flow_id": flow_id, "history": history}
-        
-    except Exception as e:
-        logger.error(f"Failed to get SAS history for flow {flow_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"获取SAS历史失败: {str(e)}")
 
 # 流程图变量相关端点
 @router.get("/{flow_id}/variables")

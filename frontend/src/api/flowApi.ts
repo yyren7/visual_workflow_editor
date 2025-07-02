@@ -254,27 +254,228 @@ export const updateFlowName = async (flowId: string, newName: string): Promise<v
 };
 
 /**
- * 复制现有流程图
- * @param {string} flowId - 要复制的流程图ID
- * @returns {Promise<FlowData>} - 返回新创建的流程图数据
+ * 深度更新对象中的flowId引用
+ * @param {any} obj - 要更新的对象
+ * @param {string} oldFlowId - 旧的flowId
+ * @param {string} newFlowId - 新的flowId
+ * @returns {any} - 更新后的对象
  */
-export const duplicateFlow = async (flowId: string): Promise<FlowData> => {
-  console.log("duplicateFlow request:", flowId);
-  try {
-    // 先获取原始流程图数据
-    const originalFlow = await getFlow(flowId);
+const updateFlowIdReferences = (obj: any, oldFlowId: string, newFlowId: string): any => {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'string') {
+    // 替换字符串中的flowId引用
+    if (obj.includes(oldFlowId)) {
+      return obj.replace(new RegExp(oldFlowId, 'g'), newFlowId);
+    }
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => updateFlowIdReferences(item, oldFlowId, newFlowId));
+  }
+  
+  if (typeof obj === 'object') {
+    const updated: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      updated[key] = updateFlowIdReferences(value, oldFlowId, newFlowId);
+    }
+    return updated;
+  }
+  
+  return obj;
+};
 
-    // 创建新的流程图对象，复制原始流程图的数据
-    const newFlowData: FlowData = {
-      name: `${originalFlow.name} (复制)`,
-      flow_data: originalFlow.flow_data,
+/**
+ * 生成新的节点ID
+ * @param {string} originalId - 原始ID
+ * @returns {string} - 新的ID
+ */
+const generateNewNodeId = (originalId: string): string => {
+  const timestamp = Date.now();
+  const randomSuffix = Math.floor(Math.random() * 1000); // 添加随机数避免冲突
+  // 保留节点类型前缀，替换时间戳部分
+  const parts = originalId.split('-');
+  if (parts.length >= 2) {
+    return `${parts[0]}-${timestamp}${randomSuffix}`;
+  }
+  return `node-${timestamp}${randomSuffix}`;
+};
+
+/**
+ * 生成新的边ID
+ * @param {string} source - 源节点ID
+ * @param {string} sourceHandle - 源节点连接点
+ * @param {string} target - 目标节点ID
+ * @param {string} targetHandle - 目标节点连接点
+ * @returns {string} - 新的边ID
+ */
+const generateNewEdgeId = (source: string, sourceHandle: string, target: string, targetHandle: string): string => {
+  return `reactflow__edge-${source}${sourceHandle}-${target}${targetHandle}`;
+};
+
+/**
+ * 深度复制对象并重新生成ID
+ * @param {any} obj - 要复制的对象
+ * @param {Map<string, string>} idMapping - ID映射表
+ * @returns {any} - 复制并重新映射ID后的对象
+ */
+const deepCopyAndRemapIds = (obj: any, idMapping: Map<string, string>): any => {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepCopyAndRemapIds(item, idMapping));
+  }
+
+  if (typeof obj === 'object') {
+    const copied: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      copied[key] = deepCopyAndRemapIds(value, idMapping);
+    }
+
+    // 重新映射相关ID字段
+    if (copied.id && idMapping.has(copied.id)) {
+      copied.id = idMapping.get(copied.id);
+    }
+    if (copied.nodeId && idMapping.has(copied.nodeId)) {
+      copied.nodeId = idMapping.get(copied.nodeId);
+    }
+    if (copied.source && idMapping.has(copied.source)) {
+      copied.source = idMapping.get(copied.source);
+    }
+    if (copied.target && idMapping.has(copied.target)) {
+      copied.target = idMapping.get(copied.target);
+    }
+
+    return copied;
+  }
+
+  return obj;
+};
+
+/**
+ * 复制流程图
+ * @param {string} flowId - 要复制的流程图ID
+ * @returns {Promise<any>} - 返回新创建的流程图数据
+ */
+export const duplicateFlow = async (flowId: string): Promise<any> => {
+  try {
+    console.log('duplicateFlow request:', flowId);
+    
+    // 1. 获取原始流程图数据
+    const originalFlow = await getFlow(flowId);
+    console.log('原始flow数据:', originalFlow);
+    
+    if (!originalFlow) {
+      throw new Error('原始流程图不存在');
+    }
+
+    // 2. 解析flow_data
+    let originalFlowData: any = {};
+    try {
+      originalFlowData = typeof originalFlow.flow_data === 'string' 
+        ? JSON.parse(originalFlow.flow_data) 
+        : (originalFlow.flow_data || {});
+    } catch (e) {
+      console.warn('解析flow_data失败，使用空对象:', e);
+      originalFlowData = {};
+    }
+    
+    console.log('解析后的flow_data:', originalFlowData);
+    console.log('原始节点数量:', originalFlowData.nodes?.length || 0);
+    console.log('原始边数量:', originalFlowData.edges?.length || 0);
+
+    // 3. 生成新的flow名称
+    const newFlowName = `${originalFlow.name || 'Untitled'} (副本)`;
+
+    // 4. 创建ID映射表 - 只处理flow_data中的静态节点
+    const idMapping = new Map<string, string>();
+    
+    // 为flow_data中的节点生成新ID
+    if (originalFlowData.nodes && originalFlowData.nodes.length > 0) {
+      originalFlowData.nodes.forEach((node: any) => {
+        if (node.id) {
+          const newId = generateNewNodeId(node.id);
+          idMapping.set(node.id, newId);
+          console.log(`ID映射: ${node.id} -> ${newId}`);
+        }
+      });
+    } else {
+      console.log('警告: 原始流程图没有节点');
+    }
+
+    console.log('ID映射表:', Array.from(idMapping.entries()));
+
+    // 5. 深度复制flow_data并重新映射ID
+    const remappedFlowData = deepCopyAndRemapIds(originalFlowData, idMapping);
+
+    // 重新生成边的ID
+    if (remappedFlowData.edges) {
+      remappedFlowData.edges.forEach((edge: any) => {
+        if (edge.source && edge.target && edge.sourceHandle && edge.targetHandle) {
+          edge.id = generateNewEdgeId(edge.source, edge.sourceHandle, edge.target, edge.targetHandle);
+        }
+      });
+    }
+
+    console.log('重新映射后的节点数量:', remappedFlowData.nodes?.length || 0);
+    console.log('重新映射后的边数量:', remappedFlowData.edges?.length || 0);
+
+    // 6. 处理sas_state - 完全原子复刻
+    let newSasState: any = {};
+    if (originalFlow.sas_state) {
+      console.log('完全原子复刻sas_state...', originalFlow.sas_state);
+      
+      // 深度复制sas_state
+      newSasState = JSON.parse(JSON.stringify(originalFlow.sas_state));
+      
+      // 更新sas_state中的flowId引用，但保持所有其他状态不变
+      newSasState = updateFlowIdReferences(newSasState, flowId, 'NEW_FLOW_ID_PLACEHOLDER');
+      
+      console.log('复制流程图: 完成sas_state原子复刻，保持所有状态不变');
+    } else {
+      console.log('警告: 原始流程图没有sas_state');
+    }
+
+    // 7. 准备发送到后端的数据
+    const flowCreateData = {
+      name: newFlowName,
+      flow_data: remappedFlowData,
+      sas_state: newSasState
     };
 
-    // 创建新的流程图
-    const newFlow = await createFlow(newFlowData);
+    console.log('准备发送到后端的数据:', flowCreateData);
+
+    // 8. 创建新流程图
+    const newFlow = await createFlow(flowCreateData);
+    console.log('复制流程图成功:', newFlow);
+    
+    // 9. 更新sas_state中的flowId引用为实际的新flowId
+    if (newFlow.id && newSasState && Object.keys(newSasState).length > 0) {
+      const updatedSasState = updateFlowIdReferences(newSasState, 'NEW_FLOW_ID_PLACEHOLDER', newFlow.id);
+      
+      // 使用updateFlow API更新sas_state中的flowId引用
+      try {
+        const updateData: FlowData = {
+          name: newFlow.name,
+          flow_data: newFlow.flow_data,
+          sas_state: updatedSasState
+        };
+        
+        await updateFlow(newFlow.id, updateData);
+        console.log('已更新新flow中的flowId引用');
+      } catch (updateError) {
+        console.warn('更新flowId引用失败，但flow复制成功:', updateError);
+      }
+    }
+
     return newFlow;
-  } catch (error: any) {
-    console.error("复制流程图失败:", error);
+  } catch (error) {
+    console.error('复制流程图失败:', error);
     throw error;
   }
 };

@@ -2,4 +2,17 @@
 > visual-workflow-editor-frontend@0.1.0 start
 > npx craco start
 
-Something is already running on port 3001.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view visual-workflow-editor-frontend in the browser.
+
+  Local:            http://localhost:3001
+  On Your Network:  http://172.18.0.3:3001
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+No issues found.

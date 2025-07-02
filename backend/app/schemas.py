@@ -50,6 +50,7 @@ class FlowEdgeBase(BaseModel):
 class FlowBase(BaseModel):
     name: Optional[str] = None
     flow_data: Optional[Dict[str, Any]] = None
+    sas_state: Optional[Dict[str, Any]] = None  # 添加sas_state支持
 
 class FlowCreate(FlowBase):
     pass

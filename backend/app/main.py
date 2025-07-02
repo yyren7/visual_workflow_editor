@@ -163,62 +163,63 @@ async def check_and_recover_stuck_states(logger):
     检查并恢复卡住的状态
     """
     try:
-        from database.connection import SessionLocal
+        from database.connection import get_db_context
+        from sqlalchemy import text
         from datetime import datetime, timedelta
         
-        # 创建数据库会话
-        db = SessionLocal()
-        
-        try:
-            # 查询checkpoints表中的处理状态
-            query = """
-            SELECT DISTINCT thread_id, 
-                   checkpoint->>'dialog_state' as dialog_state,
-                   checkpoint->>'current_step_description' as step_description,
-                   checkpoint->'messages' as messages,
-                   parent_checkpoint_id,
-                   type,
-                   checkpoint
-            FROM checkpoints 
-            WHERE checkpoint->>'dialog_state' IN (
-                'generating_xml_relation',
-                'generating_xml_final', 
-                'sas_generating_individual_xmls',
-                'sas_module_steps_accepted_proceeding',
-                'sas_all_steps_accepted_proceed_to_xml'
-            )
-            AND checkpoint_id IN (
-                SELECT MAX(checkpoint_id) 
+        # 使用上下文管理器创建数据库会话
+        with get_db_context() as db:
+            try:
+                # 查询checkpoints表中的处理状态
+                query = """
+                SELECT DISTINCT thread_id, 
+                       checkpoint->>'dialog_state' as dialog_state,
+                       checkpoint->>'current_step_description' as step_description,
+                       checkpoint->'messages' as messages,
+                       parent_checkpoint_id,
+                       type,
+                       checkpoint
                 FROM checkpoints 
-                GROUP BY thread_id
-            );
-            """
-            
-            result = db.execute(query)
-            stuck_flows = result.fetchall()
-            
-            logger.info(f"Found {len(stuck_flows)} flows in processing states")
-            
-            # 检查每个可能卡住的flow
-            for flow in stuck_flows:
-                thread_id = flow[0]
-                dialog_state = flow[1]
-                step_description = flow[2]
-                messages = flow[3]
-                
-                logger.info(f"Checking flow {thread_id} in state {dialog_state}")
-                
-                # 简单的启发式判断：如果处于处理状态但没有最近的活动
-                should_recover = await should_auto_recover_flow(
-                    thread_id, dialog_state, step_description, messages, logger
+                WHERE checkpoint->>'dialog_state' IN (
+                    'generating_xml_relation',
+                    'generating_xml_final', 
+                    'sas_generating_individual_xmls',
+                    'sas_module_steps_accepted_proceeding',
+                    'sas_all_steps_accepted_proceed_to_xml'
                 )
+                AND checkpoint_id IN (
+                    SELECT MAX(checkpoint_id) 
+                    FROM checkpoints 
+                    GROUP BY thread_id
+                );
+                """
                 
-                if should_recover:
-                    logger.warning(f"Auto-recovering stuck flow {thread_id}")
-                    await auto_recover_flow(thread_id, dialog_state, logger)
+                result = db.execute(text(query))
+                stuck_flows = result.fetchall()
+                
+                logger.info(f"Found {len(stuck_flows)} flows in processing states")
+                
+                # 检查每个可能卡住的flow
+                for flow in stuck_flows:
+                    thread_id = flow[0]
+                    dialog_state = flow[1]
+                    step_description = flow[2]
+                    messages = flow[3]
                     
-        finally:
-            db.close()
+                    logger.info(f"Checking flow {thread_id} in state {dialog_state}")
+                    
+                    # 简单的启发式判断：如果处于处理状态但没有最近的活动
+                    should_recover = await should_auto_recover_flow(
+                        thread_id, dialog_state, step_description, messages, logger
+                    )
+                    
+                    if should_recover:
+                        logger.warning(f"Auto-recovering stuck flow {thread_id}")
+                        await auto_recover_flow(thread_id, dialog_state, logger)
+                        
+            except Exception as e:
+                logger.error(f"Error during stuck state check: {e}", exc_info=True)
+                # 不需要手动关闭，上下文管理器会自动处理
             
     except Exception as e:
         logger.error(f"Error in check_and_recover_stuck_states: {e}", exc_info=True)

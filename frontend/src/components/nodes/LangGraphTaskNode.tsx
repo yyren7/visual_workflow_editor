@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
 import { useSSEManager } from '../../hooks/useSSEManager';
 import { selectActiveLangGraphStreamFlowId } from '../../store/slices/flowSlice';
+import { useTranslation } from 'react-i18next';
 
 interface TaskDefinition {
   name: string;
@@ -56,6 +57,7 @@ interface LangGraphTaskNodeProps {
 // =================================================================================
 
 export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, selected }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<TaskDefinition>(data.task);
   const { updateTask } = useAgentStateSync();
@@ -259,7 +261,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
               borderRadius: 'inherit'
             }}>
               <CircularProgress size={30} color="warning" />
-              <Typography variant="caption" sx={{ml:1, color: '#ff9800'}}>Generating Details...</Typography>
+              <Typography variant="caption" sx={{ml:1, color: '#ff9800'}}>{t('nodes.task.generatingDetails')}</Typography>
             </Box>
           )}
 
@@ -304,7 +306,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                   transition: 'all 0.3s ease'
                 }}
               >
-                Task {data.taskIndex + 1}: {editedTask.name}
+                {t('nodes.task.taskPrefix')} {data.taskIndex + 1}: {editedTask.name}
               </Typography>
               {selected && (
                 <Box display="flex" gap={0.5}>
@@ -359,7 +361,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                     mb: 1
                   }}
                 >
-                  类型: {editedTask.type}
+                  {t('nodes.task.type')} {editedTask.type}
                 </Typography>
                 {editedTask.description && (
                   <Typography 
@@ -384,7 +386,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                         mb: 1
                       }}
                     >
-                      子任务 ({editedTask.sub_tasks.length}):
+                      {t('nodes.task.subTasksCount', { count: editedTask.sub_tasks.length })}:
                     </Typography>
                     <Box sx={{ ml: 2 }}>
                       {editedTask.sub_tasks.map((subtask: string, idx: number) => (
@@ -430,7 +432,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
               >
                 <TextField
                   fullWidth
-                  label="任务名称"
+                  label={t('nodes.task.taskName')}
                   value={editedTask.name}
                   onChange={(e) => setEditedTask({...editedTask, name: e.target.value})}
                   sx={{ 
@@ -441,7 +443,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                 />
                 <TextField
                   fullWidth
-                  label="任务类型"
+                  label={t('nodes.task.taskType')}
                   value={editedTask.type}
                   onChange={(e) => setEditedTask({...editedTask, type: e.target.value})}
                   sx={{ 
@@ -454,7 +456,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                   fullWidth
                   multiline
                   rows={2}
-                  label="任务描述"
+                  label={t('nodes.task.taskDescription')}
                   value={editedTask.description || ''}
                   onChange={(e) => setEditedTask({...editedTask, description: e.target.value})}
                   sx={{ 
@@ -471,7 +473,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                 />
                 <TextField
                   fullWidth
-                  label="子任务 (逗号分隔)"
+                  label={t('nodes.task.subTasksInput')}
                   value={editedTask.sub_tasks?.join(', ') || ''}
                   onChange={(e) => setEditedTask({ 
                     ...editedTask, 

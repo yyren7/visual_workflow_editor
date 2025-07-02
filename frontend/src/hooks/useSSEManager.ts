@@ -1,9 +1,14 @@
 import { useCallback, useRef, useEffect } from 'react';
+import { fetchEventSource, EventSourceMessage } from '@sentool/fetch-event-source';
+import { useAuth } from '../contexts/AuthContext';
+
+// 临时的占位类型
+export type SSEState = 'CONNECTING' | 'OPEN' | 'CLOSED' | 'ERROR';
 
 // 全局SSE连接管理器
 class SSEConnectionManager {
   private static instance: SSEConnectionManager;
-  private activeConnections: Map<string, EventSource> = new Map();
+  private activeConnections: Map<string, AbortController> = new Map();
   private subscribers: Map<string, Map<string, Set<(data: any) => void>>> = new Map();
   private cleanupTimers: Map<string, NodeJS.Timeout> = new Map();
   // private connectionPromises: Map<string, Promise<EventSource>> = new Map(); // Potentially useful for concurrent subscriptions to the same new connection, but adds complexity. Let's omit for now.
@@ -28,85 +33,82 @@ class SSEConnectionManager {
     }
   }
 
-  private _ensureConnection(chatId: string): EventSource {
+  private _ensureConnection(chatId: string): void {
     if (this.activeConnections.has(chatId)) {
-      return this.activeConnections.get(chatId)!;
+      // 如果已有活动的Controller，直接返回
+      return;
     }
 
     const apiUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${chatId}/events`;
-    console.log(`[SSE_MANAGER_LOG] _ensureConnection: Creating new EventSource for chat: ${chatId}, URL: ${apiUrl}`);
-    const eventSource = new EventSource(apiUrl);
-    this.activeConnections.set(chatId, eventSource);
-
-    eventSource.onopen = () => {
-      console.log('[SSE_MANAGER_LOG] Connection opened for chat:', chatId);
-      this.dispatchEvent(chatId, 'open', { chatId });
-    };
-
-    const genericEventListener = (eventType: string) => (event: MessageEvent) => {
-      let parsedData: any = event.data;
-      try {
-        // Attempt to parse if data looks like JSON
-        if (typeof event.data === 'string' && (event.data.startsWith('{') || event.data.startsWith('['))) {
-          parsedData = JSON.parse(event.data);
+    console.log(`[SSE_MANAGER_LOG] _ensureConnection: Creating new fetchEventSource for chat: ${chatId}, URL: ${apiUrl}`);
+    
+    // 为每个连接创建一个AbortController，以便我们可以手动关闭它
+    const controller = new AbortController();
+    this.activeConnections.set(chatId, controller);
+    
+    fetchEventSource(apiUrl, {
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        'Accept': 'text/event-stream',
+      },
+      
+      onopen: async (response: any) => {
+        if (response.ok) {
+          console.log('[SSE_MANAGER_LOG] Connection opened for chat:', chatId);
+          this.dispatchEvent(chatId, 'open', { chatId });
+        } else {
+          console.error(`[SSE_MANAGER_LOG] Failed to open SSE connection for chat ${chatId}. Status: ${response.status}`, await response.text());
+          this.dispatchEvent(chatId, 'connection_error', { chatId, error: new Error(`HTTP ${response.status}`) });
+          this.closeConnection(chatId); // 连接失败时立即清理
         }
-      } catch (e) {
-        console.warn(`SSEManager: Data for event type '${eventType}' for chat ${chatId} is not valid JSON, using raw data. Error:`, e);
-        // parsedData remains event.data
-      }
-      this.dispatchEvent(chatId, eventType, parsedData);
+      },
 
-      // REMOVED: Do not automatically close connection on stream_end here.
-      // The connection should close if all subscribers are gone, or if explicitly closed.
-      // if (eventType === 'stream_end') {
-      //   console.log('SSEManager: Stream ended by event for chat:', chatId, '. Closing connection.');
-      //   this.closeConnection(chatId); 
-      // }
-    };
+      onmessage: (event: EventSourceMessage) => {
+        // SSE标准中，没有名称的事件是 'message' 事件
+        const eventType = event.event || 'message';
+        let parsedData: any = event.data;
 
-    // Standard event types from your previous implementation
-    eventSource.addEventListener('token', genericEventListener('token'));
-    eventSource.addEventListener('tool_start', genericEventListener('tool_start'));
-    eventSource.addEventListener('tool_end', genericEventListener('tool_end'));
-    eventSource.addEventListener('stream_end', genericEventListener('stream_end'));
-    // Add listener for 'agent_state_updated' and any other custom server events
-    eventSource.addEventListener('agent_state_updated', genericEventListener('agent_state_updated'));
-    // Generic error event from SSE standard
-    eventSource.addEventListener('error', (event: MessageEvent) => { // This is for server-sent named 'error' events
-        console.error('SSEManager: Received server-sent "error" event for chat:', chatId, event.data);
-        let parsedErrorData: any = event.data;
         try {
-            if (typeof event.data === 'string') {
-                parsedErrorData = JSON.parse(event.data);
-            }
+          if (typeof event.data === 'string' && (event.data.startsWith('{') || event.data.startsWith('['))) {
+            parsedData = JSON.parse(event.data);
+          }
         } catch (e) {
-            // use raw data if not parsable
+          console.warn(`SSEManager: Data for event type '${eventType}' for chat ${chatId} is not valid JSON, using raw data. Error:`, e);
         }
-        this.dispatchEvent(chatId, 'server_error_event', parsedErrorData); // Distinguish from connection error
+        
+        // 我们后端发送的所有自定义事件都有名称，所以这里我们只处理有名称的事件
+        // 如果事件类型是 'message' (即未命名事件)，我们可能需要检查其内容
+        // 但根据后端实现，所有有意义的事件都是有名称的，例如 `event: agent_state_updated`
+        // 我们的后端目前不发送未命名的 'message' 事件，但为了健壮性，可以加上判断
+        if(parsedData.event && parsedData.data) {
+             this.dispatchEvent(chatId, parsedData.event, parsedData.data);
+        } else if (parsedData.type && parsedData.data) {
+            // 兼容后端直接发送 {type: '...', data: '...'} 的格式
+            this.dispatchEvent(chatId, parsedData.type, parsedData.data);
+        } else {
+             // 忽略ping事件和其他未识别的格式
+             if(parsedData.event !== 'ping' && parsedData.event !== 'start' && parsedData.event !== 'end') {
+                console.log(`SSEManager: Received event for chat ${chatId} with unknown format: `, parsedData);
+             }
+        }
+      },
+      
+      onclose: () => {
+        // 这个回调在连接正常关闭时（被服务器或客户端中止）触发
+        console.log(`[SSE_MANAGER_LOG] Connection closed for chat: ${chatId}. This is expected on stream end or manual closure.`);
+        // 不需要在这里调用 this.closeConnection(chatId)，因为它会被外部逻辑（如 stream_end 事件或组件卸载）调用
+        // 避免循环调用
+      },
+
+      onerror: (error: any) => {
+        console.error(`[SSE_MANAGER_LOG] Connection error for chat: ${chatId}`, error);
+        this.dispatchEvent(chatId, 'connection_error', { chatId, error });
+        this.closeConnection(chatId); // 发生不可恢复的错误时，关闭并清理
+      }
     });
 
-
-    eventSource.onerror = (error) => { // This is for connection errors
-      console.error('SSEManager: Connection error for chat:', chatId, error);
-      this.dispatchEvent(chatId, 'connection_error', { chatId, error });
-      if (eventSource.readyState === EventSource.CLOSED) {
-        console.log('SSEManager: Connection error led to CLOSED state for chat:', chatId, '. Cleaning up.');
-        this.closeConnection(chatId); // Ensure cleanup if error leads to closed state
-      }
-    };
-
-    // Clear any existing timer before setting a new one
-    const existingTimer = this.cleanupTimers.get(chatId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-    const cleanupTimer = setTimeout(() => {
-      console.log('SSEManager: Auto-cleanup connection for chat (timeout):', chatId);
-      this.closeConnection(chatId);
-    }, 5 * 60 * 1000); // 5 minutes
-    this.cleanupTimers.set(chatId, cleanupTimer);
-
-    return eventSource;
+    // 清理逻辑现在由 closeConnection 方法中的 controller.abort() 处理
   }
 
   subscribe(
@@ -156,21 +158,15 @@ class SSEConnectionManager {
 
   closeConnection(chatId: string): void {
     console.log(`[SSE_MANAGER_LOG] closeConnection called for chat: ${chatId}`);
-    const eventSource = this.activeConnections.get(chatId);
-    if (eventSource) {
-      console.log('[SSE_MANAGER_LOG] Closing actual EventSource connection for chat:', chatId);
-      eventSource.close();
+    const controller = this.activeConnections.get(chatId);
+    if (controller) {
+      console.log('[SSE_MANAGER_LOG] Aborting fetchEventSource connection for chat:', chatId);
+      controller.abort(); // 中止 fetch 请求，这将触发 onclose 回调
       this.activeConnections.delete(chatId);
       this.dispatchEvent(chatId, 'close', { chatId }); // Dispatch a 'close' event
     }
-
-    const timer = this.cleanupTimers.get(chatId);
-    if (timer) {
-      clearTimeout(timer);
-      this.cleanupTimers.delete(chatId);
-    }
     
-    // Clear subscribers for this chat ID
+    // 清理订阅者
     this.subscribers.delete(chatId);
     console.log('SSEManager: Cleared subscribers for chat:', chatId);
   }
@@ -179,9 +175,8 @@ class SSEConnectionManager {
     console.log('SSEManager: Closing all connections, count:', this.activeConnections.size);
     const chatIds = Array.from(this.activeConnections.keys());
     chatIds.forEach(chatId => {
-      this.closeConnection(chatId); // This will also clear subscribers
+      this.closeConnection(chatId);
     });
-    // Timers are cleared within closeConnection
   }
 
   hasActiveConnection(chatId: string): boolean {

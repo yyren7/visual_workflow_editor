@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 import logging
 from collections import defaultdict
 
+from sqlalchemy.orm import Session
+from backend.app import schemas, utils
+from database.connection import get_db
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 # from langgraph.checkpoint.aiopg import PostgresSaver # Old import
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver # CORRECTED Import for async Postgres
@@ -70,6 +74,20 @@ def get_sas_app(checkpointer: AsyncPostgresSaver = Depends(get_checkpointer)):
                 return empty_generator()
         return DummySasApp()
 # --- End SAS App Initialization ---
+
+# --- 新增: 权限验证依赖 ---
+async def verify_flow_access(
+    chat_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(utils.get_current_user)
+):
+    """
+    一个依赖项，用于验证当前登录用户是否有权访问此流程(chat_id/flow_id)。
+    如果用户未登录或无权访问，将引发HTTPException。
+    """
+    utils.verify_flow_ownership(flow_id=chat_id, current_user=current_user, db=db)
+    return current_user
+# --- 结束新增 ---
 
 router = APIRouter()
 
@@ -324,7 +342,12 @@ async def _process_sas_events(
         logger.info(f"[SAS Chat {chat_id}] Background task completed.")
 
 @router.post("/sas/{chat_id}/events")
-async def sas_chat_events_post(chat_id: str, request: Request, sas_app = Depends(get_sas_app)):
+async def sas_chat_events_post(
+    chat_id: str,
+    request: Request,
+    sas_app = Depends(get_sas_app),
+    user: schemas.User = Depends(verify_flow_access)
+):
     """
     SAS POST端点：启动SAS处理并返回SSE流
     """
@@ -398,7 +421,12 @@ async def sas_chat_events_post(chat_id: str, request: Request, sas_app = Depends
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @router.get("/sas/{chat_id}/events")
-async def sas_chat_events_get(chat_id: str, request: Request, sas_app = Depends(get_sas_app)):
+async def sas_chat_events_get(
+    chat_id: str,
+    request: Request,
+    sas_app = Depends(get_sas_app),
+    user: schemas.User = Depends(verify_flow_access)
+):
     """
     SAS GET端点：连接到现有的SSE流
     """
@@ -445,7 +473,12 @@ async def sas_chat_events_get(chat_id: str, request: Request, sas_app = Depends(
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @router.post("/sas/{chat_id}/update-state")
-async def sas_update_state(chat_id: str, request: Request, sas_app = Depends(get_sas_app)):
+async def sas_update_state(
+    chat_id: str,
+    request: Request,
+    sas_app = Depends(get_sas_app),
+    user: schemas.User = Depends(verify_flow_access)
+):
     """
     Updates the state of a SAS LangGraph flow.
     """
@@ -462,7 +495,11 @@ async def sas_update_state(chat_id: str, request: Request, sas_app = Depends(get
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sas/{chat_id}/state")
-async def sas_get_state(chat_id: str, sas_app = Depends(get_sas_app)):
+async def sas_get_state(
+    chat_id: str,
+    sas_app = Depends(get_sas_app),
+    user: schemas.User = Depends(verify_flow_access)
+):
     """
     Retrieves the current state of a SAS LangGraph flow.
     """

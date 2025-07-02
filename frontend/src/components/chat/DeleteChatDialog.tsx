@@ -18,6 +18,8 @@ const DeleteChatDialog: React.FC<DeleteChatDialogProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
+      disableEnforceFocus={true}
+      disableRestoreFocus={true}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >

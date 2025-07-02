@@ -4,14 +4,27 @@ import { useState, useCallback, useEffect } from 'react';
 type VoidCallback = () => void;
 type MouseEventCallback<T extends HTMLElement = HTMLElement> = (event: React.MouseEvent<T>) => void;
 
+// 新增：定义面板状态的类型
+export interface PanelStates {
+  sidebarOpen: boolean;
+  nodeInfoOpen: boolean;
+  globalVarsOpen: boolean;
+  chatOpen: boolean;
+  flowSelectOpen: boolean;
+}
+
 export const usePanelManager = () => {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [nodeInfoOpen, setNodeInfoOpen] = useState<boolean>(false);
-  const [globalVarsOpen, setGlobalVarsOpen] = useState<boolean>(false);
-  const [chatOpen, setChatOpen] = useState<boolean>(false);
+  // 将所有状态合并到一个对象中
+  const [panelStates, setPanelStates] = useState<PanelStates>({
+    sidebarOpen: false,
+    nodeInfoOpen: false,
+    globalVarsOpen: false,
+    chatOpen: false,
+    flowSelectOpen: false,
+  });
+
   const [toggleMenuAnchorEl, setToggleMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null); // For user menu
-  const [flowSelectOpen, setFlowSelectOpen] = useState<boolean>(false);
 
   // --- Panel Positions ---
   // Default X position for side panels
@@ -74,42 +87,22 @@ export const usePanelManager = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []); // Empty dependency array means this runs once on mount
 
-  // Toggle functions
-  const toggleSidebar: VoidCallback = useCallback(() => setSidebarOpen(prev => !prev), []);
-
-  // Modified toggle for Node Info to handle position reset if needed
-  const toggleNodeInfo: VoidCallback = useCallback(() => {
-      setNodeInfoOpen(prev => {
-          // Optional: Reset position when opening?
-          // if (!prev) {
-          //     setNodeInfoPosition({ x: defaultPanelX, y: typeof window !== 'undefined' ? (window.innerHeight - 400) / 2 : 100 });
-          // }
-          return !prev;
-      });
+  // --- Generic Toggle Function ---
+  const togglePanel = useCallback((panel: keyof PanelStates) => {
+    setPanelStates(prev => ({ ...prev, [panel]: !prev[panel] }));
   }, []);
 
-  const toggleGlobalVarsPanel: VoidCallback = useCallback(() => {
-      setGlobalVarsOpen(prev => {
-          // Optional: Reset position?
-          // if (!prev && typeof window !== 'undefined') {
-          //     setGlobalVarsPosition({ x: Math.max(0, window.innerWidth - 600), y: 48 + 5 });
-          // }
-          return !prev;
-      });
+  // --- Specific Open/Close Functions ---
+  const openPanel = useCallback((panel: keyof PanelStates) => {
+    setPanelStates(prev => ({ ...prev, [panel]: true }));
   }, []);
 
-  const toggleChatPanel: VoidCallback = useCallback(() => {
-      setChatOpen(prev => {
-          // Optional: Reset position?
-          // if (!prev && typeof window !== 'undefined') {
-          //     const topNavHeight = 48;
-          //     setChatPosition({ x: Math.max(0, window.innerWidth - 720), y: Math.max(topNavHeight + 5, window.innerHeight - 600 - (topNavHeight + 10)) });
-          // }
-          return !prev;
-      });
+  const closePanel = useCallback((panel: keyof PanelStates) => {
+    setPanelStates(prev => ({ ...prev, [panel]: false }));
   }, []);
 
-  // ... other callbacks (handleToggleMenuOpen, etc.) ...
+
+  // --- Menu Handlers ---
   const handleToggleMenuOpen: MouseEventCallback<HTMLButtonElement> = useCallback((event) => {
       setToggleMenuAnchorEl(event.currentTarget);
     }, []);
@@ -128,51 +121,49 @@ export const usePanelManager = () => {
   
     const handleOpenFlowSelect: VoidCallback = useCallback(() => {
       handleMenuClose(); // Close user menu when opening flow select
-      setFlowSelectOpen(true);
-    }, [handleMenuClose]);
+      openPanel('flowSelectOpen');
+    }, [handleMenuClose, openPanel]);
   
     const handleCloseFlowSelect: VoidCallback = useCallback(() => {
-      setFlowSelectOpen(false);
-    }, []);
+      closePanel('flowSelectOpen');
+    }, [closePanel]);
 
   // Function to close the NodeInfo panel specifically
   const closeNodeInfoPanel: VoidCallback = useCallback(() => {
-    setNodeInfoOpen(false);
-  }, []);
+    closePanel('nodeInfoOpen');
+  }, [closePanel]);
 
   // Explicit function to open node info (e.g., on node click)
   const openNodeInfoPanel: VoidCallback = useCallback(() => {
       // Optional: Reset position when opening
       // setNodeInfoPosition({ x: defaultPanelX, y: typeof window !== 'undefined' ? (window.innerHeight - 400) / 2 : 100 });
-      setNodeInfoOpen(true);
-  }, []);
+      openPanel('nodeInfoOpen');
+  }, [openPanel]);
 
   return {
-    sidebarOpen,
-    nodeInfoOpen,
-    globalVarsOpen,
-    chatOpen,
-    toggleMenuAnchorEl,
-    anchorEl,
-    flowSelectOpen,
+    panelStates,
+    setPanelStates,
+    togglePanel,
+    openPanel,
+    closePanel,
+    
     // Positions
     nodeInfoPosition,
     chatPosition,
     globalVarsPosition,
-    // Toggles & Handlers
-    toggleSidebar,
-    toggleNodeInfo, // Keep original toggle if used
-    openNodeInfoPanel, // Add explicit open function
-    closeNodeInfoPanel, // Keep explicit close function
-    toggleGlobalVarsPanel,
-    toggleChatPanel,
+
+    // Menu-related state and handlers (can be refactored out if they grow)
+    toggleMenuAnchorEl,
+    anchorEl,
     handleToggleMenuOpen,
     handleToggleMenuClose,
     handleMenuOpen,
     handleMenuClose,
+
+    // Keep direct handlers that have extra logic
     handleOpenFlowSelect,
     handleCloseFlowSelect,
-    // Remove explicit setter export unless absolutely necessary elsewhere
-    // _setNodeInfoOpen: setNodeInfoOpen
+    openNodeInfoPanel,
+    closeNodeInfoPanel,
   };
 }; 

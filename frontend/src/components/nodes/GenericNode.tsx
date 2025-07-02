@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Card, CardContent, Typography, Box, Tooltip } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 通用节点数据接口
@@ -53,6 +54,7 @@ export interface GenericNodeData {
  */
 const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNodeData>) => {
   // console.log('GenericNode data:', data); // Remove this debug log
+  const { t } = useTranslation();
 
   const standardExcludedKeys = useMemo(() => [
     'label', 
@@ -71,20 +73,20 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
 
   // 处理字段值的显示转换
   const formatFieldValue = useCallback((value: any, type?: string) => {
-    if (value === undefined || value === null) return 'none';
+    if (value === undefined || value === null) return t('nodes.generic.none');
     
     // 根据字段类型格式化显示
     if (type === 'boolean') {
       if (typeof value === 'string') {
         const lowerValue = value.toLowerCase();
-        if (['true', 'enable', 'on'].includes(lowerValue)) return '✓';
-        if (['false', 'disable', 'off'].includes(lowerValue)) return '✗';
+        if (['true', 'enable', 'on'].includes(lowerValue)) return t('nodes.generic.booleanTrue');
+        if (['false', 'disable', 'off'].includes(lowerValue)) return t('nodes.generic.booleanFalse');
       }
-      return value ? '✓' : '✗';
+      return value ? t('nodes.generic.booleanTrue') : t('nodes.generic.booleanFalse');
     }
     
     return String(value);
-  }, []);
+  }, [t]);
   
   // 动态渲染输入连接点
   const renderInputHandles = useCallback(() => {
