@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, lazy, Suspense } from 'react';
 import {
   Box,
   Paper,
@@ -11,7 +11,6 @@ import {
   Input,
   ListItemIcon
 } from '@mui/material';
-import ChatInterface from '../ChatInterface';
 import { useTranslation } from 'react-i18next';
 import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
@@ -21,8 +20,10 @@ import HistoryIcon from '@mui/icons-material/History';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
-import { ChatInterfaceHandle, ChatInteractionState } from '../chat/chatTypes';
+import { ChatInterfaceHandle, ChatInteractionState } from '../ChatInterface/types';
 import { Chat } from '../../types';
+
+const ChatInterface = lazy(() => import('../ChatInterface'));
 
 interface ChatPanelProps {
   flowId: string;
@@ -327,13 +328,15 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           flexDirection: 'column',
         }}
       >
-        <ChatInterface
-          ref={chatInterfaceRef}
-          flowId={flowId}
-          onNodeSelect={onNodeSelect}
-          onActiveChatChange={handleActiveChatChange}
-          onChatInteractionStateChange={handleChatInteractionStateChange}
-        />
+        <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress /></Box>}>
+          <ChatInterface
+            ref={chatInterfaceRef}
+            flowId={flowId}
+            onNodeSelect={onNodeSelect}
+            onActiveChatChange={handleActiveChatChange}
+            onChatInteractionStateChange={handleChatInteractionStateChange}
+          />
+        </Suspense>
       </Box>
     </Paper>
   );

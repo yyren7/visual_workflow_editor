@@ -8,7 +8,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
 import NodeProperties from '../NodeProperties'; // Assuming NodeProperties is in parent dir
 import { Node } from 'reactflow';
-import { NodeData } from '../FlowEditor'; // Only NodeData needed now
+import { NodeData } from '../FlowEditor/types'; // Only NodeData needed now
 import { useTranslation } from 'react-i18next'; // Import hook
 import DraggableResizableContainer from '../DraggableResizableContainer'; // Import container
 

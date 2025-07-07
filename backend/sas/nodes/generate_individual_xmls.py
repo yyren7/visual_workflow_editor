@@ -4,7 +4,7 @@ import os
 import asyncio
 import re
 from pathlib import Path
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple, Optional, Callable
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import uuid # Added for UUID generation
@@ -181,10 +181,8 @@ def _extract_parameters_from_detail(detail_string: str, block_type: str) -> Dict
         # params['mutations'] = {'some_other_default_mutation': 'value'}
 
     elif block_type == "return":
-        params['mutations'] = {
-            'timeout': '60000' # Default from typical usage / examples, template is generic
-        }
-        logger.info(f"Using default parameters for return: {params}")
+        # return 类型的块不需要参数，使用模板的默认结构即可
+        logger.info(f"return block type detected - no parameters needed, using template defaults: {params}")
 
     # Add other block types and their fixed default parameters here as needed.
     # Example:
@@ -196,7 +194,7 @@ def _extract_parameters_from_detail(detail_string: str, block_type: str) -> Dict
     else:
         logger.warning(f"No specific default parameter logic in _extract_parameters_from_detail for block_type: '{block_type}'. XML will rely solely on template structure if no params are set.")
 
-    if not params['fields'] and not params['mutations'] and block_type not in ["procedures_defnoreturn"]: # defnoreturn might only have a name field
+    if not params['fields'] and not params['mutations'] and block_type not in ["procedures_defnoreturn", "return"]: # defnoreturn might only have a name field, return uses template defaults
          logger.debug(f"No default parameters explicitly set for block_type: '{block_type}'. Template defaults will be primary.")
     else:
         logger.debug(f"Final default/extracted parameters for '{block_type}': {params}")
@@ -210,7 +208,7 @@ async def _generate_xml_from_template(
     node_template_dir_str: str,
     source_description: str, 
     parameters: Dict[str, Any], 
-    get_next_nested_block_data_no_func: callable, # NEW: Function to get next data-blockNo for nested blocks
+    get_next_nested_block_data_no_func: Callable[[], str], # NEW: Function to get next data-blockNo for nested blocks
     x_coord: Optional[str] = None, 
     y_coord: Optional[str] = None  
 ) -> GeneratedXmlFile:
@@ -385,7 +383,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = "Parsed flow steps (tasks) are missing or empty for XML generation."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     main_output_dir_str = config.get("OUTPUT_DIR_PATH")
@@ -396,7 +394,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = "Main output directory path (OUTPUT_DIR_PATH) for individual XMLs is not configured."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     if not node_template_dir_str:
@@ -404,7 +402,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = "Node template directory path (NODE_TEMPLATE_DIR_PATH) is not configured."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     main_output_dir = Path(main_output_dir_str)
@@ -415,7 +413,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = f"Failed to create main output directory: {e}"
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     # Counter for main blocks' data-blockNo (starts from 1)
@@ -453,6 +451,8 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
                 type="task_directory_creation_failure", 
                 source_description=f"Error creating directory for task: {task_name}",
                 status="failure", 
+                xml_content=None,
+                file_path=None,
                 error_message=str(e)
             )
             state.generated_node_xmls.append(dir_error_entry)
@@ -488,6 +488,8 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
                     type="unknown_type_extraction_failure",
                     source_description=detail_str,
                     status="failure",
+                    xml_content=None,
+                    file_path=None,
                     error_message="Could not extract block type from detail string."
                 )
                 state.generated_node_xmls.append(parse_fail_entry)
@@ -619,14 +621,28 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
     if overall_errors_in_processing:
         logger.error("One or more errors occurred during the generation of individual XML blocks.")
         state.is_error = True 
-        if not state.error_message: 
-            state.error_message = "Errors occurred during individual XML block generation from templates."
-        state.subgraph_completion_status = "error" 
-        state.dialog_state = "generating_xml_relation" 
+        
+        # 收集具体的错误信息
+        failed_blocks = [xml_file for xml_file in state.generated_node_xmls if xml_file.status == "failure"]
+        error_details = []
+        for failed_block in failed_blocks[:3]:  # 只显示前3个错误，避免信息过多
+            error_details.append(f"- {failed_block.type}: {failed_block.error_message}")
+        
+        if not state.error_message:
+            if error_details:
+                detailed_errors = "\n".join(error_details)
+                if len(failed_blocks) > 3:
+                    detailed_errors += f"\n- ...以及其他 {len(failed_blocks) - 3} 个错误"
+                state.error_message = f"XML生成过程中发生错误:\n{detailed_errors}"
+            else:
+                state.error_message = "XML生成过程中发生未知错误，请检查日志以获取更多信息。"
+        
+        state.completion_status = "error" 
+        state.dialog_state = "error"  # 修改：使用明确的错误状态
     else:
         logger.info("All individual XML blocks for all tasks were generated and saved successfully.")
         state.dialog_state = "generating_xml_relation" 
-        state.subgraph_completion_status = None 
+        state.completion_status = None 
     
     return state
 
@@ -643,7 +659,7 @@ if __name__ == "__main__":
             self.is_error: bool = False
             self.error_message: Optional[str] = None
             self.dialog_state: Optional[str] = None
-            self.subgraph_completion_status: Optional[str] = None
+            self.completion_status: Optional[str] = None
             self.generated_node_xmls: List[GeneratedXmlFile] = []
 
     async def main_test():
@@ -726,7 +742,7 @@ if __name__ == "__main__":
         )
 
         print("[Test Main] Initial state created. Calling generate_individual_xmls_node...")
-        final_state = await generate_individual_xmls_node(initial_state) # llm is not used by this node
+        final_state = await generate_individual_xmls_node(initial_state) # type: ignore
 
         if final_state.is_error:
             print(f"[Test Main] Test run failed. Error: {final_state.error_message}")
@@ -735,18 +751,22 @@ if __name__ == "__main__":
             print("[Test Main] Test run completed successfully (no errors reported by the node).")
             logger.info("Test run completed successfully (no errors reported by the node).")
         
-        print(f"[Test Main] Total GeneratedXmlFile entries: {len(final_state.generated_node_xmls)}")
-        success_count = 0
-        failure_count = 0
-        for entry_idx, entry in enumerate(final_state.generated_node_xmls):
-            status_marker = "OK" if entry.status == "success" else "FAIL"
-            print(f"  [{status_marker}] Entry {entry_idx+1}: ID={entry.block_id}, Type={entry.type}, Path={entry.file_path}")
-            if entry.status == "success":
-                success_count +=1
-            else:
-                failure_count +=1
-                print(f"      Error for {entry.block_id}: {entry.error_message}")
-        print(f"[Test Main] Summary: {success_count} successful, {failure_count} failed block generations.")
+        if final_state.generated_node_xmls:
+            print(f"[Test Main] Total GeneratedXmlFile entries: {len(final_state.generated_node_xmls)}")
+            success_count = 0
+            failure_count = 0
+            for entry_idx, entry in enumerate(final_state.generated_node_xmls):
+                status_marker = "OK" if entry.status == "success" else "FAIL"
+                print(f"  [{status_marker}] Entry {entry_idx+1}: ID={entry.block_id}, Type={entry.type}, Path={entry.file_path}")
+                if entry.status == "success":
+                    success_count +=1
+                else:
+                    failure_count +=1
+                    print(f"      Error for {entry.block_id}: {entry.error_message}")
+            print(f"[Test Main] Summary: {success_count} successful, {failure_count} failed block generations.")
+        else:
+            print("[Test Main] No GeneratedXmlFile entries were created.")
+
         print(f"[Test Main] Check output files (if any) in: {mock_config['OUTPUT_DIR_PATH']}")
 
     # Configure logging to show messages from this script's logger and potentially others

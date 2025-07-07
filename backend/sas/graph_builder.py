@@ -29,6 +29,7 @@ import time
 from langsmith.utils import LangSmithNotFoundError
 
 from langgraph.graph import StateGraph, END
+from langchain_core.runnables import RunnableConfig
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 from langchain_core.messages import AIMessage, HumanMessage
@@ -278,7 +279,7 @@ def generate_relation_xml_node_py(state: RobotFlowAgentState) -> Dict[str, Any]:
             state.is_error = True
             state.error_message = f"Internal error: Unexpected error while generating relation XML: {e}"
             state.relation_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{BLOCKLY_NS}"></xml>' # Fallback
-            state.subgraph_completion_status = "error"
+            state.completion_status = "error"
 
     output_dir = Path(config.get("OUTPUT_DIR_PATH", "/tmp"))
     relation_file_name = config.get("RELATION_FILE_NAME_ACTUAL", "relation.xml")
@@ -293,16 +294,16 @@ def generate_relation_xml_node_py(state: RobotFlowAgentState) -> Dict[str, Any]:
         logger.error(f"Failed to write relation XML to {relation_file_path}: {e}", exc_info=True)
         state.is_error = True # Mark as error if file write fails
         state.error_message = (state.error_message or "") + f" Failed to save relation file: {e}"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         # relation_xml_content remains in state for potential debugging
 
     if not state.is_error:
         state.dialog_state = "generating_xml_final"
-        state.subgraph_completion_status = None 
+        state.completion_status = None 
     else: # if an error occurred either during generation or saving
         state.dialog_state = "error" # Or route back to core for retry/clarification
-        if not any( state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-             state.messages = state.messages + [AIMessage(content=f"Error generating relation XML: {state.error_message}")]
+        if state.error_message and not any( state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+             state.messages = (state.messages or []) + [AIMessage(content=f"Error generating relation XML: {state.error_message}")]
 
     return state.model_dump(exclude_none=True)
 
@@ -321,7 +322,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         logger.error("Relation XML content is missing from state.")
         state.is_error = True
         state.error_message = "Internal error: Relation XML content is missing, cannot merge final flow."
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         # state.messages = state.messages + [AIMessage(content=state.error_message)] # Message will be added by routing logic
         return state.model_dump(exclude_none=True)
 
@@ -359,7 +360,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
                     logger.error(f"Failed to parse XML for block_id {gf.block_id}: {e}. XML: {gf.xml_content[:200]}", exc_info=True)
                     state.is_error = True
                     state.error_message = f"Internal error: Failed to parse XML for node {gf.block_id}: {e}"
-                    state.subgraph_completion_status = "error"
+                    state.completion_status = "error"
                     return state.model_dump(exclude_none=True)
             elif gf.block_id:
                 logger.warning(f"Skipping block_id {gf.block_id} for merge due to status '{gf.status}' or no content.")
@@ -370,7 +371,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         logger.error(f"Failed to parse relation.xml: {e}. XML: {relation_xml_str[:200]}", exc_info=True)
         state.is_error = True
         state.error_message = f"Internal error: Failed to parse relation XML: {e}"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     final_flow_xml_root = ET.Element(f"{{{BLOCKLY_NS}}}xml")
@@ -405,11 +406,12 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         
         for rel_statement_element in relation_block_element.findall(f"{{{BLOCKLY_NS}}}statement") + relation_block_element.findall("statement"):
             statement_name = rel_statement_element.get("name")
-            final_stmt_element_for_merge = ET.SubElement(final_merged_block, f"{{{BLOCKLY_NS}}}statement", name=statement_name)
-            rel_inner_block = rel_statement_element.find(f"{{{BLOCKLY_NS}}}block") or rel_statement_element.find("block")
-            if rel_inner_block is not None:
-                constructed_inner_block = _build_final_block_tree(rel_inner_block)
-                final_stmt_element_for_merge.append(constructed_inner_block)
+            if statement_name:
+                final_stmt_element_for_merge = ET.SubElement(final_merged_block, f"{{{BLOCKLY_NS}}}statement", name=statement_name)
+                rel_inner_block = rel_statement_element.find(f"{{{BLOCKLY_NS}}}block") or rel_statement_element.find("block")
+                if rel_inner_block is not None:
+                    constructed_inner_block = _build_final_block_tree(rel_inner_block)
+                    final_stmt_element_for_merge.append(constructed_inner_block)
         
         rel_next_element = relation_block_element.find(f"{{{BLOCKLY_NS}}}next") or relation_block_element.find("next")
         if rel_next_element is not None:
@@ -435,12 +437,12 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
     except LookupError as e:
         logger.error(f"Merge process failed due to missing block data or structure: {e}", exc_info=True)
         state.is_error = True; state.error_message = str(e); 
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state.model_dump(exclude_none=True)
     except Exception as e:
         logger.error(f"Unexpected error during final XML construction: {e}", exc_info=True)
         state.is_error = True; state.error_message = f"Internal error: Unexpected error while constructing final XML: {e}"; 
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     ET.register_namespace("", BLOCKLY_NS) # Ensure default namespace for output
@@ -451,7 +453,7 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
     except Exception as e:
         logger.error(f"Error serializing final merged XML: {e}", exc_info=True)
         state.is_error = True; state.error_message = f"Internal error: Error serializing final XML: {e}"; 
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     state.final_flow_xml_content = final_xml_string_output
@@ -468,11 +470,11 @@ async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional
         logger.error(f"Error saving final_flow.xml to {final_file_path}: {e}", exc_info=True)
         state.is_error = True
         state.error_message = f"Failed to save final flow file {final_file_path}: {e}"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         # Keep final_flow_xml_content in state even if save fails
 
     if not state.is_error:
-        state.subgraph_completion_status = "completed_success"
+        state.completion_status = "completed_success"
         state.dialog_state = "final_xml_generated_success"
         state.clarification_question = None
 
@@ -606,7 +608,7 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     
     if not state.run_output_directory:
         state.is_error = True; state.error_message = "run_output_directory is not set."; logger.error(state.error_message)
-        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "sas_processing_error"; state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     base_input_dir = Path(state.run_output_directory)
@@ -617,7 +619,7 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         merged_output_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         state.is_error = True; state.error_message = f"Failed to create dir for merged flows: {e}"; logger.error(state.error_message, exc_info=True)
-        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "sas_processing_error"; state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     merged_file_paths: List[str] = []
@@ -658,7 +660,7 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     state.merged_xml_file_paths = merged_file_paths
     if not merged_file_paths and subdirs_to_process: # If there were dirs but nothing was merged
         state.is_error = True; state.error_message = "No XML files successfully merged."; logger.error(state.error_message)
-        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "sas_processing_error"; state.completion_status = "error"
     elif not subdirs_to_process:
          state.dialog_state = "sas_merging_completed_no_files"
     else:
@@ -675,7 +677,7 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
 
     if not state.run_output_directory:
         state.is_error = True; state.error_message = "run_output_directory not set."; logger.error(state.error_message)
-        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "sas_processing_error"; state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     input_dir_for_concat = Path(state.run_output_directory) / "merged_task_flows"
@@ -686,7 +688,7 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         output_dir_for_concat.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         state.is_error = True; state.error_message = f"Failed to create dir for concatenated flow: {e}"; logger.error(state.error_message, exc_info=True)
-        state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "sas_processing_error"; state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     merged_files_to_concat_paths = state.merged_xml_file_paths
@@ -699,10 +701,10 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
             logger.info(f"ConcatenateXML Node: Empty final XML saved to {state.final_flow_xml_path}")
         except Exception as e_save:
             state.is_error = True; state.error_message = f"Failed to save empty final XML: {e_save}"; logger.error(state.error_message, exc_info=True)
-            state.dialog_state = "sas_processing_error"; state.subgraph_completion_status = "error"
+            state.dialog_state = "sas_processing_error"; state.completion_status = "error"
             return state.model_dump(exclude_none=True)
         state.dialog_state = "final_xml_generated_success"
-        state.subgraph_completion_status = "completed_success"
+        state.completion_status = "completed_success"
         return state.model_dump(exclude_none=True)
 
     ET.register_namespace("", CONCAT_XML_BLOCKLY_XMLNS)
@@ -731,7 +733,7 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
 
     if state.is_error:
         state.error_message = "Errors occurred during XML concatenation: " + (state.error_message or "Unknown concatenation error.")
-        state.dialog_state = "error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "error"; state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
     try:
@@ -743,12 +745,12 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         state.final_flow_xml_content = final_xml_str_with_decl
         logger.info(f"ConcatenateXML: Successfully concatenated XML files to {final_output_file}")
         state.dialog_state = "final_xml_generated_success"
-        state.subgraph_completion_status = "completed_success"
+        state.completion_status = "completed_success"
     except Exception as e:
         logger.error(f"ConcatenateXML: Error writing final concatenated XML to {final_output_file}: {e}")
         state.is_error = True
         state.error_message = f"Error writing final concatenated XML: {e}"
-        state.dialog_state = "error"; state.subgraph_completion_status = "error"
+        state.dialog_state = "error"; state.completion_status = "error"
         
     return state.model_dump(exclude_none=True)
 
@@ -759,55 +761,54 @@ def route_after_sas_merge_xmls(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Routing after SAS Merge XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
     if state.is_error or state.dialog_state == "sas_processing_error":
         logger.warning(f"Error during SAS Merge XMLs or error state triggered. Error: {state.error_message}")
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"Error merging XMLs: {state.error_message}")]
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return END
     elif state.dialog_state == "sas_merging_completed" or state.dialog_state == "sas_merging_completed_no_files":
         logger.info(f"SAS Merge XMLs completed (state: {state.dialog_state}). Routing to SAS_CONCATENATE_XMLS.")
-        state.subgraph_completion_status = "processing" # Indicate processing continues
+        state.completion_status = "processing" # Indicate processing continues
         # Ensure dialog state is neutral or indicative for the next step if needed
         state.dialog_state = "sas_merging_done_ready_for_concat" 
         return SAS_CONCATENATE_XMLS
     else:
         logger.error(f"Unexpected dialog state after SAS Merge XMLs: {state.dialog_state}. Routing to END as error.")
         state.error_message = state.error_message or f"Unexpected state ('{state.dialog_state}') after XML merging."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return END
 
 print("DEBUG: Defining route_after_sas_concatenate_xmls") # ADDED DEBUG PRINT
 # New routing function after SAS_CONCATENATE_XMLS
 def route_after_sas_concatenate_xmls(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after SAS Concatenate XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, completion_status: {state.subgraph_completion_status}) ---")
-    if state.is_error or state.subgraph_completion_status == "error":
+    logger.info(f"--- Routing after SAS Concatenate XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, completion_status: {state.completion_status}) ---")
+    if state.is_error or state.completion_status == "error":
         logger.warning(f"Error during SAS Concatenate XMLs or error state encountered. Error: {state.error_message}")
         # Ensure error message is in AIMessages for the user if not already present
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"Error concatenating XMLs: {state.error_message}")]
-        # subgraph_completion_status should already be 'error' if set by the node
+        # completion_status should already be 'error' if set by the node
         # dialog_state might also be 'error'
         return END
-    elif state.subgraph_completion_status == "completed_success" and state.dialog_state == "final_xml_generated_success":
+    elif state.completion_status == "completed_success" and state.dialog_state == "final_xml_generated_success":
         logger.info("SAS Concatenate XMLs completed successfully. Final XML generated. Routing to END.")
         # No state change needed here as the node should have set it correctly for success.
         return END
     else:
         # This case handles scenarios where the node might not have explicitly set completion_status to 'error'
         # but the state is not a clear success state from concatenation.
-        logger.error(f"Unexpected state after SAS Concatenate XMLs: dialog_state='{state.dialog_state}', completion_status='{state.subgraph_completion_status}'. Routing to END as error.")
-        state.error_message = state.error_message or f"Unexpected state ('{state.dialog_state}', status: '{state.subgraph_completion_status}') after XML concatenation."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        logger.error(f"Unexpected state after SAS Concatenate XMLs: dialog_state='{state.dialog_state}', completion_status='{state.completion_status}'. Routing to END as error.")
+        state.error_message = state.error_message or f"Unexpected state ('{state.dialog_state}', status: '{state.completion_status}') after XML concatenation."
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return END
 
 # --- Conditional Edge Functions ---
 def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     logger.info(
         f"Entering routing after Core Interaction. dialog_state: {state.dialog_state}, "
-        f"raw_user_request: '{state.raw_user_request}', "
         f"active_plan_basis: '{state.active_plan_basis}', "
         f"enriched_structured_text: '{state.enriched_structured_text}', "
         f"is_error: {state.is_error}"
@@ -818,9 +819,9 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     if state.is_error: # This implies preprocess_and_enrich_input_node failed its own task
         logger.warning(f"Error flag is set by CORE_INTERACTION_NODE. Dialog state: {state.dialog_state}. Routing back to core for user correction.")
         # Ensure error message is in messages for the user to see
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = state.messages + [AIMessage(content=f"Error preprocessing input: {state.error_message}")]
-        state.dialog_state = 'awaiting_user_input' # Prepare for new user input
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=f"Error preprocessing input: {state.error_message}")]
+        state.dialog_state = 'generation_failed'
         state.user_input = None # Crucial: Clear stale user_input to prevent re-processing old data if core node failed.
         state.clarification_question = None # Clear any pending questions from core node
         return CORE_INTERACTION_NODE
@@ -830,26 +831,26 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     # If a clarification question has been set by CORE_INTERACTION_NODE, 
     # and it's waiting for input, it should end the current graph run.
     if state.clarification_question and current_dialog_state in [
-        "awaiting_enrichment_confirmation", 
-        "awaiting_user_input", # If CORE_INTERACTION_NODE decided to ask a question and transitioned to this state
-        "initial" # If it asked a question right from the initial state
+        "sas_awaiting_task_list_review", # Assuming this is a valid state where clarification can be requested
+        "sas_awaiting_module_steps_review", # Another valid state
+        "initial"
     ]:
         logger.info(f"Clarification question is pending ('{state.clarification_question}'). Dialog state: {current_dialog_state}. Ending graph invocation to get user input.")
-        state.subgraph_completion_status = "needs_clarification" # Indicate why it's ending
+        state.completion_status = "needs_clarification" # Indicate why it's ending
         return END
 
-    if current_dialog_state == "input_understood_ready_for_xml":
+    if current_dialog_state == "sas_step1_tasks_generated": # Adjusted to a valid state from your typedef
         if state.enriched_structured_text:
             logger.info("Core interaction successful (input_understood_ready_for_xml). Routing to: UNDERSTAND_INPUT")
-            return UNDERSTAND_INPUT
+            return SAS_USER_INPUT_TO_TASK_LIST
         else: 
-            logger.warning("State is 'input_understood_ready_for_xml' but enriched_structured_text is missing. Awaiting user input.")
-            if not any("Flow description is incomplete" in msg.content for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
+            logger.warning("State is 'sas_step1_tasks_generated' but enriched_structured_text is missing. Awaiting user input.")
+            if state.messages and not any("Flow description is incomplete" in (msg.content if hasattr(msg, 'content') else '') for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
                  state.messages = state.messages + [AIMessage(content="Flow description is incomplete or could not be processed correctly, please re-enter." )]
-            state.dialog_state = "awaiting_user_input"
+            state.dialog_state = "initial" # Revert to initial to re-process
             state.user_input = None # Clear stale input
             return CORE_INTERACTION_NODE
-    elif current_dialog_state in ["awaiting_enrichment_confirmation", "awaiting_user_input", "processing_user_input", "generation_failed"]:
+    elif current_dialog_state in ["sas_awaiting_task_list_revision_input", "initial", "generation_failed"]:
         # If CORE_INTERACTION_NODE (preprocess_and_enrich_input_node) has set one of these states, 
         # it means it's either waiting for a specific user reply (e.g. to a clarification_question),
         # actively processing, or has just handled a generation failure by setting state to await input.
@@ -860,12 +861,13 @@ def route_after_core_interaction(state: RobotFlowAgentState) -> str:
     # Fallback: If no conditions above are met (which should be rare if preprocess_and_enrich_input_node behaves as expected)
     # this indicates an unexpected state produced by CORE_INTERACTION_NODE itself.
     logger.error(f"CRITICAL: route_after_core_interaction encountered an unhandled dialog_state '{current_dialog_state}' originating from CORE_INTERACTION_NODE. This suggests an issue in preprocess_and_enrich_input_node's state setting. Resetting to await user input.")
-    if not any(f"Robot flow subgraph encountered an unhandled core state ({current_dialog_state})" in msg.content for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
-        state.messages = state.messages + [AIMessage(content=f"Robot flow subgraph encountered an unhandled core state ({current_dialog_state}). Please retry or contact support." )]
-    state.dialog_state = "awaiting_user_input"
+    error_msg_content = f"The process encountered an unhandled core state ({current_dialog_state}). Please retry or contact support."
+    if state.messages and not any(error_msg_content in (msg.content if hasattr(msg, 'content') else '') for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
+        state.messages = state.messages + [AIMessage(content=error_msg_content)]
+    state.dialog_state = "error"
     state.user_input = None
     state.is_error = True
-    state.error_message = f"Robot flow subgraph encountered an unhandled core state ({current_dialog_state})."
+    state.error_message = f"The process encountered an unhandled core state ({current_dialog_state})."
     state.clarification_question = None
     return CORE_INTERACTION_NODE
 
@@ -874,15 +876,15 @@ def route_xml_generation_or_python_step(state: RobotFlowAgentState, next_step_if
     logger.info(f"--- Routing after Step: '{current_step_name_for_log}' (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
     if state.is_error or state.dialog_state == "error": # Check dialog_state as well, as some python nodes might set it
         logger.warning(f"Error during '{current_step_name_for_log}'. Routing to core_interaction_node.")
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             # Ensure the error_message from the state is added to AIMessages if not already present by the node itself
-            state.messages = state.messages + [AIMessage(content=f"Error in step '{current_step_name_for_log}': {state.error_message}")]
+            state.messages = (state.messages or []) + [AIMessage(content=f"Error in step '{current_step_name_for_log}': {state.error_message}")]
         
         # Reset relevant state fields before going back to core interaction
         state.dialog_state = 'generation_failed' # A specific state to indicate failure and need for new input/correction
         state.user_input = None 
         # state.is_error should remain True as set by the failing node
-        state.subgraph_completion_status = "error" # Mark subgraph as errored
+        state.completion_status = "error" # Mark as errored
         return CORE_INTERACTION_NODE
     else:
         logger.info(f"'{current_step_name_for_log}' successful. Routing to {next_step_if_ok}.")
@@ -892,10 +894,10 @@ def decide_after_final_xml_generation(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Deciding after Final XML Generation (is_error: {state.is_error}, final_xml_content exists: {bool(state.final_flow_xml_content)}) ---")
     if not state.is_error and state.final_flow_xml_content:
         logger.info("Final XML generated successfully. Routing to END.")
-        if not any("Flow XML generated successfully" in msg.content for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
+        if state.messages and not any("Flow XML generated successfully" in (msg.content if hasattr(msg, 'content') else '') for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
              state.messages = state.messages + [AIMessage(content=f"Flow XML generated successfully. You can view it at path {state.final_flow_xml_path or 'not saved to file'}, or see the content in the chat history.")]
         state.dialog_state = 'final_xml_generated_success'
-        state.subgraph_completion_status = "completed_success" # Mark as fully successful
+        state.completion_status = "completed_success" # Mark as fully successful
         return END
     else:
         logger.warning("Final XML generation failed or produced no content. Routing back to core_interaction_node.")
@@ -903,12 +905,12 @@ def decide_after_final_xml_generation(state: RobotFlowAgentState) -> str:
             state.is_error = True
             state.error_message = state.error_message or "Final XML content is empty or generation failed."
         
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = state.messages + [AIMessage(content=f"Problem encountered while generating final XML: {state.error_message}. Please modify your instructions." )]
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=f"Problem encountered while generating final XML: {state.error_message}. Please modify your instructions." )]
         
         state.dialog_state = 'generation_failed'
         state.user_input = None
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return CORE_INTERACTION_NODE
 
 # New routing function for SAS Step 1
@@ -918,26 +920,26 @@ def route_after_sas_step1(state: RobotFlowAgentState) -> str:
         logger.warning(f"Error during SAS Step 1 (Task List Generation). Error message: {state.error_message}")
         if not state.error_message:
              state.error_message = "Unknown error after SAS Step 1 (Task List Generation)."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 1 (Task List Generation) Failed: {state.error_message}")]
-        state.subgraph_completion_status = "error" 
+        state.completion_status = "error" 
         return END 
     elif state.dialog_state == "sas_step1_tasks_generated":
         logger.info("SAS Step 1 (User Input to Task List Generation) completed successfully. Routing to SAS_REVIEW_AND_REFINE.")
         state.task_list_accepted = False 
         return SAS_REVIEW_AND_REFINE 
-    elif state.dialog_state == "sas_step1_completed": 
+    elif state.dialog_state == "sas_step3_completed": # Legacy state name, should be updated
         logger.warning(f"Unexpected old state 'sas_step1_completed' after SAS Step 1. Expected 'sas_step1_tasks_generated'. Routing to END as an error.")
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         state.error_message = f"Unexpected legacy state ('sas_step1_completed') after SAS Step 1. Task list generation might have failed to set the correct new state."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         return END
     else:
         logger.warning(f"Unexpected dialog state after SAS Step 1 (Task List Generation): {state.dialog_state}. Routing to END.")
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         state.error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 1 (Task List Generation)."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         return END
 
@@ -960,9 +962,9 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
 
     if state.is_error: 
         logger.warning(f"Error flag is set after Review/Refine node. Error message: {state.error_message}")
-        if state.error_message and not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"Error during review/refinement: {state.error_message}")]
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return END # Or a dedicated error handling node if desired
 
     # NEW PRIORITY CHECK: If review_and_refine determined all steps were already accepted.
@@ -970,21 +972,21 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
         logger.info("All review steps already accepted (task list & module steps). Routing to GENERATE_INDIVIDUAL_XMLS.")
         state.current_step_description = "All review steps previously accepted, proceeding to generate individual XMLs."
         state.dialog_state = "sas_generating_individual_xmls" # Align with state for next step
-        state.subgraph_completion_status = "processing"
+        state.completion_status = "processing"
         return GENERATE_INDIVIDUAL_XMLS
 
     # Priority 1: Handling states indicating the node is waiting for external user input
     if state.dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_task_list_revision_input"]:
         logger.info(f"Awaiting user feedback on the TASK LIST (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
-        state.subgraph_completion_status = "needs_clarification"
+        state.completion_status = "needs_clarification"
         return END
     elif state.dialog_state in ["sas_awaiting_module_steps_review", "sas_awaiting_module_steps_revision_input"]:
         logger.info(f"Awaiting user feedback on the MODULE STEPS (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
-        state.subgraph_completion_status = "needs_clarification"
+        state.completion_status = "needs_clarification"
         return END
     elif state.dialog_state == "sas_awaiting_xml_generation_approval":
         logger.info(f"Awaiting user approval for XML GENERATION (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
-        state.subgraph_completion_status = "needs_clarification"
+        state.completion_status = "needs_clarification"
         return END
 
     # Priority 2: Handling user approval for XML generation
@@ -992,7 +994,7 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
         logger.info("XML generation approved by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
         state.current_step_description = "XML generation approved, starting to generate individual XMLs."
         state.dialog_state = "sas_generating_individual_xmls" 
-        state.subgraph_completion_status = "processing" 
+        state.completion_status = "processing" 
         return GENERATE_INDIVIDUAL_XMLS
 
     # Priority 3: Handling successful acceptance of task list (and module steps not yet reviewed/accepted)
@@ -1002,24 +1004,24 @@ def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
         # The review_and_refine_node itself would set sas_step1_tasks_generated if only task list accepted.
         if state.dialog_state == "sas_step1_tasks_generated": # Set by review_and_refine if task list accepted
             logger.info("Task list accepted by user. Routing to SAS_PROCESS_TO_MODULE_STEPS.")
-            state.subgraph_completion_status = "completed_partial"
+            state.completion_status = "completed_partial"
             return SAS_PROCESS_TO_MODULE_STEPS
     
     # Priority 4: Handling regeneration/re-review loops initiated by review_and_refine_node
-    if state.dialog_state == "sas_description_updated_for_regeneration": # For task list regen
+    if state.dialog_state == "initial": # For task list regen, assuming review node resets to 'initial' on revision
         logger.info("User description revised for task list. Routing back to SAS_USER_INPUT_TO_TASK_LIST for regeneration.")
-        state.subgraph_completion_status = "processing"
+        state.completion_status = "processing"
         return SAS_USER_INPUT_TO_TASK_LIST
     
     if state.dialog_state == "sas_step2_module_steps_generated_for_review": # For module steps re-review after modification
         logger.info("Module steps were modified. Routing back to SAS_REVIEW_AND_REFINE for re-review.")
-        state.subgraph_completion_status = "processing"
+        state.completion_status = "processing"
         return SAS_REVIEW_AND_REFINE
 
     # Fallback / Unexpected states
     logger.warning(f"Unexpected state combination after SAS Review/Refine: dialog_state='{state.dialog_state}', task_list_accepted={state.task_list_accepted}, module_steps_accepted={state.module_steps_accepted}. Defaulting to END graph run for clarification or error.")
-    state.subgraph_completion_status = "needs_clarification" # Or "error"
-    if not state.clarification_question and not any("An unexpected state was reached" in msg.content for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+    state.completion_status = "needs_clarification" # Or "error"
+    if not state.clarification_question and not any("An unexpected state was reached" in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
          state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during the review process. Please try providing your feedback again or restart.")]
     return END
 
@@ -1030,13 +1032,13 @@ def route_after_sas_step2(state: RobotFlowAgentState) -> str:
         logger.warning(f"Error during SAS Step 2 (Module Steps Generation). Error message: {state.error_message}")
         if not state.error_message:
              state.error_message = "Unknown error after SAS Step 2 (Module Steps Generation)."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 2 (Module Steps Generation) Failed: {state.error_message}")]
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return END
-    elif state.dialog_state == "sas_step2_module_steps_generated_for_review" or state.dialog_state == "sas_step2_completed":
+    elif state.dialog_state == "sas_step2_module_steps_generated_for_review" or state.dialog_state == "sas_step3_completed": # sas_step3_completed is a legacy state name
         logger.info(f"SAS Step 2 (Module Steps Generation) completed (dialog_state: '{state.dialog_state}'). Routing to SAS_REVIEW_AND_REFINE for module steps review.")
-        state.subgraph_completion_status = "processing" 
+        state.completion_status = "processing" 
         state.dialog_state = "sas_step2_module_steps_generated_for_review" # Normalize state for review node
         
         # previous_value_for_log = None
@@ -1052,7 +1054,11 @@ def route_after_sas_step2(state: RobotFlowAgentState) -> str:
         return SAS_REVIEW_AND_REFINE
     else:
         logger.warning(f"Unexpected state after SAS Step 2 (Module Steps Generation): {state.dialog_state}. Routing to END as error.")
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
+        error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 2 (Module Steps Generation)."
+        if not any(error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
+            state.messages = (state.messages or []) + [AIMessage(content=error_message)]
+        return END
 
 # New routing function for SAS Step 3
 def route_after_sas_step3(state: RobotFlowAgentState) -> str:
@@ -1061,9 +1067,9 @@ def route_after_sas_step3(state: RobotFlowAgentState) -> str:
         logger.warning(f"Error during SAS Step 3. Error message: {state.error_message}")
         if not state.error_message:
              state.error_message = "Unknown error after SAS Step 3."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 3 Failed: {state.error_message}")]
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return END
     elif state.dialog_state == "sas_step3_completed":
         logger.info("SAS Step 3 (Parameter Mapping) completed successfully. Routing to SAS_MERGE_XMLS.")
@@ -1071,9 +1077,9 @@ def route_after_sas_step3(state: RobotFlowAgentState) -> str:
         return SAS_MERGE_XMLS
     else:
         logger.warning(f"Unexpected state after SAS Step 3: {state.dialog_state}. Routing to END.")
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         state.error_message = f"Unexpected state ({state.dialog_state}) after SAS Step 3."
-        if not any(state.error_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
+        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         return END
 
@@ -1082,7 +1088,7 @@ def route_after_initialize_state(state: RobotFlowAgentState) -> str:
     logger.info(
         f"--- Routing after Initialize State. "
         f"Dialog state: {state.dialog_state}, "
-        f"Subgraph status: {state.subgraph_completion_status}, "
+        f"Graph status: {state.completion_status}, "
         f"User input available: {bool(state.user_input)}, "
         f"Clarification question: {state.clarification_question}, "
         f"Task list accepted: {state.task_list_accepted}, "
@@ -1109,29 +1115,29 @@ def route_after_initialize_state(state: RobotFlowAgentState) -> str:
 
 # New routing function after GENERATE_INDIVIDUAL_XMLS
 def route_after_generate_individual_xmls(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after Generate Individual XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, subgraph_status: {state.subgraph_completion_status}) ---")
-    if state.is_error or state.subgraph_completion_status == "error":
+    logger.info(f"--- Routing after Generate Individual XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, graph_status: {state.completion_status}) ---")
+    if state.is_error or state.completion_status == "error":
         logger.warning(f"Error during Generate Individual XMLs. Error: {state.error_message}")
         # Ensure error message is in messages for the user if not already there from the node itself
         if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"Error generating individual XMLs: {state.error_message}")]
-        # The node generate_individual_xmls_node should set subgraph_completion_status to "error"
+        # The node generate_individual_xmls_node should set completion_status to "error"
         # and dialog_state appropriately (e.g., "error" or a specific error state).
         return END # Route to END on error
     else:
         # If successful, generate_individual_xmls_node sets:
         # state.dialog_state = "generating_xml_relation" (this might be a legacy state name from the node)
-        # state.subgraph_completion_status = None (meaning not an error, processing continues)
+        # state.completion_status = None (meaning not an error, processing continues)
         logger.info("Generate Individual XMLs successful. Routing to SAS_PARAMETER_MAPPING.")
         state.dialog_state = "sas_individual_xmls_generated_ready_for_mapping" # Set a more appropriate state for the next step
-        state.subgraph_completion_status = "processing" # Indicate that processing is ongoing
+        state.completion_status = "processing" # Indicate that processing is ongoing
         return SAS_PARAMETER_MAPPING
 
 # create_robot_flow_graph function (original was L344, this is a rewrite for the new flow)
 def create_robot_flow_graph(
     llm: BaseChatModel,
     checkpointer: Optional[BaseCheckpointSaver] = None  # ADDED checkpointer argument
-) -> Callable[[Dict[str, Any]], Any]: 
+) -> Any:
     
     workflow = StateGraph(RobotFlowAgentState)
 
@@ -1230,7 +1236,7 @@ def create_robot_flow_graph(
         SAS_CONCATENATE_XMLS,
         route_after_sas_concatenate_xmls,
         {
-            END: END # Success or error, both route to END but with different state.subgraph_completion_status
+            END: END # Success or error, both route to END but with different state.completion_status
         }
     )
 
@@ -1423,7 +1429,7 @@ async def main_test_run():
     else:
         logger.info("LangSmith tracing is not enabled (LANGCHAIN_TRACING_V2 != 'true'). Metrics will not be collected.")
 
-    graph_config = {"recursion_limit": 15, "callbacks": [root_run_id_collector]}
+    graph_config: RunnableConfig = {"recursion_limit": 15, "callbacks": [root_run_id_collector]}
 
     logger.info("--- Starting Interactive Robot Flow Test ---")
     
@@ -1453,7 +1459,7 @@ async def main_test_run():
         # Check for clarification question
         clarification_question = current_state.get("clarification_question")
         dialog_state = current_state.get("dialog_state")
-        subgraph_status = current_state.get("subgraph_completion_status")
+        subgraph_status = current_state.get("completion_status")
 
         if clarification_question:
             print("\n----------------------------------------------------")
@@ -1634,7 +1640,7 @@ async def main_test_run():
         logger.error(f"Flow completed with an error: {final_state.get('error_message')}")
     else:
         # Check for SAS specific completion states if applicable
-        sas_status = final_state.get('subgraph_completion_status')
+        sas_status = final_state.get('completion_status')
         if sas_status == "completed_success":
             logger.info("SAS Flow completed successfully.")
             # Add any specific output paths for SAS if available in final_state

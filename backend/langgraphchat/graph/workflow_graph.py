@@ -79,15 +79,10 @@ from .nodes.tool_executor import tool_node # Already configured to be used
 from .nodes.task_router import task_router_node # Import RouteDecision if needed here, or ensure AgentState handles it
 from .nodes.teaching_node import teaching_node
 from .nodes.other_assistant_node import other_assistant_node # Changed from ask_info_node
-from .nodes.robot_flow_invoker_node import robot_flow_invoker_node # 新的调用节点
 from .nodes.rephrase_prompt_node import rephrase_prompt_node # <-- 新增导入
 from .nodes.goodbye_node import handle_goodbye_node # <-- 新增导入
 from .conditions import should_continue, route_after_task_router # RouteDecision is now in types
 from .graph_types import RouteDecision # Import RouteDecision from types
-
-# --- 导入SAS子图构建器 ---
-from backend.sas.graph_builder import create_robot_flow_graph
-# --- END ---
 
 
 # --- 新增：处理重新输入的节点（如果需要明确提示用户）---
@@ -192,25 +187,10 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         else:
             logger.warning(f"Placeholder \'{placeholder}\' not found in the system prompt template provided by STRUCTURED_CHAT_AGENT_PROMPT.")
 
-    # --- 实例化SAS子图 ---
-    try:
-        sas_subgraph_app = create_robot_flow_graph(llm=llm)
-        logger.info("SAS Subgraph (robot_flow_graph) compiled successfully.")
-    except Exception as e:
-        logger.error(f"Failed to compile SAS Subgraph (robot_flow_graph): {e}", exc_info=True)
-        # 根据需要处理错误，例如抛出异常或使用备用方案
-        raise # 重新引发异常，因为这是一个关键组件
-
-
     # --- 创建和配置 StateGraph ---
     workflow = StateGraph(AgentState)
 
     bound_input_handler_node = partial(input_handler_node)
-    
-    # 绑定新的 robot_flow_invoker_node，它也需要 llm
-    # bound_robot_flow_invoker_node = partial(robot_flow_invoker_node, llm=llm) # 旧的绑定方式
-    # 新的绑定方式，传入编译好的SAS子图实例
-    bound_robot_flow_invoker_node = partial(robot_flow_invoker_node, llm=llm, sas_subgraph_app=sas_subgraph_app)
     
     # 新节点绑定
     bound_task_router_node = partial(task_router_node, llm=llm) 
@@ -223,7 +203,6 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 添加节点到图
     workflow.add_node("input_handler", bound_input_handler_node)
     workflow.add_node("task_router", bound_task_router_node) 
-    workflow.add_node("robot_flow_planner", bound_robot_flow_invoker_node) # 新的规划器节点
     workflow.add_node("teaching", bound_teaching_node) 
     workflow.add_node("other_assistant", bound_other_assistant_node) # Changed from ask_info
     workflow.add_node("rephrase_prompt", bound_rephrase_prompt_node) # <-- 添加新节点
@@ -241,7 +220,6 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         "task_router",
         route_after_task_router,
         {
-            "planner": "robot_flow_planner", 
             "teaching": "teaching",
             "other_assistant": "other_assistant", 
             "rephrase_prompt": "rephrase_prompt",  # 确保这里与 route_after_task_router 的返回字符串一致
@@ -253,15 +231,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # 添加挂起状态节点
     workflow.add_node("SUSPENDED", lambda state: state)  # 空操作节点
     
-    # 添加从功能节点到挂起节点的路由
-    workflow.add_conditional_edges(
-        "robot_flow_planner",
-        route_after_functional_node,
-        {
-            "SUSPENDED": "SUSPENDED",
-            END: END
-        }
-    )
+    # 删除了robot_flow_planner相关的路由
     workflow.add_conditional_edges(
         "teaching",
         route_after_functional_node,

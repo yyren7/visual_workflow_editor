@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlowData, getFlowsForUser } from '../../api/flowApi';
 
-export const useFlowData = (open: boolean) => {
+export const useFlowData = () => {
   const [flows, setFlows] = useState<FlowData[]>([]);
   const [filteredFlows, setFilteredFlows] = useState<FlowData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -13,14 +13,16 @@ export const useFlowData = (open: boolean) => {
   // 获取流程列表
   useEffect(() => {
     const fetchFlows = async () => {
-      if (!open) return;
-
       try {
         setLoading(true);
         setError(null);
         // 减少请求数量，避免可能的性能问题
         const userFlows = await getFlowsForUser(0, 100);
         console.log("成功获取流程图列表:", userFlows.length);
+        // 按更新时间降序排序，处理undefined情况
+        userFlows.sort((a, b) => 
+          new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime()
+        );
         setFlows(userFlows);
         setFilteredFlows(userFlows);
       } catch (err) {
@@ -38,7 +40,7 @@ export const useFlowData = (open: boolean) => {
     };
 
     fetchFlows();
-  }, [open, t]);
+  }, [t]);
 
   // 当搜索词变化时，过滤流程图
   useEffect(() => {

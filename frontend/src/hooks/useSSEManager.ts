@@ -65,33 +65,26 @@ class SSEConnectionManager {
       },
 
       onmessage: (event: EventSourceMessage) => {
-        // SSE标准中，没有名称的事件是 'message' 事件
-        const eventType = event.event || 'message';
-        let parsedData: any = event.data;
+        const eventType = event.event;
+        if (!eventType || eventType === 'message') {
+          // 忽略未命名事件或标准 'message' 事件，因为我们的应用需要特定的事件类型
+          // console.log(`SSEManager: Ignoring unnamed or 'message' event for chat ${chatId}.`);
+          return;
+        }
 
+        let parsedData: any;
         try {
-          if (typeof event.data === 'string' && (event.data.startsWith('{') || event.data.startsWith('['))) {
-            parsedData = JSON.parse(event.data);
-          }
+          parsedData = JSON.parse(event.data);
         } catch (e) {
-          console.warn(`SSEManager: Data for event type '${eventType}' for chat ${chatId} is not valid JSON, using raw data. Error:`, e);
+          console.warn(`SSEManager: Data for event '${eventType}' on chat ${chatId} is not valid JSON. Raw data: "${event.data}". Error:`, e);
+          // 如果解析失败，我们可以选择分发原始数据或忽略
+          // 为了与现有逻辑保持一致，我们选择忽略，因为下游期望的是对象
+          return;
         }
         
-        // 我们后端发送的所有自定义事件都有名称，所以这里我们只处理有名称的事件
-        // 如果事件类型是 'message' (即未命名事件)，我们可能需要检查其内容
-        // 但根据后端实现，所有有意义的事件都是有名称的，例如 `event: agent_state_updated`
-        // 我们的后端目前不发送未命名的 'message' 事件，但为了健壮性，可以加上判断
-        if(parsedData.event && parsedData.data) {
-             this.dispatchEvent(chatId, parsedData.event, parsedData.data);
-        } else if (parsedData.type && parsedData.data) {
-            // 兼容后端直接发送 {type: '...', data: '...'} 的格式
-            this.dispatchEvent(chatId, parsedData.type, parsedData.data);
-        } else {
-             // 忽略ping事件和其他未识别的格式
-             if(parsedData.event !== 'ping' && parsedData.event !== 'start' && parsedData.event !== 'end') {
-                console.log(`SSEManager: Received event for chat ${chatId} with unknown format: `, parsedData);
-             }
-        }
+        // 直接使用从 SSE 事件中获取的 eventType 和解析后的数据进行分发
+        // console.log(`[SSE_MANAGER_LOG] Dispatching event: '${eventType}' for chat: ${chatId}`, parsedData);
+        this.dispatchEvent(chatId, eventType, parsedData);
       },
       
       onclose: () => {

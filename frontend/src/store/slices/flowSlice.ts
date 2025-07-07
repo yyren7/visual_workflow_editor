@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk, ActionReducerMapBuilder, SerializedError } from '@reduxjs/toolkit';
 import { Node, Edge, addEdge as reactFlowAddEdge } from 'reactflow';
-import { NodeData } from '../../components/FlowEditor'; // Adjust path if needed
+import { NodeData } from '../../components/FlowEditor/types'; // 修正导入路径
 import { getFlow, updateFlow } from '../../api/flowApi'; // 使用 getFlow 替代 ensureFlowAgentState
 import { RootState } from '../store';
 
@@ -131,6 +131,11 @@ const flowSlice = createSlice({
   name: 'flow',
   initialState,
   reducers: {
+    resetFlowState: (state) => {
+      // 重置为初始状态
+      Object.assign(state, initialState);
+      console.log('Redux: Flow state has been reset.');
+    },
     setCurrentFlowId: (state: FlowState, action: PayloadAction<string | null>) => {
       state.currentFlowId = action.payload;
     },
@@ -203,6 +208,21 @@ const flowSlice = createSlice({
         state.edges = state.edges.filter(edge => edge.id !== edgeId);
       }
     },
+    setProcessingStatus: (state: FlowState, action: PayloadAction<boolean>) => {
+      if (state.agentState) {
+        state.agentState.isProcessingUserInput = action.payload;
+        if (action.payload) {
+          // When starting, also clear any leftover review/error states
+          state.agentState.dialog_state = 'sas_processing_user_input';
+        }
+      } else {
+        // If agentState doesn't exist, create it
+        state.agentState = {
+          isProcessingUserInput: action.payload,
+          dialog_state: action.payload ? 'sas_processing_user_input' : 'initial',
+        };
+      }
+    },
     setActiveLangGraphStreamFlowId: (state: FlowState, action: PayloadAction<string | null>) => {
       state.activeLangGraphStreamFlowId = action.payload;
     },
@@ -212,8 +232,13 @@ const flowSlice = createSlice({
       .addCase(fetchFlowById.pending, (state) => {
         state.isLoading = true;
         state.error = null;
-        // 在加载新数据之前，不清空旧数据，UI可以继续显示旧内容直到加载完成
-        console.log('Redux: Fetching flow data pending...');
+        // 在加载新数据之前，立即清空旧数据，防止闪烁
+        state.nodes = null;
+        state.edges = null;
+        state.currentFlowId = null;
+        state.flowName = null;
+        state.agentState = null;
+        console.log('Redux: Fetching flow data pending, cleared old state.');
       })
       .addCase(fetchFlowById.fulfilled, (state: FlowState, action: PayloadAction<FetchFlowByIdPayload>) => {
         // 直接用后端返回的真实状态覆盖
@@ -265,11 +290,13 @@ export const {
     updateNodeData,
     setFlowName,
     updateAgentState,
-    selectNode,      // Export new action
-    deselectAllNodes, // Export new action
-    deleteNode,       // Export new action
-    deleteEdge,       // Export new action
-    setActiveLangGraphStreamFlowId, // Export new action
+    selectNode,
+    deselectAllNodes,
+    deleteNode,
+    deleteEdge,
+    setProcessingStatus,
+    setActiveLangGraphStreamFlowId,
+    resetFlowState,
 } = flowSlice.actions;
 
 // Selectors

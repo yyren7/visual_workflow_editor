@@ -203,6 +203,18 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
     });
   }, [data.outputs, isConnectable]);
 
+  // 预计算额外字段，避免重复filter
+  const extraFields = useMemo(() => {
+    if (!selected) return [];
+    
+    return Object.entries(data)
+      .filter(([key, value]) => 
+        !standardExcludedKeys.includes(key) &&
+        !fieldNamesFromDataFields.includes(key) &&
+        (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+      );
+  }, [data, standardExcludedKeys, fieldNamesFromDataFields, selected]);
+
   // 渲染节点卡片
   return (
     <>
@@ -285,14 +297,7 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
               ))}
             </Box>
           )}
-          {selected && (
-            Object.entries(data)
-              .filter(([key, value]) => 
-                !standardExcludedKeys.includes(key) &&
-                !fieldNamesFromDataFields.includes(key) &&
-                (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-              ).length > 0 
-          ) && (
+          {selected && extraFields.length > 0 && (
             <Box sx={{ 
                 mt: (data.fields && data.fields.length > 0) ? 0.5 : 1,
                 maxHeight: selected ? '150px' : '0px',
@@ -302,24 +307,18 @@ const GenericNode = memo(({ data, isConnectable, selected }: NodeProps<GenericNo
                 opacity: selected ? 1 : 0,
                 pt: (data.fields && data.fields.length > 0) ? 0.5 : 0,
               }}>
-              {Object.entries(data)
-                .filter(([key, value]) => 
-                  !standardExcludedKeys.includes(key) &&
-                  !fieldNamesFromDataFields.includes(key) &&
-                  (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-                )
-                .map(([key, value]) => (
-                  <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}>
-                    <Typography variant="caption" sx={{ color: selected ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.6)', mr: 1, fontSize: selected ? '0.7rem' : '0.65rem', textTransform: 'capitalize' }}>
-                      {key.replace(/_/g, ' ')}:
+              {extraFields.map(([key, value]) => (
+                <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ color: selected ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.6)', mr: 1, fontSize: selected ? '0.7rem' : '0.65rem', textTransform: 'capitalize' }}>
+                    {key.replace(/_/g, ' ')}:
+                  </Typography>
+                  <Tooltip title={String(value)} placement="top-end">
+                    <Typography variant="caption" sx={{ fontWeight: 'bold', color: selected ? '#fff' : '#ddd', fontSize: selected ? '0.7rem' : '0.65rem', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '60%' }}>
+                      {formatFieldValue(value, typeof value === 'boolean' ? 'boolean' : undefined)}
                     </Typography>
-                    <Tooltip title={String(value)} placement="top-end">
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: selected ? '#fff' : '#ddd', fontSize: selected ? '0.7rem' : '0.65rem', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '60%' }}>
-                        {formatFieldValue(value, typeof value === 'boolean' ? 'boolean' : undefined)}
-                      </Typography>
-                    </Tooltip>
-                  </Box>
-                ))}
+                  </Tooltip>
+                </Box>
+              ))}
             </Box>
           )}
           {selected && data.type && (

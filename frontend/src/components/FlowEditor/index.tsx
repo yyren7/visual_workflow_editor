@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, lazy } from 'react';
 import {
   Node,
   Edge,
@@ -50,7 +50,7 @@ import { useLangGraphNodes } from '../../hooks/useLangGraphNodes';
 
 // Import UI components
 import EditorAppBar from '../EditorAppBar';
-import NodeSelectorSidebar from '../editor/NodeSelectorSidebar';
+// import NodeSelectorSidebar from '../editor/NodeSelectorSidebar'; // 1. 注释掉直接导入
 import NodePropertiesPanel from '../editor/NodePropertiesPanel';
 import FlowVariablesPanel from '../editor/FlowVariablesPanel';
 import ChatPanel from '../editor/ChatPanel';
@@ -62,6 +62,9 @@ import { useSaveHandler } from './useSaveHandler';
 import { LANGGRAPH_NODE_TYPES } from './viewportUtils';
 import FlowDebugPanel from './FlowDebugPanel';
 import { FlowEditorProps, NodeData } from './types';
+
+// 1. 使用 React.lazy 动态导入 NodeSelectorSidebar
+const NodeSelectorSidebar = lazy(() => import('../editor/NodeSelectorSidebar'));
 
 const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   const { t } = useTranslation();
@@ -233,17 +236,6 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
   }, []);
 
   // --- Loading and Error States ---
-  const isInitiallyLoading = isLoading && nodes === null;
-
-  if (isInitiallyLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>{t('flowEditor.loadingFlow')}</Typography>
-      </Box>
-    );
-  }
-
   if (!currentFlowId && !isLoading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', p: 3 }}>
@@ -281,7 +273,22 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
       />
 
       <Box sx={{ display: 'flex', flexGrow: 1, position: 'relative' }}>
-        <NodeSelectorSidebar open={panelStates.sidebarOpen} />
+        {/* 使用 React.Suspense 包裹懒加载的组件 */}
+        <React.Suspense fallback={
+          <Box sx={{
+            width: panelStates.sidebarOpen ? '250px' : '0px',
+            transition: 'width 0.3s ease',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRight: '1px solid #333'
+          }}>
+            {panelStates.sidebarOpen && <CircularProgress size={24} />}
+          </Box>
+        }>
+          <NodeSelectorSidebar open={panelStates.sidebarOpen} />
+        </React.Suspense>
 
         <Box 
           sx={{ 
@@ -292,6 +299,25 @@ const FlowEditor: React.FC<FlowEditorProps> = ({ flowId: flowIdFromProps }) => {
           }} 
           ref={reactFlowWrapper}
         >
+          {isLoading && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 12, // Ensure it's above the canvas
+              }}
+            >
+              <CircularProgress />
+              <Typography sx={{ ml: 2, color: 'white' }}>{t('flowEditor.loadingFlow')}</Typography>
+            </Box>
+          )}
           {error && (
             <Alert severity="error" sx={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 11 }}>
               {t('flowEditor.errorLoadingFlow')}: {error}

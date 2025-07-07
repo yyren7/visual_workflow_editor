@@ -1,0 +1,54 @@
+/* 性能优化CSS - 减少动画和过渡效果 */
+
+/* 在低性能模式下减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 优化节点过渡效果 */
+.react-flow__node {
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* 减少不必要的阴影效果 */
+.react-flow__node:not(:hover) {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 优化连接线动画 */
+.react-flow__edge-path {
+  transition: stroke 0.15s ease !important;
+}
+
+/* 禁用非关键动画 */
+.MuiCircularProgress-root {
+  animation-duration: 1s !important;
+}
+
+/* 优化面板过渡 */
+.MuiDrawer-paper {
+  transition: transform 0.2s ease !important;
+}
+
+/* 减少卡片动画 */
+.MuiCard-root {
+  transition: all 0.2s ease !important;
+}
+
+/* 优化按钮反馈 */
+.MuiButton-root {
+  transition: background-color 0.15s ease !important;
+}
+
+/* 使用 will-change 优化关键元素 */
+.react-flow__viewport {
+  will-change: transform;
+}
+
+.react-flow__node.selected {
+  will-change: transform, box-shadow;
+} 

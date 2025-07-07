@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 import asyncio
 import json
 import time
-from typing import Any, Dict, AsyncGenerator
+from typing import Any, Dict, AsyncGenerator, Optional
 import os
 from dotenv import load_dotenv
 import logging
@@ -201,7 +201,7 @@ async def _process_sas_events(
     chat_id: str, 
     message_content: str, 
     sas_app,
-    flow_id: str = None
+    flow_id: str = ''
 ):
     """
     Process SAS LangGraph execution and broadcast SSE events via global broadcaster
@@ -212,12 +212,34 @@ async def _process_sas_events(
     final_state = None
 
     try:
-        # Prepare graph input with chat_id for progress events
+        # Prepare graph input, merging initial state values.
+        # This ensures the graph starts with a clean, correct state for this run.
+        logger.info(f"[SAS Chat {chat_id}] Preparing initial state for graph execution.")
         graph_input = {
-            "user_input": message_content,
-            "current_chat_id": chat_id,  # 新增: 传递chat_id用于进度事件
-            "thread_id": chat_id,       # 新增: 也作为thread_id传递
+            "dialog_state": "sas_processing_user_input",
+            "current_step_description": "Processing your request...",
+            "current_user_request": message_content,
+            "task_list_accepted": False,
+            "module_steps_accepted": False,
+            "revision_iteration": 0,
+            "sas_step1_generated_tasks": [],
+            "sas_step2_module_steps": "",
+            "clarification_question": "",
+            "user_input": message_content, # Pass the input through
+            "current_chat_id": chat_id,  # For progress events
+            "thread_id": chat_id,       # For state management
         }
+
+        # Adjust state for specific approval actions
+        if message_content == "accept_tasks":
+            graph_input["dialog_state"] = "sas_tasks_accepted_processing"
+            graph_input["current_step_description"] = "Tasks approved. Generating module steps..."
+            graph_input["task_list_accepted"] = True
+        elif message_content == "accept_module_steps":
+            graph_input["dialog_state"] = "sas_modules_accepted_processing"
+            graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
+            graph_input["module_steps_accepted"] = True
+
         config = {"configurable": {"thread_id": chat_id}}
         
         logger.info(f"[SAS Chat {chat_id}] Invoking SAS graph with astream_events...")
@@ -254,10 +276,27 @@ async def _process_sas_events(
                 
                 should_sync = False
                 sync_reason = ""
+                has_error_state = False
                 
                 # Check if this is the main graph or SAS-related chain
                 if run_name in ["__graph__", "sas_user_input_to_task_list", "sas_review_and_refine", "sas_process_to_module_steps"] or "sas" in run_name.lower():
                     if isinstance(outputs_from_chain, dict):
+                        # 首先检查是否有错误状态
+                        if outputs_from_chain.get("is_error", False) or outputs_from_chain.get("dialog_state") == "error" or outputs_from_chain.get("subgraph_completion_status") == "error":
+                            has_error_state = True
+                            error_message = outputs_from_chain.get("error_message", "Unknown error occurred in SAS processing")
+                            logger.error(f"[SAS Chat {chat_id}] 🚨 检测到节点错误状态: {error_message}")
+                            
+                            # 立即发送错误事件到前端
+                            error_data = {
+                                "message": error_message, 
+                                "stage": f"sas_node_error_in_{run_name}",
+                                "dialog_state": outputs_from_chain.get("dialog_state"),
+                                "subgraph_completion_status": outputs_from_chain.get("subgraph_completion_status")
+                            }
+                            await event_broadcaster.broadcast_event(chat_id, {"type": "error", "data": error_data})
+                            is_error = True
+                            
                         important_keys = [
                             'sas_step1_generated_tasks',
                             'dialog_state',
@@ -270,11 +309,11 @@ async def _process_sas_events(
                         found_keys = [key for key in important_keys if key in outputs_from_chain]
                         if found_keys:
                             should_sync = True
-                            sync_reason = f"SAS状态更新 (run_name: {run_name}, found_keys: {found_keys})"
+                            sync_reason = f"SAS状态更新 (run_name: {run_name}, found_keys: {found_keys}, has_error: {has_error_state})"
                             final_state = outputs_from_chain
                             logger.info(f"[SAS Chat {chat_id}] 🎯 触发同步: {sync_reason}")
                 
-                if should_sync and flow_id:
+                if should_sync and flow_id and final_state:
                     try:
                         # 准备前端更新数据（不涉及Flow模型，遵循单一数据源原则）
                         frontend_update_result = await _prepare_frontend_update(final_state, flow_id)

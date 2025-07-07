@@ -29,7 +29,7 @@ const FlowSelect: React.FC<FlowSelectProps> = ({ open, onClose }) => {
     updateFlows,
     removeFlow,
     refreshFlows
-  } = useFlowData(open);
+  } = useFlowData();
 
   // 操作逻辑hook
   const {

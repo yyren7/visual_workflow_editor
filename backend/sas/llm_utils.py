@@ -1,55 +1,62 @@
 import logging
 import json
 import asyncio
-from typing import List, Optional, Dict, Any, Type, AsyncIterator
+from typing import List, Optional, Dict, Any, Type, AsyncGenerator, AsyncIterable
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import SystemMessage, HumanMessage, BaseMessage
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import HumanMessage, BaseMessage, AIMessageChunk
+from langchain_core.runnables import RunnableGenerator
 from pydantic import BaseModel # For Type[BaseModel] for json_schema
 
 from .prompt_loader import get_filled_prompt
 
 logger = logging.getLogger(__name__)
 
+async def streaming_text_parser(chunks: AsyncIterable[AIMessageChunk]) -> AsyncGenerator[str, None]:
+    """
+    A custom parser that processes a stream of AIMessageChunk objects
+    and yields the string content of each chunk.
+    """
+    async for chunk in chunks:
+        if hasattr(chunk, 'content') and chunk.content is not None:
+            yield str(chunk.content)
+
 async def invoke_llm_for_text_output(
     llm: BaseChatModel,
     system_prompt_content: str,
     user_message_content: str,
     message_history: Optional[List[BaseMessage]] = None,
-) -> AsyncIterator[str]:
-    messages: List[BaseMessage] = [SystemMessage(content=system_prompt_content)]
+) -> AsyncGenerator[str, None]:
+    # To address the Gemini deprecation warning for SystemMessage,
+    # we use a HumanMessage to convey system-level instructions.
+    messages: List[BaseMessage] = [HumanMessage(content=system_prompt_content)]
     if message_history:
         messages.extend(message_history)
     messages.append(HumanMessage(content=user_message_content))
 
-    logger.info("Invoking LLM for raw text output (streaming enabled).")
-    
+    logger.info("Invoking LLM for raw text output.")
+
     stream_for_gemini = "gemini" in getattr(llm, 'model', '').lower()
-    stream_for_deepseek = hasattr(llm, 'streaming') and llm.streaming and "deepseek" in getattr(llm, 'model', '').lower()
+    streaming_attr = getattr(llm, 'streaming', False)
+    stream_for_deepseek = streaming_attr and "deepseek" in getattr(llm, 'model', '').lower()
     should_stream_llm = stream_for_gemini or stream_for_deepseek
 
     if should_stream_llm:
         logger.info(f"LLM UTILS: Using streaming for LLM text output (Gemini: {stream_for_gemini}, DeepSeek: {stream_for_deepseek}).")
-        chunk_count = 0
         try:
+            # Directly iterate over the stream and yield the content of each chunk.
+            # This is the most direct way and avoids type-checking issues with parsers.
             async for chunk in llm.astream(messages):
-                chunk_count += 1
-                chunk_text = ""
                 if hasattr(chunk, 'content') and chunk.content is not None:
-                    chunk_text = chunk.content
-                
-                logger.info(f"LLM UTILS STREAM CHUNK [{chunk_count}]: Type={type(chunk)}, Content='{chunk_text[:100]}...'")
-                yield chunk_text
-            logger.info(f"LLM UTILS STREAM: Finished iterating. Total chunks received: {chunk_count}")
+                    yield str(chunk.content)
         except Exception as e:
             logger.error(f"LLM streaming call for string output failed. Error: {e}", exc_info=True)
             raise
     else:
-        chain = llm | StrOutputParser()
         try:
-            ai_response_content = await chain.ainvoke(messages)
-            yield ai_response_content
+            # For non-streaming, directly invoke and yield the content as a string.
+            ai_response = await llm.ainvoke(messages)
+            yield str(ai_response.content)
         except Exception as e:
             logger.error(f"LLM call for string output (non-streaming) failed. Error: {e}", exc_info=True)
             raise
@@ -71,7 +78,7 @@ async def invoke_llm_for_json_output(
         logger.error(f"Failed to load or fill system prompt: {system_prompt_template_name}")
         return {"error": f"Failed to load or fill system prompt: {system_prompt_template_name}"}
 
-    messages: List[BaseMessage] = [SystemMessage(content=filled_system_prompt)]
+    messages: List[BaseMessage] = [HumanMessage(content=filled_system_prompt)]
     if message_history:
         messages.extend(message_history)
     messages.append(HumanMessage(content=user_message_content))

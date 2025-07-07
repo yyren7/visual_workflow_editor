@@ -301,11 +301,12 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                         sx={{ 
                           px: 0,
                           py: 0.5,
-                          borderColor: 'rgba(255, 255, 255, 0.1)'
+                          borderColor: 'rgba(255, 255, 255, 0.1)',
+                          display: 'block' // 改为block布局以便自定义内部结构
                         }}
                       >
                         {editingIndex === index ? (
-                          <Box display="flex" alignItems="center" width="100%" gap={1}>
+                          <Box display="flex" alignItems="flex-start" width="100%" gap={1}>
                             <TextField
                               fullWidth
                               multiline
@@ -318,57 +319,112 @@ export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, da
                                   color: '#fff'
                                 },
                                 '& textarea': {
-                                  overflow: 'auto !important', // 编辑文本框的滚动条
+                                  overflow: 'auto !important',
                                   resize: 'none',
                                 }
                               }}
                             />
-                            <IconButton size="small" onClick={handleSaveEdit}>
-                              <CheckIcon sx={{ fontSize: '1rem' }} />
-                            </IconButton>
-                            <IconButton size="small" onClick={handleCancelEdit}>
-                              <CloseIcon sx={{ fontSize: '1rem' }} />
-                            </IconButton>
+                            <Box display="flex" flexDirection="column" gap={0.5} sx={{ flexShrink: 0 }}>
+                              <IconButton 
+                                size="small" 
+                                onClick={handleSaveEdit}
+                                sx={{ 
+                                  color: '#4caf50',
+                                  '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.1)' }
+                                }}
+                              >
+                                <CheckIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                              <IconButton 
+                                size="small" 
+                                onClick={handleCancelEdit}
+                                sx={{ 
+                                  color: '#f44336',
+                                  '&:hover': { backgroundColor: 'rgba(244, 67, 54, 0.1)' }
+                                }}
+                              >
+                                <CloseIcon sx={{ fontSize: '1rem' }} />
+                              </IconButton>
+                            </Box>
                           </Box>
                         ) : (
-                          <>
-                            <ListItemText 
-                              primary={t('nodes.detail.stepNumber', { number: index + 1 })}
-                              secondary={detail}
-                              primaryTypographyProps={{
-                                sx: { 
+                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" width="100%">
+                            <Box sx={{ flexGrow: 1, minWidth: 0, pr: 1 }}> {/* 确保文本区域有足够空间 */}
+                              <Typography 
+                                variant="subtitle2"
+                                sx={{ 
                                   fontSize: '0.8rem',
                                   color: 'rgba(255, 255, 255, 0.8)',
-                                  fontWeight: 'bold'
-                                }
-                              }}
-                              secondaryTypographyProps={{
-                                sx: { 
+                                  fontWeight: 'bold',
+                                  mb: 0.5
+                                }}
+                              >
+                                {t('nodes.detail.stepNumber', { number: index + 1 })}
+                              </Typography>
+                              <Typography 
+                                variant="body2"
+                                sx={{ 
                                   fontSize: '0.75rem',
                                   color: 'rgba(255, 255, 255, 0.7)',
-                                  whiteSpace: 'pre-wrap'
-                                }
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word', // 确保长文本正确换行
+                                  lineHeight: 1.4
+                                }}
+                              >
+                                {detail}
+                              </Typography>
+                            </Box>
+                            <Box 
+                              display="flex" 
+                              gap={0.5} 
+                              sx={{ 
+                                flexShrink: 0,
+                                ml: 1,
+                                opacity: 0.7,
+                                transition: 'opacity 0.2s ease',
+                                '&:hover': { opacity: 1 }
                               }}
-                            />
-                            <ListItemSecondaryAction>
+                            >
                               <IconButton 
-                                edge="end" 
-                                size="small" 
+                                size="small"
                                 onClick={() => handleEditDetail(index)}
-                                sx={{ mr: 0.5 }}
+                                sx={{ 
+                                  color: '#2196f3',
+                                  backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                                  border: '1px solid rgba(33, 150, 243, 0.3)',
+                                  width: '28px',
+                                  height: '28px',
+                                  '&:hover': { 
+                                    backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                                    borderColor: 'rgba(33, 150, 243, 0.5)',
+                                    transform: 'scale(1.05)'
+                                  },
+                                  transition: 'all 0.2s ease'
+                                }}
                               >
-                                <EditIcon sx={{ fontSize: '0.9rem' }} />
+                                <EditIcon sx={{ fontSize: '0.85rem' }} />
                               </IconButton>
                               <IconButton 
-                                edge="end" 
-                                size="small" 
-                                color="error"
+                                size="small"
                                 onClick={() => handleDeleteDetail(index)}
+                                sx={{ 
+                                  color: '#f44336',
+                                  backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                                  border: '1px solid rgba(244, 67, 54, 0.3)',
+                                  width: '28px',
+                                  height: '28px',
+                                  '&:hover': { 
+                                    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                                    borderColor: 'rgba(244, 67, 54, 0.5)',
+                                    transform: 'scale(1.05)'
+                                  },
+                                  transition: 'all 0.2s ease'
+                                }}
                               >
-                                <DeleteIcon sx={{ fontSize: '0.9rem' }} />
+                                <DeleteIcon sx={{ fontSize: '0.85rem' }} />
                               </IconButton>
-                            </ListItemSecondaryAction>
-                          </>
+                            </Box>
+                          </Box>
                         )}
                       </ListItem>
                     ))}

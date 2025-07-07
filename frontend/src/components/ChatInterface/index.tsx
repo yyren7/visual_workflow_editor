@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Box } from '@mui/material';
 import { useChatData } from './useChatData';
 import { useSSEHandler } from './useSSEHandler';
@@ -121,15 +121,18 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>((
     }
   }, [activeChatId, chatList, onActiveChatChange]);
 
+  // Memoize interaction state to reduce parent re-renders
+  const interactionState = useMemo(() => ({
+    isCreatingChat: isCreatingChat,
+    canDownload: !!activeChatId && messages.length > 0,
+  }), [isCreatingChat, activeChatId, messages.length]);
+
   // Inform parent about interaction states
   useEffect(() => {
     if (onChatInteractionStateChange) {
-      onChatInteractionStateChange({
-        isCreatingChat: isCreatingChat,
-        canDownload: !!activeChatId && messages.length > 0,
-      });
+      onChatInteractionStateChange(interactionState);
     }
-  }, [isCreatingChat, activeChatId, messages, onChatInteractionStateChange]);
+  }, [interactionState, onChatInteractionStateChange]);
 
   // Auto-scroll to bottom
   useEffect(() => {

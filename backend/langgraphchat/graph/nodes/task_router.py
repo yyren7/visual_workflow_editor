@@ -197,7 +197,7 @@ async def task_router_node(state: AgentState, llm: BaseChatModel) -> dict:
                 f"Re-using preserved route: '{existing_route_decision.next_node}'."
             )
             # The 'current_user_request' (e.g., "agree") has served its purpose for this router's decision.
-            # It will be available in the state for the 'robot_flow_invoker_node' to pass to the subgraph as 'user_input'.
+            # 用户输入已保存在状态中
             # We set user_request_for_router to None in the output of *this node* because it's consumed for this routing decision.
             return {
                 "task_route_decision": existing_route_decision,

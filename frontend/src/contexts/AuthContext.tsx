@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { resetFlowState } from '../store/slices/flowSlice';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -18,6 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true); // 添加加载状态
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   // 验证token有效性的函数
   const verifyToken = async (token: string): Promise<boolean> => {
@@ -54,8 +57,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // 给组件一点时间处理退出事件 (50ms应该足够)
     setTimeout(() => {
-      console.log('移除认证token，设置为未认证状态');
+      console.log('移除认证token，重置Redux状态，设置为未认证状态');
       localStorage.removeItem('access_token');
+      dispatch(resetFlowState()); // 在这里重置状态
       setIsAuthenticated(false);
       navigate('/login', { replace: true });
     }, 50);

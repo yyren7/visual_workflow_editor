@@ -26,6 +26,7 @@ interface TaskDefinition {
   type: string;
   description?: string;
   sub_tasks?: string[];
+  details?: string[];
 }
 
 interface LangGraphTaskNodeData {
@@ -374,6 +375,22 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                   >
                     {editedTask.description}
                   </Typography>
+                )}
+                
+                {/* NEW: Render details if they exist */}
+                {data.task.details && data.task.details.length > 0 && (
+                  <Box sx={{ mt: 1, borderTop: '1px solid rgba(255,255,255,0.1)', pt: 1}}>
+                    <Typography variant="subtitle2" sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', mb: 1 }}>
+                      {t('nodes.task.moduleSteps')}
+                    </Typography>
+                    <Box sx={{ pl: 1 }}>
+                      {data.task.details.map((detail, index) => (
+                        <Typography key={index} variant="body2" sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', mb: 0.5 }}>
+                          • {detail}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </Box>
                 )}
                 
                 {editedTask.sub_tasks && editedTask.sub_tasks.length > 0 && (

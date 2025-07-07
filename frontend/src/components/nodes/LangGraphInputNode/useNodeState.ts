@@ -5,6 +5,7 @@ import { LangGraphInputNodeData, NodeState, AgentStateFlags } from './types';
 
 export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
   // Local state
+  const [isInitialized, setIsInitialized] = useState(false);
   const [input, setInput] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -29,103 +30,134 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
 
   // Derived state flags
   const getAgentStateFlags = useCallback((): AgentStateFlags => {
-    const isInReviewMode = 
-      agentState?.dialog_state === 'sas_awaiting_task_list_review' ||
-      agentState?.dialog_state === 'sas_awaiting_module_steps_review' ||
-      agentState?.dialog_state === 'sas_awaiting_task_list_revision_input' ||
-      agentState?.dialog_state === 'sas_awaiting_module_steps_revision_input';
-
-    const isInErrorState = 
-      agentState?.is_error === true ||
-      agentState?.subgraph_completion_status === 'error';
-
-    const isInXmlApprovalMode = 
-      agentState?.dialog_state === 'sas_awaiting_xml_generation_approval';
-
-    const isInProcessingMode = !isInErrorState && (
-      agentState?.dialog_state === 'generating_xml_relation' ||
-      agentState?.dialog_state === 'generating_xml_final' ||
-      agentState?.dialog_state === 'sas_step1_tasks_generated' ||
-      agentState?.dialog_state === 'sas_step2_module_steps_generated_for_review' ||
-      agentState?.dialog_state === 'sas_generating_individual_xmls' ||
-      agentState?.dialog_state === 'sas_module_steps_accepted_proceeding' ||
-      agentState?.dialog_state === 'sas_all_steps_accepted_proceed_to_xml');
-
-    const isXmlGenerationComplete = !isInErrorState && (
-      agentState?.dialog_state === 'sas_step3_completed' ||
-      (agentState?.subgraph_completion_status === 'completed_success' && 
-       agentState?.final_flow_xml_path));
-
+    if (!agentState) {
+      return {
+        isInReviewMode: false,
+        isInProcessingMode: false,
+        isXmlGenerationComplete: false,
+        isInErrorState: false,
+        isInXmlApprovalMode: false,
+      };
+    }
+    const { dialog_state, subgraph_completion_status } = agentState;
+    const isProcessing = dialog_state?.includes('generating') ||
+                         dialog_state?.includes('merging') ||
+                         dialog_state?.includes('processing');
+    
     return {
-      isInReviewMode,
-      isInErrorState,
-      isInXmlApprovalMode,
-      isInProcessingMode,
-      isXmlGenerationComplete,
+      isInReviewMode: dialog_state?.includes('review'),
+      isInProcessingMode: isProcessing,
+      isXmlGenerationComplete: subgraph_completion_status === 'completed_success' && dialog_state === 'final_xml_generated_success',
+      isInErrorState: dialog_state === 'error',
+      isInXmlApprovalMode: dialog_state === 'sas_awaiting_xml_generation_approval',
     };
   }, [agentState]);
 
   // Get processing description
   const getProcessingDescription = useCallback(() => {
-    switch (agentState?.dialog_state) {
-      case 'sas_step1_tasks_generated':
-        return '正在生成详细模块步骤...';
-      case 'sas_step2_module_steps_generated_for_review':
-        return '模块步骤已生成，准备进入下一阶段...';
-      case 'sas_generating_individual_xmls':
-        return '正在生成个体XML文件...';
-      case 'generating_xml_relation':
-        return '正在生成XML关系文件...';
-      case 'generating_xml_final':
-        return '正在生成最终XML文件...';
-      case 'sas_module_steps_accepted_proceeding':
-        return '模块步骤已确认，正在进行下一步...';
-      case 'sas_all_steps_accepted_proceed_to_xml':
-        return '所有步骤已确认，正在生成XML...';
-      default:
-        return '正在处理中...';
+    if (isProcessing && processingStage) {
+      return `Local Processing: ${processingStage}`;
     }
-  }, [agentState]);
+    
+    switch (agentState?.dialog_state) {
+      case 'generating_xml_relation':
+        return 'XML relations are being generated...';
+      case 'generating_xml_final':
+        return 'Final XML output is being generated...';
+      case 'sas_step1_tasks_generated':
+        return 'Task list has been generated, proceeding to next step...';
+      case 'sas_step2_module_steps_generated_for_review':
+        return 'Module steps generated and ready for review...';
+      case 'sas_generating_individual_xmls':
+        return 'Generating individual XML files for each task...';
+      case 'sas_module_steps_accepted_proceeding':
+        return 'Module steps accepted, proceeding to XML generation...';
+      case 'sas_all_steps_accepted_proceed_to_xml':
+        return 'All steps accepted, generating XML files...';
+      case 'sas_individual_xmls_generated_ready_for_mapping':
+        return 'Individual XMLs generated, preparing parameter mapping...';
+      case 'sas_step3_to_merge_xml':
+        return 'Merging XML files...';
+      case 'sas_merging_done_ready_for_concat':
+        return 'Concatenating final XML flow...';
+      default:
+        if (agentState?.subgraph_completion_status === 'processing') {
+          return 'Processing workflow...';
+        }
+        return agentState?.current_step_description || 'Processing task...';
+    }
+  }, [agentState, isProcessing, processingStage]);
 
   // Check if processing is stuck
   const isProcessingStuck = useCallback(() => {
-    const { isInProcessingMode } = getAgentStateFlags();
-    if (!isInProcessingMode || !agentState) return false;
+    if (!agentState) return false;
     
-    const hasRecentActivity = agentState.messages && agentState.messages.length > 0;
-    const hasStepDescription = agentState.current_step_description;
+    const now = Date.now();
+    const lastUpdate = agentState.last_updated ? new Date(agentState.last_updated).getTime() : now;
+    const timeSinceUpdate = now - lastUpdate;
     
-    return !hasRecentActivity && !hasStepDescription;
-  }, [agentState, getAgentStateFlags]);
+    const stuckStates = [
+      'generating_xml_relation',
+      'generating_xml_final',
+      'sas_generating_individual_xmls',
+      'sas_module_steps_accepted_proceeding',
+      'sas_all_steps_accepted_proceed_to_xml'
+    ];
+    
+    return stuckStates.includes(agentState.dialog_state) && timeSinceUpdate > 60000; // 60 seconds
+  }, [agentState]);
 
   // Cleanup SSE subscriptions
   const cleanupUISseSubscriptions = useCallback(() => {
-    if (uiSseUnsubscribeFnsRef.current.length > 0) {
-      console.log(`LangGraphInputNode (${id}): Cleaning up ${uiSseUnsubscribeFnsRef.current.length} UI SSE subscriptions for chat: ${operationChatId}`);
-      uiSseUnsubscribeFnsRef.current.forEach(unsub => unsub());
-      uiSseUnsubscribeFnsRef.current = [];
-    }
-  }, [id, operationChatId]);
+    uiSseUnsubscribeFnsRef.current.forEach(unsub => {
+      try {
+        unsub();
+      } catch (error) {
+        console.error(`LangGraphInputNode (${id}): Error during SSE cleanup:`, error);
+      }
+    });
+    uiSseUnsubscribeFnsRef.current = [];
+  }, [id]);
 
   // Initialize state effect
   useEffect(() => {
+    if (data.flowId && !isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [data.flowId, isInitialized]);
+  
+  // Logic update based on initialization
+  useEffect(() => {
+    if (!isInitialized) return;
+
     const { isInReviewMode, isInProcessingMode } = getAgentStateFlags();
-    
+    const hasUserRequest = !!(agentState?.current_user_request || data.currentUserRequest);
+
     if (!isEditing && !showAddForm && !isInReviewMode && !isInProcessingMode) {
       setInput(agentState?.current_user_request || data.currentUserRequest || '');
     }
 
-    if (!agentState?.current_user_request && !data.currentUserRequest && !isEditing && !isInReviewMode && !isProcessing && !isInProcessingMode) {
+    if (!hasUserRequest && !isEditing && !isInReviewMode && !isProcessing && !isInProcessingMode) {
       setShowAddForm(true);
-    } else if (agentState?.current_user_request || data.currentUserRequest) {
+    } else if (hasUserRequest) {
       if (!isEditing && !isInProcessingMode) {
         setShowAddForm(false);
       }
     }
-  }, [agentState?.current_user_request, data.currentUserRequest, isEditing, getAgentStateFlags, isProcessing]);
+  }, [
+    isInitialized,
+    agentState?.current_user_request, 
+    data.currentUserRequest, 
+    isEditing, 
+    showAddForm,
+    getAgentStateFlags, 
+    isProcessing
+  ]);
 
   // Processing state check effect
   useEffect(() => {
+    if (!isInitialized) return;
+
     const { isInProcessingMode } = getAgentStateFlags();
     
     if (isInProcessingMode && !isProcessing) {
@@ -136,7 +168,7 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
         if (currentFlags.isInProcessingMode && !isProcessing) {
           console.warn(`LangGraphInputNode (${id}): Processing state appears to be stuck for flow ${operationChatId}`);
         }
-      }, 30000);
+      }, 60000);
 
       return () => clearTimeout(stuckCheckTimer);
     }
@@ -170,6 +202,7 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
 
   return {
     // State
+    isInitialized,
     input,
     isEditing,
     showAddForm,

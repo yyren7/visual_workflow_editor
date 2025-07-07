@@ -10,7 +10,9 @@ import {
   Button,
   Chip,
   LinearProgress,
-  Paper
+  Paper,
+  CircularProgress,
+  Skeleton
 } from '@mui/material';
 import { 
   Send as SendIcon, 
@@ -36,6 +38,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   
   // Node state management
   const {
+    isInitialized,
     input,
     isEditing,
     showAddForm,
@@ -111,8 +114,41 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
         }
       }));
 
+      newUnsubs.push(subscribe(operationChatId, 'tool_end', (eventData) => {
+        if (eventData && typeof eventData === 'object' && eventData.name) {
+          setProcessingStage(`Tool Finished: ${eventData.name}`);
+        }
+      }));
+
+      newUnsubs.push(subscribe(operationChatId, 'error', (eventData) => {
+        console.error(`LangGraphInputNode (${id}): Received error event:`, eventData);
+        const errorMessage = eventData?.message || 'An error occurred during processing';
+        setErrorMessage(errorMessage);
+        setIsProcessing(false);
+        setProcessingStage('Error');
+        cleanupUISseSubscriptions();
+      }));
+
+      newUnsubs.push(subscribe(operationChatId, 'connection_error', (eventData) => {
+        console.error(`LangGraphInputNode (${id}): SSE Connection Error:`, eventData);
+        setErrorMessage('Connection error with event stream. Please try again.');
+        setIsProcessing(false);
+        setProcessingStage('Connection Error');
+        cleanupUISseSubscriptions();
+      }));
+      
+      newUnsubs.push(subscribe(operationChatId, 'server_error_event', (eventData) => {
+        console.error(`LangGraphInputNode (${id}): SSE Server Error Event:`, eventData);
+        const message = eventData?.message || 'A server error occurred';
+        setErrorMessage(message);
+        setIsProcessing(false);
+        setProcessingStage('Server Error');
+        cleanupUISseSubscriptions();
+      }));
+
       newUnsubs.push(subscribe(operationChatId, 'stream_end', () => {
         setProcessingStage(prev => prev.includes('Error') ? prev : 'Processing Complete');
+        setIsProcessing(false);
       }));
 
       uiSseUnsubscribeFnsRef.current = newUnsubs;
@@ -173,8 +209,8 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setErrorMessage(null);
   }, [getAgentStateFlags, setInput, setShowAddForm, setIsEditing, cleanupUISseSubscriptions, setStreamingContent, setProcessingStage, setErrorMessage]);
 
-  // Event prevention
-  const stopPropagation = (e: React.WheelEvent | React.MouseEvent) => e.stopPropagation();
+  // Event prevention - only for wheel events when selected
+  const stopWheelPropagation = (e: React.WheelEvent) => e.stopPropagation();
 
   // UI state
   const { isInReviewMode, isInErrorState, isInXmlApprovalMode, isInProcessingMode, isXmlGenerationComplete } = getAgentStateFlags();
@@ -204,6 +240,38 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     return data.label || t('nodes.input.userInput');
   };
 
+  // 如果尚未初始化，则显示一个占位符
+  if (!isInitialized) {
+    return (
+      <Card sx={{ 
+        width: 600, 
+        minHeight: 200,
+        backgroundColor: cardBackgroundColor, 
+        border: selected ? '2px solid #76a9fa' : '2px solid #4a5568',
+        borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        p: 2,
+        boxSizing: 'border-box'
+      }}>
+        {/* Handles to prevent React Flow warnings */}
+        <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+        <Handle type="source" position={Position.Bottom} style={{ background: '#555' }} />
+        
+        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Skeleton variant="text" sx={{ fontSize: '1rem', width: '40%', bgcolor: 'grey.700' }} />
+          <Skeleton variant="rounded" width={60} height={20} sx={{ bgcolor: 'grey.700', borderRadius: '16px' }} />
+        </Box>
+
+        <Skeleton variant="rounded" sx={{ flexGrow: 1, bgcolor: 'grey.700', mb: 2, borderRadius: 1 }} />
+
+        <Box display="flex" justifyContent="flex-start" gap={1}>
+          <Skeleton variant="rounded" width={80} height={32} sx={{ bgcolor: 'grey.700', borderRadius: 1 }} />
+        </Box>
+      </Card>
+    );
+  }
+
   return (
     <Card 
       ref={cardRef}
@@ -229,7 +297,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           '100%': { transform: 'rotate(360deg)' }
         }
       }}
-      onWheelCapture={stopPropagation}
+      onWheelCapture={selected ? stopWheelPropagation : undefined}
     >
       <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
       
@@ -335,7 +403,18 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   {t('nodes.input.taskProcessingError')}
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ color: '#ffcdd2', fontSize: '0.85rem', mb: 1 }}>
+              <Typography 
+                variant="body2" 
+                component="pre"
+                sx={{ 
+                  color: '#ffcdd2', 
+                  fontSize: '0.85rem', 
+                  mb: 1,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  fontFamily: 'inherit'
+                }}
+              >
                 {agentState?.error_message || t('nodes.input.taskProcessingErrorDesc')}
               </Typography>
               <Typography variant="caption" sx={{ color: '#ffab91', fontSize: '0.75rem', display: 'block', mb: 1 }}>

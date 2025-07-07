@@ -39,7 +39,7 @@ Expected Output:
 ["Step 1 for Example_Task", "Step 2 for Example_Task"]
 """
 
-async def _send_task_progress_event(chat_id: str, task_index: int, task_name: str, status: str, details: str = None):
+async def _send_task_progress_event(chat_id: str, task_index: int, task_name: str, status: str, details: Optional[str] = None):
     """发送任务进度事件到前端，匹配前端TaskNode期望的事件格式"""
     if EVENT_BROADCASTER_AVAILABLE and chat_id:
         try:
@@ -74,7 +74,7 @@ async def _send_task_progress_event(chat_id: str, task_index: int, task_name: st
         except Exception as e:
             logger.warning(f"[TASK_PROGRESS] 发送进度事件失败: {e}")
 
-async def _send_step_overall_event(chat_id: str, status: str, details: str = None):
+async def _send_step_overall_event(chat_id: str, status: str, details: Optional[str] = None):
     """发送SAS Step 2整体进度事件"""
     if EVENT_BROADCASTER_AVAILABLE and chat_id:
         try:
@@ -175,25 +175,24 @@ async def _generate_steps_for_single_task_async(
     llm: BaseChatModel,
     available_blocks_markdown: str,
     node_index: int, # For logging
-    chat_id: str = None  # 新增: 用于发送进度事件
+    chat_id: Optional[str] = None  # 新增: 用于发送进度事件
 ) -> Tuple[str, List[str], Optional[str]]: # Returns (task_name, list_of_details, error_message_or_none)
     task_name = getattr(task_def, 'name', f"Unnamed Task {node_index+1}")
     task_type = getattr(task_def, 'type', 'UnknownType')
 
     # 发送开始处理事件
-    await _send_task_progress_event(chat_id, node_index, task_name, "processing", f"开始为任务 '{task_name}' (类型: {task_type}) 生成模块步骤")
+    if chat_id:
+        await _send_task_progress_event(chat_id, node_index, task_name, "processing", f"开始为任务 '{task_name}' (类型: {task_type}) 生成模块步骤")
 
     prompt_file_name = f"step2_{task_type.lower()}_prompt_en.md"
     prompt_file_path = STEP2_PROMPT_DIR / prompt_file_name
     
-    base_prompt_template: str
+    base_prompt_template: Optional[str] = None
     if prompt_file_path.exists():
         base_prompt_template = load_raw_prompt_file(str(prompt_file_path))
-        if not base_prompt_template:
-            logger.error(f"Failed to load SAS Step 2 prompt file: {prompt_file_path} for task type '{task_type}'. Using fallback.")
-            base_prompt_template = DEFAULT_FALLBACK_PROMPT_TEXT
-    else:
-        logger.warning(f"Prompt file not found: {prompt_file_path} for task type '{task_type}'. Using fallback.")
+
+    if not base_prompt_template:
+        logger.warning(f"Prompt file not found or empty: {prompt_file_path} for task type '{task_type}'. Using fallback.")
         base_prompt_template = DEFAULT_FALLBACK_PROMPT_TEXT
 
     if not getattr(task_def, 'description', None):
@@ -249,7 +248,8 @@ CRITICAL REQUIREMENTS:
         if isinstance(parsed_details, list) and all(isinstance(s, str) for s in parsed_details):
             logger.info(f"SAS Step 2 LLM call successful for task '{task_name}'. {len(parsed_details)} module steps generated.")
             # 发送成功完成事件
-            await _send_task_progress_event(chat_id, node_index, task_name, "completed", f"成功生成 {len(parsed_details)} 个模块步骤")
+            if chat_id:
+                await _send_task_progress_event(chat_id, node_index, task_name, "completed", f"成功生成 {len(parsed_details)} 个模块步骤")
             return task_name, parsed_details, None
         else:
             raise ValueError("Parsed JSON is not a list of strings.")
@@ -258,7 +258,8 @@ CRITICAL REQUIREMENTS:
         error_msg = f"Error processing task '{task_name}': {e}. Raw LLM output hint: {llm_response_content[:200]}..."
         logger.error(error_msg, exc_info=True)
         # 发送错误事件
-        await _send_task_progress_event(chat_id, node_index, task_name, "error", f"处理失败: {str(e)[:100]}")
+        if chat_id:
+            await _send_task_progress_event(chat_id, node_index, task_name, "error", f"处理失败: {str(e)[:100]}")
         return task_name, [f"Error: Could not generate module steps. Details: {str(e)[:100]}"], error_msg
 
 async def process_description_to_module_steps_node(state: RobotFlowAgentState, llm: BaseChatModel) -> Dict[str, Any]:
@@ -286,11 +287,12 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         state.is_error = True
         state.error_message = "Task list from SAS Step 1 is missing."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state.dict(exclude_none=True)
 
     # 发送Step 2开始事件
-    await _send_step_overall_event(chat_id, "processing", f"开始并行处理 {len(state.sas_step1_generated_tasks)} 个任务的模块步骤生成")
+    if chat_id:
+        await _send_step_overall_event(chat_id, "processing", f"开始并行处理 {len(state.sas_step1_generated_tasks)} 个任务的模块步骤生成")
 
     node_descriptions = load_node_descriptions()
     available_blocks_markdown = _generate_available_blocks_markdown(node_descriptions)
@@ -308,7 +310,7 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
                 llm=llm,
                 available_blocks_markdown=available_blocks_markdown,
                 node_index=i,
-                chat_id=chat_id  # 传递chat_id用于进度事件
+                chat_id=chat_id
             )
         )
 
@@ -336,7 +338,7 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
             task_status = "failure"
             task_error_message = str(result_or_exception)
             failed_tasks += 1
-        else:
+        elif isinstance(result_or_exception, tuple):
             _processed_task_name, processed_details, individual_task_error_msg = result_or_exception
             task_def_to_update.details = processed_details
             if individual_task_error_msg:
@@ -350,21 +352,32 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
                 all_generated_module_steps_for_logging.append(f"### Module Steps for Task: {task_name_for_log} (Type: {task_type_for_log})\\n{json.dumps(processed_details, indent=2)}")
                 logger.info(f"Successfully processed and updated details for task '{task_name_for_log}'.")
                 successful_tasks += 1
+        else:
+            # Handle cases where the result is not an exception or the expected tuple
+            error_msg = f"Unexpected result type for task '{task_name_for_log}': {type(result_or_exception)}"
+            logger.error(error_msg)
+            task_def_to_update.details = [f"Error: Unexpected result type during processing."]
+            aggregate_error_messages.append(f"Error for {task_name_for_log}: Unexpected result type.")
+            state.is_error = True
+            task_status = "failure"
+            task_error_message = "Unexpected result type."
+            failed_tasks += 1
         
         # SSE事件现在通过外部SSE处理器发送，不再通过状态队列
         logger.info(f"[SAS Step 2] 任务 {i} ({task_name_for_log}) 处理完成，状态: {task_status}")
 
     # 发送Step 2完成汇总事件
-    completion_status = "completed" if not state.is_error else "error"
+    completion_status_event = "completed" if not state.is_error else "error"
     completion_details = f"并行处理完成: {successful_tasks} 个任务成功, {failed_tasks} 个任务失败"
-    await _send_step_overall_event(chat_id, completion_status, completion_details)
+    if chat_id:
+        await _send_step_overall_event(chat_id, completion_status_event, completion_details)
 
     if state.is_error:
         final_error_detail = "; ".join(aggregate_error_messages) if aggregate_error_messages else "Unknown error during parallel module step generation."
         state.error_message = f"SAS Step 2 encountered errors: {final_error_detail}"
         logger.error(state.error_message)
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         if not any(state.error_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
     else:
@@ -394,7 +407,7 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         )
         if not any(review_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=review_message)]
-        state.subgraph_completion_status = "completed_partial"
+        state.completion_status = "completed_partial"
         
     logger.info(f"    Final state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
     return state.dict(exclude_none=True) 

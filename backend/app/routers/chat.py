@@ -803,14 +803,7 @@ async def _process_and_publish_chat_events(
                         else:
                             logger.debug(f"[Chat {chat_id}] 🎯 SAS子图结束但无重要状态: {run_name}, keys: {list(outputs_from_chain.keys())}")
                     
-                    elif "robot_flow_invoker" in run_name.lower() and isinstance(outputs_from_chain, dict):
-                        if "sas_planner_subgraph_state" in outputs_from_chain:
-                            should_sync = True
-                            sync_reason = f"机器人流程节点完成 (run_name: {run_name})"
-                            final_state = outputs_from_chain
-                            logger.info(f"[Chat {chat_id}] 🎯 触发条件3: 机器人流程节点完成")
-                        else:
-                            logger.debug(f"[Chat {chat_id}] 🎯 机器人流程节点结束但无子图状态: {run_name}")
+                    # 删除了robot_flow_invoker相关的处理逻辑
                     
                     if not should_sync:
                         logger.debug(f"[Chat {chat_id}] 🎯 Chain End不满足同步条件: run_name='{run_name}', graph_name='{compiled_graph.name}', is_dict={isinstance(outputs_from_chain, dict)}")
@@ -1043,62 +1036,14 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
                     update_types.append(field)
                     needs_sync = True
         
-        sas_subgraph_state = final_state.get('sas_planner_subgraph_state')
-        if sas_subgraph_state and isinstance(sas_subgraph_state, dict):
-            logger.info(f"[Flow {flow_id}] 🎯 发现SAS子图状态，开始提取数据...")
-            logger.debug(f"[Flow {flow_id}] 🎯 SAS子图状态键值: {list(sas_subgraph_state.keys())}")
-            
-            sas_important_fields = [
-                'sas_step1_generated_tasks',
-                'sas_step2_generated_task_details',
-                'sas_step2_module_steps',
-                'task_list_accepted',
-                'module_steps_accepted',
-                'dialog_state',
-                'subgraph_completion_status',
-                'current_user_request',
-                'revision_iteration'
-            ]
-            
-            for field in sas_important_fields:
-                if field in sas_subgraph_state:
-                    current_value = current_agent_state.get(field)
-                    new_value = sas_subgraph_state[field]
-                    if current_value != new_value:
-                        current_value_str_sas = str(current_value)[:50] + ('...' if len(str(current_value)) > 50 else '')
-                        new_value_str_sas = str(new_value)[:50] + ('...' if len(str(new_value)) > 50 else '')
-                        logger.info(f"[Flow {flow_id}] 🎯 从SAS子图检测到{field}变化: {current_value_str_sas} -> {new_value_str_sas}")
-                        sync_updates[field] = new_value
-                        update_types.append(f"sas_{field}")
-                        needs_sync = True
-            
-            sas_tasks = sas_subgraph_state.get('sas_step1_generated_tasks')
-            if sas_tasks:
-                logger.info(f"[Flow {flow_id}] 🎯 SAS子图包含 {len(sas_tasks)} 个任务:")
-                for i, task in enumerate(sas_tasks):
-                    if isinstance(task, dict):
-                        logger.debug(f"[Flow {flow_id}] 🎯   任务{i+1}: {task.get('name', 'Unknown')} (类型: {task.get('type', 'Unknown')})")
-                    else:
-                        logger.debug(f"[Flow {flow_id}] 🎯   任务{i+1}: {task}")
-            
-            sas_details = sas_subgraph_state.get('sas_step2_generated_task_details')
-            if sas_details:
-                logger.info(f"[Flow {flow_id}] SAS子图包含任务详情: {len(sas_details)} 项")
-                for task_key, details in sas_details.items():
-                    if isinstance(details, dict) and 'details' in details:
-                        detail_count = len(details['details']) if isinstance(details['details'], list) else 1
-                        logger.debug(f"[Flow {flow_id}] 🎯   {task_key}: {detail_count} 个详情")
-        
         has_task_data = (
             sync_updates.get('sas_step1_generated_tasks') or 
-            current_agent_state.get('sas_step1_generated_tasks') or
-            (sas_subgraph_state and sas_subgraph_state.get('sas_step1_generated_tasks'))
+            current_agent_state.get('sas_step1_generated_tasks')
         )
         
         has_detail_data = (
             sync_updates.get('sas_step2_generated_task_details') or
-            current_agent_state.get('sas_step2_generated_task_details') or
-            (sas_subgraph_state and sas_subgraph_state.get('sas_step2_generated_task_details'))
+            current_agent_state.get('sas_step2_generated_task_details')
         )
         
         needs_frontend_update = has_task_data or has_detail_data

@@ -8,12 +8,11 @@ case "$1" in
   frontend)
     cd /workspace/frontend
     echo "启动前端开发服务器..."
-    PORT=3001 npm start
+    npm start
     ;;
   backend)
     cd /workspace
     echo "启动后端开发服务器..."
-    export PYTHONDONTWRITEBYTECODE=1
     python3 backend/run_backend.py
     ;;
   logs)
@@ -36,12 +35,11 @@ case "$1" in
     
     # 创建前端 tmux 会话
     cd /workspace/frontend
-    tmux new-session -d -s frontend 'PORT=3001 npm start | tee /workspace/logs/frontend.log; read'
+    tmux new-session -d -s frontend 'npm start | tee /workspace/logs/frontend.log; read'
     echo "前端服务已在 tmux 会话 'frontend' 中启动"
     
     # 创建后端 tmux 会话
     cd /workspace
-    export PYTHONDONTWRITEBYTECODE=1
     tmux new-session -d -s backend 'python3 backend/run_backend.py | tee /workspace/logs/backend.log; read'
     echo "后端服务已在 tmux 会话 'backend' 中启动"
     

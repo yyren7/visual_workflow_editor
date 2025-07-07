@@ -91,7 +91,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: Any = None
         logger.warning("Parsed flow steps are missing. Generating a single empty relation XML.")
         empty_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
         state.relation_xml_content = empty_xml_content
-        state.relation_xml_path = None # Path will be set if file is successfully written
+        state.relation_xml_path = "" # Path will be set if file is successfully written
 
         output_dir = Path(config.get("OUTPUT_DIR_PATH", "/tmp"))
         # This will be the name for the single empty XML if parsed_flow_steps is empty.
@@ -110,7 +110,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: Any = None
             state.is_error = True
             state.error_message = f"Failed to write empty relation XML: {e}"
             state.dialog_state = "error"
-            state.subgraph_completion_status = "error"
+            state.completion_status = "error"
             # Error state will be returned at the end of the function
     else:
         num_tasks = len(parsed_flow_steps)
@@ -262,25 +262,25 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: Any = None
                 state.is_error = True
                 state.error_message = f"Failed to write relation XML for task '{task_name}': {e}"
                 state.dialog_state = "error"
-                state.subgraph_completion_status = "error"
+                state.completion_status = "error"
                 return state # Exit immediately if a file write fails in the loop
         
         if not processed_at_least_one_file_successfully and parsed_flow_steps:
              logger.warning("Loop over tasks completed, but no files were successfully processed/written.")
              # Set to default empty if no file was processed, even if there were tasks
              state.relation_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
-             state.relation_xml_path = None
+             state.relation_xml_path = ""
 
     # Final state updates based on whether an error occurred anywhere
     if not state.is_error: 
         state.dialog_state = "generating_xml_final"
-        state.subgraph_completion_status = None # Explicitly None if no error
+        state.completion_status = None # Explicitly None if no error
     else:
-        # Ensure dialog_state and subgraph_completion_status reflect error if not already set by specific error points
+        # Ensure dialog_state and completion_status reflect error if not already set by specific error points
         if state.dialog_state != "error": # Avoid overwriting more specific error states if already set
              state.dialog_state = "error"
-        if state.subgraph_completion_status != "error":
-             state.subgraph_completion_status = "error"
+        if state.completion_status != "error":
+             state.completion_status = "error"
              
     return state 
 
@@ -298,7 +298,7 @@ if __name__ == "__main__":
             self.is_error: bool = False
             self.error_message: Optional[str] = None
             self.dialog_state: Optional[str] = None
-            self.subgraph_completion_status: Optional[str] = None
+            self.completion_status: Optional[str] = None
             self.relation_xml_content: Optional[str] = None 
             self.relation_xml_path: Optional[str] = None    
             # The field 'self.generated_relation_files' is intentionally removed here.
@@ -397,7 +397,7 @@ if __name__ == "__main__":
 
         logger.info(f"Starting test run for generate_relation_xml_node (multi-task file output) with {len(initial_state.parsed_flow_steps)} task(s) queued...")
         
-        final_state = await generate_relation_xml_node(initial_state)
+        final_state = await generate_relation_xml_node(initial_state) # type: ignore
 
         if final_state.is_error:
             logger.error(f"Test run failed. Error: {final_state.error_message}")

@@ -47,6 +47,11 @@ class RobotFlowAgentState(BaseModel):
         "sas_step2_module_steps_generated_for_review", # Step 2 (process_to_module_steps) completed, awaiting review.
         "sas_step3_completed",                     # Step 3 (parameter_mapping) completed successfully.
 
+        # --- Custom Processing States ---
+        "sas_processing_user_input",               # System is processing the initial user request.
+        "sas_tasks_accepted_processing",           # System is processing after user accepted the task list.
+        "sas_modules_accepted_processing",         # System is processing after user accepted the module steps.
+        
         # --- Review & Refine States ---
         "sas_awaiting_task_list_review",           # System has presented the task list and is awaiting user acceptance or feedback.
         "sas_awaiting_module_steps_review",        # System has presented the module steps and is awaiting user acceptance or feedback.
@@ -56,10 +61,22 @@ class RobotFlowAgentState(BaseModel):
         # --- Routing States (internal signals for graph transitions) ---
         "sas_module_steps_accepted_proceeding",    # User accepted module steps, proceeding to the next phase (e.g., parameter mapping).
         "sas_all_steps_accepted_proceed_to_xml",   # User accepted all reviewable steps, proceeding to XML generation.
+        "sas_step3_to_merge_xml",                  # Internal state indicating transition from step 3 to XML merging.
+        "sas_merging_completed",                   # State after sas_merge_xml_node completes successfully.
+        "sas_merging_completed_no_files",          # State after sas_merge_xml_node completes but finds no files to merge.
+        "sas_merging_done_ready_for_concat",       # State indicating merging is done and ready for concatenation.
         
         # --- XML Generation States ---
         "generating_xml_relation",                 # Process is currently generating the relation XML.
-        "generating_xml_final"                     # Process is currently generating the final merged XML.
+        "generating_xml_final",                    # Process is currently generating the final merged XML.
+        "final_xml_generated_success",             # Final XML has been generated and saved successfully.
+        "sas_generating_individual_xmls",          # State indicating the process is generating individual XML files.
+        "sas_individual_xmls_generated_ready_for_mapping", # State after individual XMLs are generated, ready for parameter mapping.
+        "sas_xml_generation_approved",             # User has approved to proceed with XML generation.
+        "sas_awaiting_xml_generation_approval",    # Waiting for user approval to start XML generation.
+
+        # --- Error/Fallback States ---
+        "sas_processing_error"                     # A specific error state for XML processing nodes.
 
     ]] = Field("initial", description="The current detailed state of the dialog within the robot flow subgraph.")
     
@@ -107,7 +124,7 @@ class RobotFlowAgentState(BaseModel):
 
     language: str = Field("zh", description="The language setting for user interactions, e.g., 'zh' or 'en'.")
 
-    subgraph_completion_status: Optional[Literal["completed_success", "completed_partial", "needs_clarification", "error"]] = Field(None, description="Indicates how the robot_flow_subgraph concluded its execution for the current call.")
+    completion_status: Optional[Literal["completed_success", "completed_partial", "needs_clarification", "error", "processing"]] = Field(None, description="Indicates how the graph concluded its execution for the current call.")
 
     merged_xml_file_paths: Optional[List[str]] = Field(default_factory=list, description="Paths to XML files after merging individual task XMLs.")
 

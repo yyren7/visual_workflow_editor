@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
-import { updateAgentState, selectCurrentFlowId, selectAgentState, fetchFlowById, setActiveLangGraphStreamFlowId } from '../store/slices/flowSlice';
+import { updateAgentState, selectCurrentFlowId, selectAgentState, fetchFlowById, setActiveLangGraphStreamFlowId, setProcessingStatus } from '../store/slices/flowSlice';
 import { updateLangGraphState } from '../api/langgraphApi';
 import { chatApi } from '../api/chatApi';
 import { debounce } from 'lodash';
@@ -175,11 +175,11 @@ export const useAgentStateSync = () => {
                 // 暂时先在控制台显示，后续可以扩展到UI组件
               }
             } else if (eventType === 'stream_end') {
-              console.log(`[AGENT_SYNC_LOG] SSE stream_end for chat ${finalChatIdForSSE}. Data:`, eventData);
-              if (isActiveStream) {
-                console.log(`[AGENT_SYNC_LOG] Main stream ${finalChatIdForSSE} ended. Cleaning up subscriptions.`);
-                cleanupSseSubscriptions();
-              }
+              // This is a critical change: A 'stream_end' often signifies the end of just one step in the graph,
+              // not the entire run. Cleaning up subscriptions here would cause us to miss subsequent events,
+              // especially the final state update after a user interaction pause.
+              // The connection will be cleaned up on component unmount or when a new chat stream is initiated for a different ID.
+              console.log(`[AGENT_SYNC_LOG] Intermediate stream_end received for chat ${finalChatIdForSSE}, keeping connection open for further events. Data:`, eventData);
             } else if (eventType === 'connection_error' || eventType === 'server_error_event') {
               console.error(`[AGENT_SYNC_LOG] SSE ${eventType} for chat ${finalChatIdForSSE}. Data:`, eventData);
               if (isActiveStream) { 
@@ -214,7 +214,7 @@ export const useAgentStateSync = () => {
   }, [currentFlowId, dispatch, subscribe, cleanupSseSubscriptions, closeSseConnection]);
 
   const updateUserInput = useCallback(async (content: string, taskIndex?: number, detailIndex?: number) => {
-    dispatch(updateAgentState({ current_user_request: content })); 
+    dispatch(setProcessingStatus(true));
     await startLangGraphProcessing(content, taskIndex, detailIndex);
   }, [dispatch, startLangGraphProcessing]);
 
