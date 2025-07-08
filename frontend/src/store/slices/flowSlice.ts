@@ -9,7 +9,11 @@ interface FlowState {
   flowName: string | null; // 可以为 null
   nodes: Node<NodeData>[] | null; // 可以为 null
   edges: Edge[] | null; // 可以为 null
-  agentState: any | null; // 可以为 null
+  agentState: {
+    streamingContent?: string;
+    processingStage?: string;
+    [key: string]: any;
+  } | null;
   isLoading: boolean;
   error: string | null;
   isSaving: boolean;
@@ -169,11 +173,31 @@ const flowSlice = createSlice({
         state.flowName = action.payload;
     },
     updateAgentState: (state: FlowState, action: PayloadAction<any>) => {
+        const newState = action.payload;
         if (state.agentState) {
-            state.agentState = { ...state.agentState, ...action.payload };
+            state.agentState = { ...state.agentState, ...newState };
         } else {
-            state.agentState = action.payload;
+            state.agentState = newState;
         }
+        // 当主要状态更新时，重置流式内容，为下一次流式输出做准备
+        if (state.agentState) {
+          state.agentState.streamingContent = '';
+        }
+    },
+    appendStreamingContent: (state: FlowState, action: PayloadAction<string>) => {
+      if (state.agentState) {
+        if (!state.agentState.streamingContent) {
+          state.agentState.streamingContent = '';
+        }
+        state.agentState.streamingContent += action.payload;
+      }
+    },
+    setProcessingStage: (state: FlowState, action: PayloadAction<string>) => {
+      if (state.agentState) {
+        state.agentState.processingStage = action.payload;
+      } else {
+        state.agentState = { processingStage: action.payload };
+      }
     },
     selectNode: (state: FlowState, action: PayloadAction<string>) => {
       if (!state.nodes) return;
@@ -290,6 +314,8 @@ export const {
     updateNodeData,
     setFlowName,
     updateAgentState,
+    appendStreamingContent,
+    setProcessingStage,
     selectNode,
     deselectAllNodes,
     deleteNode,

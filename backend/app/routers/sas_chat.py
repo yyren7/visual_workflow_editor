@@ -215,15 +215,28 @@ async def _process_sas_events(
         # Prepare graph input, merging initial state values.
         # This ensures the graph starts with a clean, correct state for this run.
         logger.info(f"[SAS Chat {chat_id}] Preparing initial state for graph execution.")
+        
+        # 🔧 获取当前持久化状态，避免不必要的重置
+        current_persistent_state = {}
+        try:
+            config = {"configurable": {"thread_id": chat_id}}
+            current_state_snapshot = await sas_app.aget_state(config)
+            if current_state_snapshot and hasattr(current_state_snapshot, 'values') and current_state_snapshot.values:
+                current_persistent_state = current_state_snapshot.values
+                logger.info(f"[SAS Chat {chat_id}] 获取到持久化状态，task_list_accepted: {current_persistent_state.get('task_list_accepted', False)}, module_steps_accepted: {current_persistent_state.get('module_steps_accepted', False)}")
+        except Exception as state_get_error:
+            logger.warning(f"[SAS Chat {chat_id}] 获取持久化状态失败，将使用默认值: {state_get_error}")
+        
+        # 🔧 根据当前持久化状态设置初始值，避免不正确的重置
         graph_input = {
             "dialog_state": "sas_processing_user_input",
             "current_step_description": "Processing your request...",
             "current_user_request": message_content,
-            "task_list_accepted": False,
-            "module_steps_accepted": False,
-            "revision_iteration": 0,
-            "sas_step1_generated_tasks": [],
-            "sas_step2_module_steps": "",
+            "task_list_accepted": current_persistent_state.get("task_list_accepted", False),      # 🔧 保留持久化状态
+            "module_steps_accepted": current_persistent_state.get("module_steps_accepted", False), # 🔧 保留持久化状态
+            "revision_iteration": current_persistent_state.get("revision_iteration", 0),
+            "sas_step1_generated_tasks": current_persistent_state.get("sas_step1_generated_tasks", []),
+            "sas_step2_module_steps": current_persistent_state.get("sas_step2_module_steps", ""),
             "clarification_question": "",
             "user_input": message_content, # Pass the input through
             "current_chat_id": chat_id,  # For progress events
@@ -239,6 +252,28 @@ async def _process_sas_events(
             graph_input["dialog_state"] = "sas_modules_accepted_processing"
             graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
             graph_input["module_steps_accepted"] = True
+        elif message_content == "accept":
+            # 新增：处理通用的"accept"指令，根据当前状态判断是哪种accept
+            # 🔧 使用已获取的持久化状态，避免重复查询造成的竞态条件
+            current_dialog_state = current_persistent_state.get('dialog_state')
+            
+            logger.info(f"[SAS Chat {chat_id}] 收到通用accept指令，当前状态: {current_dialog_state}")
+            
+            if current_dialog_state == 'sas_awaiting_task_list_review':
+                # 在任务列表审核阶段，转换为任务接受
+                graph_input["dialog_state"] = "sas_tasks_accepted_processing"
+                graph_input["current_step_description"] = "Tasks approved. Generating module steps..."
+                graph_input["task_list_accepted"] = True
+                logger.info(f"[SAS Chat {chat_id}] 通用accept解释为任务列表接受")
+            elif current_dialog_state == 'sas_awaiting_module_steps_review':
+                # 在模块步骤审核阶段，转换为模块步骤接受
+                graph_input["dialog_state"] = "sas_modules_accepted_processing"
+                graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
+                graph_input["module_steps_accepted"] = True
+                logger.info(f"[SAS Chat {chat_id}] 通用accept解释为模块步骤接受")
+            else:
+                # 如果不在预期的审核状态，按普通用户输入处理
+                logger.warning(f"[SAS Chat {chat_id}] 收到accept但当前状态不是审核状态: {current_dialog_state}")
 
         config = {"configurable": {"thread_id": chat_id}}
         
@@ -424,7 +459,8 @@ async def sas_chat_events_post(
     
     async def event_generator():
         try:
-            yield f"data: {json.dumps({'event': 'start', 'run_id': chat_id})}\n\n"
+            # 🔧 修复：使用标准SSE格式发送起始事件
+            yield f"event: start\ndata: {json.dumps({'run_id': chat_id})}\n\n"
             
             # Get or create event queue for this chat
             event_queue = await event_broadcaster.get_or_create_queue(chat_id)
@@ -436,26 +472,32 @@ async def sas_chat_events_post(
                     
                     if event_item.get("type") == "stream_end":
                         logger.info(f"[SAS Events {chat_id}] Received stream end")
-                        yield f"data: {json.dumps(event_item)}\n\n"
+                        # 🔧 修复：使用标准SSE格式
+                        yield f"event: stream_end\ndata: {json.dumps(event_item.get('data', {}))}\n\n"
                         break
                     
-                    # Send the event to frontend
-                    yield f"data: {json.dumps(event_item)}\n\n"
+                    # 🔧 修复：使用标准SSE格式发送事件
+                    event_type = event_item.get("type", "message")
+                    event_data = event_item.get("data", {})
+                    logger.debug(f"[SAS Events {chat_id}] Sending event '{event_type}' with data: {str(event_data)[:100]}...")
+                    yield f"event: {event_type}\ndata: {json.dumps(event_data)}\n\n"
                         
                 except asyncio.TimeoutError:
                     logger.debug(f"[SAS Events {chat_id}] SSE timeout, sending ping")
-                    yield f"data: {json.dumps({'event': 'ping', 'data': {'timestamp': time.time()}})}\n\n"
+                    # 🔧 修复：使用标准SSE格式发送ping
+                    yield f"event: ping\ndata: {json.dumps({'timestamp': time.time()})}\n\n"
                     continue
                         
         except Exception as stream_exc:
             logger.error(f"[SAS Events {chat_id}] SSE流错误: {stream_exc}", exc_info=True)
-            error_data = {"event": "error", "data": {"error": str(stream_exc)}}
-            yield f"data: {json.dumps(error_data)}\n\n"
+            # 🔧 修复：使用标准SSE格式发送错误
+            yield f"event: error\ndata: {json.dumps({'error': str(stream_exc)})}\n\n"
         finally:
             logger.info(f"[SAS Events {chat_id}] SSE事件流结束")
             # Unregister connection when SSE ends
             event_broadcaster.unregister_connection(chat_id)
-            yield f"data: {json.dumps({'event': 'end'})}\n\n"
+            # 🔧 修复：使用标准SSE格式发送结束事件
+            yield f"event: end\ndata: {json.dumps({})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
@@ -476,7 +518,8 @@ async def sas_chat_events_get(
     
     async def event_generator():
         try:
-            yield f"data: {json.dumps({'event': 'start', 'run_id': chat_id})}\n\n"
+            # 🔧 修复：使用标准SSE格式发送起始事件
+            yield f"event: start\ndata: {json.dumps({'run_id': chat_id})}\n\n"
             
             # Get or create event queue for this chat
             event_queue = await event_broadcaster.get_or_create_queue(chat_id)
@@ -488,26 +531,32 @@ async def sas_chat_events_get(
                     
                     if event_item.get("type") == "stream_end":
                         logger.info(f"[SAS Events {chat_id}] Received stream end")
-                        yield f"data: {json.dumps(event_item)}\n\n"
+                        # 🔧 修复：使用标准SSE格式
+                        yield f"event: stream_end\ndata: {json.dumps(event_item.get('data', {}))}\n\n"
                         break
                     
-                    # Send the event to frontend
-                    yield f"data: {json.dumps(event_item)}\n\n"
+                    # 🔧 修复：使用标准SSE格式发送事件
+                    event_type = event_item.get("type", "message")
+                    event_data = event_item.get("data", {})
+                    logger.debug(f"[SAS Events {chat_id}] Sending event '{event_type}' with data: {str(event_data)[:100]}...")
+                    yield f"event: {event_type}\ndata: {json.dumps(event_data)}\n\n"
                         
                 except asyncio.TimeoutError:
                     logger.debug(f"[SAS Events {chat_id}] SSE timeout, sending ping")
-                    yield f"data: {json.dumps({'event': 'ping', 'data': {'timestamp': time.time()}})}\n\n"
+                    # 🔧 修复：使用标准SSE格式发送ping
+                    yield f"event: ping\ndata: {json.dumps({'timestamp': time.time()})}\n\n"
                     continue
                         
         except Exception as stream_exc:
             logger.error(f"[SAS Events {chat_id}] SSE流错误: {stream_exc}", exc_info=True)
-            error_data = {"event": "error", "data": {"error": str(stream_exc)}}
-            yield f"data: {json.dumps(error_data)}\n\n"
+            # 🔧 修复：使用标准SSE格式发送错误
+            yield f"event: error\ndata: {json.dumps({'error': str(stream_exc)})}\n\n"
         finally:
             logger.info(f"[SAS Events {chat_id}] SSE事件流结束")
             # Unregister connection when SSE ends
             event_broadcaster.unregister_connection(chat_id)
-            yield f"data: {json.dumps({'event': 'end'})}\n\n"
+            # 🔧 修复：使用标准SSE格式发送结束事件
+            yield f"event: end\ndata: {json.dumps({})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

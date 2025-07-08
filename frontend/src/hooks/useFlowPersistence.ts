@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { getFlow, updateFlow, getLastChatIdForFlow } from '../api/flowApi';
 import { clearFlowCache } from '../components/FlowLoader';
 import { debounce } from 'lodash';
-import { NodeData } from '../components/FlowEditor'; // Assuming NodeData is exported
+import { NodeData } from '../components/FlowEditor/types';
 
 interface UseFlowPersistenceProps {
   flowId?: string;

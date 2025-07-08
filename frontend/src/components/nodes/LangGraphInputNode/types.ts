@@ -35,6 +35,7 @@ export interface AgentStateFlags {
   isInXmlApprovalMode: boolean;
   isInProcessingMode: boolean;
   isXmlGenerationComplete: boolean;
+  isReadyForReview: boolean;
 }
 
 export interface ErrorRecoveryActions {

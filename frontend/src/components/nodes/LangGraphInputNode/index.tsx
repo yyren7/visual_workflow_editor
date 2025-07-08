@@ -30,11 +30,13 @@ import { LangGraphInputNodeProps, Task } from './types';
 import { useNodeState } from './useNodeState';
 import { useErrorRecovery } from './useErrorRecovery';
 import { useAgentStateSync } from '../../../hooks/useAgentStateSync';
-import { useSSEManager } from '../../../hooks/useSSEManager';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { fetchFlowById } from '../../../store/slices/flowSlice';
 
 export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data, selected }) => {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   
   // Node state management
   const {
@@ -48,7 +50,6 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     errorMessage,
     operationChatId,
     streamingContentRef,
-    uiSseUnsubscribeFnsRef,
     taskDescriptionRef,
     editTextFieldRef,
     cardRef,
@@ -59,11 +60,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setInput,
     setIsEditing,
     setShowAddForm,
-    setIsProcessing,
-    setStreamingContent,
-    setProcessingStage,
     setErrorMessage,
-    cleanupUISseSubscriptions,
   } = useNodeState(id, data);
 
   // Error recovery
@@ -76,7 +73,6 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
 
   // Processing logic
   const { updateUserInput } = useAgentStateSync();
-  const { subscribe } = useSSEManager();
 
   // Main processing handler
   const handleSend = useCallback(async (overrideInput?: string) => {
@@ -91,77 +87,16 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
       return;
     }
 
-    cleanupUISseSubscriptions();
-    setIsProcessing(true);
-    setStreamingContent('');
-    setProcessingStage('Initializing...');
     setErrorMessage(null);
 
     try {
       await updateUserInput(contentToSend);
-      
-      const newUnsubs: (() => void)[] = [];
-
-      newUnsubs.push(subscribe(operationChatId, 'token', (eventData) => {
-        if (typeof eventData === 'string') {
-          setStreamingContent(prev => prev + eventData);
-        }
-      }));
-      
-      newUnsubs.push(subscribe(operationChatId, 'tool_start', (eventData) => {
-        if (eventData && typeof eventData === 'object' && eventData.name) {
-          setProcessingStage(`Tool Started: ${eventData.name}`);
-        }
-      }));
-
-      newUnsubs.push(subscribe(operationChatId, 'tool_end', (eventData) => {
-        if (eventData && typeof eventData === 'object' && eventData.name) {
-          setProcessingStage(`Tool Finished: ${eventData.name}`);
-        }
-      }));
-
-      newUnsubs.push(subscribe(operationChatId, 'error', (eventData) => {
-        console.error(`LangGraphInputNode (${id}): Received error event:`, eventData);
-        const errorMessage = eventData?.message || 'An error occurred during processing';
-        setErrorMessage(errorMessage);
-        setIsProcessing(false);
-        setProcessingStage('Error');
-        cleanupUISseSubscriptions();
-      }));
-
-      newUnsubs.push(subscribe(operationChatId, 'connection_error', (eventData) => {
-        console.error(`LangGraphInputNode (${id}): SSE Connection Error:`, eventData);
-        setErrorMessage('Connection error with event stream. Please try again.');
-        setIsProcessing(false);
-        setProcessingStage('Connection Error');
-        cleanupUISseSubscriptions();
-      }));
-      
-      newUnsubs.push(subscribe(operationChatId, 'server_error_event', (eventData) => {
-        console.error(`LangGraphInputNode (${id}): SSE Server Error Event:`, eventData);
-        const message = eventData?.message || 'A server error occurred';
-        setErrorMessage(message);
-        setIsProcessing(false);
-        setProcessingStage('Server Error');
-        cleanupUISseSubscriptions();
-      }));
-
-      newUnsubs.push(subscribe(operationChatId, 'stream_end', () => {
-        setProcessingStage(prev => prev.includes('Error') ? prev : 'Processing Complete');
-        setIsProcessing(false);
-      }));
-
-      uiSseUnsubscribeFnsRef.current = newUnsubs;
-
+      setShowAddForm(false);
+      setIsEditing(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to initiate processing.');
-      setIsProcessing(false);
-      setProcessingStage('Failed to Start');
     }
-
-    setShowAddForm(false);
-    setIsEditing(false);
-  }, [input, operationChatId, updateUserInput, subscribe, id, cleanupUISseSubscriptions, setIsProcessing, setStreamingContent, setProcessingStage, setErrorMessage, uiSseUnsubscribeFnsRef, setShowAddForm, setIsEditing]);
+  }, [input, operationChatId, updateUserInput, id, setErrorMessage, setShowAddForm, setIsEditing]);
 
   // UI event handlers
   const handleEdit = useCallback(() => {
@@ -172,21 +107,14 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setInput(currentReq);
     setIsEditing(true);
     setShowAddForm(false);
-    cleanupUISseSubscriptions(); 
-    setStreamingContent(''); 
-    setProcessingStage('');
     setErrorMessage(null);
-  }, [getAgentStateFlags, agentState, data, setInput, setIsEditing, setShowAddForm, cleanupUISseSubscriptions, setStreamingContent, setProcessingStage, setErrorMessage]);
+  }, [getAgentStateFlags, agentState, data, setInput, setIsEditing, setShowAddForm, setErrorMessage]);
 
   const handleCancel = useCallback(() => {
     const { isInProcessingMode, isXmlGenerationComplete, isInErrorState, isInXmlApprovalMode } = getAgentStateFlags();
     if (isInProcessingMode || isXmlGenerationComplete || isInErrorState || isInXmlApprovalMode) return;
     
-    cleanupUISseSubscriptions();
-    setStreamingContent(''); 
-    setProcessingStage('');
     setErrorMessage(null);
-    setIsProcessing(false);
 
     setIsEditing(false);
     if (!agentState?.current_user_request && !data.currentUserRequest) {
@@ -194,7 +122,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     } else {
       setShowAddForm(false);
     }
-  }, [getAgentStateFlags, cleanupUISseSubscriptions, setStreamingContent, setProcessingStage, setErrorMessage, setIsProcessing, setIsEditing, agentState, data, setShowAddForm]);
+  }, [getAgentStateFlags, setErrorMessage, setIsEditing, agentState, data, setShowAddForm]);
 
   const handleAddNew = useCallback(() => {
     const { isInProcessingMode, isXmlGenerationComplete, isInErrorState, isInXmlApprovalMode } = getAgentStateFlags();
@@ -203,17 +131,20 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setInput('');
     setShowAddForm(true);
     setIsEditing(false);
-    cleanupUISseSubscriptions();
-    setStreamingContent(''); 
-    setProcessingStage('');
     setErrorMessage(null);
-  }, [getAgentStateFlags, setInput, setShowAddForm, setIsEditing, cleanupUISseSubscriptions, setStreamingContent, setProcessingStage, setErrorMessage]);
+  }, [getAgentStateFlags, setInput, setShowAddForm, setIsEditing, setErrorMessage]);
 
   // Event prevention - only for wheel events when selected
   const stopWheelPropagation = (e: React.WheelEvent) => e.stopPropagation();
 
+  // 手动刷新状态的函数
+  const handleRefreshState = useCallback(() => {
+    console.log('手动刷新状态...');
+    dispatch(fetchFlowById(id.replace(/^langgraph_input_/, '')));
+  }, [dispatch, id]);
+
   // UI state
-  const { isInReviewMode, isInErrorState, isInXmlApprovalMode, isInProcessingMode, isXmlGenerationComplete } = getAgentStateFlags();
+  const { isInReviewMode, isInErrorState, isInXmlApprovalMode, isInProcessingMode, isXmlGenerationComplete, isReadyForReview } = getAgentStateFlags();
   const cardBackgroundColor = selected ? '#1e2a50' : '#2c3e50';
   const displayUserRequest = agentState?.current_user_request || data.currentUserRequest;
   const taskDisplayHeight = '150px';
@@ -222,7 +153,9 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   const cardTitle = () => {
     if (isInErrorState) return t('nodes.input.taskError');
     if (isInXmlApprovalMode) return t('nodes.input.approveXmlGeneration');
+    if (isReadyForReview) return t('nodes.input.moduleStepsReady');
     if (isInReviewMode) {
+      if (!agentState) return t('nodes.input.reviewMode');
       switch (agentState.dialog_state) {
         case 'sas_awaiting_task_list_review':
           return t('nodes.input.reviewGeneratedTasks');
@@ -277,7 +210,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
       ref={cardRef}
       sx={{ 
         width: 600, 
-        minHeight: isInReviewMode || (isEditing || showAddForm) ? 300 : 
+        minHeight: isInReviewMode || isReadyForReview || (isEditing || showAddForm) ? 300 : 
                   isInErrorState ? 280 :
                   isInXmlApprovalMode ? 320 :
                   isInProcessingMode ? 250 : 
@@ -325,6 +258,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
             label={
               isInErrorState ? t('nodes.input.error') :
               isInXmlApprovalMode ? t('nodes.input.awaitingApproval') :
+              isReadyForReview ? t('nodes.input.readyForReview') :
               isProcessing ? t('nodes.input.processing') : 
               isInReviewMode ? t('nodes.input.reviewMode') : 
               isInProcessingMode ? t('nodes.input.processingTask') :
@@ -335,6 +269,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
             color={
               isInErrorState ? "error" :
               isInXmlApprovalMode ? "warning" :
+              isReadyForReview ? "info" :
               isProcessing ? "success" : 
               isInReviewMode ? "warning" : 
               isInProcessingMode ? "info" :
@@ -528,6 +463,16 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                 <Button
                   size="small"
                   variant="outlined"
+                  color="info"
+                  sx={{ fontSize: '0.75rem', minHeight: '28px' }}
+                  onClick={handleRefreshState}
+                  disabled={isProcessing}
+                >
+                  同步状态
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
                   color="warning"
                   sx={{ fontSize: '0.75rem', minHeight: '28px' }}
                   onClick={() => window.location.reload()}
@@ -667,6 +612,63 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
             </Paper>
           )}
 
+          {/* Ready for Review Mode - Module Steps Generated */}
+          {isReadyForReview && agentState && (
+            <Paper elevation={2} sx={{ p: 1.5, mb: 1, backgroundColor: '#1c2733', border: '1px solid #2196f3', flexShrink: 0 }}>
+              <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                <CheckIcon sx={{ fontSize: '1rem', color: '#2196f3' }} />
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#2196f3' }}>
+                  {t('nodes.input.moduleStepsGenerated')}
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#eee', fontSize: '0.85rem', mb: 1 }}>
+                {t('nodes.input.moduleStepsGeneratedDesc')}
+              </Typography>
+              
+              {/* 显示生成的模块步骤 */}
+              {agentState.sas_step2_module_steps && (
+                <Box sx={{ mb: 1.5, p: 1, backgroundColor: '#0d1117', borderRadius: 1, border: '1px solid #444', maxHeight: '200px', overflowY: 'auto' }}>
+                  <Typography variant="caption" sx={{ color: '#aaa', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                    {t('nodes.input.generatedModuleSteps')}:
+                  </Typography>
+                  <Typography variant="body2" component="pre" sx={{ 
+                    whiteSpace: 'pre-wrap', 
+                    color: '#eee', 
+                    fontSize: '0.8rem',
+                    fontFamily: 'monospace'
+                  }}>
+                    {agentState.sas_step2_module_steps}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* 进入审核的按钮 */}
+              <Box display="flex" gap={1} flexWrap="wrap" mt={1}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CheckIcon />}
+                  sx={{ fontSize: '0.75rem', minHeight: '28px' }}
+                  onClick={() => handleSend('accept')}
+                  disabled={isProcessing}
+                >
+                  {t('nodes.input.proceedToReview')}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="warning"
+                  sx={{ fontSize: '0.75rem', minHeight: '28px' }}
+                  onClick={() => handleSend('regenerate')}
+                  disabled={isProcessing}
+                >
+                  {t('nodes.input.regenerateSteps')}
+                </Button>
+              </Box>
+            </Paper>
+          )}
+
           {/* 🎯 REVIEW MODE - 这就是您要找的部分！ */}
           {isInReviewMode && agentState && (
             <Box sx={{ mb: 1, flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -758,7 +760,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   {agentState.dialog_state === 'sas_awaiting_task_list_review' && (
                       <Button 
                           size="small" variant="contained" color="success"
-                          onClick={() => handleSend("accept_tasks")}
+                          onClick={() => handleSend("accept")}
                           startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
                       >
                           {t('nodes.input.approveTasks')}
@@ -767,7 +769,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   {agentState.dialog_state === 'sas_awaiting_module_steps_review' && (
                       <Button 
                           size="small" variant="contained" color="success"
-                          onClick={() => handleSend("accept_module_steps")}
+                          onClick={() => handleSend("accept")}
                           startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
                       >
                           {t('nodes.input.approveModuleSteps')}
@@ -777,7 +779,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                     size="small" variant="contained" 
                     onClick={() => handleSend()}
                     startIcon={<SendIcon />} 
-                    disabled={isProcessing || ((agentState.dialog_state !== 'sas_awaiting_task_list_review' && agentState.dialog_state !== 'sas_awaiting_module_steps_review') && !input.trim())}
+                    disabled={isProcessing}
                     sx={{ fontSize: '0.8rem'}}
                   >
                     {agentState.dialog_state === 'sas_awaiting_task_list_review' ? t('nodes.input.submitFeedback') : 
@@ -789,7 +791,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
 
           {/* Task Display */}
-          {!isEditing && !showAddForm && !isInReviewMode && !isProcessing && !isInProcessingMode && displayUserRequest && (
+          {!isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isProcessing && !isInProcessingMode && displayUserRequest && (
             <Box sx={{ overflowY: 'auto', flexGrow: 1, mb:1, border: '1px dashed #444', borderRadius:1, p:1 }} ref={taskDescriptionRef}>
               <Typography variant="caption" sx={{color: '#aaa', fontStyle:'italic', display:'block', mb:0.5}}>{t('nodes.input.currentTaskDescription')}:</Typography>
               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#fff', fontSize: '0.9rem', lineHeight: 1.5, wordBreak: 'break-word'}}>
@@ -799,7 +801,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
 
           {/* Edit Controls */}
-          {!isEditing && !showAddForm && !isInReviewMode && !isProcessing && !isInProcessingMode && !isXmlGenerationComplete && displayUserRequest && (
+          {!isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isProcessing && !isInProcessingMode && !isXmlGenerationComplete && displayUserRequest && (
              <Box display="flex" gap={1} sx={{ flexShrink: 0, mt: 'auto' }}>
                 <Button size="small" startIcon={<EditIcon />} onClick={handleEdit} variant="outlined" disabled={isProcessing || isInProcessingMode} sx={{ fontSize: '0.8rem'}}>
                   {t('nodes.input.edit')}
@@ -808,7 +810,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
 
           {/* Input Form */}
-          {(isEditing || showAddForm) && !isInReviewMode && !isProcessing && !isInProcessingMode && (
+          {(isEditing || showAddForm) && !isInReviewMode && !isReadyForReview && !isProcessing && !isInProcessingMode && (
             <Box sx={{ height: 'auto', display: 'flex', flexDirection: 'column', flexGrow:1, overflowY:'auto' }} ref={editTextFieldRef}>
               <TextField
                 fullWidth
@@ -856,7 +858,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
 
           {/* No Task Display */}
-          {!displayUserRequest && !isEditing && !showAddForm && !isInReviewMode && !isProcessing && !isInProcessingMode && (
+          {!displayUserRequest && !isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isProcessing && !isInProcessingMode && (
             <Box textAlign="center" py={3} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
               <InfoIcon sx={{fontSize: '2rem', color: 'rgba(255, 255, 255, 0.3)', mb:1 }}/>
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.9rem', mb: 2 }}>

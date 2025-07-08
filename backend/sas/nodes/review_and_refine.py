@@ -42,7 +42,6 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
     """
     A node that orchestrates the review and refinement loop for both task lists and module steps.
     It can pause execution to await user feedback and then resume based on that feedback.
-    This version is corrected to always return the full RobotFlowAgentState object.
     """
     logger.info(f"--- SAS: Review and Refine Node (Iteration {state.revision_iteration}) ---")
     logger.info(f"    Initial dialog_state: '{state.dialog_state}'")
@@ -52,144 +51,102 @@ async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel)
     user_input = state.user_input
     logger.info(f"    RECEIVED user_input at START: '{user_input}'")
 
-    # Default pass-through values
-    new_dialog_state = state.dialog_state
-    completion_status = state.completion_status
-    error_message = state.error_message
-    clarification_question = None # Reset clarification unless explicitly set
+    # This node has two main modes:
+    # 1. If user_input exists: Process the user's feedback (accept, revise, etc.).
+    # 2. If user_input is None: Prepare a question for the user and pause the graph.
 
-    # Determine context for feedback
-    is_task_list_review = state.dialog_state in ['sas_awaiting_task_list_review', 'sas_step1_tasks_generated']
-    is_module_steps_review = state.dialog_state == 'sas_awaiting_module_steps_review'
-
-    # If user_input is present, it means we are responding to feedback.
+    # Mode 1: Process user feedback
     if user_input:
-        logger.info("Processing user feedback.")
         feedback_lower = user_input.strip().lower()
-        
-        # Check for acceptance
-        is_accepted = any(phrase in feedback_lower for phrase in ["accept", "agree", "yes", "ok", "yep", "approve"])
-        is_reset_request = "reset" in feedback_lower
+        is_accepted = any(phrase in feedback_lower for phrase in ["accept", "agree", "yes", "ok", "yep", "approve", "ok."])
 
-        if is_reset_request:
-            logger.info("[REVIEW_NODE_RESET] User requested reset.")
-            # Reset logic needs to be handled by a dedicated node or graph state update.
-            # For now, we set a state that can be routed to a reset handler.
-            new_dialog_state = "error" # Or a specific 'reset_triggered' state
-            error_message = "User requested a reset. This feature is under development."
-            completion_status = "error"
-        
-        elif is_accepted:
+        # Determine which review we are in based on the state when the graph was paused
+        is_task_list_review = state.dialog_state == 'sas_awaiting_task_list_review'
+        is_module_steps_review = state.dialog_state == 'sas_awaiting_module_steps_review'
+
+        if is_accepted:
             if is_task_list_review:
                 logger.info("User accepted the TASK LIST.")
                 state.task_list_accepted = True
-                new_dialog_state = "sas_step1_tasks_generated" # Signal to proceed to step 2
-                completion_status = "completed_partial"
+                # This state tells the router to proceed to the next step (module generation)
+                state.dialog_state = "sas_step1_tasks_generated" 
             elif is_module_steps_review:
                 logger.info("User accepted the MODULE STEPS.")
                 state.module_steps_accepted = True
-                new_dialog_state = "sas_all_steps_accepted_proceed_to_xml" # Signal to proceed to XML generation
-                completion_status = "completed_partial"
+                # This state tells the router that all reviews are done and we can generate XML
+                state.dialog_state = "sas_xml_generation_approved"
             else:
-                logger.warning(f"Acceptance received in an unexpected state: {state.dialog_state}")
+                logger.warning(f"Acceptance received in an unexpected state: {state.dialog_state}. No action taken.")
 
-            # After acceptance, update state and return immediately to allow routing
-            state.dialog_state = new_dialog_state
-            state.completion_status = completion_status
-            state.user_input = None # Clear input
-            logger.info(f"Acceptance processed. Returning immediately with state: {new_dialog_state}")
-            return state
+            state.completion_status = "completed_partial" # Mark this part as done
         else:
             # User provided feedback for revision
             logger.info("User provided revision feedback.")
             state.user_advice = user_input
             state.revision_iteration += 1
             if is_task_list_review:
-                new_dialog_state = "sas_awaiting_task_list_revision_input"
+                # This state tells the router to go back to the task generation node
+                state.dialog_state = "initial" 
+                state.task_list_accepted = False # <<< THE FIX IS HERE
             elif is_module_steps_review:
-                new_dialog_state = "sas_awaiting_module_steps_revision_input"
-            completion_status = "needs_clarification"
-
-            # After setting up for revision, return immediately
-            state.dialog_state = new_dialog_state
-            state.completion_status = completion_status
-            state.user_input = None # Clear input
-            logger.info(f"Revision feedback processed. Returning immediately to re-run previous node.")
-            return state
-
-    # This block handles the case where there is no user_input.
-    # The purpose is to prepare the state for user review and then pause.
-    else:
-        if is_task_list_review:
-            # Generate the clarification question for the task list
-            if state.sas_step1_generated_tasks:
-                tasks_json = json.dumps([task.model_dump() for task in state.sas_step1_generated_tasks], indent=2)
-                clarification_question = (
-                    f"These are the tasks generated based on your description (iteration {state.revision_iteration}):\n\n"
-                    f"```json\n{tasks_json}\n```\n\n"
-                    f"Do you accept these tasks? You can say \"accept\" or \"agree\", or provide your modification instructions."
-                )
-                new_dialog_state = "sas_awaiting_task_list_review"
-            else:
-                error_message = "[Review Node] No tasks were generated for review."
-                logger.error(error_message)
-                new_dialog_state = "error"
-                completion_status = "error"
-
-        elif is_module_steps_review:
-            # Generate the clarification question for the module steps
-            if state.sas_step2_module_steps:
-                 clarification_question = (
-                    f"These are the module steps generated for the tasks (iteration {state.revision_iteration}):\n\n"
-                    f"```\n{state.sas_step2_module_steps}\n```\n\n"
-                    f"Do you accept these module steps? You can say \"accept\" or \"agree\", or provide modification instructions."
-                )
-                 new_dialog_state = "sas_awaiting_module_steps_review"
-            else:
-                error_message = "[Review Node] No module steps were generated for review."
-                logger.error(error_message)
-                new_dialog_state = "error"
-                completion_status = "error"
-        else:
-            # No specific review state, likely an issue. For safety, just pass through.
-            logger.warning(f"Review node entered with no user_input and an unexpected dialog_state: '{state.dialog_state}'. Passing state through.")
-            # No change to state, just return it.
-            return state
-
-        # If we are here, we have generated a clarification question and are pausing.
-        state.clarification_question = clarification_question
-        state.dialog_state = new_dialog_state
-        state.completion_status = "needs_clarification"
-        
-        logger.info(f"Paused for user input. Clarification: '{str(clarification_question)[:100]}...'. Dialog state set to: {new_dialog_state}")
-        
-        # Directly return the modified state object
-        return state
-        
-    # This final state update is now only for the path where user input was processed
-    # but did not result in an immediate return (e.g., a path that might not exist anymore).
-    # The main logic paths (acceptance, revision) now return early.
-    state.dialog_state = new_dialog_state
-    state.completion_status = completion_status
-    state.error_message = error_message
-    state.clarification_question = clarification_question
+                 # This state tells the router to go back to the module step generation node
+                state.dialog_state = "sas_step2_module_steps_generated_for_review"
+                state.module_steps_accepted = False # <<< AND HERE
             
-    logger.info(f"--- SAS: Review and Refine Node PRE-RETURN (Standard Fallback) ---")
-    logger.info(f"    FINAL dialog_state before return: '{state.dialog_state}'")
-    if state.sas_step1_generated_tasks:
-        logger.info(f"    FINAL sas_step1_generated_tasks count before return: {len(state.sas_step1_generated_tasks)}")
-        if state.sas_step1_generated_tasks:
-             logger.info(f"    FINAL first task name: {state.sas_step1_generated_tasks[0].name}")
-    else:
-        logger.info(f"    FINAL sas_step1_generated_tasks is empty or None.")
-    logger.info(f"    FINAL clarification_question before return: '{str(state.clarification_question)[:50]}...'")
-    logger.info(f"    FINAL completion_status before return: '{state.completion_status}'")
-    
-    # CRITICAL: Clear the user_input after it has been processed to prevent reuse in subsequent steps.
-    state.user_input = None
-    logger.info("    User input cleared before returning from review_and_refine node.")
+            state.completion_status = "processing"
 
-    return state
+        # CRITICAL: Clear user_input after processing and return immediately
+        state.user_input = None
+        state.clarification_question = None # Clear question after processing feedback
+        logger.info(f"User feedback processed. New dialog_state: '{state.dialog_state}'. Returning to router.")
+        return state
+
+    # Mode 2: No user_input, so prepare a question and pause
+    else:
+        # Determine which item needs review
+        is_task_list_review_needed = state.dialog_state == 'sas_step1_tasks_generated' and not state.task_list_accepted
+        is_module_steps_review_needed = state.dialog_state == 'sas_step2_module_steps_generated_for_review' and not state.module_steps_accepted
+
+        if is_task_list_review_needed:
+            if state.sas_step1_generated_tasks:
+                tasks_json = json.dumps([task.model_dump() for task in state.sas_step1_generated_tasks], indent=2, ensure_ascii=False)
+                state.clarification_question = (
+                    f"这是根据您的描述生成的任务列表 (第 {state.revision_iteration + 1} 次审核):\n\n"
+                    f"```json\n{tasks_json}\n```\n\n"
+                    '您是否接受这份任务列表？您可以回答"接受"、"同意"，或者直接提供您的修改意见。'
+                )
+                state.dialog_state = "sas_awaiting_task_list_review" # PAUSE state
+                state.completion_status = "needs_clarification"
+            else:
+                logger.error("[Review Node] No tasks were generated for review.")
+                state.error_message = "No tasks were generated for review."
+                state.dialog_state = "error"
+                state.completion_status = "error"
+
+        elif is_module_steps_review_needed:
+            if state.sas_step2_module_steps:
+                 state.clarification_question = (
+                    f"这是为任务生成的模块步骤 (第 {state.revision_iteration + 1} 次审核):\n\n"
+                    f"```\n{state.sas_step2_module_steps}\n```\n\n"
+                    '您是否接受这些模块步骤？您可以回答"接受"、"同意"，或者提供修改意见。'
+                )
+                 state.dialog_state = "sas_awaiting_module_steps_review" # PAUSE state
+                 state.completion_status = "needs_clarification"
+            else:
+                logger.error("[Review Node] No module steps were generated for review.")
+                state.error_message = "No module steps were generated for review."
+                state.dialog_state = "error"
+                state.completion_status = "error"
+        else:
+            # If no review is needed, it might be an issue or just passing through.
+            logger.warning(f"Review node entered, but no review is currently needed. Dialog state: '{state.dialog_state}'. Passing through.")
+            # We don't change the state here, just let it pass to the next node via the router.
+            # This case might happen if, for example, the flow is designed to skip a review step.
+            # The router should handle the current dialog_state correctly.
+            pass
+
+        logger.info(f"Prepared to pause for user input. New dialog_state: '{state.dialog_state}'.")
+        return state
 
 __all__ = [
     "review_and_refine_node"

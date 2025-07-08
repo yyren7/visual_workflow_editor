@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
-import { updateAgentState, selectCurrentFlowId, selectAgentState, fetchFlowById, setActiveLangGraphStreamFlowId, setProcessingStatus } from '../store/slices/flowSlice';
+import {
+  updateAgentState,
+  selectCurrentFlowId,
+  selectAgentState,
+  fetchFlowById,
+  setActiveLangGraphStreamFlowId,
+  setProcessingStatus,
+  appendStreamingContent,
+  setProcessingStage,
+} from '../store/slices/flowSlice';
 import { updateLangGraphState } from '../api/langgraphApi';
 import { chatApi } from '../api/chatApi';
 import { debounce } from 'lodash';
@@ -135,25 +144,52 @@ export const useAgentStateSync = () => {
             const isActiveStream = finalChatIdForSSE === currentChatIdForSSESubscriptions.current;
 
             if (eventType === 'agent_state_updated') {
-              if (eventData && typeof eventData === 'object' && eventData.flow_id && eventData.agent_state) {
-                console.log('[DEBUG] useAgentStateSync: Event data is valid object with flow_id and agent_state.');
-                console.log('[DEBUG] useAgentStateSync:   eventData.flow_id:', eventData.flow_id);
-                console.log('[DEBUG] useAgentStateSync:   currentFlowId (from Redux):', currentFlowId);
-                if (eventData.flow_id === currentFlowId) {
-                  console.log('[DEBUG] useAgentStateSync: flow_id MATCHES. Dispatching updateAgentState.');
-                  console.log('[DEBUG] useAgentStateSync:   Agent state keys received:', Object.keys(eventData.agent_state));
-                  if (eventData.agent_state.dialog_state) {
-                    console.log('[DEBUG] useAgentStateSync:   Received dialog_state:', eventData.agent_state.dialog_state);
-                  }
-                  if (eventData.agent_state.sas_step1_generated_tasks) {
-                    console.log('[DEBUG] useAgentStateSync:   Received sas_step1_generated_tasks count:', eventData.agent_state.sas_step1_generated_tasks.length);
-                  }
-                  dispatch(updateAgentState(eventData.agent_state));
-                } else {
-                  console.warn('[DEBUG] useAgentStateSync: flow_id MISMATCH on agent_state_updated. Current flow in Redux:', currentFlowId, 'Received from event for stream ', finalChatIdForSSE, 'eventData.flow_id:', eventData.flow_id);
+              console.log(`[AGENT_SYNC_DEBUG] Raw agent_state_updated event received for chat ${finalChatIdForSSE}:`, eventData);
+              if (eventData && typeof eventData === 'object' && eventData.agent_state) {
+                console.log('[DEBUG] useAgentStateSync: Received agent_state_updated. Bypassing strict flow_id check and dispatching update.');
+                console.log('[DEBUG] useAgentStateSync:   Received for SSE stream ID:', finalChatIdForSSE);
+                console.log('[DEBUG] useAgentStateSync:   Event flow_id:', eventData.flow_id);
+                console.log('[DEBUG] useAgentStateSync:   Current Redux flow_id:', currentFlowId);
+                console.log('[DEBUG] useAgentStateSync:   Agent state keys received:', Object.keys(eventData.agent_state));
+                
+                if (eventData.agent_state.dialog_state) {
+                  console.log('[DEBUG] useAgentStateSync:   Received dialog_state:', eventData.agent_state.dialog_state);
                 }
+                if (eventData.agent_state.sas_step1_generated_tasks) {
+                  console.log('[DEBUG] useAgentStateSync:   Received sas_step1_generated_tasks count:', eventData.agent_state.sas_step1_generated_tasks.length);
+                }
+                
+                console.log('[AGENT_SYNC_DEBUG] About to dispatch updateAgentState with:', eventData.agent_state);
+                dispatch(updateAgentState(eventData.agent_state));
+                dispatch(setProcessingStage('Processing initial request...'));
+
+                // Notify the flow editor that it needs to refresh
+                console.log('[AGENT_SYNC_LOG] Dispatching flow-refresh event to update UI.');
+                const refreshEvent = new CustomEvent('flow-refresh', {
+                  detail: {
+                    metadata: {
+                      flowId: currentFlowId, // Make sure the event is for the current flow
+                      source: 'agent_state_sync'
+                    }
+                  }
+                });
+                window.dispatchEvent(refreshEvent);
+                console.log('[AGENT_SYNC_DEBUG] Successfully processed agent_state_updated event and dispatched Redux update');
+
               } else {
-                console.warn('[DEBUG] useAgentStateSync: Received MALFORMED agent_state_updated event (missing flow_id or agent_state field). EventData:', JSON.stringify(eventData, null, 2));
+                console.warn('[DEBUG] useAgentStateSync: Received MALFORMED agent_state_updated event (missing agent_state field). EventData:', JSON.stringify(eventData, null, 2));
+              }
+            } else if (eventType === 'token') {
+              if (typeof eventData === 'string') {
+                dispatch(appendStreamingContent(eventData));
+              }
+            } else if (eventType === 'tool_start') {
+              if (eventData && typeof eventData === 'object' && eventData.name) {
+                dispatch(setProcessingStage(`Tool Started: ${eventData.name}`));
+              }
+            } else if (eventType === 'tool_end') {
+              if (eventData && typeof eventData === 'object' && eventData.name) {
+                dispatch(setProcessingStage(`Tool Finished: ${eventData.name}`));
               }
             } else if (eventType === 'task_progress') {
               // 处理任务进度事件
@@ -180,8 +216,11 @@ export const useAgentStateSync = () => {
               // especially the final state update after a user interaction pause.
               // The connection will be cleaned up on component unmount or when a new chat stream is initiated for a different ID.
               console.log(`[AGENT_SYNC_LOG] Intermediate stream_end received for chat ${finalChatIdForSSE}, keeping connection open for further events. Data:`, eventData);
+              dispatch(setProcessingStage('Processing Complete'));
             } else if (eventType === 'connection_error' || eventType === 'server_error_event') {
               console.error(`[AGENT_SYNC_LOG] SSE ${eventType} for chat ${finalChatIdForSSE}. Data:`, eventData);
+              const errorMsg = eventData?.message || `A ${eventType} occurred.`;
+              dispatch(setProcessingStage(`Error: ${errorMsg}`));
               if (isActiveStream) { 
                 console.warn(`[AGENT_SYNC_LOG] Error ('${eventType}') on active stream ${finalChatIdForSSE}. Cleaning up subscriptions.`);
                 cleanupSseSubscriptions();
@@ -219,6 +258,7 @@ export const useAgentStateSync = () => {
   }, [dispatch, startLangGraphProcessing]);
 
   const updateTask = useCallback((taskIndex: number, task: any) => {
+    if (!agentState) return;
     const currentTasks = agentState.sas_step1_generated_tasks || [];
     const updatedTasks = [...currentTasks];
     if (taskIndex < updatedTasks.length) updatedTasks[taskIndex] = task;
@@ -227,6 +267,7 @@ export const useAgentStateSync = () => {
   }, [agentState, dispatch]);
 
   const updateTaskDetails = useCallback((taskIndex: number, details: string[]) => {
+    if (!agentState) return;
     const currentDetails = agentState.sas_step2_generated_task_details || {};
     const updatedDetails = { ...currentDetails, [taskIndex.toString()]: { details } };
     dispatch(updateAgentState({ sas_step2_generated_task_details: updatedDetails }));

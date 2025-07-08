@@ -35,8 +35,8 @@ case "$1" in
     
     # 创建前端 tmux 会话
     cd /workspace/frontend
-    tmux new-session -d -s frontend 'npm start | tee /workspace/logs/frontend.log; read'
-    echo "前端服务已在 tmux 会话 'frontend' 中启动"
+    tmux new-session -d -s frontend 'PORT=3001 npm start | tee /workspace/logs/frontend.log; read'
+    echo "前端服务已在 tmux 会话 'frontend' 中启动（端口 3001）"
     
     # 创建后端 tmux 会话
     cd /workspace

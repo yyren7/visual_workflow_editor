@@ -66,15 +66,23 @@ class SSEConnectionManager {
 
       onmessage: (event: EventSourceMessage) => {
         const eventType = event.event;
+        console.log(`[SSE_MANAGER_DEBUG] Raw SSE event received for chat ${chatId}:`, {
+          event: eventType,
+          data: event.data,
+          id: event.id,
+          retry: event.retry
+        });
+        
         if (!eventType || eventType === 'message') {
           // 忽略未命名事件或标准 'message' 事件，因为我们的应用需要特定的事件类型
-          // console.log(`SSEManager: Ignoring unnamed or 'message' event for chat ${chatId}.`);
+          console.log(`[SSE_MANAGER_DEBUG] Ignoring unnamed or 'message' event for chat ${chatId}. EventType: '${eventType}'`);
           return;
         }
 
         let parsedData: any;
         try {
           parsedData = JSON.parse(event.data);
+          console.log(`[SSE_MANAGER_DEBUG] Successfully parsed event data for '${eventType}' on chat ${chatId}:`, parsedData);
         } catch (e) {
           console.warn(`SSEManager: Data for event '${eventType}' on chat ${chatId} is not valid JSON. Raw data: "${event.data}". Error:`, e);
           // 如果解析失败，我们可以选择分发原始数据或忽略
@@ -83,7 +91,7 @@ class SSEConnectionManager {
         }
         
         // 直接使用从 SSE 事件中获取的 eventType 和解析后的数据进行分发
-        // console.log(`[SSE_MANAGER_LOG] Dispatching event: '${eventType}' for chat: ${chatId}`, parsedData);
+        console.log(`[SSE_MANAGER_DEBUG] Dispatching event: '${eventType}' for chat: ${chatId}`, parsedData);
         this.dispatchEvent(chatId, eventType, parsedData);
       },
       

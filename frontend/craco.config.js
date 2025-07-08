@@ -1,4 +1,7 @@
 module.exports = {
+  devServer: {
+    port: 3001,
+  },
   webpack: {
     configure: (webpackConfig) => {
       // 检查开发服务器配置是否存在
