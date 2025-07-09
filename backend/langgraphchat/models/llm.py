@@ -32,7 +32,8 @@ from tenacity import (
     wait_exponential,
 )
 
-from backend.langgraphchat.config import settings
+# 修复导入问题：从backend.config导入AI_CONFIG
+from backend.config import AI_CONFIG
 logger = logging.getLogger(__name__)
 import os
 from dotenv import load_dotenv
@@ -49,17 +50,17 @@ class DeepSeekChatModel(BaseChatModel):
     client: Any = None
     async_client: Any = None
     
-    model_name: str = settings.DEEPSEEK_MODEL
+    model_name: str = AI_CONFIG.get('DEEPSEEK_MODEL', 'deepseek-chat')
     model_kwargs: Dict[str, Any] = Field(default_factory=dict)
-    temperature: float = settings.DEFAULT_TEMPERATURE
-    max_tokens: Optional[int] = settings.DEFAULT_MAX_TOKENS
+    temperature: float = AI_CONFIG.get('DEFAULT_TEMPERATURE', 0.3)
+    max_tokens: Optional[int] = AI_CONFIG.get('DEFAULT_MAX_TOKENS', 1500)
     top_p: float = 0.95
     
     streaming: bool = False
     n: int = 1
     
-    openai_api_key: str = settings.DEEPSEEK_API_KEY
-    openai_api_base: str = settings.DEEPSEEK_BASE_URL
+    openai_api_key: str = AI_CONFIG.get('DEEPSEEK_API_KEY', '')
+    openai_api_base: str = AI_CONFIG.get('DEEPSEEK_BASE_URL', 'https://api.deepseek.com')
     openai_proxy: Optional[str] = None
     request_timeout: Optional[float] = 60.0
     max_retries: int = 3
@@ -98,7 +99,7 @@ class DeepSeekChatModel(BaseChatModel):
                 self.openai_api_key = openai_api_key
             # 最后使用settings中的值
             else:
-                self.openai_api_key = settings.DEEPSEEK_API_KEY
+                self.openai_api_key = AI_CONFIG.get('DEEPSEEK_API_KEY', '')
                 logger.info("使用settings中的DEEPSEEK_API_KEY")
         
         # 同样处理API基础URL
@@ -107,7 +108,7 @@ class DeepSeekChatModel(BaseChatModel):
             logger.info("从环境变量读取DEEPSEEK_BASE_URL")
             self.openai_api_base = env_api_base
         else:
-            self.openai_api_base = openai_api_base or settings.DEEPSEEK_BASE_URL
+            self.openai_api_base = openai_api_base or AI_CONFIG.get('DEEPSEEK_BASE_URL', 'https://api.deepseek.com')
         
         # 添加更详细的日志，显示API密钥的一部分（但不是完整密钥）
         key_prefix = self.openai_api_key[:8] if self.openai_api_key and len(self.openai_api_key) > 10 else ""
@@ -174,7 +175,7 @@ class DeepSeekChatModel(BaseChatModel):
         
         # 检查API密钥格式，并根据设置添加前缀
         if api_key:
-            if not api_key.startswith("sk-") and settings.API_KEY_ADD_PREFIX:
+            if not api_key.startswith("sk-") and AI_CONFIG.get('API_KEY_ADD_PREFIX', False):
                 logger.info("根据配置添加'sk-'前缀到API密钥")
                 api_key = f"sk-{api_key}"
             elif not api_key.startswith("sk-"):
@@ -182,9 +183,9 @@ class DeepSeekChatModel(BaseChatModel):
         
         # 选择API端点
         api_base = self.openai_api_base
-        if settings.ALTERNATIVE_BASE_URL:
-            logger.info(f"使用替代API端点: {settings.ALTERNATIVE_BASE_URL}")
-            api_base = settings.ALTERNATIVE_BASE_URL
+        if AI_CONFIG.get('ALTERNATIVE_BASE_URL'):
+            logger.info(f"使用替代API端点: {AI_CONFIG.get('ALTERNATIVE_BASE_URL')}")
+            api_base = AI_CONFIG.get('ALTERNATIVE_BASE_URL')
         
         # 创建客户端并记录详细信息
         client = OpenAI(
@@ -454,13 +455,13 @@ class DeepSeekChatModel(BaseChatModel):
                         api_base = env_api_base
                     
                     # 使用替代API端点（如果配置）
-                    if settings.ALTERNATIVE_BASE_URL:
-                        logger.info(f"异步客户端使用替代API端点: {settings.ALTERNATIVE_BASE_URL}")
-                        api_base = settings.ALTERNATIVE_BASE_URL
+                    if AI_CONFIG.get('ALTERNATIVE_BASE_URL'):
+                        logger.info(f"异步客户端使用替代API端点: {AI_CONFIG.get('ALTERNATIVE_BASE_URL')}")
+                        api_base = AI_CONFIG.get('ALTERNATIVE_BASE_URL')
                     
                     # 检查API密钥格式，并根据设置添加前缀
                     if api_key:
-                        if not api_key.startswith("sk-") and settings.API_KEY_ADD_PREFIX:
+                        if not api_key.startswith("sk-") and AI_CONFIG.get('API_KEY_ADD_PREFIX', False):
                             logger.info("为异步客户端根据配置添加'sk-'前缀到API密钥")
                             api_key = f"sk-{api_key}"
                         elif not api_key.startswith("sk-"):
@@ -523,17 +524,17 @@ def get_chat_model() -> BaseChatModel:
     Returns:
         配置好的聊天模型实例
     """
-    logger.info(f"初始化聊天模型: {settings.CHAT_MODEL_NAME}")
+    logger.info(f"初始化聊天模型: {AI_CONFIG.get('CHAT_MODEL_NAME', 'deepseek-chat')}")
     
     # 使用DeepSeek模型
-    if settings.USE_DEEPSEEK:
+    if AI_CONFIG.get('USE_DEEPSEEK', True):
         logger.info("使用DeepSeek模型")
         return DeepSeekChatModel(
-            model_name=settings.CHAT_MODEL_NAME,
-            temperature=settings.DEFAULT_TEMPERATURE,
-            max_tokens=settings.DEFAULT_MAX_TOKENS,
-            openai_api_key=settings.DEEPSEEK_API_KEY,
-            openai_api_base=settings.DEEPSEEK_BASE_URL
+            model_name=AI_CONFIG.get('CHAT_MODEL_NAME', 'deepseek-chat'),
+            temperature=AI_CONFIG.get('DEFAULT_TEMPERATURE', 0.3),
+            max_tokens=AI_CONFIG.get('DEFAULT_MAX_TOKENS', 1500),
+            openai_api_key=AI_CONFIG.get('DEEPSEEK_API_KEY', ''),
+            openai_api_base=AI_CONFIG.get('DEEPSEEK_BASE_URL', 'https://api.deepseek.com')
         )
     
     # 默认使用OpenAI模型
@@ -541,8 +542,8 @@ def get_chat_model() -> BaseChatModel:
     from langchain_openai import ChatOpenAI
     
     return ChatOpenAI(
-        model_name=settings.CHAT_MODEL_NAME,
-        temperature=settings.DEFAULT_TEMPERATURE,
-        max_tokens=settings.DEFAULT_MAX_TOKENS,
-        openai_api_key=settings.OPENAI_API_KEY
+        model_name=AI_CONFIG.get('CHAT_MODEL_NAME', 'gpt-3.5-turbo'),
+        temperature=AI_CONFIG.get('DEFAULT_TEMPERATURE', 0.3),
+        max_tokens=AI_CONFIG.get('DEFAULT_MAX_TOKENS', 1500),
+        openai_api_key=AI_CONFIG.get('OPENAI_API_KEY', '')
     ) 

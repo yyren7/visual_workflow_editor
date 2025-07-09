@@ -81,12 +81,18 @@ class SSEConnectionManager {
 
         let parsedData: any;
         try {
-          parsedData = JSON.parse(event.data);
+          // 检查数据是否已经是对象，或者是否为JSON字符串
+          if (typeof event.data === 'string') {
+            parsedData = JSON.parse(event.data);
+          } else {
+            // 如果不是字符串，假设它已经是我们需要的对象
+            parsedData = event.data;
+          }
           console.log(`[SSE_MANAGER_DEBUG] Successfully parsed event data for '${eventType}' on chat ${chatId}:`, parsedData);
         } catch (e) {
-          console.warn(`SSEManager: Data for event '${eventType}' on chat ${chatId} is not valid JSON. Raw data: "${event.data}". Error:`, e);
+          console.warn(`SSEManager: Data for event '${eventType}' on chat ${chatId} is not valid JSON and could not be used directly. Raw data:`, event.data, "Error:", e);
           // 如果解析失败，我们可以选择分发原始数据或忽略
-          // 为了与现有逻辑保持一致，我们选择忽略，因为下游期望的是对象
+          // 为了与现有逻辑保持一致，我们选择忽略
           return;
         }
         

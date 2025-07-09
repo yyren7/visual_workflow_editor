@@ -458,18 +458,25 @@ export const duplicateFlow = async (flowId: string): Promise<any> => {
     if (newFlow.id && newSasState && Object.keys(newSasState).length > 0) {
       const updatedSasState = updateFlowIdReferences(newSasState, 'NEW_FLOW_ID_PLACEHOLDER', newFlow.id);
       
-      // 使用updateFlow API更新sas_state中的flowId引用
+      // 🔧 使用SAS API更新状态，而不是Flow API
       try {
-        const updateData: FlowData = {
-          name: newFlow.name,
-          flow_data: newFlow.flow_data,
-          sas_state: updatedSasState
-        };
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${newFlow.id}/update-state`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(updatedSasState)
+        });
         
-        await updateFlow(newFlow.id, updateData);
-        console.log('已更新新flow中的flowId引用');
+        if (response.ok) {
+          console.log('已通过SAS API更新新flow中的flowId引用');
+        } else {
+          console.warn('通过SAS API更新flowId引用失败，但flow复制成功:', response.statusText);
+        }
       } catch (updateError) {
-        console.warn('更新flowId引用失败，但flow复制成功:', updateError);
+        console.warn('通过SAS API更新flowId引用失败，但flow复制成功:', updateError);
       }
     }
 

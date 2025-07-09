@@ -11,7 +11,7 @@ export const useErrorRecovery = (
     if (!operationChatId) return;
     
     try {
-      const response = await fetch(`/flows/${operationChatId}/reset-stuck-state`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${operationChatId}/reset-stuck-state`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export const useErrorRecovery = (
     if (!operationChatId) return;
     
     try {
-      const response = await fetch(`/flows/${operationChatId}/force-reset-state`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${operationChatId}/force-reset-state`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export const useErrorRecovery = (
     if (!operationChatId) return;
     
     try {
-      const response = await fetch(`/flows/${operationChatId}/rollback-to-previous`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${operationChatId}/rollback-to-previous`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ export const useErrorRecovery = (
     if (!operationChatId) return;
     
     try {
-      const response = await fetch(`/flows/${operationChatId}/force-complete-processing`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${operationChatId}/force-complete-processing`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

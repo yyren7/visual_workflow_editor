@@ -16,7 +16,7 @@ from database.embedding.service import DatabaseEmbeddingService
 
 # --- 导入 DbChatMemory 和 BaseMessage --- 
 from backend.langgraphchat.memory.db_chat_memory import DbChatMemory
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage  # 添加缺失的导入
 from langchain_core.runnables import Runnable # 导入 Runnable 类型提示
 # 根据官方文档，直接从 langchain_deepseek 导入 ChatDeepSeek
 from langchain_deepseek import ChatDeepSeek 
@@ -100,7 +100,7 @@ class ChatService:
                 raise RuntimeError(f"Could not compile LangGraph workflow: {e}")
         return self._compiled_workflow_graph
 
-    def create_chat(self, flow_id: str, name: str = "新聊天", chat_data: Dict[str, Any] = None) -> Optional[Chat]:
+    def create_chat(self, flow_id: str, name: str = "新聊天", chat_data: Optional[Dict[str, Any]] = None) -> Optional[Chat]:
         """
         创建新的聊天记录
         
@@ -181,7 +181,7 @@ class ChatService:
             logger.error(f"获取流程图 {flow_id} 的聊天记录失败: {str(e)}")
             return []
     
-    def update_chat(self, chat_id: str, name: str = None, chat_data: Dict[str, Any] = None) -> Optional[Chat]:
+    def update_chat(self, chat_id: str, name: Optional[str] = None, chat_data: Optional[Dict[str, Any]] = None) -> Optional[Chat]:
         """
         更新聊天记录
         
@@ -199,18 +199,18 @@ class ChatService:
                 logger.error(f"聊天 {chat_id} 不存在，无法更新")
                 return None
                 
-            # 更新字段
+            # 更新字段 - 使用setattr避免类型检查问题
             if name is not None:
-                chat.name = name
+                setattr(chat, 'name', name)
                 
             if chat_data is not None:
                 # 安全更新 chat_data，保留其他可能存在的字段
-                existing_data = chat.chat_data or {}
+                existing_data = getattr(chat, 'chat_data', None) or {}
                 existing_data.update(chat_data)
-                chat.chat_data = existing_data
+                setattr(chat, 'chat_data', existing_data)
             
             # 更新时间戳
-            chat.updated_at = datetime.utcnow()
+            setattr(chat, 'updated_at', datetime.utcnow())
             
             self.db.commit()
             self.db.refresh(chat)
@@ -230,21 +230,19 @@ class ChatService:
             chat = self.db.query(Chat).filter(Chat.id == chat_id).first()
             if not chat:
                 logger.error(f"ChatService: Chat {chat_id} not found. Cannot add message.")
-                return None, None
+                return None
             
-            logger.debug(f"ChatService: Chat {chat_id} found. Current chat_data before modification: {chat.chat_data}") # 记录修改前的数据
+            logger.debug(f"ChatService: Chat {chat_id} found. Current chat_data before modification: {getattr(chat, 'chat_data', None)}") # 记录修改前的数据
 
-            # 2. 使用 MutableDict 安全地修改 chat_data
-            # from sqlalchemy.dialects.postgresql import JSONB # 已移到顶部
-            # from sqlalchemy.ext.mutable import MutableDict # 已移到顶部
-            chat_data_variable = MutableDict.as_mutable(chat.chat_data) if chat.chat_data else MutableDict()
+            # 2. 安全地获取和修改 chat_data
+            chat_data_dict = getattr(chat, 'chat_data', None) or {}
             
             # 确保有messages数组
-            if "messages" not in chat_data_variable:
-                chat_data_variable["messages"] = []
-            elif not isinstance(chat_data_variable["messages"], list):
+            if "messages" not in chat_data_dict:
+                chat_data_dict["messages"] = []
+            elif not isinstance(chat_data_dict["messages"], list):
                  logger.warning(f"ChatService: Chat {chat_id} messages was not a list, resetting to empty list.")
-                 chat_data_variable["messages"] = [] # 如果不是列表，重置
+                 chat_data_dict["messages"] = [] # 如果不是列表，重置
                  
             # 3. 准备新消息
             new_message = {
@@ -255,16 +253,16 @@ class ChatService:
             logger.debug(f"ChatService: Prepared new message for chat {chat_id}: {{'role': '{role}', 'content': '{content[:50]}...', 'timestamp': '{new_message['timestamp']}'}}") # 记录准备好的消息（内容截断）
                  
             # 4. 添加新消息到列表
-            chat_data_variable["messages"].append(new_message)
-            logger.debug(f"ChatService: Appended new message to chat_data_variable for chat {chat_id}. New messages count: {len(chat_data_variable['messages'])}")
+            chat_data_dict["messages"].append(new_message)
+            logger.debug(f"ChatService: Appended new message to chat_data_dict for chat {chat_id}. New messages count: {len(chat_data_dict['messages'])}")
             
             # 5. 更新聊天对象的属性
-            chat.chat_data = chat_data_variable 
+            setattr(chat, 'chat_data', chat_data_dict)
             # ---- 显式标记 chat_data 已修改 ----
             flag_modified(chat, "chat_data") # <--- 添加此行
             logger.debug(f"ChatService: chat.chat_data assigned and explicitly flagged as modified for chat {chat_id}.")
             
-            chat.updated_at = datetime.utcnow()
+            setattr(chat, 'updated_at', datetime.utcnow())
             
             # 6. 提交到数据库
             self.db.add(chat) # 通常在对象已从会话加载后，修改会自动跟踪，但 add() 无害
@@ -276,22 +274,23 @@ class ChatService:
             # 首先刷新当前 chat 实例以获取数据库的最新状态
             logger.info(f"ChatService: Attempting to refresh chat object {chat_id} in current session...")
             self.db.refresh(chat)
-            logger.info(f"ChatService: Chat {chat_id} refreshed. Verifying data in current session: chat.chat_data.messages count = {len(chat.chat_data.get('messages', []))}")
-            if chat.chat_data.get('messages'):
+            logger.info(f"ChatService: Chat {chat_id} refreshed. Verifying data in current session: chat.chat_data.messages count = {len(getattr(chat, 'chat_data', {}).get('messages', []))}")
+            current_chat_data = getattr(chat, 'chat_data', {})
+            if current_chat_data.get('messages'):
                 # 记录最后一条消息的部分内容以供验证
-                last_msg_preview = chat.chat_data['messages'][-1].get('content', '')[:50]
-                last_msg_role = chat.chat_data['messages'][-1].get('role')
+                last_msg_preview = current_chat_data['messages'][-1].get('content', '')[:50]
+                last_msg_role = current_chat_data['messages'][-1].get('role')
                 logger.debug(f"ChatService: Last message in current session after refresh for {chat_id}: {{'role': '{last_msg_role}', 'content': '{last_msg_preview}...'}}")
             # --- 结束调试 ---
 
             logger.info(f"ChatService: Successfully added and committed '{role}' message to chat {chat_id}.")
             # 返回包含新消息时间戳的Chat对象或仅消息本身
-            return chat, new_message["timestamp"] 
+            return (chat, new_message["timestamp"])
 
         except Exception as e:
             self.db.rollback()
             logger.error(f"ChatService: Error adding message to chat {chat_id}: {e}", exc_info=True) # 保持 exc_info=True
-            return None, None
+            return None
 
     def delete_chat(self, chat_id: str) -> bool:
         """

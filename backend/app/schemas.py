@@ -50,7 +50,8 @@ class FlowEdgeBase(BaseModel):
 class FlowBase(BaseModel):
     name: Optional[str] = None
     flow_data: Optional[Dict[str, Any]] = None
-    sas_state: Optional[Dict[str, Any]] = None  # 添加sas_state支持
+    # REMOVED: sas_state field to separate Flow and LangGraph concerns
+    # sas_state: Optional[Dict[str, Any]] = None  # 添加sas_state支持
 
 class FlowCreate(FlowBase):
     pass
@@ -167,17 +168,20 @@ class LangGraphInitializeResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class FlowDetail(FlowBase):
-    """流程图详情（包含 SAS 状态）"""
-    id: str
-    owner_id: str
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
-    last_interacted_chat_id: Optional[str]
-    sas_state: Optional[Dict[str, Any]] = None  # LangGraph state
-
-    class Config:
-        from_attributes = True
+# DEPRECATED: FlowDetail model couples Flow and SAS state.
+# Frontend should fetch Flow and SAS state separately.
+# Use Flow model for flow data and call /sas/threads/{thread_id}/state for SAS state.
+# class FlowDetail(FlowBase):
+#     """流程图详情（包含 SAS 状态）"""
+#     id: str
+#     owner_id: str
+#     created_at: Optional[datetime]
+#     updated_at: Optional[datetime]
+#     last_interacted_chat_id: Optional[str]
+#     sas_state: Optional[Dict[str, Any]] = None  # LangGraph state
+#
+#     class Config:
+#         from_attributes = True
 
 class SASInput(BaseModel):
     """SAS 运行输入"""

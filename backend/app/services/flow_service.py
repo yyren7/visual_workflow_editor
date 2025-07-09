@@ -17,7 +17,7 @@ class FlowService:
     def __init__(self, db: Session):
         self.db = db
     
-    async def get_flows(self, owner_id: Optional[int] = None, limit: int = 100) -> List[Flow]:
+    async def get_flows(self, owner_id: Optional[str] = None, limit: int = 100) -> List[Flow]:
         """
         获取流程图列表
         
@@ -59,8 +59,8 @@ class FlowService:
             "name": flow.name,
             "owner_id": flow.owner_id,
             "flow_data": flow_data,
-            "created_at": flow.created_at.isoformat() if flow.created_at else None,
-            "updated_at": flow.updated_at.isoformat() if flow.updated_at else None,
+            "created_at": flow.created_at.isoformat() if flow.created_at is not None else None,
+            "updated_at": flow.updated_at.isoformat() if flow.updated_at is not None else None,
             "last_interacted_chat_id": flow.last_interacted_chat_id
         }
         
@@ -79,12 +79,12 @@ class FlowService:
         flow = self.db.query(Flow).filter(Flow.id == flow_id).first()
         return flow
     
-    async def create_flow(self, owner_id: int, name: str = None, data: dict = None) -> Flow:
+    async def create_flow(self, owner_id: str, name: Optional[str] = None, data: Optional[dict] = None) -> Flow:
         """
         创建新的流程图（只创建数据库记录）
         
         Args:
-            owner_id: 所有者ID
+            owner_id: 所有者ID (UUID字符串)
             name: 流程图名称
             data: 流程图数据
             
@@ -114,7 +114,7 @@ class FlowService:
             
             # 初始化流程图变量
             sync_variable_service = FlowVariableService(self.db)
-            sync_variable_service.initialize_flow_variables(flow.id)
+            sync_variable_service.initialize_flow_variables(str(flow.id))
             
             logger.info(f"Created flow {flow.id} for user {owner_id}")
             return flow
@@ -147,14 +147,14 @@ class FlowService:
                 logger.warning(f"要更新的流程图不存在: {flow_id}")
                 return False
                 
-            # 更新数据
+            # 更新数据 - 使用setattr避免类型检查问题
             if data is not None:
-                flow.flow_data = data
-            flow.updated_at = datetime.datetime.utcnow()
+                setattr(flow, 'flow_data', data)
+            setattr(flow, 'updated_at', datetime.datetime.utcnow())
             
             # 如果提供了名称，也更新名称
             if name is not None:
-                flow.name = name
+                setattr(flow, 'name', name)
                 
             self.db.commit()
             

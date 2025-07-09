@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { 
   Card, 
@@ -31,7 +31,7 @@ import { useNodeState } from './useNodeState';
 import { useErrorRecovery } from './useErrorRecovery';
 import { useAgentStateSync } from '../../../hooks/useAgentStateSync';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchFlowById } from '../../../store/slices/flowSlice';
 
 export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data, selected }) => {
@@ -72,7 +72,21 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   } = useErrorRecovery(operationChatId, setErrorMessage);
 
   // Processing logic
-  const { updateUserInput } = useAgentStateSync();
+  const { updateUserInput, forceStateSync, checkStateSyncHealth } = useAgentStateSync();
+
+  // 🔧 新增：手动同步状态的处理函数
+  const handleManualSync = useCallback(() => {
+    const flowId = id.replace(/^langgraph_input_/, '');
+    console.log('[MANUAL_SYNC] 🔄 User triggered manual state sync for flow:', flowId);
+    forceStateSync(flowId);
+  }, [id, forceStateSync]);
+
+  // 🔧 新增：检查状态健康的处理函数
+  const handleHealthCheck = useCallback(() => {
+    const flowId = id.replace(/^langgraph_input_/, '');
+    console.log('[HEALTH_CHECK] 🔍 User triggered health check for flow:', flowId);
+    checkStateSyncHealth(flowId);
+  }, [id, checkStateSyncHealth]);
 
   // Main processing handler
   const handleSend = useCallback(async (overrideInput?: string) => {
@@ -140,7 +154,8 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   // 手动刷新状态的函数
   const handleRefreshState = useCallback(() => {
     console.log('手动刷新状态...');
-    dispatch(fetchFlowById(id.replace(/^langgraph_input_/, '')));
+    const flowId = id.replace(/^langgraph_input_/, '');
+    dispatch(fetchFlowById(flowId) as any);
   }, [dispatch, id]);
 
   // UI state
@@ -393,6 +408,16 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                 >
                   {t('nodes.input.skipError')}
                 </Button>
+                {/* 🔧 新增：手动状态同步按钮 */}
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  sx={{ fontSize: '0.7rem', minHeight: '24px' }}
+                  onClick={handleManualSync}
+                >
+                  手动同步状态
+                </Button>
               </Box>
             </Paper>
           )}
@@ -552,6 +577,15 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                       onClick={handleForceComplete}
                     >
                       {t('nodes.input.skipError')}
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                      sx={{ fontSize: '0.7rem', minHeight: '24px' }}
+                      onClick={handleManualSync}
+                    >
+                      手动同步状态
                     </Button>
                   </Box>
                 </Box>

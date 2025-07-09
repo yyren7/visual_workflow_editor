@@ -51,17 +51,90 @@ export const fetchFlowById = createAsyncThunk<FetchFlowByIdPayload, string, { re
     async (flowId: string, { rejectWithValue }) => {
         try {
             console.log(`Redux: Fetching flow and agent state for ${flowId}`);
-            // 直接调用 getFlow 来获取所有数据（现在后端会自动提供完整的 sas_state）
-            const flowData = await getFlow(flowId);
-            if (flowData && flowData.id) {
-                return {
-                    id: flowData.id,
-                    name: flowData.name || 'Untitled Flow',
-                    // 如果 flow_data 为 null/undefined，则返回空数组
-                    nodes: flowData.flow_data?.nodes || [],
-                    edges: flowData.flow_data?.edges || [],
-                    // 后端现在保证总是返回有效的 sas_state，但仍然保留安全检查
-                    sas_state: flowData.sas_state || {
+            
+            // 🔧 同时获取Flow数据和LangGraph状态
+            const [flowData, sasState] = await Promise.all([
+                getFlow(flowId),
+                // 获取LangGraph checkpoint状态
+                fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${flowId}/state`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(async (res) => {
+                    if (res.ok) {
+                        const data = await res.json();
+                        console.log('🔧 [DEBUG] Raw SAS state response:', data);
+                        console.log('🔧 [DEBUG] Response type:', typeof data);
+                        console.log('🔧 [DEBUG] Response keys:', Object.keys(data || {}));
+                        
+                        // 🔧 修复：正确处理LangGraph StateSnapshot响应
+                        let stateValues = null;
+                        if (data && Array.isArray(data)) {
+                            console.log('🔧 [DEBUG] Response is array, length:', data.length);
+                            // LangGraph StateSnapshot的第0个元素包含状态数据
+                            if (data.length > 0 && data[0] && typeof data[0] === 'object') {
+                                console.log('🔧 [DEBUG] Using data[0] as state values');
+                                console.log('🔧 [DEBUG] data[0] keys:', Object.keys(data[0]));
+                                console.log('🔧 [DEBUG] data[0] content:', data[0]);
+                                stateValues = data[0];
+                            } else {
+                                console.log('🔧 [DEBUG] Array[0] is not valid state object');
+                            }
+                        } else if (data && typeof data === 'object') {
+                            console.log('🔧 [DEBUG] Processing data object...');
+                            // 如果data有values函数，调用它获取真正的状态
+                            if (typeof data.values === 'function') {
+                                console.log('🔧 [DEBUG] data.values is a function, calling it...');
+                                stateValues = data.values();
+                            } else if (data.values && typeof data.values === 'object') {
+                                console.log('🔧 [DEBUG] data.values is an object, using directly...');
+                                console.log('🔧 [DEBUG] data.values keys:', Object.keys(data.values));
+                                stateValues = data.values;
+                            } else {
+                                console.log('🔧 [DEBUG] No values field found, using data directly...');
+                                stateValues = data;
+                            }
+                        }
+                        
+                        console.log('🔧 [DEBUG] Final stateValues:', stateValues);
+                        console.log('🔧 [DEBUG] Final stateValues keys:', Object.keys(stateValues || {}));
+                        
+                        // 检查是否有任务数据
+                        if (stateValues && stateValues.sas_step1_generated_tasks) {
+                            console.log('🔧 [DEBUG] ✅ Found sas_step1_generated_tasks:', stateValues.sas_step1_generated_tasks);
+                        } else {
+                            console.log('🔧 [DEBUG] ❌ No sas_step1_generated_tasks found in stateValues');
+                        }
+                        
+                        // 🔧 深度复制并序列化状态，确保移除任何函数
+                        const serializedState = JSON.parse(JSON.stringify(stateValues || {}));
+                        console.log('🔧 [DEBUG] Serialized state:', serializedState);
+                        return serializedState;
+                    } else if (res.status === 404) {
+                        // 如果没有找到LangGraph状态，返回默认初始状态
+                        console.log(`Redux: No LangGraph state found for ${flowId}, using default initial state`);
+                        return {
+                            dialog_state: "initial",
+                            messages: [],
+                            config: {},
+                            generated_node_xmls: [],
+                            task_list_accepted: false,
+                            module_steps_accepted: false,
+                            revision_iteration: 0,
+                            is_error: false,
+                            language: "zh",
+                            relation_xml_content: "",
+                            relation_xml_path: "",
+                            merged_xml_file_paths: []
+                        };
+                    } else {
+                        throw new Error(`Failed to fetch SAS state: ${res.status} ${res.statusText}`);
+                    }
+                }).catch(error => {
+                    console.warn(`Redux: Error fetching SAS state for ${flowId}, using default:`, error);
+                    // 出错时返回默认状态
+                    return {
                         dialog_state: "initial",
                         messages: [],
                         config: {},
@@ -74,7 +147,22 @@ export const fetchFlowById = createAsyncThunk<FetchFlowByIdPayload, string, { re
                         relation_xml_content: "",
                         relation_xml_path: "",
                         merged_xml_file_paths: []
-                    },
+                    };
+                })
+            ]);
+
+            if (flowData && flowData.id) {
+                console.log(`Redux: Successfully fetched flow data and SAS state for ${flowId}`);
+                console.log(`Redux: Flow nodes: ${flowData.flow_data?.nodes?.length || 0}, SAS dialog_state: ${sasState?.dialog_state}`);
+                
+                return {
+                    id: flowData.id,
+                    name: flowData.name || 'Untitled Flow',
+                    // 如果 flow_data 为 null/undefined，则返回空数组
+                    nodes: flowData.flow_data?.nodes || [],
+                    edges: flowData.flow_data?.edges || [],
+                    // 🔧 使用从LangGraph checkpoint获取的真实状态
+                    sas_state: sasState,
                 };
             } else {
                 console.error(`Redux: Invalid data received for ${flowId}. Data:`, flowData);
@@ -174,10 +262,13 @@ const flowSlice = createSlice({
     },
     updateAgentState: (state: FlowState, action: PayloadAction<any>) => {
         const newState = action.payload;
+        // 🔧 确保状态可序列化，移除任何函数
+        const serializableNewState = JSON.parse(JSON.stringify(newState || {}));
+        
         if (state.agentState) {
-            state.agentState = { ...state.agentState, ...newState };
+            state.agentState = { ...state.agentState, ...serializableNewState };
         } else {
-            state.agentState = newState;
+            state.agentState = serializableNewState;
         }
         // 当主要状态更新时，重置流式内容，为下一次流式输出做准备
         if (state.agentState) {
@@ -279,6 +370,19 @@ const flowSlice = createSlice({
         console.log(
           `Redux: Fetching flow data fulfilled for ${action.payload.id}. Nodes: ${action.payload.nodes.length}, DialogState: ${action.payload.sas_state?.dialog_state}`
         );
+        
+        // 🔧 新增：详细打印agentState调试信息
+        console.log('🔧 [DEBUG] Full sas_state received:', action.payload.sas_state);
+        if (action.payload.sas_state) {
+          console.log('🔧 [DEBUG] sas_state keys:', Object.keys(action.payload.sas_state));
+          console.log('🔧 [DEBUG] dialog_state:', action.payload.sas_state.dialog_state);
+          console.log('🔧 [DEBUG] sas_step1_generated_tasks:', action.payload.sas_state.sas_step1_generated_tasks);
+          console.log('🔧 [DEBUG] current_user_request:', action.payload.sas_state.current_user_request);
+          console.log('🔧 [DEBUG] task_list_accepted:', action.payload.sas_state.task_list_accepted);
+          console.log('🔧 [DEBUG] module_steps_accepted:', action.payload.sas_state.module_steps_accepted);
+        } else {
+          console.log('🔧 [DEBUG] No sas_state received!');
+        }
       })
       .addCase(fetchFlowById.rejected, (state: FlowState, action) => {
         // 加载失败时，只更新错误状态，不清除可能仍然有用的旧数据

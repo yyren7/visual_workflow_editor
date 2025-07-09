@@ -44,6 +44,10 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
   }>({});
 
   const generateLangGraphNodes = useCallback((state: AgentState, flowId: string): { nodes: Node[], edges: Edge[] } => {
+    console.log('🔧 [DEBUG] generateLangGraphNodes: Starting generation');
+    console.log('🔧 [DEBUG] State received:', state);
+    console.log('🔧 [DEBUG] FlowId:', flowId);
+    
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
 
@@ -74,8 +78,17 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
       height: actualInputHeight,
     };
     newNodes.push(inputNode);
+    console.log('🔧 [DEBUG] Added input node');
 
     const tasks = state.sas_step1_generated_tasks || [];
+    console.log('🔧 [DEBUG] Tasks from state:', tasks);
+    console.log('🔧 [DEBUG] Tasks count:', tasks.length);
+    
+    if (tasks.length === 0) {
+      console.log('🔧 [DEBUG] No tasks found - returning only input node');
+      return { nodes: newNodes, edges: newEdges };
+    }
+
     if (tasks.length > 0) {
       const taskYOffset = inputNode.position.y + actualInputHeight + VERTICAL_SPACING;
       
@@ -198,10 +211,21 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
 
   const syncLangGraphNodes = useCallback(() => {
     if (!agentState || !currentFlowId) {
+        console.log('🔧 [DEBUG] syncLangGraphNodes: Missing agentState or currentFlowId');
+        console.log('🔧 [DEBUG] agentState:', agentState);
+        console.log('🔧 [DEBUG] currentFlowId:', currentFlowId);
         return;
     }
 
+    console.log('🔧 [DEBUG] syncLangGraphNodes: Starting sync');
+    console.log('🔧 [DEBUG] Full agentState:', agentState);
+    console.log('🔧 [DEBUG] agentState.sas_step1_generated_tasks:', agentState.sas_step1_generated_tasks);
+    console.log('🔧 [DEBUG] agentState.dialog_state:', agentState.dialog_state);
+
     const { nodes: langGraphNodesGenerated, edges: langGraphEdgesGenerated } = generateLangGraphNodes(agentState, currentFlowId);
+    
+    console.log('🔧 [DEBUG] Generated LangGraph nodes count:', langGraphNodesGenerated.length);
+    console.log('🔧 [DEBUG] Generated LangGraph nodes:', langGraphNodesGenerated.map(n => ({ id: n.id, type: n.type })));
     
     const nonLangGraphNodes = nodesFromStore?.filter(node => !node.id.startsWith('langgraph_')) || [];
     
@@ -228,12 +252,21 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     const updatedNodes = [...nonLangGraphNodes, ...finalLangGraphNodes];
     const updatedEdges = [...nonLangGraphEdges, ...langGraphEdgesGenerated]; 
 
+    console.log('🔧 [DEBUG] Final updatedNodes count:', updatedNodes.length);
+    console.log('🔧 [DEBUG] Final LangGraph nodes in update:', updatedNodes.filter(n => n.id.startsWith('langgraph_')).map(n => ({ id: n.id, type: n.type })));
+
     if (!_isEqual(updatedNodes, nodesFromStore)) {
+        console.log('🔧 [DEBUG] Dispatching setNodes with updated nodes');
         dispatch(setNodes(updatedNodes));
+    } else {
+        console.log('🔧 [DEBUG] No node changes needed');
     }
 
     if (!_isEqual(updatedEdges, edgesFromStore)) {
+        console.log('🔧 [DEBUG] Dispatching setEdges with updated edges');
         dispatch(setEdges(updatedEdges));
+    } else {
+        console.log('🔧 [DEBUG] No edge changes needed');
     }
   }, [agentState, currentFlowId, nodesFromStore, edgesFromStore, generateLangGraphNodes, dispatch]);
 
