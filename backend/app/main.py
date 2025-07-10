@@ -101,7 +101,7 @@ try:
     logger.info("Successfully imported backend.config.APP_CONFIG")
     from backend.app.routers import (
         user, flow, email, auth, node_templates,
-        flow_variables, chat, langgraph_chat, sas_chat
+        flow_variables, chat, sas_chat
     )
     logger.info("Successfully imported basic routers.")
     if not MINIMAL_MODE:
@@ -412,8 +412,6 @@ try:
     logger.info("Registered flow_variables router.")
     app.include_router(chat.router)
     logger.info("Registered chat router.")
-    app.include_router(langgraph_chat.router)
-    logger.info("Registered langgraph_chat router.")
     app.include_router(sas_chat.router)
     logger.info("Registered sas_chat router.")
 except Exception as e:

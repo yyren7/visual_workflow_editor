@@ -11,7 +11,7 @@ import {
   appendStreamingContent,
   setProcessingStage,
 } from '../store/slices/flowSlice';
-import { updateLangGraphState } from '../api/langgraphApi';
+import { updateLangGraphState } from '../api/sasApi';
 import { debounce } from 'lodash';
 import { useSSEManager } from './useSSEManager';
 import { store } from '../store/store';
