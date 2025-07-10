@@ -620,7 +620,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   color="primary"
                   startIcon={<CheckIcon />}
                   sx={{ fontSize: '0.75rem', minHeight: '28px' }}
-                  onClick={() => handleSend('accept')}
+                  onClick={() => handleSend('start_review')}
                   disabled={isProcessing}
                 >
                   {t('nodes.input.proceedToReview')}

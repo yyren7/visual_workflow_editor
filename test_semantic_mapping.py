@@ -96,7 +96,7 @@ def test_semantic_normalization():
     """测试语义名称标准化和匹配"""
     
     try:
-        from backend.langgraphchat.graph.subgraph.sas.nodes.parameter_mapping import ParameterMapper
+        from backend.sas.nodes.parameter_mapping import ParameterMapper
         
         print("\n🔍 测试语义名称标准化和匹配...")
         

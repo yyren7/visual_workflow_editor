@@ -130,7 +130,7 @@ export const useAgentStateSync = () => {
         currentChatIdForSSESubscriptions.current = finalChatIdForSSE;
         
         const newUnsubs: Array<() => void> = [];
-        const eventsToSubscribe: string[] = ['agent_state_updated', 'stream_end', 'connection_error', 'server_error_event', 'token', 'tool_start', 'tool_end', 'user_message_saved', 'ping', 'task_progress'];
+        const eventsToSubscribe: string[] = ['agent_state_updated', 'stream_end', 'processing_complete', 'connection_error', 'server_error_event', 'token', 'tool_start', 'tool_end', 'user_message_saved', 'ping', 'task_progress'];
         
         eventsToSubscribe.forEach(eventType => {
           console.log(`[AGENT_SYNC_LOG] Subscribing to SSE event type: '${eventType}' for chat ID: ${finalChatIdForSSE}`);
@@ -174,12 +174,22 @@ export const useAgentStateSync = () => {
                 dispatch(updateAgentState(eventData.agent_state));
                 
                 // 🔧 强制UI重新渲染以确保状态变化生效
+                setTimeout(() => {
+                  console.log('[SYNC_FIX] 📊 Redux state after update:', store.getState().flow.agentState?.dialog_state);
+                  // 🔧 强制触发一个轻量的状态更新来确保组件重新渲染
+                  const currentState = store.getState().flow.agentState;
+                  if (currentState && currentState.dialog_state) {
+                    dispatch(setProcessingStage(currentState.processingStage || ''));
+                  }
+                }, 50);
+                
+                // 🔧 特别处理审核状态，确保UI正确更新
                 if (eventData.agent_state.dialog_state === 'sas_awaiting_module_steps_review') {
-                  console.log('[SYNC_FIX] 🔄 Forcing UI update for review state...');
-                  // 稍微延迟重新获取状态以确保redux更新完成
+                  console.log('[SYNC_FIX] 🎯 Detected review state - ensuring proper UI sync!');
+                  // 额外的延迟确保复杂状态更新完成
                   setTimeout(() => {
-                    console.log('[SYNC_FIX] 📊 Current Redux state after update:', store.getState().flow.agentState?.dialog_state);
-                  }, 100);
+                    console.log('[SYNC_FIX] 📊 Final review state check:', store.getState().flow.agentState?.dialog_state);
+                  }, 200);
                 }
               } else {
                 console.warn('[AGENT_SYNC_LOG] Received agent_state_updated event but eventData.agent_state is missing or invalid:', eventData);
@@ -198,6 +208,42 @@ export const useAgentStateSync = () => {
                   console.log('[SYNC_FIX] 🎯 Stream ended in review state - ensuring state sync!');
                   dispatch(updateAgentState(eventData.final_state));
                 }
+              }
+            } else if (eventType === 'processing_complete') {
+              console.log(`[AGENT_SYNC_LOG] 🎯 Processing complete for chat ${finalChatIdForSSE}. EventData:`, eventData);
+              
+              // 🔧 如果事件数据包含最终状态，优先处理状态更新
+              if (eventData && eventData.final_state) {
+                console.log('[SYNC_FIX] 🔄 Processing complete with final state - updating:', eventData.final_state.dialog_state);
+                dispatch(updateAgentState(eventData.final_state));
+                
+                // 给Redux状态更新一点时间，然后再重置处理状态
+                setTimeout(() => {
+                  console.log('[SYNC_FIX] 📊 Final Redux state after processing complete:', store.getState().flow.agentState?.dialog_state);
+                  
+                  // 重置处理状态，确保前端UI正确更新
+                  dispatch(setProcessingStage(''));
+                  dispatch(setProcessingStatus(false));
+                  
+                  // 强制触发轻量更新以确保UI重新渲染
+                  dispatch(updateAgentState({ 
+                    __forceUpdate: Date.now() 
+                  }));
+                }, 50);
+              } else {
+                console.log('[SYNC_FIX] 🔄 Processing complete without final state - just resetting processing status');
+                
+                // 重置处理状态，确保前端UI正确更新
+                dispatch(setProcessingStage(''));
+                dispatch(setProcessingStatus(false));
+                
+                // 强制触发轻量更新以确保UI重新渲染
+                setTimeout(() => {
+                  dispatch(updateAgentState({ 
+                    __forceUpdate: Date.now() 
+                  }));
+                  console.log('[SYNC_FIX] 📊 Final Redux state after processing complete:', store.getState().flow.agentState?.dialog_state);
+                }, 50);
               }
             } else if (eventType === 'token') {
               if (typeof eventData === 'string') {

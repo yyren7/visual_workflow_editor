@@ -330,7 +330,15 @@ const resources: Resource = {
       'nodes.input.confirmEdit': '确认编辑',
       'nodes.input.send': '发送',
       'nodes.input.noTaskDescriptionYet': '尚无任务描述。',
-      'nodes.input.addTaskDescription': '添加任务描述'
+      'nodes.input.addTaskDescription': '添加任务描述',
+      
+      // 🔧 添加缺失的翻译键
+      'nodes.input.moduleStepsReady': '模块步骤就绪',
+      'nodes.input.moduleStepsGenerated': '模块步骤已生成',
+      'nodes.input.moduleStepsGeneratedDesc': '系统已生成模块步骤，请审查后决定是否进入审核流程。',
+      'nodes.input.proceedToReview': '进入审核',
+      'nodes.input.regenerateSteps': '重新生成步骤',
+      'nodes.input.generatedModuleSteps': '生成的模块步骤'
     }
   },
   en: {

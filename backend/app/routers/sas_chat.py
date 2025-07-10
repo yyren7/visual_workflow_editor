@@ -8,6 +8,8 @@ import os
 from dotenv import load_dotenv
 import logging
 from collections import defaultdict
+import re
+# 移除了urlparse import，不再需要直接解析数据库URL
 
 from sqlalchemy.orm import Session
 from backend.app import schemas, utils
@@ -29,6 +31,9 @@ logger = logging.getLogger(__name__)
 
 # --- Stream End Sentinel ---
 STREAM_END_SENTINEL = object()
+
+# --- 移除了直接数据库连接函数，改用LangGraph API ---
+# 注意：不再需要直接操作数据库，LangGraph的checkpointer会处理所有持久化操作
 
 # --- LLM Initialization ---
 LLM_INSTANCE = None
@@ -245,22 +250,18 @@ async def get_chat_history(chat_id: str):
 
 def get_checkpoint_values(checkpoint_obj) -> dict:
     """
-    健壮地获取checkpoint的values，处理可能是方法或属性的情况
+    获取checkpoint的values，StateSnapshot对象有.values属性
     """
-    if not checkpoint_obj or not hasattr(checkpoint_obj, 'values'):
+    if not checkpoint_obj:
         return {}
     
     try:
-        if callable(checkpoint_obj.values):
-            result = checkpoint_obj.values()
+        # 根据LangGraph文档，StateSnapshot对象有.values属性
+        if hasattr(checkpoint_obj, 'values'):
+            values = checkpoint_obj.values
+            return values if isinstance(values, dict) else {}
         else:
-            result = checkpoint_obj.values
-        
-        # 确保返回的是字典类型
-        if isinstance(result, dict):
-            return result
-        else:
-            logger.warning(f"Checkpoint values is not a dict, got: {type(result)}")
+            logger.warning(f"Checkpoint object missing .values attribute: {type(checkpoint_obj)}")
             return {}
     except Exception as e:
         logger.error(f"Error getting checkpoint values: {e}")
@@ -418,6 +419,19 @@ async def _process_sas_events(
             graph_input["dialog_state"] = "sas_modules_accepted_processing"
             graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
             graph_input["module_steps_accepted"] = True
+        elif message_content == "start_review":
+            # 🔧 新增：处理"开始审核"指令，专门用于从生成完成状态进入审核状态
+            current_dialog_state = current_persistent_state.get('dialog_state')
+            
+            logger.info(f"[SAS Chat {chat_id}] 收到start_review指令，当前状态: {current_dialog_state}")
+            
+            if current_dialog_state == 'sas_step2_module_steps_generated_for_review':
+                # 从模块步骤生成完成状态进入审核状态
+                # 不改变dialog_state，让review_and_refine_node处理转换到审核状态
+                graph_input["current_step_description"] = "Starting module steps review process..."
+                logger.info(f"[SAS Chat {chat_id}] start_review指令将触发模块步骤审核流程")
+            else:
+                logger.warning(f"[SAS Chat {chat_id}] 收到start_review但当前状态不支持: {current_dialog_state}")
         elif message_content == "accept":
             # 新增：处理通用的"accept"指令，根据当前状态判断是哪种accept
             # 🔧 使用已获取的持久化状态，避免重复查询造成的竞态条件
@@ -585,15 +599,31 @@ async def _process_sas_events(
             # await event_broadcaster.broadcast_event(chat_id, {"type": "stream_end", "data": {"chat_id": chat_id}})
             # logger.info(f"[SAS Chat {chat_id}] Stream end event broadcast.")
             
-            # 发送处理完成事件，但保持连接
+            # 发送处理完成事件，但保持连接，并包含最终状态
             logger.info(f"[SAS Chat {chat_id}] Broadcasting processing_complete event (keeping connection alive).")
-            await event_broadcaster.broadcast_event(chat_id, {
-                "type": "processing_complete", 
+            
+            # 🔧 构建 processing_complete 事件数据
+            event_data = {
+                "type": "processing_complete",
                 "data": {
-                    "chat_id": chat_id, 
+                    "chat_id": chat_id,
                     "message": "SAS processing completed, connection remains open for future events"
                 }
-            })
+            }
+            
+            # 如果有最终状态，包含在事件中
+            if final_state and isinstance(final_state, dict):
+                event_data["data"]["final_state"] = {
+                    "dialog_state": final_state.get("dialog_state"),
+                    "sas_step1_generated_tasks": final_state.get("sas_step1_generated_tasks"),
+                    "task_list_accepted": final_state.get("task_list_accepted"),
+                    "module_steps_accepted": final_state.get("module_steps_accepted"),
+                    "completion_status": final_state.get("completion_status"),
+                    "clarification_question": final_state.get("clarification_question")
+                }
+                logger.info(f"[SAS Chat {chat_id}] Including final state in processing_complete: {final_state.get('dialog_state')}")
+            
+            await event_broadcaster.broadcast_event(chat_id, event_data)
             
         except Exception as qe:
             logger.error(f"[SAS Chat {chat_id}] Failed to broadcast processing_complete: {qe}")
@@ -773,12 +803,13 @@ async def sas_update_state(
         state_update_payload = await request.json()
         config = {"configurable": {"thread_id": chat_id}}
         updated_checkpoint = await sas_app.aupdate_state(config, state_update_payload)
-        print(f"SAS update-state for chat_id/thread_id: {chat_id}, update: {state_update_payload}, response: {updated_checkpoint}")
+        logger.info(f"SAS update-state for thread {chat_id}: {len(str(state_update_payload))} bytes updated")
+        logger.debug(f"Updated checkpoint: {updated_checkpoint}")
         return updated_checkpoint
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in request body.")
     except Exception as e:
-        print(f"Error in /sas/{chat_id}/update-state: {e}")
+        logger.error(f"Error in /sas/{chat_id}/update-state: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{chat_id}/state")
@@ -810,52 +841,54 @@ async def sas_get_state(
                 if current_checkpoint:
                     break
                     
-                print(f"🔧 [DEBUG] Attempt {attempt + 1}: No checkpoint found, retrying...")
+                logger.debug(f"Attempt {attempt + 1}: No checkpoint found for thread {chat_id}, retrying...")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 2  # 指数退避
                     
             except Exception as retry_error:
-                print(f"🔧 [DEBUG] Attempt {attempt + 1} failed: {retry_error}")
+                logger.warning(f"Attempt {attempt + 1} failed for thread {chat_id}: {retry_error}")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 2
                 else:
+                    # 记录最终失败的详细信息
+                    logger.error(f"Failed to get state for thread {chat_id} after {max_retries} attempts: {retry_error}")
                     raise retry_error
         
-        print(f"🔧 [DEBUG] Current checkpoint type: {type(current_checkpoint)}")
-        print(f"🔧 [DEBUG] Current checkpoint exists: {current_checkpoint is not None}")
+        logger.debug(f"Current checkpoint type: {type(current_checkpoint)}")
+        logger.debug(f"Current checkpoint exists: {current_checkpoint is not None}")
         
         if current_checkpoint:
             # 使用辅助函数安全地获取values
             try:
                 checkpoint_values = get_checkpoint_values(current_checkpoint)
-                print(f"🔧 [DEBUG] Successfully got checkpoint values: {bool(checkpoint_values)}")
+                logger.debug(f"Successfully got checkpoint values: {bool(checkpoint_values)}")
                 
                 if checkpoint_values:
                     dialog_state = checkpoint_values.get('dialog_state')
                     tasks = checkpoint_values.get('sas_step1_generated_tasks')
                     current_user_request = checkpoint_values.get('current_user_request')
                     
-                    print(f"🔧 [DEBUG] Dialog state: {dialog_state}")
-                    print(f"🔧 [DEBUG] Tasks count: {len(tasks) if tasks else 0}")
-                    print(f"🔧 [DEBUG] Has user request: {bool(current_user_request)}")
+                    logger.debug(f"Dialog state: {dialog_state}")
+                    logger.debug(f"Tasks count: {len(tasks) if tasks else 0}")
+                    logger.debug(f"Has user request: {bool(current_user_request)}")
                     
                     if tasks:
-                        print(f"🔧 [DEBUG] ✅ Found {len(tasks)} tasks")
+                        logger.info(f"Found {len(tasks)} tasks for thread {chat_id}")
                     else:
-                        print(f"🔧 [DEBUG] ❌ No tasks found")
+                        logger.info(f"No tasks found for thread {chat_id}")
                 else:
-                    print(f"🔧 [DEBUG] Failed to get checkpoint values")
+                    logger.warning(f"Failed to get checkpoint values for thread {chat_id}")
             except Exception as values_error:
-                print(f"🔧 [DEBUG] Error getting checkpoint values: {values_error}")
+                logger.error(f"Error getting checkpoint values for thread {chat_id}: {values_error}")
                 # 即使获取values失败，仍然返回checkpoint，让前端处理
         else:
-            print(f"🔧 [DEBUG] ❌ No checkpoint found after {max_retries} attempts")
+            logger.warning(f"No checkpoint found for thread {chat_id} after {max_retries} attempts")
         
         if not current_checkpoint:
             # 返回一个默认的空状态而不是404错误，避免前端处理问题
-            print(f"🔧 [DEBUG] Returning default empty state for {chat_id}")
+            logger.info(f"Returning default empty state for thread {chat_id}")
             return {
                 "values": {
                     "dialog_state": "initial",
@@ -875,7 +908,6 @@ async def sas_get_state(
         raise
     except Exception as e:
         error_msg = f"Error in /sas/{chat_id}/state: {e}"
-        print(error_msg)
         logger.error(error_msg, exc_info=True)
         
         # 检查是否是权限相关的错误
@@ -947,6 +979,7 @@ async def reset_stuck_state(
         stuck_states = [
             'generating_xml_relation',
             'generating_xml_final', 
+            'generation_failed',  # 新增：生成失败状态
             'sas_generating_individual_xmls',
             'sas_module_steps_accepted_proceeding',
             'sas_all_steps_accepted_proceed_to_xml',
@@ -962,9 +995,14 @@ async def reset_stuck_state(
         
         # 获取checkpoint历史
         checkpoint_history = []
-        async for checkpoint_tuple in sas_app.aget_state_history(config):
-            if hasattr(checkpoint_tuple, 'checkpoint') and checkpoint_tuple.checkpoint:
-                checkpoint_history.append(checkpoint_tuple)
+        try:
+            async for checkpoint_tuple in sas_app.aget_state_history(config):
+                if checkpoint_tuple:  # 简化检查，StateSnapshot对象应该总是有效
+                    checkpoint_history.append(checkpoint_tuple)
+        except Exception as history_error:
+            logger.error(f"获取checkpoint历史失败: {history_error}")
+            # 如果无法获取历史，创建干净的初始状态
+            checkpoint_history = []
         
         if len(checkpoint_history) < 2:
             # 没有历史，创建干净的初始状态
@@ -1008,21 +1046,34 @@ async def reset_stuck_state(
         
         for i in range(1, len(checkpoint_history)):
             checkpoint_tuple = checkpoint_history[i]
-            checkpoint_values = checkpoint_tuple.checkpoint.get('channel_values', {})
-            dialog_state = checkpoint_values.get('dialog_state')
-            is_error = checkpoint_values.get('is_error', False)
             
-            # 寻找一个稳定且无错误的checkpoint
-            if dialog_state in stable_states_priority and not is_error:
-                priority = stable_states_priority.index(dialog_state)
-                if priority < target_priority:
-                    target_checkpoint = checkpoint_tuple
-                    target_priority = priority
-                    logger.info(f"Found better rollback target: {dialog_state} (priority {priority})")
+            # 正确获取checkpoint的状态数据 - 需要通过config重新获取完整状态
+            try:
+                checkpoint_config = checkpoint_tuple.config
+                checkpoint_data = await sas_app.aget_state(checkpoint_config)
+                if checkpoint_data:
+                    checkpoint_values = get_checkpoint_values(checkpoint_data)
+                    dialog_state = checkpoint_values.get('dialog_state')
+                    is_error = checkpoint_values.get('is_error', False)
                     
-                    # 如果找到了最高优先级的状态，就停止搜索
-                    if priority == 0:
-                        break
+                    # 寻找一个稳定且无错误的checkpoint
+                    if dialog_state and dialog_state in stable_states_priority and not is_error:
+                        priority = stable_states_priority.index(dialog_state)
+                        if priority < target_priority:
+                            target_checkpoint = checkpoint_tuple
+                            target_priority = priority
+                            logger.info(f"Found better rollback target: {dialog_state} (priority {priority})")
+                            
+                            # 如果找到了最高优先级的状态，就停止搜索
+                            if priority == 0:
+                                break
+                    else:
+                        logger.debug(f"Checkpoint {i} not suitable: state={dialog_state}, error={is_error}")
+                else:
+                    logger.warning(f"Could not get state data for checkpoint {i}")
+            except Exception as e:
+                logger.warning(f"Error checking checkpoint {i}: {e}")
+                continue
         
         if not target_checkpoint:
             # 没有找到稳定checkpoint，创建初始状态
@@ -1049,29 +1100,32 @@ async def reset_stuck_state(
                 "message": f"已重置到干净的初始状态 (从 {current_dialog_state})"
             }
         
-        # 获取目标checkpoint的完整状态
+        # 获取目标checkpoint的完整状态数据
         target_config = target_checkpoint.config
         target_checkpoint_data = await sas_app.aget_state(target_config)
         
         if not target_checkpoint_data:
             raise Exception("无法获取目标checkpoint的状态数据")
         
-        # 使用目标checkpoint的完整状态
         target_state = dict(get_checkpoint_values(target_checkpoint_data))
-        target_state['current_step_description'] = f"Reset to {target_state.get('dialog_state')} checkpoint from stuck state"
+        target_dialog_state = target_state.get('dialog_state')
+        
+        # 准备回退状态
+        target_state['current_step_description'] = f"Reset to {target_dialog_state} checkpoint from stuck state"
         target_state['user_input'] = None
         target_state['is_error'] = False
         target_state['error_message'] = None
         
         # 如果回退到审查状态，确保用户需要重新确认
-        if target_state.get('dialog_state') == 'sas_awaiting_module_steps_review':
+        if target_dialog_state == 'sas_awaiting_module_steps_review':
             target_state['module_steps_accepted'] = False
             target_state['completion_status'] = 'needs_clarification'
-        elif target_state.get('dialog_state') == 'sas_awaiting_task_list_review':
+        elif target_dialog_state == 'sas_awaiting_task_list_review':
             target_state['task_list_accepted'] = False
             target_state['module_steps_accepted'] = False
             target_state['completion_status'] = 'needs_clarification'
         
+        # 使用LangGraph API安全地更新状态
         await sas_app.aupdate_state(config, target_state)
         
         target_dialog_state = target_state.get('dialog_state')
@@ -1112,7 +1166,7 @@ async def force_reset_state(
         checkpoint_history = []
         try:
             async for checkpoint_tuple in sas_app.aget_state_history(config):
-                if hasattr(checkpoint_tuple, 'checkpoint') and checkpoint_tuple.checkpoint:
+                if checkpoint_tuple:  # 简化检查
                     checkpoint_history.append(checkpoint_tuple)
         except Exception as history_error:
             logger.warning(f"Error getting checkpoint history for flow {flow_id}: {history_error}")
@@ -1123,13 +1177,17 @@ async def force_reset_state(
         initial_checkpoint = None
         for checkpoint_tuple in reversed(checkpoint_history):
             try:
-                checkpoint_values = checkpoint_tuple.checkpoint.get('channel_values', {})
-                dialog_state = checkpoint_values.get('dialog_state')
-                
-                if dialog_state == 'initial':
-                    initial_checkpoint = checkpoint_tuple
-                    logger.info(f"Found initial checkpoint at {checkpoint_tuple.config}")
-                    break
+                # 正确获取checkpoint的状态数据 - 需要通过config重新获取完整状态
+                checkpoint_config = checkpoint_tuple.config
+                checkpoint_data = await sas_app.aget_state(checkpoint_config)
+                if checkpoint_data:
+                    checkpoint_values = get_checkpoint_values(checkpoint_data)
+                    dialog_state = checkpoint_values.get('dialog_state')
+                    
+                    if dialog_state == 'initial':
+                        initial_checkpoint = checkpoint_tuple
+                        logger.info(f"Found initial checkpoint with state: {dialog_state}")
+                        break
             except Exception as checkpoint_error:
                 logger.warning(f"Error processing checkpoint for flow {flow_id}: {checkpoint_error}")
                 continue
@@ -1137,17 +1195,22 @@ async def force_reset_state(
         if initial_checkpoint:
             # 找到了initial checkpoint，回退到该状态
             try:
+                # 获取initial checkpoint的完整状态数据
                 target_config = initial_checkpoint.config
                 target_checkpoint_data = await sas_app.aget_state(target_config)
                 
                 if not target_checkpoint_data:
                     raise Exception("无法获取initial checkpoint的状态数据")
                 
-                # 使用initial checkpoint的完整状态
                 initial_state = dict(get_checkpoint_values(target_checkpoint_data))
+                
+                # 准备初始状态
                 initial_state['current_step_description'] = 'Reset to initial checkpoint state'
                 initial_state['user_input'] = None  # 清理用户输入
+                initial_state['is_error'] = False   # 清除错误状态
+                initial_state['error_message'] = None
                 
+                # 使用LangGraph API安全地更新状态
                 await sas_app.aupdate_state(config, initial_state)
                 
                 logger.info(f"Successfully reset flow {flow_id} to initial checkpoint from {current_dialog_state}")
@@ -1218,9 +1281,13 @@ async def rollback_to_previous_state(
         
         # 获取checkpoint历史（按时间倒序）
         checkpoint_history = []
-        async for checkpoint_tuple in sas_app.aget_state_history(config):
-            if hasattr(checkpoint_tuple, 'checkpoint') and checkpoint_tuple.checkpoint:
-                checkpoint_history.append(checkpoint_tuple)
+        try:
+            async for checkpoint_tuple in sas_app.aget_state_history(config):
+                if checkpoint_tuple:  # 简化检查
+                    checkpoint_history.append(checkpoint_tuple)
+        except Exception as history_error:
+            logger.error(f"获取checkpoint历史失败: {history_error}")
+            raise HTTPException(status_code=500, detail="获取历史状态失败")
         
         if len(checkpoint_history) < 2:
             raise HTTPException(status_code=400, detail="没有找到可以回退的历史checkpoint")
@@ -1230,6 +1297,7 @@ async def rollback_to_previous_state(
             'initial',
             'sas_step1_tasks_generated',
             'sas_awaiting_task_list_review',          # 任务列表审查状态
+            'sas_tasks_accepted_processing',          # 任务列表被接受后的处理状态
             'sas_step2_module_steps_generated_for_review',
             'sas_awaiting_module_steps_review',       # 模块步骤审查状态（用户点击承认按钮的状态）
             'sas_xml_generation_approved',            # XML生成承认后的状态
@@ -1239,54 +1307,87 @@ async def rollback_to_previous_state(
         
         # 查找最近的稳定checkpoint（跳过当前checkpoint，从第二个开始）
         target_checkpoint = None
+        target_checkpoint_index = None
+        logger.info(f"Searching through {len(checkpoint_history)} checkpoints for stable state")
+        
         for i in range(1, len(checkpoint_history)):
             checkpoint_tuple = checkpoint_history[i]
-            checkpoint_values = checkpoint_tuple.checkpoint.get('channel_values', {})
-            dialog_state = checkpoint_values.get('dialog_state')
-            is_error = checkpoint_values.get('is_error', False)
             
-            logger.info(f"Checking checkpoint {i}: dialog_state={dialog_state}, is_error={is_error}")
-            
-            # 寻找一个稳定且无错误的checkpoint
-            if dialog_state in stable_states and not is_error:
-                target_checkpoint = checkpoint_tuple
-                logger.info(f"Found suitable rollback target: {dialog_state} at {checkpoint_tuple.config}")
-                break
+            # 正确获取checkpoint的状态数据
+            try:
+                checkpoint_config = checkpoint_tuple.config
+                checkpoint_data = await sas_app.aget_state(checkpoint_config)
+                if checkpoint_data:
+                    checkpoint_values = get_checkpoint_values(checkpoint_data)
+                    dialog_state = checkpoint_values.get('dialog_state')
+                    is_error = checkpoint_values.get('is_error', False)
+                    
+                    logger.debug(f"Checking checkpoint {i}: dialog_state={dialog_state}, is_error={is_error}")
+                    
+                    # 寻找一个稳定且无错误的checkpoint
+                    if dialog_state in stable_states and not is_error:
+                        target_checkpoint = checkpoint_tuple
+                        target_checkpoint_index = i
+                        logger.info(f"Found suitable rollback target: {dialog_state} at checkpoint {i}")
+                        break
+                else:
+                    logger.warning(f"Could not get state data for checkpoint {i}")
+            except Exception as e:
+                logger.warning(f"Error checking checkpoint {i}: {e}")
+                continue
         
-        if not target_checkpoint:
-            raise HTTPException(status_code=400, detail="没有找到合适的稳定checkpoint进行回退")
+        logger.info(f"Target checkpoint found: {target_checkpoint is not None}")
         
-        # 获取目标checkpoint的完整状态
+        if not target_checkpoint or target_checkpoint_index is None:
+            # 如果找不到任何稳定状态，返回错误
+            logger.warning(f"No stable checkpoint found for flow {flow_id}")
+            raise HTTPException(status_code=400, detail="没有找到可以回退的稳定checkpoint状态")
+        
+        # 安全的回滚：使用LangGraph API来创建新的checkpoint，而不是删除旧的
         target_config = target_checkpoint.config
-        target_checkpoint_data = await sas_app.aget_state(target_config)
         
-        if not target_checkpoint_data:
-            raise HTTPException(status_code=500, detail="无法获取目标checkpoint的状态数据")
+        logger.info(f"Rolling back to checkpoint at index {target_checkpoint_index}")
         
-        # 使用目标checkpoint的完整状态，但更新一些必要的字段
-        target_state = dict(get_checkpoint_values(target_checkpoint_data))
-        target_state['current_step_description'] = f"Rolled back to {target_state.get('dialog_state')} checkpoint"
-        target_state['user_input'] = None  # 清理用户输入，避免重复处理
-        
-        # 如果回退到审查状态，确保用户需要重新确认
-        if target_state.get('dialog_state') == 'sas_awaiting_module_steps_review':
-            target_state['module_steps_accepted'] = False
-            target_state['completion_status'] = 'needs_clarification'
-        elif target_state.get('dialog_state') == 'sas_awaiting_task_list_review':
-            target_state['task_list_accepted'] = False
-            target_state['module_steps_accepted'] = False
-            target_state['completion_status'] = 'needs_clarification'
-        
-        # 更新到目标checkpoint状态
-        await sas_app.aupdate_state(config, target_state)
-        
-        target_dialog_state = target_state.get('dialog_state')
-        logger.info(f"Successfully rolled back flow {flow_id} from {current_dialog_state} to {target_dialog_state}")
-        
-        return {
-            "success": True, 
-            "message": f"已回退到checkpoint状态: {target_dialog_state} (从 {current_dialog_state})"
-        }
+        try:
+            # 获取目标checkpoint的状态数据
+            target_checkpoint_data = await sas_app.aget_state(target_config)
+            if not target_checkpoint_data:
+                raise Exception("无法获取目标checkpoint的状态数据")
+            
+            target_state = get_checkpoint_values(target_checkpoint_data)
+            target_dialog_state = target_state.get('dialog_state')
+            
+            # 使用LangGraph API安全地更新状态，创建新的checkpoint
+            # 这比直接删除数据库记录更安全，保持了LangGraph的内部一致性
+            rollback_state = dict(target_state)  # 复制目标状态
+            rollback_state['current_step_description'] = f"Rolled back to {target_dialog_state} checkpoint"
+            rollback_state['user_input'] = None  # 清除用户输入
+            rollback_state['is_error'] = False   # 清除错误状态
+            rollback_state['error_message'] = None
+            
+            # 如果回退到审查状态，确保用户需要重新确认
+            if target_dialog_state == 'sas_awaiting_module_steps_review':
+                rollback_state['module_steps_accepted'] = False
+                rollback_state['completion_status'] = 'needs_clarification'
+            elif target_dialog_state == 'sas_awaiting_task_list_review':
+                rollback_state['task_list_accepted'] = False
+                rollback_state['module_steps_accepted'] = False
+                rollback_state['completion_status'] = 'needs_clarification'
+            
+            # 使用aupdate_state创建新的checkpoint
+            config = {"configurable": {"thread_id": flow_id}}
+            await sas_app.aupdate_state(config, rollback_state)
+            
+            logger.info(f"Successfully rolled back flow {flow_id} from {current_dialog_state} to {target_dialog_state}")
+            
+            return {
+                "success": True, 
+                "message": f"已回退到checkpoint状态: {target_dialog_state} (从 {current_dialog_state}，通过创建新checkpoint实现)"
+            }
+            
+        except Exception as rollback_error:
+            logger.error(f"Failed to rollback to checkpoint: {rollback_error}")
+            raise HTTPException(status_code=500, detail=f"回滚到checkpoint失败: {str(rollback_error)}")
         
     except HTTPException:
         # 重新抛出HTTP异常

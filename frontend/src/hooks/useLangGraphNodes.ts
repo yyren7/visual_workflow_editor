@@ -264,14 +264,45 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     console.log('🔧 [DEBUG] Final updatedNodes count:', updatedNodes.length);
     console.log('🔧 [DEBUG] Final LangGraph nodes in update:', updatedNodes.filter(n => n.id.startsWith('langgraph_')).map(n => ({ id: n.id, type: n.type })));
 
-    if (!_isEqual(updatedNodes, nodesFromStore)) {
+    // 🔧 修复：检查节点数量和内容变化，而不是深度比较
+    const currentLangGraphNodes = nodesFromStore?.filter(n => n.id.startsWith('langgraph_')) || [];
+    const newLangGraphNodes = updatedNodes.filter(n => n.id.startsWith('langgraph_'));
+    
+    const shouldUpdateNodes = 
+        currentLangGraphNodes.length !== newLangGraphNodes.length ||
+        newLangGraphNodes.some(newNode => {
+            const existingNode = currentLangGraphNodes.find(n => n.id === newNode.id);
+            return !existingNode || !_isEqual(newNode.data, existingNode.data);
+        });
+    
+    console.log('🔧 [DEBUG] Current LangGraph nodes count:', currentLangGraphNodes.length);
+    console.log('🔧 [DEBUG] New LangGraph nodes count:', newLangGraphNodes.length);
+    console.log('🔧 [DEBUG] Should update nodes:', shouldUpdateNodes);
+
+    if (shouldUpdateNodes) {
         console.log('🔧 [DEBUG] Dispatching setNodes with updated nodes');
         dispatch(setNodes(updatedNodes));
     } else {
         console.log('🔧 [DEBUG] No node changes needed');
     }
 
-    if (!_isEqual(updatedEdges, edgesFromStore)) {
+    // 🔧 修复：简化边的比较逻辑
+    const currentLangGraphEdges = edgesFromStore?.filter(e => 
+        e.source.startsWith('langgraph_') || e.target.startsWith('langgraph_')
+    ) || [];
+    const newLangGraphEdges = updatedEdges.filter(e => 
+        e.source.startsWith('langgraph_') || e.target.startsWith('langgraph_')
+    );
+    
+    const shouldUpdateEdges = 
+        currentLangGraphEdges.length !== newLangGraphEdges.length ||
+        !_isEqual(newLangGraphEdges.map(e => e.id).sort(), currentLangGraphEdges.map(e => e.id).sort());
+    
+    console.log('🔧 [DEBUG] Current LangGraph edges count:', currentLangGraphEdges.length);
+    console.log('🔧 [DEBUG] New LangGraph edges count:', newLangGraphEdges.length);
+    console.log('🔧 [DEBUG] Should update edges:', shouldUpdateEdges);
+
+    if (shouldUpdateEdges) {
         console.log('🔧 [DEBUG] Dispatching setEdges with updated edges');
         dispatch(setEdges(updatedEdges));
     } else {

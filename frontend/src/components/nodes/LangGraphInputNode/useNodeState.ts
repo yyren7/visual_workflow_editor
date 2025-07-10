@@ -24,7 +24,11 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
   // Derived state from Redux
   const streamingContent = agentState?.streamingContent || '';
   const processingStage = agentState?.processingStage || '';
-  const isProcessing = !!processingStage && processingStage !== 'Processing Complete' && !processingStage.startsWith('Error');
+  const isProcessing = (agentState?.isProcessingUserInput === true) || 
+    (!!processingStage && 
+     processingStage !== 'Processing Complete' && 
+     processingStage !== '' && 
+     !processingStage.startsWith('Error'));
 
   // Operation chat ID
   const operationChatId = data.flowId || reduxCurrentFlowId;

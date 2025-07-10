@@ -240,14 +240,13 @@ const flowSlice = createSlice({
         const serializableNewState = JSON.parse(JSON.stringify(newState || {}));
         
         if (state.agentState) {
+            // 🔧 强制创建新的引用以触发useSelector更新
             state.agentState = { ...state.agentState, ...serializableNewState };
         } else {
             state.agentState = serializableNewState;
         }
-        // 当主要状态更新时，重置流式内容，为下一次流式输出做准备
-        if (state.agentState) {
-          state.agentState.streamingContent = '';
-        }
+        // 🔧 移除自动重置streamingContent的逻辑，让各个事件自己控制
+        // 只有在明确的状态变更时才重置streaming内容
     },
     appendStreamingContent: (state: FlowState, action: PayloadAction<string>) => {
       if (state.agentState) {
