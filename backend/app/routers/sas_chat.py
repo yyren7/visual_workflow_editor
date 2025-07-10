@@ -90,6 +90,21 @@ async def verify_flow_access(
     return current_user
 # --- 结束新增 ---
 
+# --- 新增: 专门用于flow_id参数的权限验证依赖 ---
+async def verify_flow_access_by_flow_id(
+    flow_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(utils.get_current_user)
+):
+    """
+    一个依赖项，用于验证当前登录用户是否有权访问此流程(通过flow_id参数)。
+    专门为使用flow_id作为路径参数的端点设计。
+    如果用户未登录或无权访问，将引发HTTPException。
+    """
+    utils.verify_flow_ownership(flow_id=flow_id, current_user=current_user, db=db)
+    return current_user
+# --- 结束新增 ---
+
 router = APIRouter(
     prefix="/sas", # 修复：统一使用 /sas 前缀，与前端期望保持一致
     tags=["sas"],
@@ -267,7 +282,7 @@ async def _prepare_frontend_update(final_state: dict, flow_id: str) -> dict:
             'task_list_accepted',
             'module_steps_accepted',
             'dialog_state',
-            'subgraph_completion_status',
+            'completion_status',
             'current_user_request',
             'revision_iteration',
             'clarification_question',
@@ -289,7 +304,7 @@ async def _prepare_frontend_update(final_state: dict, flow_id: str) -> dict:
                     frontend_agent_state[field] = final_state[field]
                     update_types.append(field)
                     
-                    if field in ['dialog_state', 'sas_step1_generated_tasks', 'subgraph_completion_status']:
+                    if field in ['dialog_state', 'sas_step1_generated_tasks', 'completion_status']:
                         logger.info(f"[SAS_FRONTEND_UPDATE] 包含重要字段: {field} = {final_state[field]}")
             
             logger.info(f"[SAS Flow {flow_id}] 🎯 准备发送前端更新，字段: {update_types}")
@@ -468,7 +483,7 @@ async def _process_sas_events(
                 if run_name in ["__graph__", "sas_user_input_to_task_list", "sas_review_and_refine", "sas_process_to_module_steps"] or "sas" in run_name.lower():
                     if isinstance(outputs_from_chain, dict):
                         # 首先检查是否有错误状态
-                        if outputs_from_chain.get("is_error", False) or outputs_from_chain.get("dialog_state") == "error" or outputs_from_chain.get("subgraph_completion_status") == "error":
+                        if outputs_from_chain.get("is_error", False) or outputs_from_chain.get("dialog_state") == "error" or outputs_from_chain.get("completion_status") == "error":
                             has_error_state = True
                             error_message = outputs_from_chain.get("error_message", "Unknown error occurred in SAS processing")
                             logger.error(f"[SAS Chat {chat_id}] 🚨 检测到节点错误状态: {error_message}")
@@ -478,7 +493,7 @@ async def _process_sas_events(
                                 "message": error_message, 
                                 "stage": f"sas_node_error_in_{run_name}",
                                 "dialog_state": outputs_from_chain.get("dialog_state"),
-                                "subgraph_completion_status": outputs_from_chain.get("subgraph_completion_status")
+                                "completion_status": outputs_from_chain.get("completion_status")
                             }
                             await event_broadcaster.broadcast_event(chat_id, {"type": "error", "data": error_data})
                             is_error = True
@@ -486,7 +501,7 @@ async def _process_sas_events(
                         important_keys = [
                             'sas_step1_generated_tasks',
                             'dialog_state',
-                            'subgraph_completion_status',
+                            'completion_status',
                             'task_list_accepted',
                             'module_steps_accepted',
                             'clarification_question'
@@ -533,7 +548,7 @@ async def _process_sas_events(
                                             "sas_step1_generated_tasks": final_state.get("sas_step1_generated_tasks"),
                                             "task_list_accepted": final_state.get("task_list_accepted"),
                                             "module_steps_accepted": final_state.get("module_steps_accepted"),
-                                            "subgraph_completion_status": final_state.get("subgraph_completion_status")
+                                            "completion_status": final_state.get("completion_status")
                                         },
                                         "trigger": "sas_state_completed"
                                     }
@@ -911,7 +926,7 @@ async def health_check():
 async def reset_stuck_state(
     flow_id: str,
     sas_app = Depends(get_sas_app),
-    user: schemas.User = Depends(verify_flow_access)
+    user: schemas.User = Depends(verify_flow_access_by_flow_id)
 ):
     """
     重置卡住的处理状态，通过checkpoint回退到最近的稳定状态
@@ -973,12 +988,7 @@ async def reset_stuck_state(
             
             return {
                 "success": True, 
-                "message": "已重置到干净的初始状态",
-                "reset_details": {
-                    "from_state": current_dialog_state,
-                    "to_state": "initial",
-                    "reset_type": "clean_initial_state"
-                }
+                "message": f"已重置到干净的初始状态 (从 {current_dialog_state})"
             }
         
         # 定义稳定状态优先级（按重要性排序）
@@ -1036,12 +1046,7 @@ async def reset_stuck_state(
             
             return {
                 "success": True, 
-                "message": "已重置到干净的初始状态",
-                "reset_details": {
-                    "from_state": current_dialog_state,
-                    "to_state": "initial",
-                    "reset_type": "clean_initial_state"
-                }
+                "message": f"已重置到干净的初始状态 (从 {current_dialog_state})"
             }
         
         # 获取目标checkpoint的完整状态
@@ -1074,83 +1079,20 @@ async def reset_stuck_state(
         
         return {
             "success": True, 
-            "message": f"已从卡住状态重置到: {target_dialog_state}",
-            "reset_details": {
-                "from_state": current_dialog_state,
-                "to_state": target_dialog_state,
-                "checkpoint_time": target_config.get('configurable', {}).get('thread_ts'),
-                "reset_type": "checkpoint_rollback"
-            }
+            "message": f"已从卡住状态重置到: {target_dialog_state} (从 {current_dialog_state})"
         }
             
     except Exception as e:
         logger.error(f"Failed to reset stuck state for flow {flow_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"重置卡住状态失败: {str(e)}")
 
-@router.post("/{flow_id}/force-complete-processing", response_model=schemas.SuccessResponse)
-async def force_complete_processing(
-    flow_id: str,
-    sas_app = Depends(get_sas_app),
-    user: schemas.User = Depends(verify_flow_access)
-):
-    """
-    强制完成当前的处理步骤，跳转到完成状态
-    """
-    try:
-        config = {"configurable": {"thread_id": flow_id}}
-        
-        # 获取当前状态
-        state_snapshot = await sas_app.aget_state(config)
-        if not state_snapshot:
-            raise HTTPException(status_code=404, detail="未找到该流程的状态")
-        
-        current_state = get_checkpoint_values(state_snapshot)
-        
-        # 根据当前状态强制设置为适当的完成状态
-        current_dialog_state = current_state.get('dialog_state')
-        
-        if current_dialog_state in ['generating_xml_relation', 'generating_xml_final']:
-            # 如果正在生成XML，强制设置为完成状态
-            completed_state = {
-                **current_state,
-                'dialog_state': 'sas_step3_completed',
-                'subgraph_completion_status': 'completed_success',
-                'is_error': False,
-                'error_message': None,
-                'current_step_description': 'Processing forcefully completed by user',
-                # 如果没有XML路径，提供一个默认路径
-                'final_flow_xml_path': current_state.get('final_flow_xml_path') or f'/tmp/flow_{flow_id}_force_completed.xml'
-            }
-        elif current_dialog_state in ['sas_generating_individual_xmls']:
-            # 如果正在生成个体XML，设置为relation生成完成
-            completed_state = {
-                **current_state,
-                'dialog_state': 'generating_xml_final',
-                'current_step_description': 'Individual XMLs forcefully completed, proceeding to final XML'
-            }
-        else:
-            # 其他处理状态，设置为通用完成状态
-            completed_state = {
-                **current_state,
-                'dialog_state': 'sas_step3_completed',
-                'subgraph_completion_status': 'completed_success',
-                'current_step_description': 'Processing forcefully completed by user'
-            }
-        
-        await sas_app.aupdate_state(config, completed_state)
-        
-        logger.info(f"Force completed processing for flow {flow_id} from state {current_dialog_state}")
-        return {"success": True, "message": "已强制完成当前处理步骤"}
-        
-    except Exception as e:
-        logger.error(f"Failed to force complete processing for flow {flow_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"强制完成失败: {str(e)}")
+
 
 @router.post("/{flow_id}/force-reset-state", response_model=schemas.SuccessResponse)
 async def force_reset_state(
     flow_id: str,
     sas_app = Depends(get_sas_app),
-    user: schemas.User = Depends(verify_flow_access)
+    user: schemas.User = Depends(verify_flow_access_by_flow_id)
 ):
     """
     强制重置到最早的initial checkpoint状态（真正的checkpoint回退，而不是手动构造状态）
@@ -1168,83 +1110,88 @@ async def force_reset_state(
         
         # 获取完整的checkpoint历史（按时间倒序）
         checkpoint_history = []
-        async for checkpoint_tuple in sas_app.aget_state_history(config):
-            if hasattr(checkpoint_tuple, 'checkpoint') and checkpoint_tuple.checkpoint:
-                checkpoint_history.append(checkpoint_tuple)
+        try:
+            async for checkpoint_tuple in sas_app.aget_state_history(config):
+                if hasattr(checkpoint_tuple, 'checkpoint') and checkpoint_tuple.checkpoint:
+                    checkpoint_history.append(checkpoint_tuple)
+        except Exception as history_error:
+            logger.warning(f"Error getting checkpoint history for flow {flow_id}: {history_error}")
+            # 如果无法获取历史，直接创建干净的初始状态
+            checkpoint_history = []
         
         # 查找最早的initial checkpoint（从历史列表的末尾开始查找）
         initial_checkpoint = None
         for checkpoint_tuple in reversed(checkpoint_history):
-            checkpoint_values = checkpoint_tuple.checkpoint.get('channel_values', {})
-            dialog_state = checkpoint_values.get('dialog_state')
-            
-            if dialog_state == 'initial':
-                initial_checkpoint = checkpoint_tuple
-                logger.info(f"Found initial checkpoint at {checkpoint_tuple.config}")
-                break
+            try:
+                checkpoint_values = checkpoint_tuple.checkpoint.get('channel_values', {})
+                dialog_state = checkpoint_values.get('dialog_state')
+                
+                if dialog_state == 'initial':
+                    initial_checkpoint = checkpoint_tuple
+                    logger.info(f"Found initial checkpoint at {checkpoint_tuple.config}")
+                    break
+            except Exception as checkpoint_error:
+                logger.warning(f"Error processing checkpoint for flow {flow_id}: {checkpoint_error}")
+                continue
         
         if initial_checkpoint:
             # 找到了initial checkpoint，回退到该状态
-            target_config = initial_checkpoint.config
-            target_checkpoint_data = await sas_app.aget_state(target_config)
-            
-            if not target_checkpoint_data:
-                raise Exception("无法获取initial checkpoint的状态数据")
-            
-            # 使用initial checkpoint的完整状态
-            initial_state = dict(get_checkpoint_values(target_checkpoint_data))
-            initial_state['current_step_description'] = 'Reset to initial checkpoint state'
-            initial_state['user_input'] = None  # 清理用户输入
-            
-            await sas_app.aupdate_state(config, initial_state)
-            
-            logger.info(f"Successfully reset flow {flow_id} to initial checkpoint from {current_dialog_state}")
-            return {
-                "success": True, 
-                "message": "已重置到initial checkpoint状态",
-                "reset_details": {
-                    "from_state": current_dialog_state,
-                    "to_state": "initial",
-                    "checkpoint_time": target_config.get('configurable', {}).get('thread_ts'),
-                    "reset_type": "checkpoint_rollback"
+            try:
+                target_config = initial_checkpoint.config
+                target_checkpoint_data = await sas_app.aget_state(target_config)
+                
+                if not target_checkpoint_data:
+                    raise Exception("无法获取initial checkpoint的状态数据")
+                
+                # 使用initial checkpoint的完整状态
+                initial_state = dict(get_checkpoint_values(target_checkpoint_data))
+                initial_state['current_step_description'] = 'Reset to initial checkpoint state'
+                initial_state['user_input'] = None  # 清理用户输入
+                
+                await sas_app.aupdate_state(config, initial_state)
+                
+                logger.info(f"Successfully reset flow {flow_id} to initial checkpoint from {current_dialog_state}")
+                return {
+                    "success": True, 
+                    "message": f"已重置到initial checkpoint状态 (从 {current_dialog_state})"
                 }
-            }
-        else:
-            # 没有找到initial checkpoint，创建一个真正干净的初始状态
-            logger.warning(f"No initial checkpoint found for flow {flow_id}, creating fresh initial state")
-            
-            # 创建干净的初始状态
-            initial_state_dict = {
-                "messages": [],
-                "dialog_state": "initial",
-                "config": {},
-                "task_list_accepted": False,
-                "module_steps_accepted": False,
-                "is_error": False,
-                "language": "zh",
-                "relation_xml_content": "",
-                "relation_xml_path": "",
-                "revision_iteration": 0,
-                "generated_node_xmls": [],
-                "merged_xml_file_paths": [],
-                "current_step_description": "Reset to clean initial state (no checkpoint found)",
-                "user_input": None
-            }
-            
-            await sas_app.aupdate_state(config, initial_state_dict)
-            
-            logger.info(f"Successfully reset flow {flow_id} to clean initial state from {current_dialog_state}")
-            return {
-                "success": True, 
-                "message": "已重置到干净的初始状态",
-                "reset_details": {
-                    "from_state": current_dialog_state,
-                    "to_state": "initial",
-                    "checkpoint_time": None,
-                    "reset_type": "clean_initial_state"
-                }
-            }
+            except Exception as rollback_error:
+                logger.error(f"Failed to rollback to initial checkpoint for flow {flow_id}: {rollback_error}")
+                # 如果回退失败，尝试创建干净的初始状态
+                logger.warning(f"Rollback failed, creating fresh initial state for flow {flow_id}")
         
+        # 没有找到initial checkpoint 或者 回退失败，创建一个真正干净的初始状态
+        logger.warning(f"No initial checkpoint found or rollback failed for flow {flow_id}, creating fresh initial state")
+        
+        # 创建干净的初始状态
+        initial_state_dict = {
+            "messages": [],
+            "dialog_state": "initial",
+            "config": {},
+            "task_list_accepted": False,
+            "module_steps_accepted": False,
+            "is_error": False,
+            "language": "zh",
+            "relation_xml_content": "",
+            "relation_xml_path": "",
+            "revision_iteration": 0,
+            "generated_node_xmls": [],
+            "merged_xml_file_paths": [],
+            "current_step_description": "Reset to clean initial state (no checkpoint found)",
+            "user_input": None
+        }
+        
+        await sas_app.aupdate_state(config, initial_state_dict)
+        
+        logger.info(f"Successfully reset flow {flow_id} to clean initial state from {current_dialog_state}")
+        return {
+            "success": True, 
+            "message": f"已重置到干净的初始状态 (从 {current_dialog_state})"
+        }
+        
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
     except Exception as e:
         logger.error(f"Failed to force reset to initial state for flow {flow_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"强制重置到初始状态失败: {str(e)}")
@@ -1253,7 +1200,7 @@ async def force_reset_state(
 async def rollback_to_previous_state(
     flow_id: str,
     sas_app = Depends(get_sas_app),
-    user: schemas.User = Depends(verify_flow_access)
+    user: schemas.User = Depends(verify_flow_access_by_flow_id)
 ):
     """
     回退到上一个稳定的checkpoint状态（真正的checkpoint回退，不是手动构造状态）
@@ -1264,7 +1211,7 @@ async def rollback_to_previous_state(
         # 获取当前状态信息（用于日志记录）
         current_state_snapshot = await sas_app.aget_state(config)
         if not current_state_snapshot:
-            return {"success": False, "message": "无法获取当前状态"}
+            raise HTTPException(status_code=404, detail="无法获取当前状态，流程可能不存在或未初始化")
         
         current_dialog_state = get_checkpoint_values(current_state_snapshot).get('dialog_state')
         logger.info(f"Current state for flow {flow_id}: {current_dialog_state}")
@@ -1276,7 +1223,7 @@ async def rollback_to_previous_state(
                 checkpoint_history.append(checkpoint_tuple)
         
         if len(checkpoint_history) < 2:
-            return {"success": False, "message": "没有找到可以回退的历史checkpoint"}
+            raise HTTPException(status_code=400, detail="没有找到可以回退的历史checkpoint")
         
         # 定义稳定状态列表，用于查找合适的回退目标
         stable_states = [
@@ -1307,14 +1254,14 @@ async def rollback_to_previous_state(
                 break
         
         if not target_checkpoint:
-            return {"success": False, "message": "没有找到合适的稳定checkpoint进行回退"}
+            raise HTTPException(status_code=400, detail="没有找到合适的稳定checkpoint进行回退")
         
         # 获取目标checkpoint的完整状态
         target_config = target_checkpoint.config
         target_checkpoint_data = await sas_app.aget_state(target_config)
         
         if not target_checkpoint_data:
-            return {"success": False, "message": "无法获取目标checkpoint的状态数据"}
+            raise HTTPException(status_code=500, detail="无法获取目标checkpoint的状态数据")
         
         # 使用目标checkpoint的完整状态，但更新一些必要的字段
         target_state = dict(get_checkpoint_values(target_checkpoint_data))
@@ -1338,14 +1285,12 @@ async def rollback_to_previous_state(
         
         return {
             "success": True, 
-            "message": f"已回退到checkpoint状态: {target_dialog_state}",
-            "rollback_details": {
-                "from_state": current_dialog_state,
-                "to_state": target_dialog_state,
-                "checkpoint_time": target_config.get('configurable', {}).get('thread_ts')
-            }
+            "message": f"已回退到checkpoint状态: {target_dialog_state} (从 {current_dialog_state})"
         }
         
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
     except Exception as e:
         logger.error(f"Failed to rollback to previous checkpoint for flow {flow_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"checkpoint回退失败: {str(e)}") 

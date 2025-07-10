@@ -18,7 +18,6 @@ async def input_handler_node(state: AgentState, **kwargs) -> Dict[str, Any]:
     logger.debug(
         f"Input Handler START. Input='{state.get('input')}', "
         f"InputProcessed='{state.get('input_processed')}', "
-        f"SubgraphStatus='{state.get('subgraph_completion_status')}', "
         f"NumMessages={len(state.get('messages', []))}"
     )
 
@@ -35,19 +34,7 @@ async def input_handler_node(state: AgentState, **kwargs) -> Dict[str, Any]:
     # This flag is True if input_str is the primary source for determined_user_request in *this* cycle.
     input_str_is_the_active_request_source = False
 
-    subgraph_clarification_mode = state.get("subgraph_completion_status") == "needs_clarification"
-
-    if subgraph_clarification_mode:
-        if input_str:
-            # In clarification mode, the new input_str IS the user's clarification for routing.
-            determined_user_request = input_str
-            input_str_is_the_active_request_source = True
-            logger.info(f"Input Handler: Clarification Mode. Using new input '{input_str}' as user_request_for_router.")
-        else:
-            # No new input during clarification, fall back to the existing request that led to clarification.
-            determined_user_request = state.get("user_request_for_router")
-            logger.info(f"Input Handler: Clarification Mode. No new input. Using existing user_request_for_router: '{determined_user_request}'.")
-    elif input_str and not input_processed_in_prior_cycles:
+    if input_str and not input_processed_in_prior_cycles:
         # Standard case: New input string received, not in clarification, and this specific input content
         # has not been processed in a previous cycle. This is the primary request.
         determined_user_request = input_str

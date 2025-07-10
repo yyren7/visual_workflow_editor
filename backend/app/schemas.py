@@ -54,7 +54,7 @@ class FlowBase(BaseModel):
     # sas_state: Optional[Dict[str, Any]] = None  # 添加sas_state支持
 
 class FlowCreate(FlowBase):
-    pass
+    source_flow_id: Optional[str] = None  # 用于复制flow时指定源flow_id
 
 class FlowUpdate(FlowBase):
     pass

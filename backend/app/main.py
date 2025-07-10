@@ -278,7 +278,7 @@ async def auto_recover_flow(thread_id, dialog_state, logger):
             recovered_state = {
                 **current_state,
                 'dialog_state': 'sas_step3_completed',
-                'subgraph_completion_status': 'completed_success',
+                'completion_status': 'completed_success',
                 'is_error': False,
                 'error_message': None,
                 'current_step_description': 'Auto-recovered from stuck XML generation state',
@@ -293,7 +293,7 @@ async def auto_recover_flow(thread_id, dialog_state, logger):
             reset_state = {
                 **current_state,
                 'dialog_state': 'initial',
-                'subgraph_completion_status': None,
+                'completion_status': None,
                 'is_error': False,
                 'error_message': None,
                 'current_step_description': 'Auto-recovered from stuck processing state',

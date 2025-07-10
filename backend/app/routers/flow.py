@@ -13,6 +13,7 @@ from backend.app.utils import get_current_user, verify_flow_ownership
 from backend.app.services.user_flow_service import UserFlowService
 from backend.app.services.flow_service import FlowService
 from backend.app.services.flow_variable_service import FlowVariableService
+from backend.app.services.checkpoint_copy_service import CheckpointCopyService
 # REMOVED: No longer need SAS/LangGraph related imports - these are handled in sas_chat.py
 # from backend.app.dependencies import get_checkpointer # MODIFIED: Import from dependencies
 # from backend.app.routers.sas_chat import get_sas_app  # Import to get SAS app for state management
@@ -43,7 +44,8 @@ async def create_flow(
 ):
     """
     创建新的流程图。
-    LangGraph SAS 状态的初始化现在由前端调用 sas_chat 中的专门端点处理。
+    如果提供了source_flow_id，将复制完整的LangGraph checkpoint历史。
+    否则，将初始化一个空的checkpointer。
     """
     # 1. 创建数据库记录
     new_db_flow = await flow_service.create_flow(
@@ -52,7 +54,44 @@ async def create_flow(
         data=flow_data.flow_data or {}
     )
     
-    logger.info(f"Created new flow {new_db_flow.id} for user {current_user.id}. SAS state must be initialized separately.")
+    # 2. 处理checkpoint初始化
+    checkpoint_service = CheckpointCopyService(db)
+    
+    if hasattr(flow_data, 'source_flow_id') and flow_data.source_flow_id:
+        # 复制现有flow的checkpoint历史
+        try:
+            success = await checkpoint_service.copy_checkpoints(
+                source_thread_id=flow_data.source_flow_id,
+                target_thread_id=str(new_db_flow.id)
+            )
+            
+            if success:
+                logger.info(f"成功复制checkpoints: {flow_data.source_flow_id} -> {new_db_flow.id}")
+            else:
+                logger.warning(f"复制checkpoints失败，创建空checkpointer: {new_db_flow.id}")
+                # 如果复制失败，创建空的checkpointer
+                await checkpoint_service.initialize_empty_checkpointer(str(new_db_flow.id))
+                
+        except Exception as e:
+            logger.error(f"复制checkpoints时发生错误: {e}")
+            # 如果复制失败，创建空的checkpointer
+            try:
+                await checkpoint_service.initialize_empty_checkpointer(str(new_db_flow.id))
+                logger.info(f"为flow {new_db_flow.id} 创建了空checkpointer")
+            except Exception as init_error:
+                logger.error(f"初始化空checkpointer也失败: {init_error}")
+    else:
+        # 创建全新flow，初始化空的checkpointer
+        try:
+            success = await checkpoint_service.initialize_empty_checkpointer(str(new_db_flow.id))
+            if success:
+                logger.info(f"成功为新flow {new_db_flow.id} 初始化空checkpointer")
+            else:
+                logger.warning(f"初始化空checkpointer失败: {new_db_flow.id}")
+        except Exception as e:
+            logger.error(f"初始化空checkpointer时发生错误: {e}")
+    
+    logger.info(f"Created new flow {new_db_flow.id} for user {current_user.id}")
     
     return new_db_flow
 
@@ -113,26 +152,25 @@ async def delete_flow(
     flow_id: str, 
     current_user: schemas.User = Depends(get_current_user),
     flow_service: FlowService = Depends(get_flow_service),
-    # sas_app = Depends(get_sas_app) # REMOVED: No longer need SAS app
+    db: Session = Depends(get_db)
 ):
     """
-    删除流程图，包括数据库记录和对应的 LangGraph 状态。
+    删除流程图，包括数据库记录和对应的 LangGraph checkpointer 状态。
     必须登录并且只能删除自己的流程。
     """
-    _ = verify_flow_ownership(flow_id, current_user, flow_service.db)
+    _ = verify_flow_ownership(flow_id, current_user, db)
 
     # 1. 首先删除 LangGraph checkpointer 中的状态
+    checkpoint_service = CheckpointCopyService(db)
     try:
-        config = {"configurable": {"thread_id": flow_id}}
-        # 注意：LangGraph 可能没有直接的 delete 方法，这里我们先尝试获取状态
-        # 如果状态存在，记录日志；如果需要实际删除，可能需要调用 checkpointer 的具体方法
-        # REMOVED: No longer need sas_app import
-        # state_snapshot = await sas_app.aget_state(config)
-        # if state_snapshot and hasattr(state_snapshot, 'values'):
-        logger.info(f"No SAS state found for flow {flow_id}, skipping state deletion")
+        checkpoint_deleted = await checkpoint_service.delete_checkpoints(flow_id)
+        if checkpoint_deleted:
+            logger.info(f"成功删除flow {flow_id} 的所有checkpoints")
+        else:
+            logger.warning(f"删除flow {flow_id} 的checkpoints失败")
     except Exception as e:
-        logger.warning(f"Could not delete SAS state for flow {flow_id}: {e}")
-        # 继续删除数据库记录，即使状态删除失败
+        logger.error(f"删除flow {flow_id} 的checkpoints时发生错误: {e}")
+        # 继续删除数据库记录，即使checkpoint删除失败
     
     # 2. 删除数据库记录
     success = await flow_service.delete_flow(flow_id=flow_id)

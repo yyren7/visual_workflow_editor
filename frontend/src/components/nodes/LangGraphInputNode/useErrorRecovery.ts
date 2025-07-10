@@ -85,36 +85,11 @@ export const useErrorRecovery = (
     }
   }, [operationChatId, setErrorMessage]);
 
-  // Force complete current processing step
-  const handleForceComplete = useCallback(async () => {
-    if (!operationChatId) return;
-    
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${operationChatId}/force-complete-processing`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-      
-      if (response.ok) {
-        console.log(`Successfully force completed processing for flow ${operationChatId}`);
-        window.location.reload();
-      } else {
-        console.error('Failed to force complete:', response.statusText);
-        setErrorMessage('强制完成失败，请刷新页面重试');
-      }
-    } catch (error) {
-      console.error('Error force completing:', error);
-      setErrorMessage('强制完成时发生错误');
-    }
-  }, [operationChatId, setErrorMessage]);
+
 
   return {
     handleResetStuckState,
     handleForceReset,
     handleRollbackToPrevious,
-    handleForceComplete,
   };
 }; 

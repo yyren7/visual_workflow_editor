@@ -41,7 +41,7 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
         isReadyForReview: false,
       };
     }
-    const { dialog_state, subgraph_completion_status } = agentState;
+    const { dialog_state, completion_status } = agentState;
     
     // 扩展处理中状态检测
     const isProcessing = dialog_state?.includes('generating') ||
@@ -68,7 +68,7 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
     return {
       isInReviewMode,
       isInProcessingMode: isProcessing,
-      isXmlGenerationComplete: subgraph_completion_status === 'completed_success' && dialog_state === 'final_xml_generated_success',
+      isXmlGenerationComplete: completion_status === 'completed_success' && dialog_state === 'final_xml_generated_success',
       isInErrorState,
       isInXmlApprovalMode: dialog_state === 'sas_awaiting_xml_generation_approval',
       isReadyForReview,
@@ -117,7 +117,7 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
       case 'sas_processing_error':
         return 'Processing error occurred...';
       default:
-        if (agentState.subgraph_completion_status === 'processing') {
+        if (agentState.completion_status === 'processing') {
           return 'Processing workflow...';
         }
         return agentState.current_step_description || 'Processing task...';

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
@@ -21,10 +21,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  
+  // 防止重复验证的标记
+  const isVerifyingRef = useRef(false);
+  const lastVerifyTimeRef = useRef(0);
 
   // 验证token有效性的函数
   const verifyToken = async (token: string): Promise<boolean> => {
     if (!token) return false;
+    
+    // 防止频繁验证，设置最小间隔
+    const now = Date.now();
+    const MIN_VERIFY_INTERVAL = 5000; // 5秒内不重复验证
+    
+    if (isVerifyingRef.current || (now - lastVerifyTimeRef.current) < MIN_VERIFY_INTERVAL) {
+      console.log('验证token: 跳过重复验证');
+      return isAuthenticated; // 返回当前状态，避免重复验证
+    }
+    
+    isVerifyingRef.current = true;
+    lastVerifyTimeRef.current = now;
 
     try {
       console.log('验证token...');
@@ -39,6 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Token验证失败:', error);
       return false;
+    } finally {
+      isVerifyingRef.current = false;
     }
   };
 
@@ -47,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('设置认证token');
     localStorage.setItem('access_token', token);
     setIsAuthenticated(true);
+    lastVerifyTimeRef.current = Date.now(); // 更新最后验证时间
   };
 
   // 登出函数 - 只设置状态，并在确定状态后使用统一的路由处理
@@ -61,6 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('access_token');
       dispatch(resetFlowState()); // 在这里重置状态
       setIsAuthenticated(false);
+      // 重置验证标记
+      isVerifyingRef.current = false;
+      lastVerifyTimeRef.current = 0;
       navigate('/login', { replace: true });
     }, 50);
   };
@@ -99,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  // 监听本地存储变化 - 处理多标签页同步登录状态
+  // 监听本地存储变化 - 处理多标签页同步登录状态，但减少频繁检查
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('access_token');
@@ -117,23 +139,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
-    window.addEventListener('storage', checkAuth);
-    window.addEventListener('loginChange', checkAuth);
+    // 使用防抖来减少频繁的存储变化检查
+    let timeoutId: NodeJS.Timeout;
+    const debouncedCheckAuth = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkAuth, 500); // 500ms防抖
+    };
+    
+    window.addEventListener('storage', debouncedCheckAuth);
+    window.addEventListener('loginChange', debouncedCheckAuth);
     
     return () => {
-      window.removeEventListener('storage', checkAuth);
-      window.removeEventListener('loginChange', checkAuth);
+      clearTimeout(timeoutId);
+      window.removeEventListener('storage', debouncedCheckAuth);
+      window.removeEventListener('loginChange', debouncedCheckAuth);
     };
   }, []);
 
-  // 记录认证状态变化
+  // 记录认证状态变化 - 减少日志频率
   useEffect(() => {
     console.log('认证状态变化:', {
       isAuthenticated,
       isLoading,
       currentPath: location.pathname
     });
-  }, [isAuthenticated, isLoading, location]);
+  }, [isAuthenticated, isLoading, location.pathname]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>

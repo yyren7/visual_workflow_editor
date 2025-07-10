@@ -139,7 +139,7 @@ export const getLastChatIdForFlow = async (flowId: string): Promise<{ chatId: st
 export const getFlowsForUser = async (skip = 0, limit = 10): Promise<FlowData[]> => {
     console.log("getFlowsForUser request:", skip, limit);
     try {
-        const response: AxiosResponse<FlowData[]> = await apiClient.get(`/flows?skip=${skip}&limit=${limit}`);
+        const response: AxiosResponse<FlowData[]> = await apiClient.get(`/flows/?skip=${skip}&limit=${limit}`);
         console.log("getFlowsForUser response:", response.status, response.data);
         return response.data || []; // 确保始终返回数组，即使后端返回null
     } catch (error: any) {
@@ -425,27 +425,13 @@ export const duplicateFlow = async (flowId: string): Promise<any> => {
     console.log('重新映射后的节点数量:', remappedFlowData.nodes?.length || 0);
     console.log('重新映射后的边数量:', remappedFlowData.edges?.length || 0);
 
-    // 6. 处理sas_state - 完全原子复刻
-    let newSasState: any = {};
-    if (originalFlow.sas_state) {
-      console.log('完全原子复刻sas_state...', originalFlow.sas_state);
-      
-      // 深度复制sas_state
-      newSasState = JSON.parse(JSON.stringify(originalFlow.sas_state));
-      
-      // 更新sas_state中的flowId引用，但保持所有其他状态不变
-      newSasState = updateFlowIdReferences(newSasState, flowId, 'NEW_FLOW_ID_PLACEHOLDER');
-      
-      console.log('复制流程图: 完成sas_state原子复刻，保持所有状态不变');
-    } else {
-      console.log('警告: 原始流程图没有sas_state');
-    }
+    // 6. 注意：LangGraph状态现在通过后端的checkpoint复制处理
 
     // 7. 准备发送到后端的数据
     const flowCreateData = {
       name: newFlowName,
       flow_data: remappedFlowData,
-      sas_state: newSasState
+      source_flow_id: flowId  // 添加源flow_id用于checkpoint复制
     };
 
     console.log('准备发送到后端的数据:', flowCreateData);
@@ -454,31 +440,8 @@ export const duplicateFlow = async (flowId: string): Promise<any> => {
     const newFlow = await createFlow(flowCreateData);
     console.log('复制流程图成功:', newFlow);
     
-    // 9. 更新sas_state中的flowId引用为实际的新flowId
-    if (newFlow.id && newSasState && Object.keys(newSasState).length > 0) {
-      const updatedSasState = updateFlowIdReferences(newSasState, 'NEW_FLOW_ID_PLACEHOLDER', newFlow.id);
-      
-      // 🔧 使用SAS API更新状态，而不是Flow API
-      try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/sas/${newFlow.id}/update-state`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(updatedSasState)
-        });
-        
-        if (response.ok) {
-          console.log('已通过SAS API更新新flow中的flowId引用');
-        } else {
-          console.warn('通过SAS API更新flowId引用失败，但flow复制成功:', response.statusText);
-        }
-      } catch (updateError) {
-        console.warn('通过SAS API更新flowId引用失败，但flow复制成功:', updateError);
-      }
-    }
+    // 9. LangGraph状态已通过后端checkpoint复制自动处理
+    console.log('LangGraph状态通过checkpoint复制已自动处理');
 
     return newFlow;
   } catch (error) {

@@ -1008,7 +1008,7 @@ def _sync_langgraph_state_to_flow(final_state, flow_id, flow_service_bg):
             'task_list_accepted',
             'module_steps_accepted',
             'dialog_state',
-            'subgraph_completion_status',
+            'completion_status',
             'current_user_request',
             'revision_iteration',
             'input_processed'

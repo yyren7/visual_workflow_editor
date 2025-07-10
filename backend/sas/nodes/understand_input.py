@@ -49,7 +49,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         state.is_error = True
         state.error_message = "Enriched input text is missing for parsing."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     config = state.config
@@ -58,7 +58,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         state.is_error = True
         state.error_message = "Configuration (placeholders) is missing."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
     
     current_messages = state.messages
@@ -117,7 +117,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         state.is_error = True
         state.error_message = f"Step 1: Failed to understand input. LLM Error: {error_msg_detail}. Raw: {str(raw_out)[:500]}"
         state.dialog_state = "generation_failed"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     if known_node_types_list and parsed_output.get("operations"):
@@ -139,7 +139,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
             state.is_error = True
             state.error_message = f"Step 1: Invalid node types found. {error_message} Raw LLM Output: {str(parsed_output)[:500]}"
             state.dialog_state = "error" # Corrected from generation_failed to error if it is a direct error not a retryable one.
-            state.subgraph_completion_status = "error"
+            state.completion_status = "error"
             return state
 
     try:
@@ -162,7 +162,7 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         if state.parsed_flow_steps is not None:
              state.messages = current_messages + [AIMessage(content=f"Successfully parsed input. Steps: {len(state.parsed_flow_steps)}")]
 
-        state.subgraph_completion_status = None
+        state.completion_status = None
         return state
     except Exception as e: 
         logger.error(f"Step 1 Failed: Pydantic validation error for UnderstandInputSchema or subsequent validation. Error: {e}. Raw Output from LLM: {json.dumps(parsed_output, indent=2, ensure_ascii=False)}", exc_info=True)
@@ -171,5 +171,5 @@ async def understand_input_node(state: RobotFlowAgentState, llm: BaseChatModel) 
         state.is_error = True
         state.error_message = f"Step 1: Output validation error. Details: {e}. Parsed: {str(parsed_output)[:500]}"
         state.dialog_state = "generation_failed"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state 

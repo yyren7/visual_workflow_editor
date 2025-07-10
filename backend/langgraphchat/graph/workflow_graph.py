@@ -108,30 +108,14 @@ def route_after_functional_node(state: AgentState) -> str:
     """
     在功能节点执行完毕后进行路由。
     """
-    logger.info(f"--- Routing after Functional Node. Subgraph status: {state.get('subgraph_completion_status')}")
+    logger.info("--- Routing after Functional Node.")
     
-    subgraph_status = state.get("subgraph_completion_status")
-
-    if subgraph_status == "needs_clarification":
-        logger.info("Functional node/subgraph needs clarification. Suspending graph.")
-        # 设置挂起状态
-        state["is_suspended"] = True
-        return "SUSPENDED"  # 新的路由状态
-    elif subgraph_status in ["completed_success", "error"]:
-        logger.info(f"Subgraph completed with status: {subgraph_status}. Resetting task context.")
-        # 重置状态
-        state["task_route_decision"] = None
-        state["user_request_for_router"] = None
-        state["subgraph_completion_status"] = None
-        state["is_suspended"] = False
-        return END
-    else:
-        logger.info(f"Simple functional node completed. Resetting task context.")
-        state["task_route_decision"] = None
-        state["user_request_for_router"] = None
-        state["subgraph_completion_status"] = None
-        state["is_suspended"] = False
-        return END
+    # 简单的功能节点完成后，重置任务上下文并结束
+    logger.info("Functional node completed. Resetting task context.")
+    state["task_route_decision"] = None
+    state["user_request_for_router"] = None
+    state["is_suspended"] = False
+    return END
 
 # Graph compilation
 def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = None) -> StateGraph:

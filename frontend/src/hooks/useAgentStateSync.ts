@@ -43,31 +43,7 @@ export const useAgentStateSync = () => {
     }
   }, [dispatch, closeSseConnection]);
 
-  // 🔧 新增：主动获取最新状态的功能
-  const forceStateSync = useCallback(async (flowId: string) => {
-    if (!flowId) return;
-    
-    try {
-      console.log('[SYNC_FIX] 🔄 Force syncing state for flowId:', flowId);
-      dispatch(fetchFlowById(flowId));
-    } catch (error) {
-      console.error('[SYNC_FIX] ❌ Failed to force sync state:', error);
-    }
-  }, [dispatch]);
 
-  // 🔧 新增：检查状态不一致的情况
-  const checkStateSyncHealth = useCallback((flowId: string) => {
-    if (!flowId) return;
-    
-    const currentState = store.getState().flow.agentState;
-    console.log('[SYNC_FIX] 🔍 Health check - Current state:', currentState?.dialog_state);
-    
-    // 如果状态看起来不对，主动同步
-    if (currentState?.dialog_state === 'sas_step2_module_steps_generated_for_review') {
-      console.log('[SYNC_FIX] ⚠️ Detected potentially stale state, forcing sync...');
-      forceStateSync(flowId);
-    }
-  }, [forceStateSync]);
 
   useEffect(() => {
     return () => {
@@ -346,7 +322,5 @@ export const useAgentStateSync = () => {
     updateTask,
     updateTaskDetails,
     startLangGraphProcessing,
-    forceStateSync, // 🔧 新增：暴露给外部使用
-    checkStateSyncHealth, // 🔧 新增：暴露给外部使用
   };
 }; 

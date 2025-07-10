@@ -419,9 +419,9 @@ class ChatService:
         if "messages" not in chat.chat_data or not isinstance(chat.chat_data["messages"], list):
             chat.chat_data["messages"] = []
 
-        # 1. 从 chat.chat_data 加载持久化的 SAS 状态
-        persisted_sas_state_for_subgraph = chat.chat_data.get("persisted_sas_graph_state")
-        if persisted_sas_state_for_subgraph:
+        # 1. 从 chat.chat_data 加载持久化的 SAS 状态  
+        persisted_sas_state = chat.chat_data.get("persisted_sas_state")
+        if persisted_sas_state:
             logger.info(f"ChatService: Found persisted SAS state for chat {chat_id}.")
         else:
             logger.info(f"ChatService: No persisted SAS state found for chat {chat_id}.")
@@ -452,7 +452,7 @@ class ChatService:
         current_messages_for_graph.append(HumanMessage(content=user_input))
 
         #  b. 构建 AgentState 输入字典
-        #  注意：确保 AgentState 定义中包含 sas_planner_subgraph_state 字段
+        #  注意：AgentState 已移除 sas_planner_subgraph_state 字段
         agent_state_input = {
             "messages": current_messages_for_graph,
             "input": user_input, # 当前用户的直接输入
@@ -461,11 +461,11 @@ class ChatService:
             "flow_context": {}, # 根据需要填充流程上下文
             "chat_history_in_db_for_summary": True, # 示例：指示图可以使用数据库历史
             "input_processed": False, # 通常在图的 input_handler 中设置为 True
-            "sas_planner_subgraph_state": persisted_sas_state_for_subgraph, # 注入恢复的状态
+            # 注入恢复的状态 - sas_planner_subgraph_state字段已移除
             # 其他 AgentState 中定义的字段，根据需要提供默认值或从chat对象加载
             "task_route_decision": None, 
             "user_request_for_router": None,
-            "subgraph_completion_status": None,
+            "completion_status": None,
             "clarification_question": None,
             "is_error": False,
             "error_message": None,
@@ -491,18 +491,18 @@ class ChatService:
         
         # 将输出字典转换回 AgentState 对象
         output_agent_state = AgentState(**output_state_dict)
-        logger.info(f"ChatService: Workflow invocation completed for chat {chat_id}. Subgraph status: {output_agent_state.subgraph_completion_status}")
+        logger.info(f"ChatService: Workflow invocation completed for chat {chat_id}. Status: {output_agent_state.completion_status}")
 
         # 4. 根据返回的 AgentState 更新或清除持久化的 SAS 状态
-        if output_agent_state.subgraph_completion_status == "needs_clarification":
-            logger.info(f"ChatService: Subgraph needs clarification for chat {chat_id}. Persisting SAS state.")
-            chat.chat_data["persisted_sas_graph_state"] = output_agent_state.sas_planner_subgraph_state
+        if output_agent_state.completion_status == "needs_clarification":
+            logger.info(f"ChatService: SAS needs clarification for chat {chat_id}. Persisting SAS state.")
+            chat.chat_data["persisted_sas_state"] = persisted_sas_state  # 保持现有状态
         else:
-            if "persisted_sas_graph_state" in chat.chat_data:
-                logger.info(f"ChatService: Subgraph status is '{output_agent_state.subgraph_completion_status}'. Clearing persisted SAS state for chat {chat_id}.")
-                del chat.chat_data["persisted_sas_graph_state"]
+            if "persisted_sas_state" in chat.chat_data:
+                logger.info(f"ChatService: SAS status is '{output_agent_state.completion_status}'. Clearing persisted SAS state for chat {chat_id}.")
+                del chat.chat_data["persisted_sas_state"]
             else:
-                logger.info(f"ChatService: Subgraph status is '{output_agent_state.subgraph_completion_status}'. No persisted SAS state to clear for chat {chat_id}.")
+                logger.info(f"ChatService: SAS status is '{output_agent_state.completion_status}'. No persisted SAS state to clear for chat {chat_id}.")
 
         # 5. 更新 chat_data 中的消息历史 (可选，如果图的输出消息需要合并)
         #    通常，图的 AgentState 的 "messages" 字段会包含最新的完整对话历史。
@@ -529,12 +529,11 @@ class ChatService:
 
         chat.chat_data["messages"] = updated_messages_for_db
         
-        # 6. 更新Flow的agent_state
+        # 6. 更新Flow的agent_state（已移除sas_planner_subgraph_state字段）
         flow = self.db.query(Flow).filter(Flow.id == chat.flow_id).first()
-        if flow and output_agent_state.sas_planner_subgraph_state:
-            flow.agent_state = output_agent_state.sas_planner_subgraph_state
-            flag_modified(flow, "agent_state")
-            logger.info(f"ChatService: Updated Flow {flow.id} agent_state from chat {chat_id}")
+        if flow:
+            # SAS相关的agent_state更新逻辑已简化，因为不再使用subgraph状态
+            logger.info(f"ChatService: Flow {flow.id} found for chat {chat_id}, but agent_state update is skipped")
         
         # 7. 保存对 chat 对象的更改
         try:

@@ -1459,7 +1459,7 @@ async def main_test_run():
         # Check for clarification question
         clarification_question = current_state.get("clarification_question")
         dialog_state = current_state.get("dialog_state")
-        subgraph_status = current_state.get("completion_status")
+        completion_status_value = current_state.get("completion_status")
 
         if clarification_question:
             print("\n----------------------------------------------------")
@@ -1473,10 +1473,10 @@ async def main_test_run():
             current_state["user_input"] = user_response
             # Add user message to history for the graph to see
             current_state["messages"] = (current_state.get("messages") or []) + [HumanMessage(content=user_response)]
-        elif subgraph_status == "completed_success":
+        elif completion_status_value == "completed_success":
             logger.info("--- Flow COMPLETED SUCCESSFULLY ---")
             break
-        elif subgraph_status == "error":
+        elif completion_status_value == "error":
             logger.error(f"--- Flow FAILED with error: {current_state.get('error_message')} ---")
             break
         elif dialog_state in ["final_xml_generated_success", "sas_step3_completed"]: # other potential success states
@@ -1484,7 +1484,7 @@ async def main_test_run():
             break
         else:
             logger.info("No clarification question, and not a recognized completion/error state. Ending loop.")
-            logger.info(f"Final Dialog State: {dialog_state}, Subgraph Status: {subgraph_status}")
+            logger.info(f"Final Dialog State: {dialog_state}, Completion Status: {completion_status_value}")
             break # Fallback to prevent infinite loop if state is unclear
 
     if loop_count >= max_loops:

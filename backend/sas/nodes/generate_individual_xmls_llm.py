@@ -391,7 +391,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = "LLM instance is required for XML generation but was not provided."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     parsed_tasks_from_state = state.parsed_flow_steps 
@@ -402,7 +402,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = "Parsed flow steps (tasks) are missing or empty for XML generation."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     main_output_dir_str = config.get("OUTPUT_DIR_PATH")
@@ -411,7 +411,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = "Main output directory path (OUTPUT_DIR_PATH) for individual XMLs is not configured."
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     main_output_dir = Path(main_output_dir_str)
@@ -422,7 +422,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True
         state.error_message = f"Failed to create main output directory: {e}"
         state.dialog_state = "error"
-        state.subgraph_completion_status = "error"
+        state.completion_status = "error"
         return state
 
     # --- Prepare initial list of all task detail arguments for LLM processing ---
@@ -534,7 +534,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         state.is_error = True 
         if not state.error_message: 
             state.error_message = "Errors occurred during LLM-based individual XML block generation or directory creation."
-        state.subgraph_completion_status = "error" 
+        state.completion_status = "error" 
         state.dialog_state = "generating_xml_relation" 
     else:
         if not state.generated_node_xmls and not all_task_detail_args and parsed_tasks_from_state : # check if there were tasks but no details that led to xml generation
@@ -545,7 +545,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
             logger.info("All individual XML blocks for all tasks were processed successfully (including retries if any, and no directory issues)." )
         
         state.dialog_state = "generating_xml_relation" 
-        state.subgraph_completion_status = None 
+        state.completion_status = None 
     
     return state
 
@@ -560,7 +560,7 @@ if __name__ == "__main__": # pragma: no cover
             self.is_error: bool = False
             self.error_message: Optional[str] = None
             self.dialog_state: Optional[str] = None
-            self.subgraph_completion_status: Optional[str] = None
+            self.completion_status: Optional[str] = None
             self.generated_node_xmls: List[GeneratedXmlFile] = []
 
     async def main_test():

@@ -289,7 +289,7 @@ const resources: Resource = {
       'nodes.input.refreshPage': '刷新页面',
       'nodes.input.rollbackState': '回退状态',
       'nodes.input.resetToInitial': '重置到初始',
-      'nodes.input.skipError': '跳过错误',
+
       'nodes.input.xmlApprovalRequired': 'XML生成批准必需',
       'nodes.input.xmlApprovalDesc': '所有任务和模块步骤已确认完成。系统准备生成XML程序文件。',
       'nodes.input.taskConfigSummary': '任务配置摘要:',
@@ -618,7 +618,7 @@ const resources: Resource = {
       'nodes.input.refreshPage': 'Refresh Page',
       'nodes.input.rollbackState': 'Rollback State',
       'nodes.input.resetToInitial': 'Reset to Initial',
-      'nodes.input.skipError': 'Skip Error',
+
       'nodes.input.xmlApprovalRequired': 'XML Generation Approval Required',
       'nodes.input.xmlApprovalDesc': 'All tasks and module steps have been confirmed. The system is ready to generate XML program files.',
       'nodes.input.taskConfigSummary': 'Task Configuration Summary:',
@@ -900,7 +900,7 @@ const resources: Resource = {
       'nodes.input.refreshPage': 'ページを更新',
       'nodes.input.rollbackState': '状態をロールバック',
       'nodes.input.resetToInitial': '初期状態にリセット',
-      'nodes.input.skipError': 'エラーをスキップ',
+
       'nodes.input.xmlApprovalRequired': 'XML生成の承認が必要',
       'nodes.input.xmlApprovalDesc': 'すべてのタスクとモジュールステップが確認されました。システムはXMLプログラムファイルを生成する準備ができています。',
       'nodes.input.taskConfigSummary': 'タスク設定概要:',

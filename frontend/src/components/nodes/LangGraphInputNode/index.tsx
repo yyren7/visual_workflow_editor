@@ -68,25 +68,10 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     handleResetStuckState,
     handleForceReset,
     handleRollbackToPrevious,
-    handleForceComplete,
   } = useErrorRecovery(operationChatId, setErrorMessage);
 
   // Processing logic
-  const { updateUserInput, forceStateSync, checkStateSyncHealth } = useAgentStateSync();
-
-  // 🔧 新增：手动同步状态的处理函数
-  const handleManualSync = useCallback(() => {
-    const flowId = id.replace(/^langgraph_input_/, '');
-    console.log('[MANUAL_SYNC] 🔄 User triggered manual state sync for flow:', flowId);
-    forceStateSync(flowId);
-  }, [id, forceStateSync]);
-
-  // 🔧 新增：检查状态健康的处理函数
-  const handleHealthCheck = useCallback(() => {
-    const flowId = id.replace(/^langgraph_input_/, '');
-    console.log('[HEALTH_CHECK] 🔍 User triggered health check for flow:', flowId);
-    checkStateSyncHealth(flowId);
-  }, [id, checkStateSyncHealth]);
+  const { updateUserInput } = useAgentStateSync();
 
   // Main processing handler
   const handleSend = useCallback(async (overrideInput?: string) => {
@@ -151,12 +136,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
   // Event prevention - only for wheel events when selected
   const stopWheelPropagation = (e: React.WheelEvent) => e.stopPropagation();
 
-  // 手动刷新状态的函数
-  const handleRefreshState = useCallback(() => {
-    console.log('手动刷新状态...');
-    const flowId = id.replace(/^langgraph_input_/, '');
-    dispatch(fetchFlowById(flowId) as any);
-  }, [dispatch, id]);
+
 
   // UI state
   const { isInReviewMode, isInErrorState, isInXmlApprovalMode, isInProcessingMode, isXmlGenerationComplete, isReadyForReview } = getAgentStateFlags();
@@ -399,25 +379,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                 >
                   {t('nodes.input.resetToInitial')}
                 </Button>
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="warning"
-                  sx={{ fontSize: '0.7rem', minHeight: '24px' }}
-                  onClick={handleForceComplete}
-                >
-                  {t('nodes.input.skipError')}
-                </Button>
-                {/* 🔧 新增：手动状态同步按钮 */}
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                  sx={{ fontSize: '0.7rem', minHeight: '24px' }}
-                  onClick={handleManualSync}
-                >
-                  手动同步状态
-                </Button>
+
               </Box>
             </Paper>
           )}
@@ -485,16 +447,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                 >
                   {t('nodes.input.resetTask')}
                 </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="info"
-                  sx={{ fontSize: '0.75rem', minHeight: '28px' }}
-                  onClick={handleRefreshState}
-                  disabled={isProcessing}
-                >
-                  同步状态
-                </Button>
+
                 <Button
                   size="small"
                   variant="outlined"
@@ -569,24 +522,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                     >
                       {t('nodes.input.resetToInitial')}
                     </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="warning"
-                      sx={{ fontSize: '0.7rem', minHeight: '24px' }}
-                      onClick={handleForceComplete}
-                    >
-                      {t('nodes.input.skipError')}
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="primary"
-                      sx={{ fontSize: '0.7rem', minHeight: '24px' }}
-                      onClick={handleManualSync}
-                    >
-                      手动同步状态
-                    </Button>
+
                   </Box>
                 </Box>
               )}

@@ -74,6 +74,11 @@ class NodeTemplateService:
         返回:
             Dict[str, NodeTemplate]: 模板字典，键为模板类型
         """
+        # 检查是否禁用模板加载
+        if os.getenv("DISABLE_NODE_TEMPLATE_LOADING", "0") == "1":
+            print("节点模板加载已禁用 (DISABLE_NODE_TEMPLATE_LOADING=1)")
+            return {}
+            
         try:
             if not os.path.exists(self.template_dir):
                 print(f"警告: 模板目录不存在: {self.template_dir}")
@@ -234,11 +239,12 @@ class NodeTemplateService:
             if has_statements:
                 for i, stmt in enumerate(statements):
                     stmt_name = stmt.get("name")
-                    inputs.append({
-                        "id": f"input_{stmt_name}", 
-                        "label": self._format_label(stmt_name),
-                        "position": i + 1
-                    })
+                    if stmt_name:  # 确保stmt_name不为None
+                        inputs.append({
+                            "id": f"input_{stmt_name}", 
+                            "label": self._format_label(stmt_name),
+                            "position": i + 1
+                        })
             
             outputs = []
             # 基本输出点（大多数节点都有）

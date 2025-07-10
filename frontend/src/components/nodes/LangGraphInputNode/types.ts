@@ -42,5 +42,4 @@ export interface ErrorRecoveryActions {
   handleResetStuckState: () => Promise<void>;
   handleForceReset: () => Promise<void>;
   handleRollbackToPrevious: () => Promise<void>;
-  handleForceComplete: () => Promise<void>;
 } 
