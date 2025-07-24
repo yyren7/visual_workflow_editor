@@ -1,136 +1,79 @@
-# SAS (Step-by-Step Automation System) Subgraph
+# SAS (Sequential Agent System) LangGraph Workflow
 
-SAS 负责将用户的自然语言描述转换为可执行的机器人工作流程 XML。
+## Overview
 
-## 目录结构
+The SAS LangGraph workflow is a sophisticated agent system designed to convert natural language descriptions of robotic tasks into executable, structured XML files. It leverages a state machine built with LangGraph to manage a multi-step process that includes LLM-based generation, user review cycles, and template-based code generation.
 
+The system is designed to be interactive, allowing users to review and refine the generated plans at two critical stages, ensuring the final output accurately reflects their intent.
+
+## Core Workflow
+
+The entire process is modeled as a state graph, where each node represents a specific processing step and edges represent the flow of control. The workflow has been significantly simplified to a linear process with two main user review loops.
+
+```mermaid
+graph TD;
+    A["User Input<br/>(initial)"] --> B{"1. Generate Task List<br/>(user_input_to_task_list)"};
+    B --> C{"Review Task List<br/>(sas_awaiting_task_list_review)"};
+    C -- "User Approves" --> D{"2. Generate Module Steps<br/>(task_list_to_module_steps)"};
+    C -- "User Provides Feedback" --> B;
+
+    D --> E{"Review Module Steps<br/>(sas_awaiting_module_steps_review)"};
+    E -- "User Approves & Generate" --> F{"3. Generate Individual XMLs<br/>(sas_generating_individual_xmls)"};
+    E -- "User Provides Feedback" --> D;
+
+    F --> G{"4. Parameter Mapping<br/>(parameter_mapping)"};
+    G --> H{"5. Merge XMLs<br/>(merge_xml)"};
+    H --> I["✅ Final XML Generated<br/>(final_xml_generated_success)"];
+
+    subgraph "User Interaction Points"
+        C; E;
+    end
+
+    subgraph "Automated Backend Processing"
+        B; D; F; G; H; I;
+    end
 ```
-sas/
-├── README.md              # 本文档
-├── state.py              # 状态定义 (RobotFlowAgentState)
-├── graph_builder.py      # 图构建器和路由逻辑
-├── nodes/                # 各个处理节点
-│   ├── __init__.py
-│   ├── user_input_to_task_list.py      # 步骤1: 用户输入转任务列表
-│   ├── process_description_to_module_steps.py  # 步骤2: 任务转模块步骤
-│   ├── parameter_mapping.py             # 步骤3: 参数映射
-│   ├── review_and_refine.py            # 审查和优化节点
-│   ├── generate_individual_xmls.py      # 生成单个XML文件
-│   ├── generate_individual_xmls_llm.py  # LLM版本的XML生成
-│   ├── generate_relation_xml.py         # 生成关系XML
-│   ├── understand_input.py              # 理解用户输入
-│   ├── merge_xml.py                     # 合并XML文件
-│   └── concatenate_xml.py              # 连接XML文件
-├── prompts/              # 提示词模板
-│   └── (各种提示词文件)
-├── utils/                # 工具函数
-│   ├── __init__.py
-│   ├── xml_utils.py      # XML处理工具
-│   ├── file_utils.py     # 文件操作工具
-└── config/               # 配置
-    ├── __init__.py
-    └── defaults.py       # 默认配置
 
-```
+## State Management (`RobotFlowAgentState`)
 
-## 主要流程
-
-### 1. 初始化阶段
-
-- `initialize_state_node`: 初始化状态，设置输出目录等
-
-### 2. 任务分解阶段 (Step 1)
-
-- `user_input_to_task_list_node`: 将用户输入转换为任务列表
-- 生成 `sas_step1_generated_tasks`
-
-### 3. 模块步骤生成阶段 (Step 2)
-
-- `process_description_to_module_steps_node`: 将任务转换为具体的模块步骤
-- 生成 `sas_step2_module_steps`
-
-### 4. 参数映射阶段 (Step 3)
-
-- `parameter_mapping_node`: 将逻辑参数映射到实际参数
-- 生成 `sas_step3_parameter_mapping` 和 `sas_step3_mapping_report`
-
-### 5. XML 生成阶段
-
-- `generate_individual_xmls_node`: 为每个步骤生成单独的 XML
-- `generate_relation_xml_node`: 生成关系 XML
-- `generate_final_flow_xml_node`: 合并生成最终的流程 XML
-
-### 6. 审查和优化
-
-- `review_and_refine_node`: 允许用户审查和修改生成的内容
-
-## 状态管理
-
-- **State Management**: LangGraph maintains the application's state in a `RobotFlowAgentState` object. This state includes:
-  - **Core State**: `messages` (conversation history), `dialog_state` (current stage of the workflow).
-  - **User Input**: `user_input`, `current_user_request`.
-  - **Generated Data**: `sas_step1_generated_tasks`, `sas_step2_module_steps`, `generated_node_xmls`, etc.
-  - **Control Flags**: `task_list_accepted`, `module_steps_accepted`, `is_error`.
-- **Nodes**: Each major processing step is a node (e.g., `user_input_to_task_list_node`, `task_list_to_module_steps_node`). Nodes take the current state, perform an action, and return an updated state.
-- **Edges**: Conditional edges (routing functions like `route_after_sas_review_and_refine`) inspect the state (e.g., `dialog_state`, `task_list_accepted`) to decide which node to execute next. This creates the dynamic, branching logic of the workflow.
-- **Persistence**: A `PostgresSaver` is used as a checkpointer, automatically saving the state after each step to a PostgreSQL database. This ensures the workflow is durable and can be resumed.
+The consistency and durability of the workflow are managed through a central state object, `RobotFlowAgentState`, defined in `backend/sas/state.py`. This Pydantic model encapsulates all the data required for the agent to operate, and it is automatically persisted to a PostgreSQL database after each step by a LangGraph checkpointer.
 
 ### Key State Variables
 
-The `RobotFlowAgentState` Pydantic model defines the entire context of the workflow. Key variables include:
-
 - **`messages`**: A list of `BaseMessage` objects that form the conversation history.
-- **`dialog_state`**: A `Literal` type that represents the current state of the workflow, such as `initial`, `sas_awaiting_task_list_review`, or `sas_generating_individual_xmls`. This is the primary variable used for routing decisions.
+- **`dialog_state`**: A `Literal` type that represents the current stage of the workflow (e.g., `initial`, `sas_awaiting_task_list_review`). This is the primary variable used for routing decisions.
 - **`user_input`**: The most recent input from the user, which is typically consumed by a node and then cleared.
-- **`current_user_request`**: The active user request that serves as the basis for the current generation flow. This can be updated by user feedback.
-- **`sas_step1_generated_tasks`**: The structured list of tasks generated by the first step. This is a `List[TaskDefinition]`.
-- **`sas_step2_module_steps`**: The detailed module steps generated by the second step, as a single formatted string.
-- **`task_list_accepted`** and **`module_steps_accepted`**: Boolean flags that track user approval at the two main review points. They are critical for the conditional routing logic.
-- **`is_error`** and **`error_message`**: Used for error handling throughout the graph.
+- **`current_user_request`**: The active user request that serves as the basis for the current generation flow. This is updated with user feedback during review cycles.
+- **`sas_step1_generated_tasks`**: The structured list of tasks (`List[TaskDefinition]`) generated from the user's request. This serves as the single source of truth for the task plan.
+- **`sas_step2_module_steps`**: A formatted string containing the detailed, executable module steps generated for all tasks.
+- **`task_list_accepted`** & **`module_steps_accepted`**: Boolean flags that track user approval at the two main review points. They are critical for the conditional routing logic.
+- **`is_error`** & **`error_message`**: Used for robust error handling throughout the graph.
+- **`generated_node_xmls`**: A list of `GeneratedXmlFile` objects containing metadata about each successfully (or unsuccessfully) generated XML file.
 
-### Core Workflow Logic
+## Key Nodes & Logic
 
-1.  **Initialization (`initialize_state_node`)**: Sets up the initial state, including creating a run-specific output directory and processing the very first user input.
-2.  **Task List Generation (`user_input_to_task_list_node`)**: Takes `current_user_request` and uses an LLM to generate a structured list of tasks (`sas_step1_generated_tasks`).
-3.  **Review (`review_and_refine_node`)**: This node acts as a gate.
-    - It transitions the `dialog_state` to `sas_awaiting_task_list_review` or `sas_awaiting_module_steps_review`, causing the graph to pause and wait for user interaction.
-    - The actual approval or feedback is handled outside the graph (in `sas_chat.py`), which updates the state's boolean flags (`task_list_accepted`, `module_steps_accepted`) or revises `current_user_request`.
-4.  **Module Step Generation (`task_list_to_module_steps_node`)**: Once the task list is approved, this node runs in parallel for each task to generate detailed module steps.
-5.  **XML Generation (`generate_individual_xmls_node`)**: After module steps are approved, this template-based node generates individual XML files for each step.
-6.  **Parameter Mapping & Merging**: The final steps (`parameter_mapping_node`, `sas_merge_xml_node`) handle parameter assignments and final XML assembly.
+The graph is composed of several key nodes, each with a distinct responsibility:
 
-### Routing and Conditionals
+1.  **`initialize_state_node`**: The entry point of the graph. It sets up the initial state, creates a run-specific output directory, and processes the very first user input.
 
-The file `graph_builder.py` defines the graph's structure using `workflow.add_conditional_edges`. Each routing function (e.g., `route_after_sas_review_and_refine`) is a simple Python function that inspects the current `RobotFlowAgentState` and returns the name of the next node to execute. This makes the control flow explicit and easy to debug. For example, the review router checks `state.task_list_accepted` and `state.module_steps_accepted` to decide whether to proceed, loop back for regeneration, or wait.
+2.  **`user_input_to_task_list_node`**: Takes the `current_user_request` and uses an LLM to generate a structured list of high-level tasks, populating `sas_step1_generated_tasks`.
 
-## 路由逻辑
+3.  **`review_and_refine_node`**: This node acts as a gate for user interaction. It transitions the `dialog_state` to a waiting state (e.g., `sas_awaiting_task_list_review`), which pauses the graph. The actual user approval or feedback is handled by the API layer (`sas_chat.py`), which updates the state's boolean flags or revises `current_user_request` before reinvoking the graph.
 
-路由函数根据当前状态决定下一步：
+4.  **`task_list_to_module_steps_node`**: Once the task list is approved, this node runs in parallel for each task in `sas_step1_generated_tasks` to generate detailed, executable module steps. The consolidated output is stored in `sas_step2_module_steps`.
 
-- `route_after_initialize_state`: 初始化后的路由
-- `route_after_sas_step1`: 任务列表生成后的路由
-- `route_after_sas_step2`: 模块步骤生成后的路由
-- `route_after_sas_step3`: 参数映射后的路由
-- `route_after_sas_review_and_refine`: 审查后的路由
+5.  **`generate_individual_xmls_node`**: After the module steps are approved, this node uses a template-based approach (not an LLM) to generate individual XML files for each step, based on the templates found in the `node_database`.
 
-## 使用示例
+6.  **`parameter_mapping_node`**: This node (currently a placeholder) is responsible for analyzing the generated steps, extracting logical parameters (e.g., "safe point"), and mapping them to available slots in the robot's parameter files.
 
-```python
-from langchain_openai import ChatOpenAI
-import asyncio
-import logging
-import json
+7.  **`sas_merge_xml_node`**: The final step, which takes all the individually generated XML files for each task and merges them into a single, cohesive XML file representing the complete robot program for that task.
 
-# Assuming the graph builder is now directly under backend.sas
-from backend.sas.graph_builder import create_robot_flow_graph
+## Routing and Conditionals
 
-# Configure logging
-// ... existing code ...
-```
+The file `graph_builder.py` defines the graph's structure using `workflow.add_conditional_edges`. Each routing function (e.g., `route_after_sas_review_and_refine`) is a simple Python function that inspects the current `RobotFlowAgentState` and returns the name of the next node to execute.
 
-## 注意事项
+This design makes the control flow explicit and easy to debug. For example, the `route_after_sas_review_and_refine` function checks `state.task_list_accepted` and `state.module_steps_accepted` to decide whether to proceed to the next generation step, loop back for regeneration based on user feedback, or wait for further user input.
 
-1. **模板路径**: 确保 `NODE_TEMPLATE_DIR_PATH` 指向正确的模板目录
-2. **输出目录**: `OUTPUT_DIR_PATH` 会自动创建如果不存在
-3. **错误处理**: 检查 `is_error` 和 `error_message` 字段
-4. **语言设置**: 通过 `language` 字段控制输出语言（默认 "zh"）
+## Persistence
+
+The SAS workflow is designed for durability. It uses an `AsyncPostgresSaver` as a LangGraph checkpointer. After every node execution, the entire `RobotFlowAgentState` is automatically serialized and saved to a PostgreSQL database. This ensures that even if the application restarts, the state of any ongoing workflow can be perfectly restored and resumed.
