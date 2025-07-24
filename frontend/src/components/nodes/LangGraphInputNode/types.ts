@@ -36,6 +36,7 @@ export interface AgentStateFlags {
   isInProcessingMode: boolean;
   isXmlGenerationComplete: boolean;
   isReadyForReview: boolean;
+  isTasksGenerated: boolean; // 新增：任务列表生成完成状态
 }
 
 export interface ErrorRecoveryActions {

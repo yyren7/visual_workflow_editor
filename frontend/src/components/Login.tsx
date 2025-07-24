@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 
 // 定义表单验证的接口
 interface FormErrors {
@@ -21,6 +22,7 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { login } = useAuth(); // 获取 AuthContext 的 login 方法
 
   // 清理表单错误
   useEffect(() => {
@@ -55,14 +57,10 @@ const Login: React.FC = () => {
   };
 
   // 存储认证信息
-  const saveAuthData = (token: string, userId: string): boolean => {
+  const saveAuthData = (userId: string): boolean => {
     try {
-      // 主要存储方式
-      localStorage.setItem('access_token', token);
+      // 只保存 user_id，token 由 AuthContext 的 login 方法处理
       localStorage.setItem('user_id', userId);
-
-      // 触发登录状态变化事件，通知NavBar更新
-      window.dispatchEvent(new Event('loginChange'));
       return true;
     } catch (e) {
       console.error('Error saving authentication data:', e);
@@ -77,7 +75,11 @@ const Login: React.FC = () => {
       return;
     }
 
-    const saved = saveAuthData(response.access_token, response.user_id);
+    // 立即更新 AuthContext 的认证状态（这会保存 token）
+    login(response.access_token);
+    
+    // 保存其他用户信息
+    const saved = saveAuthData(response.user_id);
 
     if (saved) {
       enqueueSnackbar(t('login.success'), { variant: 'success' });

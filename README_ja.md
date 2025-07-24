@@ -43,7 +43,7 @@ VSCode でプロジェクトフォルダを開きます。「Devcontainer 設定
 
 コンテナが実行されたら：
 
-- フロントエンド: http://localhost:3000
+- フロントエンド: http://localhost:3001
 - バックエンド API: http://localhost:8000
 
 ## スクリプトを使用した開発（代替方法）

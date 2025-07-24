@@ -19,14 +19,13 @@ if __name__ == '__main__' and (__package__ is None or __package__ == ''):
 
 该模块负责构建用于处理聊天交互、管理状态以及调用工具（特别是与流程图操作相关的工具）的 LangGraph 状态图。
 
-它定义了图的结构（节点、边、入口点、条件路由），并将具体的节点实现逻辑委托给其他模块。
+采用"一问一答"的中心化路由模式：
+- 用户输入 -> input_handler -> task_router (中心枢纽) -> 各功能节点 -> END
+- 每次用户输入对应一次图执行，状态通过 AgentState 持久化
+- 功能节点完成任务后直接结束，不再循环路由
 
 提供了一个编译函数 `compile_workflow_graph` 来创建可执行的图实例。
-
 """
-
-# Input-》advisor-》planner-》parameter-》
-# exhibitor-》code generator-》code combination
 
 from typing import List, Optional
 from pathlib import Path # Added
@@ -85,72 +84,41 @@ from .conditions import should_continue, route_after_task_router # RouteDecision
 from .graph_types import RouteDecision # Import RouteDecision from types
 
 
-# --- 新增：处理重新输入的节点（如果需要明确提示用户）---
-# 这个节点可以用来向用户明确地发送"请重新输入"的消息
-async def rephrase_request_node(state: AgentState) -> dict:
-    """
-    如果 task_router 决定需要用户重新澄清，这个节点可以添加一个提示消息。
-    然后流程会通过路由到 END 来结束当前轮次，等待用户的新输入。
-    """
-    decision = state.get("task_route_decision")
-    llm_summary = decision.user_intent if decision and hasattr(decision, 'user_intent') else "我不确定您的意思。"
-    
-    rephrase_message_content = f"抱歉，我不太理解您的请求：'{llm_summary}'。您能换个方式详细描述一下吗？"
-    
-    current_messages = state.get("messages", [])
-    current_messages.append(AIMessage(content=rephrase_message_content, id=f"ai_rephrase_{len(current_messages)}"))
-
-    logger.info(f"Rephrase request: Prompting user to rephrase. Summary of unclear intent: {llm_summary}")
-    
-    return {"messages": current_messages}
-
-def route_after_functional_node(state: AgentState) -> str:
-    """
-    在功能节点执行完毕后进行路由。
-    """
-    logger.info("--- Routing after Functional Node.")
-    
-    # 简单的功能节点完成后，重置任务上下文并结束
-    logger.info("Functional node completed. Resetting task context.")
-    state["task_route_decision"] = None
-    state["user_request_for_router"] = None
-    state["is_suspended"] = False
-    return END
-
 # Graph compilation
-def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = None) -> StateGraph:
+def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = None):
     """
     编译并返回 LangGraph 工作流图实例。
+    
+    采用中心化的"一问一答"路由模式：
+    1. 用户输入 -> input_handler (处理输入) -> task_router (智能路由中心)
+    2. task_router 根据用户意图路由到对应功能节点
+    3. 功能节点完成任务后直接到 END，结束本次图执行
+    4. 下次用户输入时，重新开始一个新的图执行流程
 
     Args:
-        llm: 用于 Planner 节点的 BaseChatModel 实例。
+        llm: 用于节点的 BaseChatModel 实例。
         custom_tools: 可选的工具列表。如果提供，则使用这些工具；否则使用默认的 `flow_tools`。
 
     Returns:
-        一个已编译的 LangGraph StateGraph 实例。
+        一个已编译的 LangGraph 工作流图实例。
     """
-    logger.info("Compiling workflow graph...")
+    logger.info("Compiling workflow graph with centralized routing pattern...")
 
     # 确定要使用的工具集
-    tools_to_use = custom_tools if custom_tools is not None else flow_tools # tools_to_use is for the old planner's tool_node
-    # The new robot_flow_invoker_node and its subgraph will manage their own tools.
-    # So, `tools_to_use` and related system prompt parts might be less relevant for the main graph's planner path.
-    # However, if other parts of the main graph use tools, this remains necessary.
-    # For now, we keep it as is, as the `tool_node` is still part of the graph, though not directly after the new planner.
+    tools_to_use = custom_tools if custom_tools is not None else (flow_tools or [])
 
-    # --- 准备 Planner 的系统提示模板 (这部分是为旧 planner 准备的) ---
-    # 如果新的 robot_flow_invoker_node 不需要特定的系统提示模板注入，
-    # 或者它内部处理自己的提示，这部分可能不再直接用于 "planner" 路径。
-    # 暂时保留，以防其他节点可能间接使用。
-    if not (STRUCTURED_CHAT_AGENT_PROMPT.messages and
-            isinstance(STRUCTURED_CHAT_AGENT_PROMPT.messages[0], SystemMessagePromptTemplate) and
-            hasattr(STRUCTURED_CHAT_AGENT_PROMPT.messages[0].prompt, 'template')):
+    # --- 准备系统提示模板 (保留以备将来可能的 planner 节点使用) ---
+    try:
+        if (STRUCTURED_CHAT_AGENT_PROMPT.messages and
+                isinstance(STRUCTURED_CHAT_AGENT_PROMPT.messages[0], SystemMessagePromptTemplate)):
+            raw_system_template = STRUCTURED_CHAT_AGENT_PROMPT.messages[0].prompt.template
+        else:
+            raise ValueError("Invalid prompt structure")
+    except (AttributeError, ValueError, IndexError):
         logger.error("System prompt template structure is not as expected. Using a fallback.")
         raw_system_template = "You are a helpful assistant. Use the available tools if necessary. Context: {flow_context}"
-    else:
-        raw_system_template = STRUCTURED_CHAT_AGENT_PROMPT.messages[0].prompt.template
 
-    rendered_tools_desc = render_text_description(tools_to_use if tools_to_use else []) # Handle empty tools_to_use
+    rendered_tools_desc = render_text_description(tools_to_use if tools_to_use else [])
     tool_names_list_str = ", ".join([t.name for t in tools_to_use] if tools_to_use else [])
 
     try:
@@ -159,7 +127,7 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
         logger.error(f"Error getting dynamic node types info: {e}")
         node_types_description = "(获取节点类型信息时出错)\\\\n"
 
-    system_prompt_template_for_planner = raw_system_template # This might not be used by new invoker node
+    system_prompt_template_for_planner = raw_system_template
     placeholders_to_fill = {
         "{tools}": rendered_tools_desc,
         "{tool_names}": tool_names_list_str,
@@ -174,76 +142,50 @@ def compile_workflow_graph(llm: BaseChatModel, custom_tools: List[BaseTool] = No
     # --- 创建和配置 StateGraph ---
     workflow = StateGraph(AgentState)
 
+    # 绑定节点函数 (使用 partial 传递必要参数)
     bound_input_handler_node = partial(input_handler_node)
-    
-    # 新节点绑定
     bound_task_router_node = partial(task_router_node, llm=llm) 
     bound_teaching_node = partial(teaching_node, llm=llm)
-    bound_other_assistant_node = partial(other_assistant_node) # Changed from bound_ask_info_node and ask_info_node
-    bound_rephrase_prompt_node = partial(rephrase_prompt_node) # <-- 新增绑定
-    bound_handle_goodbye_node = partial(handle_goodbye_node) # <-- 新增绑定
-
+    bound_other_assistant_node = partial(other_assistant_node)
+    bound_rephrase_prompt_node = partial(rephrase_prompt_node)
+    bound_handle_goodbye_node = partial(handle_goodbye_node)
 
     # 添加节点到图
     workflow.add_node("input_handler", bound_input_handler_node)
     workflow.add_node("task_router", bound_task_router_node) 
     workflow.add_node("teaching", bound_teaching_node) 
-    workflow.add_node("other_assistant", bound_other_assistant_node) # Changed from ask_info
-    workflow.add_node("rephrase_prompt", bound_rephrase_prompt_node) # <-- 添加新节点
-    workflow.add_node("handle_goodbye", bound_handle_goodbye_node) # <-- 添加新节点
-
+    workflow.add_node("other_assistant", bound_other_assistant_node)
+    workflow.add_node("rephrase_prompt", bound_rephrase_prompt_node)
+    workflow.add_node("handle_goodbye", bound_handle_goodbye_node)
 
     # 设置图的入口点
     workflow.set_entry_point("input_handler")
 
-    # 定义节点间的边
+    # 定义节点间的边 - 采用中心化路由模式
     workflow.add_edge("input_handler", "task_router")
 
-    # 从 task_router 出发的条件边
+    # 从 task_router (中心枢纽) 出发的条件边
     workflow.add_conditional_edges(
         "task_router",
         route_after_task_router,
         {
             "teaching": "teaching",
             "other_assistant": "other_assistant", 
-            "rephrase_prompt": "rephrase_prompt",  # 确保这里与 route_after_task_router 的返回字符串一致
-            "handle_goodbye_node": "handle_goodbye", # 修改键名以匹配 conditions.py 的返回
+            "rephrase_prompt": "rephrase_prompt",
+            "handle_goodbye_node": "handle_goodbye",
             END: END 
         }
     )
     
-    # 添加挂起状态节点
-    workflow.add_node("SUSPENDED", lambda state: state)  # 空操作节点
-    
-    # 删除了robot_flow_planner相关的路由
-    workflow.add_conditional_edges(
-        "teaching",
-        route_after_functional_node,
-        {
-            "input_handler": "input_handler", # Should not happen for simple nodes unless they can ask for clarification
-            END: END # Normal completion routes to END
-        }
-    )
-    workflow.add_conditional_edges(
-        "other_assistant",
-        route_after_functional_node,
-        {
-            "input_handler": "input_handler", # Should not happen for simple nodes
-            END: END # Normal completion routes to END
-        }
-    )
-
-    # 新增：从 rephrase_prompt 节点出来的边，固定到 END
+    # 所有功能节点完成任务后直接到 END
+    # 这样每次用户输入只对应一次图执行，简化了流程
+    workflow.add_edge("teaching", END)
+    workflow.add_edge("other_assistant", END)
     workflow.add_edge("rephrase_prompt", END)
-
-    # 添加从挂起状态回到输入处理器的边
-    workflow.add_edge("SUSPENDED", "input_handler")
-
-    # 新增：从 goodbye 节点出来的边，固定到 END
     workflow.add_edge("handle_goodbye", END)
 
     # 编译图
-    logger.info("Workflow graph compilation complete.")
+    logger.info("Workflow graph compilation complete. Using centralized routing pattern.")
     return workflow.compile()
 
 
@@ -294,55 +236,50 @@ async def interactive_workflow_runner():
         flow_context={"interactive_mode": True},
         current_flow_id=f"interactive_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",
         input_processed=False,
-        is_suspended=False  # 初始非挂起状态
+        task_route_decision=None,
+        user_request_for_router=None,
+        rephrase_count=0
     )
     
     while True:
         # 4. 执行图
-        run_config = RunnableConfig(recursion_limit=100)
+        run_config = RunnableConfig(recursion_limit=25)
         async for state_update in graph_app.astream(current_state, config=run_config):
             current_state = state_update
         
-        # 5. 检查是否挂起
-        if current_state.get("is_suspended", False):
-            print("\n--- Graph Suspended ---")
-            print(f"Clarification needed: {current_state.get('clarification_question', 'No question provided')}")
+        # 5. 显示最终结果
+        print("\n--- Task Completed ---")
+        for msg in current_state.get("messages", []):
+            if isinstance(msg, AIMessage):
+                print(f"Assistant: {msg.content}")
+        
+        # 6. 开始新任务
+        new_task = input("\nEnter new task (or 'exit' to quit): ")
+        if new_task.lower() in ["exit", "quit"]:
+            break
             
-            # 获取用户输入
-            user_input = input("Your response: ")
-            if user_input.lower() in ["exit", "quit"]:
-                break
-                
-            # 更新状态继续处理
-            current_state["input"] = user_input
-            current_state["messages"].append(HumanMessage(content=user_input))
-            current_state["input_processed"] = False
-            current_state["is_suspended"] = False
-        else:
-            # 6. 显示最终结果
-            print("\n--- Task Completed ---")
-            for msg in current_state.get("messages", []):
-                if isinstance(msg, AIMessage):
-                    print(f"Assistant: {msg.content}")
-            
-            # 7. 开始新任务
-            new_task = input("\nEnter new task (or 'exit' to quit): ")
-            if new_task.lower() in ["exit", "quit"]:
-                break
-                
-            # 8. 重置状态
-            current_state = AgentState(
-                input=new_task,
-                messages=[HumanMessage(content=new_task)],
-                flow_context={"interactive_mode": True},
-                current_flow_id=f"interactive_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",
-                input_processed=False,
-                is_suspended=False
-            )
+        # 7. 为新的用户输入重置状态，但保留对话历史
+        # 这样 task_router 可以根据历史上下文做出更好的路由决策
+        current_messages = current_state.get("messages", [])
+        current_messages.append(HumanMessage(content=new_task))
+        
+        current_state = AgentState(
+            input=new_task,
+            messages=current_messages,  # 保留历史对话
+            flow_context={"interactive_mode": True},
+            current_flow_id=current_state.get("current_flow_id", f"interactive_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}"),
+            input_processed=False,
+            task_route_decision=None,
+            user_request_for_router=None,
+            rephrase_count=0
+        )
     
-    # 9. 清理资源
-    if hasattr(llm, 'aclose'):
-        await llm.aclose()
+    # 8. 清理资源
+    try:
+        if hasattr(llm, 'aclose'):
+            await llm.aclose()
+    except Exception as e:
+        logger.warning(f"Error closing LLM: {e}")
 
 if __name__ == "__main__":
     asyncio.run(interactive_workflow_runner())

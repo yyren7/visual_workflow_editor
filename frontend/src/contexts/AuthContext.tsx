@@ -139,20 +139,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
-    // 使用防抖来减少频繁的存储变化检查
+    // 使用防抖来减少频繁的存储变化检查（仅适用于 storage 事件）
     let timeoutId: NodeJS.Timeout;
     const debouncedCheckAuth = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(checkAuth, 500); // 500ms防抖
     };
     
+    // 立即处理登录变化事件（不使用防抖）
+    const handleLoginChange = () => {
+      console.log('loginChange 事件触发，立即处理');
+      checkAuth(); // 立即执行，不延迟
+    };
+    
     window.addEventListener('storage', debouncedCheckAuth);
-    window.addEventListener('loginChange', debouncedCheckAuth);
+    window.addEventListener('loginChange', handleLoginChange); // 立即处理
     
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener('storage', debouncedCheckAuth);
-      window.removeEventListener('loginChange', debouncedCheckAuth);
+      window.removeEventListener('loginChange', handleLoginChange);
     };
   }, []);
 

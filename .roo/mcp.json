@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql+psycopg2://yyren:yyren123123@db:5432/flow_editor_db"
+      ]
+    }
+  }
+}

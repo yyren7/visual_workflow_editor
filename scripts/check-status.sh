@@ -14,7 +14,7 @@ docker logs workflow-editor-frontend --tail 20 >> $OUTPUT_FILE 2>&1
 
 # 检查前端应用是否可访问
 echo -e "\n=== 前端应用访问检查 ===" >> $OUTPUT_FILE
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 >> $OUTPUT_FILE 2>&1
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 >> $OUTPUT_FILE 2>&1
 
 # 检查后端容器日志
 echo -e "\n=== 后端容器日志 ===" >> $OUTPUT_FILE

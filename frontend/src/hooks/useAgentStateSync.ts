@@ -122,12 +122,14 @@ export const useAgentStateSync = () => {
         }
       }
       console.log(`[AGENT_SYNC_LOG] POST to SSE endpoint successful for effective chat ID: ${finalChatIdForSSE}`);
-      dispatch(setActiveLangGraphStreamFlowId(finalChatIdForSSE));
 
       if (currentChatIdForSSESubscriptions.current !== finalChatIdForSSE || activeUnsubscribeFunctions.current.length === 0 ) {
         console.log(`[AGENT_SYNC_LOG] Setting up new SSE subscriptions for chat ID: ${finalChatIdForSSE}. Previous SSE chat ID: ${currentChatIdForSSESubscriptions.current}`);
         cleanupSseSubscriptions();
         currentChatIdForSSESubscriptions.current = finalChatIdForSSE;
+        
+        // 🔧 修复：在清理完旧订阅后再设置新的流ID
+        dispatch(setActiveLangGraphStreamFlowId(finalChatIdForSSE));
         
         const newUnsubs: Array<() => void> = [];
         const eventsToSubscribe: string[] = ['agent_state_updated', 'stream_end', 'processing_complete', 'connection_error', 'server_error_event', 'token', 'tool_start', 'tool_end', 'user_message_saved', 'ping', 'task_progress'];
@@ -298,6 +300,8 @@ export const useAgentStateSync = () => {
         activeUnsubscribeFunctions.current = newUnsubs;
       } else {
         console.log(`useAgentStateSync: Already have active subscriptions for chat ${finalChatIdForSSE}. No new subscriptions created.`);
+        // 🔧 修复：即使已有订阅，也要确保流ID被正确设置
+        dispatch(setActiveLangGraphStreamFlowId(finalChatIdForSSE));
       }
 
     } catch (error) {

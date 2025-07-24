@@ -8,7 +8,33 @@ case "$1" in
   frontend)
     cd /workspace/frontend
     echo "启动前端开发服务器..."
+    
+    # 创建前端运行时日志文件
+    mkdir -p /workspace/logs
+    touch /workspace/logs/frontend-runtime.log
+    
+    # 启动日志监听器（后台运行）
+    (
+      echo ""
+      echo "=== 🌐 前端运行时日志 (浏览器Console) ==="
+      echo "等待前端应用启动..."
+      sleep 5  # 等待前端应用启动
+      echo "开始监听浏览器日志..."
+      
+      # 使用tail -f监听日志文件，并添加前缀
+      tail -f /workspace/logs/frontend-runtime.log 2>/dev/null | while read line; do
+        echo "🌐 $line"
+      done
+    ) &
+    LOG_PID=$!
+    
+    # 启动前端服务器（前台运行）
+    echo ""
+    echo "=== 📦 前端构建日志 (Webpack/Node.js) ==="
     npm start
+    
+    # 当前端退出时，停止日志监听
+    kill $LOG_PID 2>/dev/null
     ;;
   backend)
     cd /workspace

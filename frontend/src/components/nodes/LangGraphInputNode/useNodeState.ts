@@ -33,6 +33,21 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
   // Operation chat ID
   const operationChatId = data.flowId || reduxCurrentFlowId;
 
+  // Helper function to check for recent activity
+  const hasRecentActivity = useCallback((state: any) => {
+    if (!state) return false;
+    
+    const hasMessages = state.messages && state.messages.length > 0;
+    const hasStepDescription = state.current_step_description && state.current_step_description.trim() !== "";
+    const hasGeneratedTasks = state.sas_step1_generated_tasks && state.sas_step1_generated_tasks.length > 0;
+    const hasModuleSteps = state.sas_step2_module_steps && state.sas_step2_module_steps.trim() !== "";
+    const isCurrentlyProcessing = state.completion_status === 'processing';
+    const hasClarificationQuestion = !!state.clarification_question;
+    
+    // Consider it has recent activity if any of these conditions are met
+    return hasMessages || hasStepDescription || hasGeneratedTasks || hasModuleSteps || isCurrentlyProcessing || hasClarificationQuestion;
+  }, []);
+
   // Derived state flags
   const getAgentStateFlags = useCallback((): AgentStateFlags => {
     if (!agentState) {
@@ -43,16 +58,20 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
         isInErrorState: false,
         isInXmlApprovalMode: false,
         isReadyForReview: false,
+        isTasksGenerated: false,
       };
     }
     const { dialog_state, completion_status } = agentState;
     
-    // 扩展处理中状态检测
-    const isProcessing = dialog_state?.includes('generating') ||
-                         dialog_state?.includes('merging') ||
-                         dialog_state?.includes('processing') ||
-                         dialog_state === 'sas_xml_generation_approved' ||
-                         dialog_state === 'sas_step3_completed';
+    // 蓝色处理状态检测 - 系统认为在处理中
+    const isInProcessingMode = dialog_state?.includes('generating') ||
+                             dialog_state?.includes('merging') ||
+                             dialog_state?.includes('processing') ||
+                             dialog_state === 'sas_xml_generation_approved' ||
+                             dialog_state === 'sas_step3_completed' ||
+                             // ⭐ 新增：处理反馈后的中间状态
+                             (dialog_state === 'initial' && agentState?.completion_status === 'processing') ||
+                             (dialog_state === 'sas_step1_tasks_generated' && agentState?.completion_status === 'processing');
     
     // 审核模式状态
     const isInReviewMode = dialog_state === 'sas_awaiting_task_list_review' ||
@@ -60,24 +79,32 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
                           dialog_state === 'sas_awaiting_module_steps_review' ||
                           dialog_state === 'sas_awaiting_module_steps_revision_input';
     
-    // 准备审核状态
-    const isReadyForReview = dialog_state === 'sas_step1_tasks_generated' ||
-                            dialog_state === 'sas_step2_module_steps_generated_for_review';
+    // 🔧 修复：分开处理两种不同的状态
+    // 任务列表生成完成 - 应该继续处理或进入审核模式
+    const isTasksGenerated = dialog_state === 'sas_step1_tasks_generated';
     
-    // 扩展错误状态检测
+    // 模块步骤生成完成 - 准备审核模块步骤
+    const isReadyForReview = dialog_state === 'sas_step2_module_steps_generated_for_review';
+    
+    // 错误状态检测 - 区分实时处理和中断处理
     const isInErrorState = dialog_state === 'error' ||
                           dialog_state === 'generation_failed' ||
-                          dialog_state === 'sas_processing_error';
+                          dialog_state === 'sas_processing_error' ||
+                          agentState?.is_error === true ||
+                          completion_status === 'error' ||
+                          // 检测被中断的处理状态：系统认为在处理中，但实际上没有实时处理
+                          (isInProcessingMode && !isProcessing && !hasRecentActivity(agentState));
     
     return {
       isInReviewMode,
-      isInProcessingMode: isProcessing,
+      isInProcessingMode,
       isXmlGenerationComplete: completion_status === 'completed_success' && dialog_state === 'final_xml_generated_success',
       isInErrorState,
       isInXmlApprovalMode: dialog_state === 'sas_awaiting_xml_generation_approval',
       isReadyForReview,
+      isTasksGenerated, // 新增：任务列表生成完成状态
     };
-  }, [agentState]);
+  }, [agentState, hasRecentActivity, isProcessing]);
 
   // Get processing description
   const getProcessingDescription = useCallback(() => {
@@ -120,6 +147,12 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
         return 'Generation process failed, please try again...';
       case 'sas_processing_error':
         return 'Processing error occurred...';
+      case 'initial':
+        // ⭐ 新增：处理反馈后的初始重新生成状态
+        if (agentState.completion_status === 'processing') {
+          return 'Processing your feedback, regenerating tasks...';
+        }
+        return 'Initializing...';
       default:
         if (agentState.completion_status === 'processing') {
           return 'Processing workflow...';
@@ -147,6 +180,11 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
       'sas_xml_generation_approved',
       'sas_step3_completed'
     ];
+    
+    // 统一的超时处理逻辑
+    if (stuckStates.includes(agentState.dialog_state as string)) {
+      return timeSinceUpdate > 30000; // 30 seconds for all processing states
+    }
     
     return stuckStates.includes(agentState.dialog_state) && timeSinceUpdate > 60000; // 60 seconds
   }, [agentState]);

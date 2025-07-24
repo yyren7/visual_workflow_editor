@@ -1,16 +1,15 @@
 import logging
-from typing import Dict, Any, List, Optional
+import asyncio
 import json
-from pathlib import Path
 import uuid
-
+from typing import Any, Dict, List, Optional
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
+from langchain_core.messages import BaseMessage, AIMessage, AIMessageChunk, HumanMessage
 from pydantic import ValidationError
 
 from ..state import RobotFlowAgentState, TaskDefinition
-from ..prompt_loader import get_sas_step1_task_list_generation_prompt
 from ..llm_utils import invoke_llm_for_text_output
+from ..prompt_loader import get_sas_step1_task_list_generation_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -75,15 +74,19 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
     stream_id = f"sas_step1_llm_stream_{uuid.uuid4()}"
 
     try:
-        async for chunk_text in invoke_llm_for_text_output(
-            llm=llm,
-            system_prompt_content=system_prompt,
-            user_message_content=formatted_prompt,
-            message_history=None
-        ):
-            if not chunk_text:
-                continue
-            full_response_content += chunk_text
+        # 使用标准的LangChain调用方式，让LangGraph事件系统能够捕获流式输出
+        # 将system_prompt作为HumanMessage发送（符合Gemini的要求）
+        messages = [
+            HumanMessage(content=system_prompt),
+            HumanMessage(content=formatted_prompt)
+        ]
+        
+        # 使用标准的LangChain流式调用
+        async for chunk in llm.astream(messages):
+            if hasattr(chunk, 'content') and chunk.content:
+                chunk_text = str(chunk.content)
+                if chunk_text:
+                    full_response_content += chunk_text
 
         logger.info(f"LLM streaming finished for stream {stream_id}. Accumulated {len(full_response_content)} characters.")
 
@@ -100,6 +103,12 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
         state.dialog_state = "generation_failed"
         state.completion_status = "error"
         full_response_content = "" # Reset content on stream error
+    
+    # 流式处理完成后，如果有完整响应，将其作为AI消息添加到状态中
+    if full_response_content and not state.is_error:
+        ai_message = AIMessage(content=full_response_content, id=stream_id)
+        state.messages = (state.messages or []) + [ai_message]
+        logger.info(f"Added complete AI response to messages (stream {stream_id})")
     
     # After streaming loop (successful or with error)
 

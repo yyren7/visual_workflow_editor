@@ -139,7 +139,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
 
 
   // UI state
-  const { isInReviewMode, isInErrorState, isInXmlApprovalMode, isInProcessingMode, isXmlGenerationComplete, isReadyForReview } = getAgentStateFlags();
+  const { isInReviewMode, isInErrorState, isInXmlApprovalMode, isInProcessingMode, isXmlGenerationComplete, isReadyForReview, isTasksGenerated } = getAgentStateFlags();
   const cardBackgroundColor = selected ? '#1e2a50' : '#2c3e50';
   const displayUserRequest = agentState?.current_user_request || data.currentUserRequest;
   const taskDisplayHeight = '150px';
@@ -149,6 +149,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     if (isInErrorState) return t('nodes.input.taskError');
     if (isInXmlApprovalMode) return t('nodes.input.approveXmlGeneration');
     if (isReadyForReview) return t('nodes.input.moduleStepsReady');
+    if (isTasksGenerated) return t('nodes.input.taskListGenerated'); // 新增：任务列表生成完成状态的标题
     if (isInReviewMode) {
       if (!agentState) return t('nodes.input.reviewMode');
       switch (agentState.dialog_state) {
@@ -205,7 +206,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
       ref={cardRef}
       sx={{ 
         width: 600, 
-        minHeight: isInReviewMode || isReadyForReview || (isEditing || showAddForm) ? 300 : 
+        minHeight: isInReviewMode || isReadyForReview || isTasksGenerated || (isEditing || showAddForm) ? 300 : 
                   isInErrorState ? 280 :
                   isInXmlApprovalMode ? 320 :
                   isInProcessingMode ? 250 : 
@@ -730,7 +731,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   {agentState.dialog_state === 'sas_awaiting_task_list_review' && (
                       <Button 
                           size="small" variant="contained" color="success"
-                          onClick={() => handleSend("accept")}
+                          onClick={() => handleSend("FRONTEND_APPROVE_TASKS")}
                           startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
                       >
                           {t('nodes.input.approveTasks')}
@@ -739,7 +740,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   {agentState.dialog_state === 'sas_awaiting_module_steps_review' && (
                       <Button 
                           size="small" variant="contained" color="success"
-                          onClick={() => handleSend("accept")}
+                          onClick={() => handleSend("FRONTEND_APPROVE_MODULE_STEPS")}
                           startIcon={<CheckIcon />} disabled={isProcessing} sx={{ fontSize: '0.8rem'}}
                       >
                           {t('nodes.input.approveModuleSteps')}
@@ -747,7 +748,16 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                   )}
                   <Button 
                     size="small" variant="contained" 
-                    onClick={() => handleSend()}
+                    onClick={() => {
+                      // 🔧 蓝色按钮：提交反馈时加上前缀，在有修改意见时重置批准状态
+                      const feedbackContent = input.trim();
+                      if (feedbackContent) {
+                        handleSend(`FRONTEND_FEEDBACK:${feedbackContent}`);
+                      } else {
+                        // 空输入时发送空反馈
+                        handleSend("FRONTEND_FEEDBACK:");
+                      }
+                    }}
                     startIcon={<SendIcon />} 
                     disabled={isProcessing}
                     sx={{ fontSize: '0.8rem'}}
@@ -761,7 +771,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
 
           {/* Task Display */}
-          {!isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isProcessing && !isInProcessingMode && displayUserRequest && (
+          {!isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isTasksGenerated && !isProcessing && !isInProcessingMode && displayUserRequest && (
             <Box sx={{ overflowY: 'auto', flexGrow: 1, mb:1, border: '1px dashed #444', borderRadius:1, p:1 }} ref={taskDescriptionRef}>
               <Typography variant="caption" sx={{color: '#aaa', fontStyle:'italic', display:'block', mb:0.5}}>{t('nodes.input.currentTaskDescription')}:</Typography>
               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#fff', fontSize: '0.9rem', lineHeight: 1.5, wordBreak: 'break-word'}}>
@@ -771,7 +781,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
           )}
 
           {/* Edit Controls */}
-          {!isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isProcessing && !isInProcessingMode && !isXmlGenerationComplete && displayUserRequest && (
+          {!isEditing && !showAddForm && !isInReviewMode && !isReadyForReview && !isTasksGenerated && !isProcessing && !isInProcessingMode && !isXmlGenerationComplete && displayUserRequest && (
              <Box display="flex" gap={1} sx={{ flexShrink: 0, mt: 'auto' }}>
                 <Button size="small" startIcon={<EditIcon />} onClick={handleEdit} variant="outlined" disabled={isProcessing || isInProcessingMode} sx={{ fontSize: '0.8rem'}}>
                   {t('nodes.input.edit')}
@@ -806,6 +816,16 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                     '& .MuiInputBase-inputMultiline': {
                         flexGrow: 1,
                         overflowY: 'auto'
+                    }
+                  },
+                  // 修复label缩小时的垂直位置，确保完整文字显示
+                  '& .MuiInputLabel-root': {
+                    color: '#bbb',
+                    '&.MuiInputLabel-shrink': {
+                      transform: 'translate(14px, -2px) scale(0.75)', // 调整Y轴偏移，让文字完整显示
+                    },
+                    '&.Mui-focused': {
+                      color: '#76a9fa'
                     }
                   }
                 }}

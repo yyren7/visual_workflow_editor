@@ -53,7 +53,7 @@ popd > /dev/null
 # 等待用户输入
 print_green "==============================================="
 print_green "  前后端服务已启动"
-print_green "  - 前端: http://localhost:3000"
+print_green "  - 前端: http://localhost:3001"
 print_green "  - 后端: http://localhost:8000"
 print_green "==============================================="
 print_yellow "按 Ctrl+C 停止所有服务"

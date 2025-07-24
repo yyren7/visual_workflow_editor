@@ -5,7 +5,7 @@ import datetime
 import uuid
 import json
 
-from database.models import Flow
+from database.models import Flow, Chat
 from backend.app.services.flow_variable_service import FlowVariableService
 from fastapi import Depends
 
@@ -182,6 +182,9 @@ class FlowService:
                 logger.warning(f"要删除的流程图不存在: {flow_id}")
                 return False
             
+            # 在删除流程图之前，先删除所有关联的聊天记录
+            self.db.query(Chat).filter(Chat.flow_id == flow_id).delete(synchronize_session=False)
+
             # 删除流程图
             self.db.delete(flow)
             self.db.commit()

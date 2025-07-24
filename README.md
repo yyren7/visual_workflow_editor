@@ -43,7 +43,7 @@ When starting for the first time, the Dev Container will automatically build the
 
 Once the container is running:
 
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:3001
 - Backend API: http://localhost:8000
 
 ## Development with Scripts (Alternative Method)

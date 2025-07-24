@@ -77,6 +77,8 @@ const resources: Resource = {
       'flowEditor.addInputNode': '添加输入节点',
       'flowEditor.addProcessNode': '添加处理节点',
       'flowEditor.save': '保存',
+      'flowEditor.saving': '保存中',
+      'flowEditor.lastSaved': '最后保存',
       'flowEditor.saveSuccess': '流程保存成功',
       'flowEditor.saveError': '保存流程图失败',
       'flowEditor.loadSuccess': '流程加载成功！',
@@ -105,6 +107,7 @@ const resources: Resource = {
       'flowEditor.closeNodeSelector': '关闭节点选择器',
       'flowEditor.openGlobalVars': '打开流程图变量',
       'flowEditor.closeGlobalVars': '关闭流程图变量',
+      'flowEditor.toggleGlobalVars': '流程图变量菜单',
       'flowEditor.openChat': '打开对话助手',
       'flowEditor.closeChat': '关闭对话助手',
       'flowEditor.nodeProperties': '节点属性',
@@ -266,6 +269,10 @@ const resources: Resource = {
       'nodes.task.taskDescription': '任务描述',
       'nodes.task.subTasksInput': '子任务 (逗号分隔)',
       'nodes.task.generatingDetails': '生成详情中...',
+      'nodes.task.moduleSteps': '模块步骤',
+      'nodes.task.defaultLabel': '任务',
+      'nodes.task.subtasksCountText': '个子任务',
+      'nodes.task.errorGeneratingDetails': '生成详细信息时出错：',
       
       'nodes.input.taskError': '任务错误',
       'nodes.input.approveXmlGeneration': '批准XML生成',
@@ -294,6 +301,7 @@ const resources: Resource = {
       'nodes.input.xmlApprovalDesc': '所有任务和模块步骤已确认完成。系统准备生成XML程序文件。',
       'nodes.input.taskConfigSummary': '任务配置摘要:',
       'nodes.input.tasksGenerated': '• 已生成 {{count}} 个任务',
+      'nodes.input.taskListGenerated': '任务列表已生成', // 新增：任务列表生成完成状态
       'nodes.input.moduleStepsDefined': '• 模块步骤已定义并确认',
       'nodes.input.readyToGenerate': '• 准备生成可执行的XML程序文件',
       'nodes.input.approveGenerateXml': '批准生成XML',
@@ -332,13 +340,19 @@ const resources: Resource = {
       'nodes.input.noTaskDescriptionYet': '尚无任务描述。',
       'nodes.input.addTaskDescription': '添加任务描述',
       
-      // 🔧 添加缺失的翻译键
       'nodes.input.moduleStepsReady': '模块步骤就绪',
       'nodes.input.moduleStepsGenerated': '模块步骤已生成',
       'nodes.input.moduleStepsGeneratedDesc': '系统已生成模块步骤，请审查后决定是否进入审核流程。',
       'nodes.input.proceedToReview': '进入审核',
       'nodes.input.regenerateSteps': '重新生成步骤',
-      'nodes.input.generatedModuleSteps': '生成的模块步骤'
+      'nodes.input.generatedModuleSteps': '生成的模块步骤',
+      
+      // 流程图创建相关
+      'flowSelect.createNew': '创建新流程图',
+      'selectPage.createFlow': '创建新流程图',
+      
+      // LangGraph节点标签
+      'nodes.langgraph.robotTaskDescription': '机器人任务描述'
     }
   },
   en: {
@@ -414,6 +428,8 @@ const resources: Resource = {
       'flowEditor.addInputNode': 'Add Input Node',
       'flowEditor.addProcessNode': 'Add Process Node',
       'flowEditor.save': 'Save',
+      'flowEditor.saving': 'Saving',
+      'flowEditor.lastSaved': 'Last saved',
       'flowEditor.saveSuccess': 'Flow saved successfully',
       'flowEditor.saveError': 'Failed to save flow',
       'flowEditor.loadSuccess': 'Flow loaded successfully!',
@@ -442,6 +458,7 @@ const resources: Resource = {
       'flowEditor.closeNodeSelector': 'Close Node Selector',
       'flowEditor.openGlobalVars': 'Open Flow Variables',
       'flowEditor.closeGlobalVars': 'Close Flow Variables',
+      'flowEditor.toggleGlobalVars': 'Flow Variables Menu',
       'flowEditor.openChat': 'Open Chat Assistant',
       'flowEditor.closeChat': 'Close Chat Assistant',
       'flowEditor.nodeProperties': 'Node Properties',
@@ -603,6 +620,10 @@ const resources: Resource = {
       'nodes.task.taskDescription': 'Task Description',
       'nodes.task.subTasksInput': 'Sub-tasks (comma separated)',
       'nodes.task.generatingDetails': 'Generating Details...',
+      'nodes.task.moduleSteps': 'Module Steps',
+      'nodes.task.defaultLabel': 'Task',
+      'nodes.task.subtasksCountText': ' subtasks',
+      'nodes.task.errorGeneratingDetails': 'Error generating details: ',
       
       'nodes.input.taskError': 'Task Error',
       'nodes.input.approveXmlGeneration': 'Approve XML Generation',
@@ -631,6 +652,7 @@ const resources: Resource = {
       'nodes.input.xmlApprovalDesc': 'All tasks and module steps have been confirmed. The system is ready to generate XML program files.',
       'nodes.input.taskConfigSummary': 'Task Configuration Summary:',
       'nodes.input.tasksGenerated': '• Generated {{count}} task(s)',
+      'nodes.input.taskListGenerated': 'Task list generated', // New: Task list generation complete status
       'nodes.input.moduleStepsDefined': '• Module steps defined and confirmed',
       'nodes.input.readyToGenerate': '• Ready to generate executable XML program files',
       'nodes.input.approveGenerateXml': 'Approve XML Generation',
@@ -667,7 +689,21 @@ const resources: Resource = {
       'nodes.input.confirmEdit': 'Confirm Edit',
       'nodes.input.send': 'Send',
       'nodes.input.noTaskDescriptionYet': 'No task description yet.',
-      'nodes.input.addTaskDescription': 'Add Task Description'
+      'nodes.input.addTaskDescription': 'Add Task Description',
+      
+      'nodes.input.moduleStepsReady': 'Module Steps Ready',
+      'nodes.input.moduleStepsGenerated': 'Module Steps Generated',
+      'nodes.input.moduleStepsGeneratedDesc': 'The system has generated module steps. Please review and decide whether to proceed with the review process.',
+      'nodes.input.proceedToReview': 'Proceed to Review',
+      'nodes.input.regenerateSteps': 'Regenerate Steps',
+      'nodes.input.generatedModuleSteps': 'Generated Module Steps',
+      
+      // Flow creation related
+      'flowSelect.createNew': 'Create New Flow',
+      'selectPage.createFlow': 'Create New Flow',
+      
+      // LangGraph node labels
+      'nodes.langgraph.robotTaskDescription': 'Robot Task Description'
     }
   },
   ja: {
@@ -722,6 +758,8 @@ const resources: Resource = {
       'flowEditor.addInputNode': '入力ノードを追加',
       'flowEditor.addProcessNode': '処理ノードを追加',
       'flowEditor.save': '保存',
+      'flowEditor.saving': '保存中',
+      'flowEditor.lastSaved': '最後に保存',
       'flowEditor.saveSuccess': 'フローの保存に成功しました！',
       'flowEditor.saveError': 'フローの保存中にエラーが発生しました：',
       'flowEditor.loadSuccess': 'フローの読み込みに成功しました！',
@@ -746,6 +784,7 @@ const resources: Resource = {
       'flowEditor.closeNodeSelector': 'ノードセレクターを閉じる',
       'flowEditor.openGlobalVars': 'フロー変数を開く',
       'flowEditor.closeGlobalVars': 'フロー変数を閉じる',
+      'flowEditor.toggleGlobalVars': 'フロー変数メニュー',
       'flowEditor.openChat': 'チャットアシスタントを開く',
       'flowEditor.closeChat': 'チャットアシスタントを閉じる',
       'flowEditor.nodeProperties': 'ノードプロパティ',
@@ -795,33 +834,33 @@ const resources: Resource = {
       'globalVars.empty': 'グローバル変数はまだありません',
 
       // 流程图变量
-      'flowVariables.title': '流程图变量',
-      'flowVariables.newVariable': '新变量名',
-      'flowVariables.variableValue': '变量值',
-      'flowVariables.add': '添加',
+      'flowVariables.title': 'フロー変数',
+      'flowVariables.newVariable': '新しい変数名',
+      'flowVariables.variableValue': '変数値',
+      'flowVariables.add': '追加',
       'flowVariables.save': '保存',
-      'flowVariables.delete': '删除',
-      'flowVariables.refresh': '刷新',
-      'flowVariables.reset': '重置',
-      'flowVariables.upload': '上传',
-      'flowVariables.saveFile': '导出',
-      'flowVariables.loadSuccess': '变量加载成功',
-      'flowVariables.loadError': '加载变量失败',
-      'flowVariables.saveSuccess': '变量保存成功',
-      'flowVariables.saveError': '保存变量失败',
-      'flowVariables.saveFileSuccess': '变量导出成功',
-      'flowVariables.resetSuccess': '变量重置成功',
-      'flowVariables.resetError': '重置变量失败',
-      'flowVariables.readError': '读取文件失败',
-      'flowVariables.invalidFormat': '无效的文件格式',
-      'flowVariables.duplicateName': '变量名已存在',
-      'flowVariables.emptyName': '变量名不能为空',
-      'flowVariables.confirmReset': '确定要重置所有变量吗？',
-      'flowVariables.deleteSuccess': '变量 {{name}} 已删除',
-      'flowVariables.deleteError': '删除变量 {{name}} 失败',
-      'flowVariables.importSuccess': '变量导入成功',
-      'flowVariables.importError': '导入变量失败',
-      'flowVariables.noActiveFlow': '没有活动的流程图，请先选择或创建一个流程图',
+      'flowVariables.delete': '削除',
+      'flowVariables.refresh': '更新',
+      'flowVariables.reset': 'リセット',
+      'flowVariables.upload': 'アップロード',
+      'flowVariables.saveFile': 'エクスポート',
+      'flowVariables.loadSuccess': '変数の読み込みに成功しました',
+      'flowVariables.loadError': '変数の読み込みに失敗しました',
+      'flowVariables.saveSuccess': '変数の保存に成功しました',
+      'flowVariables.saveError': '変数の保存に失敗しました',
+      'flowVariables.saveFileSuccess': '変数のエクスポートに成功しました',
+      'flowVariables.resetSuccess': '変数のリセットに成功しました',
+      'flowVariables.resetError': '変数のリセットに失敗しました',
+      'flowVariables.readError': 'ファイルの読み込みに失敗しました',
+      'flowVariables.invalidFormat': '無効なファイル形式です',
+      'flowVariables.duplicateName': '変数名が既に存在します',
+      'flowVariables.emptyName': '変数名を空にすることはできません',
+      'flowVariables.confirmReset': 'すべての変数をリセットしますか？',
+      'flowVariables.deleteSuccess': '変数 {{name}} を削除しました',
+      'flowVariables.deleteError': '変数 {{name}} の削除に失敗しました',
+      'flowVariables.importSuccess': '変数のインポートに成功しました',
+      'flowVariables.importError': '変数のインポートに失敗しました',
+      'flowVariables.noActiveFlow': 'アクティブなフローがありません。先にフローを選択または作成してください',
 
       // チャットインターフェース
       'chat.title': 'チャットアシスタント',
@@ -885,6 +924,10 @@ const resources: Resource = {
       'nodes.task.taskDescription': 'タスクの説明',
       'nodes.task.subTasksInput': 'サブタスク (カンマ区切り)',
       'nodes.task.generatingDetails': '詳細を生成中...',
+      'nodes.task.moduleSteps': 'モジュールステップ',
+      'nodes.task.defaultLabel': 'タスク',
+      'nodes.task.subtasksCountText': '個のサブタスク',
+      'nodes.task.errorGeneratingDetails': '詳細情報の生成中にエラーが発生しました：',
       
       'nodes.input.taskError': 'タスクエラー',
       'nodes.input.approveXmlGeneration': 'XML生成を承認',
@@ -913,6 +956,7 @@ const resources: Resource = {
       'nodes.input.xmlApprovalDesc': 'すべてのタスクとモジュールステップが確認されました。システムはXMLプログラムファイルを生成する準備ができています。',
       'nodes.input.taskConfigSummary': 'タスク設定概要:',
       'nodes.input.tasksGenerated': '• {{count}} 個のタスクを生成',
+      'nodes.input.taskListGenerated': 'タスクリストが生成されました', // New: Task list generation complete status
       'nodes.input.moduleStepsDefined': '• モジュールステップが定義され確認済み',
       'nodes.input.readyToGenerate': '• 実行可能なXMLプログラムファイルの生成準備完了',
       'nodes.input.approveGenerateXml': 'XML生成を承認',
@@ -949,12 +993,26 @@ const resources: Resource = {
       'nodes.input.confirmEdit': '編集を確認',
       'nodes.input.send': '送信',
       'nodes.input.noTaskDescriptionYet': 'タスク説明はまだありません。',
-      'nodes.input.addTaskDescription': 'タスク説明を追加'
+      'nodes.input.addTaskDescription': 'タスク説明を追加',
+      
+      'nodes.input.moduleStepsReady': 'モジュールステップ準備完了',
+      'nodes.input.moduleStepsGenerated': 'モジュールステップが生成されました',
+      'nodes.input.moduleStepsGeneratedDesc': 'システムがモジュールステップを生成しました。レビューしてからレビュープロセスに進むかどうかを決定してください。',
+      'nodes.input.proceedToReview': 'レビューに進む',
+      'nodes.input.regenerateSteps': 'ステップを再生成',
+      'nodes.input.generatedModuleSteps': '生成されたモジュールステップ',
+      
+      // フロー作成関連
+      'flowSelect.createNew': '新しいフローを作成',
+      'selectPage.createFlow': '新しいフローを作成',
+      
+      // LangGraphノードラベル
+      'nodes.langgraph.robotTaskDescription': 'ロボットタスク説明'
     }
   }
 };
 
-// 初期化オプション
+// 初始化选项
 const i18nOptions: InitOptions = {
   resources,
   lng: 'zh', // 默认语言

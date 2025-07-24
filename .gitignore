@@ -44,6 +44,18 @@ database/flow_database/result/example_run
 
 backend/langgraphchat/sessions/*
 
+# 忽略数据库中由用户生成的数据和日志
+database/flow_database/
+database/document_database/
+
+# 忽略日志文件
+logs/
+
+# 忽略测试和迁移产生的结果
+database/flow_database/result/
+
+# 忽略前端依赖
+frontend/node_modules/
 # Log files
 logs/*
 !logs/.keep

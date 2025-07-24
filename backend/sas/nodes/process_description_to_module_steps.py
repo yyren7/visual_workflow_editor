@@ -223,16 +223,17 @@ CRITICAL REQUIREMENTS:
 
     llm_response_content = ""
     try:
-        async for chunk in invoke_llm_for_text_output(
-            llm=llm,
-            system_prompt_content=system_prompt_content,
-            user_message_content=user_prompt_content,
-            message_history=None
-        ):
-            if isinstance(chunk, str):
-                llm_response_content += chunk
-            elif isinstance(chunk, dict) and "error" in chunk: # Handle potential error dicts from stream
-                raise Exception(f"LLM stream error for {task_name}: {chunk.get('error')} - Details: {chunk.get('details')}")
+        # 使用标准的LangChain调用方式，让LangGraph事件系统能够捕获流式输出
+        messages = [
+            HumanMessage(content=system_prompt_content),
+            HumanMessage(content=user_prompt_content)
+        ]
+        
+        async for chunk in llm.astream(messages):
+            if hasattr(chunk, 'content') and chunk.content:
+                chunk_text = str(chunk.content)
+                if chunk_text:
+                    llm_response_content += chunk_text
         
         if not llm_response_content.strip():
              raise ValueError("LLM returned empty content.")

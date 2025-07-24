@@ -300,13 +300,32 @@ async def _prepare_frontend_update(final_state: dict, flow_id: str) -> dict:
             frontend_agent_state = {}
             update_types = []
             
+            # 🔧 修复：序列化 Pydantic 模型对象以避免 JSON 序列化错误
+            def serialize_pydantic_objects(obj):
+                """安全地序列化 Pydantic 模型对象"""
+                if hasattr(obj, 'model_dump'):
+                    return obj.model_dump()
+                elif hasattr(obj, 'dict'):
+                    return obj.dict()
+                elif isinstance(obj, list):
+                    return [serialize_pydantic_objects(item) for item in obj]
+                elif isinstance(obj, dict):
+                    return {k: serialize_pydantic_objects(v) for k, v in obj.items()}
+                else:
+                    return obj
+            
             for field in important_fields:
                 if field in final_state:
-                    frontend_agent_state[field] = final_state[field]
+                    # 序列化可能包含 Pydantic 对象的字段
+                    field_value = final_state[field]
+                    if field in ['sas_step1_generated_tasks', 'sas_step2_generated_task_details', 'sas_step2_module_steps']:
+                        field_value = serialize_pydantic_objects(field_value)
+                    
+                    frontend_agent_state[field] = field_value
                     update_types.append(field)
                     
                     if field in ['dialog_state', 'sas_step1_generated_tasks', 'completion_status']:
-                        logger.info(f"[SAS_FRONTEND_UPDATE] 包含重要字段: {field} = {final_state[field]}")
+                        logger.info(f"[SAS_FRONTEND_UPDATE] 包含重要字段: {field} = {field_value}")
             
             logger.info(f"[SAS Flow {flow_id}] 🎯 准备发送前端更新，字段: {update_types}")
             
@@ -390,13 +409,35 @@ async def _process_sas_events(
             current_state_snapshot = await sas_app.aget_state(config)
             if current_state_snapshot:
                 current_persistent_state = get_checkpoint_values(current_state_snapshot)
-                logger.info(f"[SAS Chat {chat_id}] 获取到持久化状态，task_list_accepted: {current_persistent_state.get('task_list_accepted', False)}, module_steps_accepted: {current_persistent_state.get('module_steps_accepted', False)}")
+                
+                # 🔧 添加详细的状态日志，帮助诊断问题
+                tasks_data = current_persistent_state.get("sas_step1_generated_tasks")
+                tasks_count = len(tasks_data) if tasks_data else 0
+                logger.info(f"[SAS Chat {chat_id}] 获取到持久化状态:")
+                logger.info(f"  - dialog_state: {current_persistent_state.get('dialog_state')}")
+                logger.info(f"  - task_list_accepted: {current_persistent_state.get('task_list_accepted', False)}")
+                logger.info(f"  - module_steps_accepted: {current_persistent_state.get('module_steps_accepted', False)}")
+                logger.info(f"  - sas_step1_generated_tasks count: {tasks_count}")
+                logger.info(f"  - revision_iteration: {current_persistent_state.get('revision_iteration', 0)}")
+                
+                # 🔧 如果任务列表存在，记录任务名称以便跟踪
+                if tasks_data:
+                    task_names = [task.get('name', 'unnamed') for task in tasks_data if isinstance(task, dict)]
+                    logger.info(f"  - Task names: {task_names[:5]}{'...' if len(task_names) > 5 else ''}")
+            else:
+                logger.warning(f"[SAS Chat {chat_id}] 未找到现有的checkpoint状态")
         except Exception as state_get_error:
             logger.warning(f"[SAS Chat {chat_id}] 获取持久化状态失败，将使用默认值: {state_get_error}")
         
         # 🔧 根据当前持久化状态设置初始值，避免不正确的重置
+        # 特别注意：对于特定的消息类型，可能需要保留更多的状态
+        preserved_tasks = current_persistent_state.get("sas_step1_generated_tasks", [])
+        
+        # 🔧 删除了关键字批准逻辑 - 只有前端绿色按钮可以触发批准
+        # 所有用户输入都将作为普通输入处理，不再进行关键字匹配批准
+        
         graph_input = {
-            "dialog_state": "sas_processing_user_input",
+            "dialog_state": "initial",
             "current_step_description": "Processing your request...",
             "current_user_request": message_content,
             "task_list_accepted": current_persistent_state.get("task_list_accepted", False),      # 🔧 保留持久化状态
@@ -409,17 +450,16 @@ async def _process_sas_events(
             "current_chat_id": chat_id,  # For progress events
             "thread_id": chat_id,       # For state management
         }
+        
+        # 🔧 记录即将使用的graph_input状态
+        final_tasks_count = len(graph_input["sas_step1_generated_tasks"]) if graph_input["sas_step1_generated_tasks"] else 0
+        logger.info(f"[SAS Chat {chat_id}] 即将执行graph，最终任务数量: {final_tasks_count}")
+        if graph_input["sas_step1_generated_tasks"]:
+            final_task_names = [task.get('name', 'unnamed') for task in graph_input["sas_step1_generated_tasks"] if isinstance(task, dict)]
+            logger.info(f"[SAS Chat {chat_id}] 最终任务名称: {final_task_names[:5]}{'...' if len(final_task_names) > 5 else ''}")
 
-        # Adjust state for specific approval actions
-        if message_content == "accept_tasks":
-            graph_input["dialog_state"] = "sas_tasks_accepted_processing"
-            graph_input["current_step_description"] = "Tasks approved. Generating module steps..."
-            graph_input["task_list_accepted"] = True
-        elif message_content == "accept_module_steps":
-            graph_input["dialog_state"] = "sas_modules_accepted_processing"
-            graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
-            graph_input["module_steps_accepted"] = True
-        elif message_content == "start_review":
+        # 🔧 只保留特殊的前端按钮触发消息处理
+        if message_content == "start_review":
             # 🔧 新增：处理"开始审核"指令，专门用于从生成完成状态进入审核状态
             current_dialog_state = current_persistent_state.get('dialog_state')
             
@@ -432,28 +472,58 @@ async def _process_sas_events(
                 logger.info(f"[SAS Chat {chat_id}] start_review指令将触发模块步骤审核流程")
             else:
                 logger.warning(f"[SAS Chat {chat_id}] 收到start_review但当前状态不支持: {current_dialog_state}")
-        elif message_content == "accept":
-            # 新增：处理通用的"accept"指令，根据当前状态判断是哪种accept
-            # 🔧 使用已获取的持久化状态，避免重复查询造成的竞态条件
+        
+        # 🔧 修复：前端绿色按钮专用批准逻辑（使用正确的状态）
+        elif message_content == "FRONTEND_APPROVE_TASKS":
+            # 只有前端绿色按钮通过特殊API调用才能触发任务批准
             current_dialog_state = current_persistent_state.get('dialog_state')
-            
-            logger.info(f"[SAS Chat {chat_id}] 收到通用accept指令，当前状态: {current_dialog_state}")
-            
             if current_dialog_state == 'sas_awaiting_task_list_review':
-                # 在任务列表审核阶段，转换为任务接受
-                graph_input["dialog_state"] = "sas_tasks_accepted_processing"
+                graph_input["dialog_state"] = "sas_step1_tasks_generated"
                 graph_input["current_step_description"] = "Tasks approved. Generating module steps..."
                 graph_input["task_list_accepted"] = True
-                logger.info(f"[SAS Chat {chat_id}] 通用accept解释为任务列表接受")
-            elif current_dialog_state == 'sas_awaiting_module_steps_review':
-                # 在模块步骤审核阶段，转换为模块步骤接受
-                graph_input["dialog_state"] = "sas_modules_accepted_processing"
+                logger.info(f"[SAS Chat {chat_id}] 前端绿色按钮批准任务列表")
+            else:
+                logger.warning(f"[SAS Chat {chat_id}] 前端尝试批准任务但状态不正确: {current_dialog_state}")
+        
+        elif message_content == "FRONTEND_APPROVE_MODULE_STEPS":
+            # 只有前端绿色按钮通过特殊API调用才能触发模块步骤批准
+            current_dialog_state = current_persistent_state.get('dialog_state')
+            if current_dialog_state == 'sas_awaiting_module_steps_review':
+                graph_input["dialog_state"] = "sas_step2_module_steps_generated_for_review"
                 graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
                 graph_input["module_steps_accepted"] = True
-                logger.info(f"[SAS Chat {chat_id}] 通用accept解释为模块步骤接受")
+                logger.info(f"[SAS Chat {chat_id}] 前端绿色按钮批准模块步骤")
             else:
-                # 如果不在预期的审核状态，按普通用户输入处理
-                logger.warning(f"[SAS Chat {chat_id}] 收到accept但当前状态不是审核状态: {current_dialog_state}")
+                logger.warning(f"[SAS Chat {chat_id}] 前端尝试批准模块步骤但状态不正确: {current_dialog_state}")
+        
+        # 🔧 新增：蓝色按钮修改意见逻辑 - 重置批准状态
+        elif message_content.startswith("FRONTEND_FEEDBACK:"):
+            # 前端蓝色按钮提交反馈时重置相应的批准状态
+            current_dialog_state = current_persistent_state.get('dialog_state')
+            feedback_content = message_content.replace("FRONTEND_FEEDBACK:", "").strip()
+            
+            if current_dialog_state == 'sas_awaiting_task_list_review':
+                # 在任务审核阶段提交修改意见，重置task和detail的批准状态，并触发重新生成
+                graph_input["task_list_accepted"] = False
+                graph_input["module_steps_accepted"] = False
+                graph_input["current_user_request"] = feedback_content
+                graph_input["dialog_state"] = "initial"  # ⭐ 关键修复：设置状态触发重新生成
+                logger.info(f"[SAS Chat {chat_id}] 任务审核阶段收到修改意见，重置批准状态并触发重新生成")
+            elif current_dialog_state == 'sas_awaiting_module_steps_review':
+                # 在模块步骤审核阶段提交修改意见，重置detail批准状态，并触发重新处理
+                graph_input["module_steps_accepted"] = False
+                graph_input["task_list_accepted"] = True  # ⭐ 保持任务列表已批准状态
+                graph_input["current_user_request"] = feedback_content
+                graph_input["dialog_state"] = "sas_step1_tasks_generated"  # ⭐ 触发模块步骤重新生成
+                logger.info(f"[SAS Chat {chat_id}] 模块步骤审核阶段收到修改意见，重置模块批准状态并触发重新处理")
+            else:
+                # 其他状态下的普通反馈
+                graph_input["current_user_request"] = feedback_content
+                logger.info(f"[SAS Chat {chat_id}] 收到普通反馈")
+        
+        # 🔧 所有其他用户输入都作为普通输入处理，不进行任何自动批准
+        else:
+            logger.info(f"[SAS Chat {chat_id}] 用户输入作为普通消息处理，无自动批准")
 
         config = {"configurable": {"thread_id": chat_id}}
         
@@ -594,6 +664,19 @@ async def _process_sas_events(
             # 给前端一点时间处理之前的事件，特别是agent_state_updated事件
             await asyncio.sleep(0.5)  # 500ms延迟确保重要事件被处理
             
+            # 🔧 修复：从检查点获取最新状态，而不是使用可能过时的 final_state
+            latest_state = None
+            try:
+                config = {"configurable": {"thread_id": chat_id}}
+                current_checkpoint = await sas_app.aget_state(config)
+                if current_checkpoint:
+                    latest_state = get_checkpoint_values(current_checkpoint)
+                    logger.info(f"[SAS Chat {chat_id}] 🔧 获取最新检查点状态，dialog_state: {latest_state.get('dialog_state') if latest_state else 'None'}")
+            except Exception as e:
+                logger.warning(f"[SAS Chat {chat_id}] 获取最新检查点状态失败: {e}")
+                # 如果获取失败，回退到使用 final_state
+                latest_state = final_state
+            
             # 不再发送stream_end事件，保持SSE连接开启
             # logger.info(f"[SAS Chat {chat_id}] Broadcasting stream_end event.")
             # await event_broadcaster.broadcast_event(chat_id, {"type": "stream_end", "data": {"chat_id": chat_id}})
@@ -611,17 +694,37 @@ async def _process_sas_events(
                 }
             }
             
-            # 如果有最终状态，包含在事件中
-            if final_state and isinstance(final_state, dict):
+            # 如果有最终状态，包含在事件中（优先使用最新的检查点状态）
+            state_to_send = latest_state if latest_state else final_state
+            if state_to_send and isinstance(state_to_send, dict):
+                # 🔧 修复：序列化 Pydantic 模型对象以避免 JSON 序列化错误
+                def serialize_pydantic_objects(obj):
+                    """安全地序列化 Pydantic 模型对象"""
+                    if hasattr(obj, 'model_dump'):
+                        return obj.model_dump()
+                    elif hasattr(obj, 'dict'):
+                        return obj.dict()
+                    elif isinstance(obj, list):
+                        return [serialize_pydantic_objects(item) for item in obj]
+                    elif isinstance(obj, dict):
+                        return {k: serialize_pydantic_objects(v) for k, v in obj.items()}
+                    else:
+                        return obj
+                
+                # 序列化 sas_step1_generated_tasks 中的 TaskDefinition 对象
+                sas_step1_tasks = state_to_send.get("sas_step1_generated_tasks")
+                if sas_step1_tasks:
+                    sas_step1_tasks = serialize_pydantic_objects(sas_step1_tasks)
+                
                 event_data["data"]["final_state"] = {
-                    "dialog_state": final_state.get("dialog_state"),
-                    "sas_step1_generated_tasks": final_state.get("sas_step1_generated_tasks"),
-                    "task_list_accepted": final_state.get("task_list_accepted"),
-                    "module_steps_accepted": final_state.get("module_steps_accepted"),
-                    "completion_status": final_state.get("completion_status"),
-                    "clarification_question": final_state.get("clarification_question")
+                    "dialog_state": state_to_send.get("dialog_state"),
+                    "sas_step1_generated_tasks": sas_step1_tasks,
+                    "task_list_accepted": state_to_send.get("task_list_accepted"),
+                    "module_steps_accepted": state_to_send.get("module_steps_accepted"),
+                    "completion_status": state_to_send.get("completion_status"),
+                    "clarification_question": state_to_send.get("clarification_question")
                 }
-                logger.info(f"[SAS Chat {chat_id}] Including final state in processing_complete: {final_state.get('dialog_state')}")
+                logger.info(f"[SAS Chat {chat_id}] Including final state in processing_complete: {state_to_send.get('dialog_state')}")
             
             await event_broadcaster.broadcast_event(chat_id, event_data)
             
@@ -1297,7 +1400,6 @@ async def rollback_to_previous_state(
             'initial',
             'sas_step1_tasks_generated',
             'sas_awaiting_task_list_review',          # 任务列表审查状态
-            'sas_tasks_accepted_processing',          # 任务列表被接受后的处理状态
             'sas_step2_module_steps_generated_for_review',
             'sas_awaiting_module_steps_review',       # 模块步骤审查状态（用户点击承认按钮的状态）
             'sas_xml_generation_approved',            # XML生成承认后的状态

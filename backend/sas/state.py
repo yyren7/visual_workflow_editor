@@ -47,11 +47,6 @@ class RobotFlowAgentState(BaseModel):
         "sas_step2_module_steps_generated_for_review", # Step 2 (process_to_module_steps) completed, awaiting review.
         "sas_step3_completed",                     # Step 3 (parameter_mapping) completed successfully.
 
-        # --- Custom Processing States ---
-        "sas_processing_user_input",               # System is processing the initial user request.
-        "sas_tasks_accepted_processing",           # System is processing after user accepted the task list.
-        "sas_modules_accepted_processing",         # System is processing after user accepted the module steps.
-        
         # --- Review & Refine States ---
         "sas_awaiting_task_list_review",           # System has presented the task list and is awaiting user acceptance or feedback.
         "sas_awaiting_module_steps_review",        # System has presented the module steps and is awaiting user acceptance or feedback.

@@ -414,6 +414,7 @@ try:
     logger.info("Registered chat router.")
     app.include_router(sas_chat.router)
     logger.info("Registered sas_chat router.")
+            
 except Exception as e:
     logger.error(f"Error registering routers: {e}", exc_info=True)
     raise

@@ -34,24 +34,27 @@
 
 ## 端口映射
 
-- 前端服务端口：3000
+- 前端服务端口：3001
 - 后端服务端口：8000
 
 ## 预安装的工具和扩展
 
 ### 后端开发
+
 - Python 3.10
 - FastAPI, SQLAlchemy
 - pylint, flake8, black
 - pytest
 
 ### 前端开发
+
 - Node.js 16
 - React
 - ESLint, Prettier
 - TypeScript
 
 ### 开发工具
+
 - Git
 - Docker CLI
 - SQLite 工具
@@ -69,10 +72,12 @@
 ## 常见问题
 
 1. **前端热重载不工作**
+
    - 确保 `.devcontainer/docker-compose.yml` 中设置了 `CHOKIDAR_USEPOLLING=true`
 
 2. **无法连接到后端服务**
+
    - 检查前端配置中的 API 地址是否正确设置为 `http://localhost:8000`
 
 3. **访问数据库问题**
-   - 可以使用 VS Code 的 SQLTools 扩展，已预先配置连接到 SQLite 数据库 
+   - 可以使用 VS Code 的 SQLTools 扩展，已预先配置连接到 SQLite 数据库

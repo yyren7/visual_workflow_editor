@@ -301,13 +301,13 @@ const flowSlice = createSlice({
         state.agentState.isProcessingUserInput = action.payload;
         if (action.payload) {
           // When starting, also clear any leftover review/error states
-          state.agentState.dialog_state = 'sas_processing_user_input';
+          state.agentState.dialog_state = 'initial';
         }
       } else {
         // If agentState doesn't exist, create it
         state.agentState = {
           isProcessingUserInput: action.payload,
-          dialog_state: action.payload ? 'sas_processing_user_input' : 'initial',
+          dialog_state: action.payload ? 'initial' : 'initial',
         };
       }
     },

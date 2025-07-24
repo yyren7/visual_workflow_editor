@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { Node, Edge } from 'reactflow';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import _isEqual from 'lodash/isEqual';
 import { AppDispatch } from '../store/store';
 import {
@@ -30,6 +31,7 @@ interface AgentState {
 }
 
 export const useLangGraphNodes = (agentState?: AgentState) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const currentFlowId = useSelector(selectCurrentFlowId);
   const nodesFromStore = useSelector(selectNodes);
@@ -74,7 +76,7 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
       type: 'langgraph_input',
       position: existingInputNode?.position || { x: 100, y: 50 },
       data: {
-        label: '机器人任务描述',
+        label: t('nodes.langgraph.robotTaskDescription'),
         flowId: flowId,
         currentUserRequest: state.current_user_request || '',
       },
@@ -87,6 +89,17 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     const tasks = state.sas_step1_generated_tasks || [];
     console.log('🔧 [DEBUG] Tasks from state:', tasks);
     console.log('🔧 [DEBUG] Tasks count:', tasks.length);
+    
+    // 添加详细的任务和details统计
+    let totalDetailsCount = 0;
+    const tasksWithDetails = tasks.filter(task => task.details && task.details.length > 0);
+    tasks.forEach(task => {
+      if (task.details) {
+        totalDetailsCount += task.details.length;
+      }
+    });
+    console.log('🔧 [DEBUG] Tasks with details:', tasksWithDetails.length);
+    console.log('🔧 [DEBUG] Total detail steps across all tasks:', totalDetailsCount);
     
     if (tasks.length === 0) {
       console.log('🔧 [DEBUG] No tasks found - returning only input node');
@@ -122,16 +135,23 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
 
         const details = task.details || [];
         if (details.length > 0) {
+          console.log(`🔧 [DEBUG] Creating detail node for task "${task.name}" with ${details.length} steps:`, details);
+          
           const detailY = taskYOffset + TASK_NODE_HEIGHT + VERTICAL_SPACING;
+          
+          // New: Calculate the centered X position for the detail node
+          const detailX = taskX + (TASK_NODE_WIDTH / 2) - (DETAIL_NODE_WIDTH / 2);
+
           const detailNode: Node = {
             id: `langgraph_detail_${flowId}_${i}`,
             type: 'langgraph_detail',
-            position: { x: taskX, y: detailY },
+            position: { x: detailX, y: detailY }, // Use the new centered X
             data: { label: `${task.name} - Steps`, flowId, taskIndex: i, taskName: task.name, details },
             width: DETAIL_NODE_WIDTH,
             height: DETAIL_NODE_HEIGHT,
           };
           newNodes.push(detailNode);
+          console.log(`🔧 [DEBUG] Added detail node: ${detailNode.id}`);
 
           newEdges.push({
             id: `edge_task_${i}_to_detail`,
@@ -142,6 +162,16 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
         }
       });
     }
+
+    // 添加节点类型统计
+    const nodeTypeStats = {
+      input: newNodes.filter(n => n.type === 'langgraph_input').length,
+      task: newNodes.filter(n => n.type === 'langgraph_task').length,
+      detail: newNodes.filter(n => n.type === 'langgraph_detail').length,
+    };
+    console.log('🔧 [DEBUG] Node type statistics:', nodeTypeStats);
+    console.log('🔧 [DEBUG] Total nodes generated:', newNodes.length);
+    console.log('🔧 [DEBUG] Total edges generated:', newEdges.length);
 
     return { nodes: newNodes, edges: newEdges };
   }, [nodesFromStore]);
@@ -159,6 +189,7 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     const HORIZONTAL_SPACING = 50;
     const TASK_NODE_WIDTH = 400;
     const TASK_NODE_HEIGHT = 300;
+    const DETAIL_NODE_WIDTH = 400;
     const DETAIL_NODE_HEIGHT = 250;
 
     const updatedNodes = nodesFromStore.map(node => {
@@ -206,9 +237,12 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
         const tasksStartX = inputCenterX - totalTasksWidth / 2;
         const taskX = tasksStartX + (taskIndex * taskSlotWidth);
 
+        // New: Center the detail node under the task node
+        const detailX = taskX + (TASK_NODE_WIDTH / 2) - (node.width || DETAIL_NODE_WIDTH) / 2;
+
         return {
           ...node,
-          position: { x: taskX, y: detailY }
+          position: { x: detailX, y: detailY }
         };
       }
       
@@ -235,6 +269,20 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     
     console.log('🔧 [DEBUG] Generated LangGraph nodes count:', langGraphNodesGenerated.length);
     console.log('🔧 [DEBUG] Generated LangGraph nodes:', langGraphNodesGenerated.map(n => ({ id: n.id, type: n.type })));
+    
+    // 添加详细的节点类型统计
+    const generatedNodeTypeStats = {
+      input: langGraphNodesGenerated.filter(n => n.type === 'langgraph_input').length,
+      task: langGraphNodesGenerated.filter(n => n.type === 'langgraph_task').length,
+      detail: langGraphNodesGenerated.filter(n => n.type === 'langgraph_detail').length,
+    };
+    console.log('🔧 [DEBUG] Generated node type statistics:', generatedNodeTypeStats);
+    
+    // 显示每个detail node的详细信息
+    const detailNodes = langGraphNodesGenerated.filter(n => n.type === 'langgraph_detail');
+    detailNodes.forEach(node => {
+      console.log(`🔧 [DEBUG] Detail node ${node.id}: task="${node.data.taskName}", steps=${node.data.details?.length || 0}`);
+    });
     
     const nonLangGraphNodes = nodesFromStore?.filter(node => !node.id.startsWith('langgraph_')) || [];
     

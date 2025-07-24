@@ -52,8 +52,9 @@ $DOCKER_COMPOSE ps
 
 print_green "==============================================="
 print_green "  开发环境已启动"
-print_green "  - 前端: http://localhost:3000"
-print_green "  - 后端: http://localhost:8000"
+print_green "访问以下地址:"
+print_green "  - 前端: http://localhost:3001"
+print_green "  - 后端 API: http://localhost:8000/docs"
 print_green "==============================================="
 print_yellow "要进入开发容器，请运行: docker exec -it workflow-editor-dev bash"
 print_yellow "要查看日志，请运行: $DOCKER_COMPOSE logs -f"

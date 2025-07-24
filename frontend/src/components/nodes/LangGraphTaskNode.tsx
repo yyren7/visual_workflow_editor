@@ -278,7 +278,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
               {data.label}
             </Typography>
             <Chip 
-              label={data.task.type || 'Task'} 
+              label={data.task.type || t('nodes.task.defaultLabel')} 
               size="small" 
               color="secondary" 
               variant="outlined"
@@ -528,7 +528,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                       mt: 0.5
                     }}
                   >
-                    {editedTask.sub_tasks.length} 个子任务
+                    {editedTask.sub_tasks.length} {t('nodes.task.subtasksCountText')}
                   </Typography>
                 )}
               </Box>
@@ -540,7 +540,7 @@ export const LangGraphTaskNode: React.FC<LangGraphTaskNodeProps> = ({ id, data, 
                 color="error" 
                 sx={{ mt: 1, fontSize: '0.75rem', flexShrink: 0, border: '1px solid red', p:0.5, borderRadius:1, backgroundColor: 'rgba(255,0,0,0.1)'}}
               >
-                Error generating details: {detailError}
+                {t('nodes.task.errorGeneratingDetails')}{detailError}
               </Typography>
             )}
           </Box>

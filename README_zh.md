@@ -43,7 +43,7 @@ cd visual_workflow_editor
 
 容器启动完成后：
 
-- 前端: http://localhost:3000
+- 前端: http://localhost:3001
 - 后端 API: http://localhost:8000
 
 ## 使用脚本进行开发（替代方法）
