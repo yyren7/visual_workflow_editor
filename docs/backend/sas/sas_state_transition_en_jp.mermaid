@@ -29,7 +29,7 @@ graph TD
     INIT["Initialize State<br/>(initialize_state)<br/>状態初期化"]:::initNode
     TASK_GEN["Generate Task List<br/>(sas_user_input_to_task_list)<br/>タスクリスト生成"]:::processNode
     REVIEW["Review and Refine<br/>(sas_review_and_refine)<br/>レビューと改善"]:::reviewNode
-    MODULE_STEPS["Generate Module Steps<br/>(sas_process_to_module_steps)<br/>モジュールステップ生成"]:::processNode
+    MODULE_STEPS["Generate Module Steps<br/>(sas_task_list_to_module_steps)<br/>モジュールステップ生成"]:::processNode
     PARAM_MAP["Parameter Mapping<br/>(sas_parameter_mapping)<br/>パラメータマッピング"]:::processNode
     GEN_XML["Generate Individual XMLs<br/>(generate_individual_xmls)<br/>個別XML生成"]:::processNode
     MERGE_XML["Merge XMLs<br/>(sas_merge_xmls)<br/>XML結合"]:::processNode

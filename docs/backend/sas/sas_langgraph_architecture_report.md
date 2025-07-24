@@ -101,11 +101,12 @@ SAS 系统的核心是基于 LangGraph 构建的状态图，包含以下主要�
 1. **initialize_state_node**: 初始化状态和配置
 2. **sas_user_input_to_task_list**: 将用户输入转换为任务列表
 3. **sas_review_and_refine**: 审查和优化任务
-4. **sas_process_to_module_steps**: 生成详细的模块步骤
-5. **sas_parameter_mapping**: 参数映射
-6. **generate_individual_xmls**: 生成单个 XML 文件
-7. **sas_merge_xmls**: 合并 XML 文件
-8. **sas_concatenate_xmls**: 连接 XML 文件
+4. **sas_task_list_to_module_steps**: 用户批准任务列表后，进入此状态，为每个任务生成详细的模块步骤。
+5. **sas_awaiting_module_steps_review**: 系统已生成模块步骤，等待用户审核。
+6. **sas_generating_individual_xmls**: 用户批准模块步骤后，开始为每个模块步骤生成独立的 XML 文件。
+7. **sas_individual_xmls_generated_ready_for_mapping**: 所有独立 XML 文件生成完毕，准备进入参数映射阶段。
+8. **sas_merge_xmls**: 合并 XML 文件
+9. **sas_concatenate_xmls**: 连接 XML 文件
 
 ---
 

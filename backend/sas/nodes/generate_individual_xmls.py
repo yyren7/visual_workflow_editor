@@ -54,7 +54,7 @@ if __name__ == "__main__" and __package__ is None:
         print(f"[Preamble] Error setting __package__: {e_pkg}. This might happen if project_root calculation is incorrect.")
         # If __package__ cannot be set, relative imports might still fail.
 
-from ..state import RobotFlowAgentState, GeneratedXmlFile 
+from ..state import RobotFlowAgentState, GeneratedXmlFile, TaskDefinition 
 # prompt_loader and llm_utils imports are removed.
 
 logger = logging.getLogger(__name__)
@@ -374,15 +374,15 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
     state.is_error = False
     state.generated_node_xmls = []
 
-    parsed_tasks_from_state = state.parsed_flow_steps
+    tasks_from_state = state.sas_step1_generated_tasks
     config = state.config
 
     # Validate essential configurations
-    if not parsed_tasks_from_state:
-        logger.error("parsed_flow_steps is missing or empty in agent state.")
+    if not tasks_from_state:
+        logger.error("sas_step1_generated_tasks is missing or empty in agent state.")
         state.is_error = True
-        state.error_message = "Parsed flow steps (tasks) are missing or empty for XML generation."
-        state.dialog_state = "error"
+        state.error_message = "Task list (sas_step1_generated_tasks) is missing or empty for XML generation."
+        state.dialog_state = "generation_failed"
         state.completion_status = "error"
         return state
 
@@ -434,9 +434,9 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         _nested_block_data_no_current_val += 1
         return str(val_to_return)
 
-    for task_index, task_data in enumerate(parsed_tasks_from_state):
-        task_name = task_data.get('name', f'task_{task_index}')
-        task_details = task_data.get('details', [])
+    for task_index, task_data in enumerate(tasks_from_state):
+        task_name = getattr(task_data, 'name', f'task_{task_index}')
+        task_details = getattr(task_data, 'details', [])
         
         sanitized_task_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', task_name)
         task_specific_dir_name = f"{task_index:02d}_{sanitized_task_name}"
@@ -503,7 +503,7 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
             extracted_params = _extract_parameters_from_detail(detail_str, block_type)
             
             if block_type == "procedures_defnoreturn":
-                procedure_name_from_task = task_data.get('name')
+                procedure_name_from_task = getattr(task_data, 'name', None)
                 if procedure_name_from_task:
                     if 'fields' not in extracted_params:
                         extracted_params['fields'] = {}
@@ -638,11 +638,11 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
                 state.error_message = "XML生成过程中发生未知错误，请检查日志以获取更多信息。"
         
         state.completion_status = "error" 
-        state.dialog_state = "error"  # 修改：使用明确的错误状态
+        state.dialog_state = "generation_failed"
     else:
         logger.info("All individual XML blocks for all tasks were generated and saved successfully.")
-        state.dialog_state = "generating_xml_relation" 
-        state.completion_status = None 
+        state.dialog_state = "sas_individual_xmls_generated_ready_for_mapping" 
+        state.completion_status = "processing"
     
     return state
 
@@ -652,8 +652,8 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
 if __name__ == "__main__":
     # Mock or minimal RobotFlowAgentState for testing
     class MockRobotFlowAgentState:
-        def __init__(self, parsed_flow_steps: List[Dict[str, Any]], config: Dict[str, Any]):
-            self.parsed_flow_steps = parsed_flow_steps
+        def __init__(self, sas_step1_generated_tasks: List[Dict[str, Any]], config: Dict[str, Any]):
+            self.sas_step1_generated_tasks = [TaskDefinition(**task) for task in sas_step1_generated_tasks] # Convert dicts to Pydantic models
             self.config = config
             self.current_step_description: Optional[str] = None
             self.is_error: bool = False
@@ -685,7 +685,7 @@ if __name__ == "__main__":
             logger.info(f"Loaded {len(tasks_for_state)} tasks directly from JSON list.")
         elif isinstance(test_input_data, dict):
             # Check for common keys that might hold the list of tasks
-            possible_task_list_keys = ["parsed_flow_steps", "sas_step1_generated_tasks"] 
+            possible_task_list_keys = ["sas_step1_generated_tasks", "parsed_flow_steps"] 
             found_list = False
             for key in possible_task_list_keys:
                 if key in test_input_data and isinstance(test_input_data[key], list):
@@ -703,7 +703,7 @@ if __name__ == "__main__":
                         "Could not identify a list of tasks in the loaded JSON dictionary using known keys, "
                         "and it does not appear to be a single task object. 'tasks_for_state' will be empty."
                     )
-                    tasks_for_state = [] # Ensure it's an empty list if no tasks found
+                    tasks_for_state = [] # Ensure it's an empty list
         else:
             logger.error(
                 f"Loaded JSON data is neither a list nor a dictionary (type: {type(test_input_data)}). "
@@ -737,7 +737,7 @@ if __name__ == "__main__":
         print(f"[Test Main] Number of tasks to process: {len(tasks_for_state)}")
 
         initial_state = MockRobotFlowAgentState(
-            parsed_flow_steps=tasks_for_state, 
+            sas_step1_generated_tasks=tasks_for_state, 
             config=mock_config
         )
 

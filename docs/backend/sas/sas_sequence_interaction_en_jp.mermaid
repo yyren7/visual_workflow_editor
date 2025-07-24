@@ -80,7 +80,7 @@ sequenceDiagram
         Hook->>API: POST /sas/{chat_id}/events<br/>POSTリクエスト送信
         API->>LG: Continue processing<br/>処理続行
         LG->>LG: review_and_refine_node<br/>レビュー・改良ノード
-        LG->>LG: process_to_module_steps_node<br/>モジュールステップ処理ノード
+        LG->>LG: task_list_to_module_steps_node<br/>モジュールステップ処理ノード
     else User modifies / ユーザー修正
         User->>UI: Input modification feedback<br/>修正フィードバック入力
         UI->>Hook: updateUserInput(feedback)<br/>フィードバック入力更新

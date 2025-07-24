@@ -140,8 +140,11 @@ def route_after_sas_review_refine(state: RobotFlowAgentState) -> str:
     if state.is_error:
         return END
 
-    if state.dialog_state == "sas_step1_tasks_generated" and state.task_list_accepted:
-        return SAS_PROCESS_TO_MODULE_STEPS
+    if state.task_list_accepted:
+        # タスクリストが承認された場合、モジュールステップ生成へ
+        logger.info("Task list accepted by user. Routing to SAS_TASK_LIST_TO_MODULE_STEPS.")
+        state.completion_status = "processing"
+        return SAS_TASK_LIST_TO_MODULE_STEPS
     elif state.dialog_state == "sas_step2_module_steps_generated_for_review" and state.module_steps_accepted:
         return SAS_PARAMETER_MAPPING
     elif state.dialog_state in ["needs_clarification", "awaiting_user_input"]:
@@ -149,6 +152,22 @@ def route_after_sas_review_refine(state: RobotFlowAgentState) -> str:
     else:
         return SAS_REVIEW_AND_REFINE  # 再レビュー
 ```
+
+#### 2. `task_list_to_module_steps` へのフィードバック
+
+ユーザーがモジュールステップに対して修正を指示した場合、`review_and_refine`ノードは `module_steps_accepted` を `False` に設定し、`dialog_state` を `task_list_to_module_steps` に更新します。
+
+`route_after_sas_review_and_refine` はこの状態を検出し、再度 `SAS_TASK_LIST_TO_MODULE_STEPS` ノードへルーティングします。
+
+```python
+# route_after_sas_review_and_refine 内
+    # ...
+    if state.dialog_state == "task_list_to_module_steps":
+        logger.info("User provided revisions for the module steps. Routing back to SAS_TASK_LIST_TO_MODULE_STEPS.")
+        return SAS_TASK_LIST_TO_MODULE_STEPS
+```
+
+これにより、LangGraph は `task_list_to_module_steps_node` を再実行し、ユーザーの新しい指示 (`current_user_request`) に基づいてモジュールステップを再生成します。
 
 ### 3.2 エラー処理と回復ロジック
 

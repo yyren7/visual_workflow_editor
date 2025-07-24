@@ -181,11 +181,11 @@ async def check_and_recover_stuck_states(logger):
                        checkpoint
                 FROM checkpoints 
                 WHERE checkpoint->>'dialog_state' IN (
-                    'generating_xml_relation',
-                    'generating_xml_final', 
+                    'generation_failed',
                     'sas_generating_individual_xmls',
-                    'sas_module_steps_accepted_proceeding',
-                    'sas_all_steps_accepted_proceed_to_xml'
+                    'parameter_mapping',
+                    'merge_xml',
+                    'error'
                 )
                 AND checkpoint_id IN (
                     SELECT MAX(checkpoint_id) 

@@ -163,12 +163,13 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
                 task_names = [task.name for task in generated_tasks]
                 logger.info(f"Generated task names: {task_names}")
 
-                state.dialog_state = "sas_step1_tasks_generated"
+                # The dialog_state is now managed by the graph's routing logic.
+                # This node's responsibility is to set the output and error flags.
                 state.current_step_description = f"SAS Step 1: Structured task list generated successfully (Iteration {state.revision_iteration})."
                 
                 final_message_content_for_this_node = f"成功为请求 (迭代 {state.revision_iteration}) 生成了包含 {len(generated_tasks)} 个任务的任务列表: {', '.join(task_names[:3])}{'...' if len(task_names) > 3 else ''}."
-                state.completion_status = "completed_partial"
-                state.is_error = False # Explicitly clear error if parsing succeeds
+                state.completion_status = "processing" # Use "processing" to indicate the graph should continue
+                state.is_error = False
                 state.error_message = None
 
         except json.JSONDecodeError as e:

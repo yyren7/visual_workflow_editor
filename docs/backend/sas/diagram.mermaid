@@ -13,7 +13,7 @@ graph TD
     INIT["初始化状态<br/>(initialize_state)"]:::initNode
     TASK_GEN["生成任务列表<br/>(sas_user_input_to_task_list)"]:::processNode
     REVIEW["审查和优化<br/>(sas_review_and_refine)"]:::reviewNode
-    MODULE_STEPS["生成模块步骤<br/>(sas_process_to_module_steps)"]:::processNode
+    MODULE_STEPS["生成模块步骤<br/>(sas_task_list_to_module_steps)"]:::processNode
     PARAM_MAP["参数映射<br/>(sas_parameter_mapping)"]:::processNode
     GEN_XML["生成单个XML<br/>(generate_individual_xmls)"]:::processNode
     MERGE_XML["合并XML<br/>(sas_merge_xmls)"]:::processNode

@@ -263,12 +263,12 @@ CRITICAL REQUIREMENTS:
             await _send_task_progress_event(chat_id, node_index, task_name, "error", f"处理失败: {str(e)[:100]}")
         return task_name, [f"Error: Could not generate module steps. Details: {str(e)[:100]}"], error_msg
 
-async def process_description_to_module_steps_node(state: RobotFlowAgentState, llm: BaseChatModel) -> Dict[str, Any]:
+async def task_list_to_module_steps_node(state: RobotFlowAgentState, llm: BaseChatModel) -> Dict[str, Any]:
     """
     SAS Step 2: Convert detailed process description for each task from Step 1 
     into specific, executable module steps using task-type-specific prompts.
     """
-    logger.info(f"--- Entering SAS Step 2: Process Description to Module Steps (dialog_state: {state.dialog_state}) ---")
+    logger.info(f"--- Entering SAS Step 2: Task List to Module Steps (dialog_state: {state.dialog_state}) ---")
     
     # 尝试从状态中获取chat_id，如果没有则为None
     chat_id = getattr(state, 'current_chat_id', None) or getattr(state, 'thread_id', None)
@@ -276,7 +276,7 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
     # SSE事件队列已移除，不再进行队列检查
     logger.info("[SSE] SSE事件队列功能已在新架构中通过其他方式处理")
     
-    logger.info(f"    Initial state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
+    logger.info(f"    Initial state.task_list_accepted in SAS_TASK_LIST_TO_MODULE_STEPS: {state.task_list_accepted}")
     state.current_step_description = "SAS Step 2: Converting individual task descriptions to specific module steps (parallel execution)."
     state.is_error = False
     state.error_message = None
@@ -377,30 +377,17 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         final_error_detail = "; ".join(aggregate_error_messages) if aggregate_error_messages else "Unknown error during parallel module step generation."
         state.error_message = f"SAS Step 2 encountered errors: {final_error_detail}"
         logger.error(state.error_message)
-        state.dialog_state = "error"
+        state.dialog_state = "generation_failed" # Use generic failure state
         state.completion_status = "error"
         if not any(state.error_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
     else:
         state.sas_step2_module_steps = "\\n\\n".join(all_generated_module_steps_for_logging) 
-        state.dialog_state = "sas_step2_module_steps_generated_for_review"
-        state.current_step_description = f"SAS Step 2: Module steps generated in parallel for all {len(state.sas_step1_generated_tasks)} tasks, awaiting review."
+        # Routing logic now handles state transitions. This node just sets the output.
+        state.current_step_description = f"SAS Step 2: Module steps generated for all {len(state.sas_step1_generated_tasks)} tasks, ready for review."
         
-        logger.info("Populating state.parsed_flow_steps from successfully processed tasks after parallel execution.")
-        parsed_steps_list = []
-        for task_def_obj in state.sas_step1_generated_tasks:
-            # Check if task_def_obj.details has error messages; if so, perhaps exclude or mark them?
-            # For now, assume details are either good steps or an error string from the helper.
-            # The generate_individual_xmls_node will need to handle potentially error-filled details.
-            parsed_steps_list.append({
-                "name": getattr(task_def_obj, 'name', 'UnknownTaskName'),
-                "type": getattr(task_def_obj, 'type', 'UnknownTaskType'),
-                "description": getattr(task_def_obj, 'description', ''),
-                "details": getattr(task_def_obj, 'details', []), # These are the crucial module steps
-                "sub_tasks": getattr(task_def_obj, 'sub_tasks', [])
-            })
-        state.parsed_flow_steps = parsed_steps_list
-        logger.info(f"Successfully populated state.parsed_flow_steps with {len(state.parsed_flow_steps)} entries after parallel processing.")
+        # No longer need to populate the redundant parsed_flow_steps.
+        # Downstream nodes will use sas_step1_generated_tasks directly.
         
         review_message = (
             f"Module steps have been generated in parallel for all {len(state.sas_step1_generated_tasks)} tasks "
@@ -408,11 +395,11 @@ async def process_description_to_module_steps_node(state: RobotFlowAgentState, l
         )
         if not any(review_message in str(msg.content) for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=review_message)]
-        state.completion_status = "completed_partial"
+        state.completion_status = "processing" # Signal to graph that processing should continue
         
-    logger.info(f"    Final state.task_list_accepted in SAS_PROCESS_TO_MODULE_STEPS: {state.task_list_accepted}")
+    logger.info(f"    Final state.task_list_accepted in SAS_TASK_LIST_TO_MODULE_STEPS: {state.task_list_accepted}")
     return state.dict(exclude_none=True) 
 
 __all__ = [
-    "process_description_to_module_steps_node"
+    "task_list_to_module_steps_node"
 ] 

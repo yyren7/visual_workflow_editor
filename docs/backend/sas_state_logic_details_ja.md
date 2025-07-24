@@ -137,7 +137,7 @@ async def user_input_to_task_list_node(state: RobotFlowAgentState, llm: BaseChat
 ### 2.1 Review and Refine ノード後のルーティング
 
 ```python
-def route_after_sas_review_refine(state: RobotFlowAgentState) -> str:
+def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
     """
     レビューノード後のルーティング判断：
     複数の条件を階層的に評価
@@ -154,17 +154,21 @@ def route_after_sas_review_refine(state: RobotFlowAgentState) -> str:
         logger.error("エラー状態のため終了")
         return END
 
-    # 判定2: タスクリストが承認された場合
-    if (state.dialog_state == "sas_step1_tasks_generated" and
-        state.task_list_accepted):
-        logger.info("タスクリストが承認されました → Step 2に進行")
-        return SAS_PROCESS_TO_MODULE_STEPS
+    # ユーザーの承認状態に基づいてルーティング
+    if state.module_steps_accepted:
+        # モジュールステップが承認された場合、XML生成へ
+        return GENERATE_INDIVIDUAL_XMLS
 
-    # 判定3: モジュールステップが承認された場合
-    if (state.dialog_state == "sas_step2_module_steps_generated_for_review" and
-        state.module_steps_accepted):
-        logger.info("モジュールステップが承認されました → パラメータマッピングに進行")
-        return SAS_PARAMETER_MAPPING
+    if state.task_list_accepted:
+        # タスクリストが承認された場合、モジュールステップ生成へ
+        return SAS_TASK_LIST_TO_MODULE_STEPS
+
+    # ユーザーからのフィードバックに基づいて再生成ループへ
+    if state.dialog_state == "user_input_to_task_list":
+        return SAS_USER_INPUT_TO_TASK_LIST
+
+    if state.dialog_state == "task_list_to_module_steps":
+        return SAS_TASK_LIST_TO_MODULE_STEPS
 
     # 判定4: 明確化が必要な状態
     if state.dialog_state in ["needs_clarification", "awaiting_user_input"]:

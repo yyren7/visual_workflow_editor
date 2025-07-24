@@ -26,9 +26,15 @@ sequenceDiagram
     LG->>LG: initialize_state_node
     LG->>DB: 保存初始状态
     
-    LG->>LG: user_input_to_task_list_node
+    LG->>LG: sas_user_input_to_task_list_node
     LG->>LLM: 生成任务列表
     LLM->>LG: 返回JSON任务
+    LG-->>UI: Display Task List
+    UI-->>LG: User Approves Task List
+    LG->>LG: sas_task_list_to_module_steps_node
+    LG-->>UI: Display Module Steps
+    UI-->>LG: User Approves Module Steps
+    LG->>LG: generate_individual_xmls_node
     
     %% SSE事件流
     LG-->>SSE: 发送token事件

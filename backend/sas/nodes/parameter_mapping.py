@@ -481,9 +481,10 @@ async def parameter_mapping_node(state: RobotFlowAgentState, llm: Optional[BaseC
         # state.sas_step3_mapping_report = mapping_report
         
     logger.info("SAS Step 3: Parameter Mapping - SKIPPED (logic commented out for now).")
-    state.dialog_state = "sas_step3_completed" # Mark as completed even if skipped
-    state.current_step_description = "SAS Step 3: Parameter mapping SKIPPED (logic commented out)."
-    state.completion_status = "completed_success" # Mark as success even if skipped
-        
+    # The new routing logic handles state transitions.
+    # This node simply needs to indicate success or failure.
+    state.current_step_description = "SAS Step 3: Parameter mapping SKIPPED."
+    state.completion_status = "processing" # Signal to graph that processing should continue
+    state.dialog_state = "sas_step3_completed" # Keep this for now to match the routing logic
 
     return state.dict(exclude_none=True) 

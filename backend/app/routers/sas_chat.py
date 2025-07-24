@@ -287,7 +287,6 @@ async def _prepare_frontend_update(final_state: dict, flow_id: str) -> dict:
             'current_user_request',
             'revision_iteration',
             'clarification_question',
-            'parsed_flow_steps',
             'generated_node_xmls',
             'final_flow_xml_content'
         ]
@@ -475,51 +474,43 @@ async def _process_sas_events(
         
         # 🔧 修复：前端绿色按钮专用批准逻辑（使用正确的状态）
         elif message_content == "FRONTEND_APPROVE_TASKS":
-            # 只有前端绿色按钮通过特殊API调用才能触发任务批准
             current_dialog_state = current_persistent_state.get('dialog_state')
             if current_dialog_state == 'sas_awaiting_task_list_review':
-                graph_input["dialog_state"] = "sas_step1_tasks_generated"
-                graph_input["current_step_description"] = "Tasks approved. Generating module steps..."
                 graph_input["task_list_accepted"] = True
-                logger.info(f"[SAS Chat {chat_id}] 前端绿色按钮批准任务列表")
+                graph_input["user_input"] = None # Clear input to prevent re-processing
+                graph_input["dialog_state"] = current_dialog_state # Keep state for routing
+                logger.info(f"[SAS Chat {chat_id}] Frontend approved task list.")
             else:
-                logger.warning(f"[SAS Chat {chat_id}] 前端尝试批准任务但状态不正确: {current_dialog_state}")
+                logger.warning(f"[SAS Chat {chat_id}] Frontend attempted to approve tasks but state was incorrect: {current_dialog_state}")
         
         elif message_content == "FRONTEND_APPROVE_MODULE_STEPS":
-            # 只有前端绿色按钮通过特殊API调用才能触发模块步骤批准
             current_dialog_state = current_persistent_state.get('dialog_state')
             if current_dialog_state == 'sas_awaiting_module_steps_review':
-                graph_input["dialog_state"] = "sas_step2_module_steps_generated_for_review"
-                graph_input["current_step_description"] = "Module steps approved. Proceeding to next phase..."
                 graph_input["module_steps_accepted"] = True
-                logger.info(f"[SAS Chat {chat_id}] 前端绿色按钮批准模块步骤")
+                graph_input["user_input"] = None # Clear input
+                graph_input["dialog_state"] = current_dialog_state # Keep state for routing
+                logger.info(f"[SAS Chat {chat_id}] Frontend approved module steps.")
             else:
-                logger.warning(f"[SAS Chat {chat_id}] 前端尝试批准模块步骤但状态不正确: {current_dialog_state}")
+                logger.warning(f"[SAS Chat {chat_id}] Frontend attempted to approve module steps but state was incorrect: {current_dialog_state}")
         
         # 🔧 新增：蓝色按钮修改意见逻辑 - 重置批准状态
         elif message_content.startswith("FRONTEND_FEEDBACK:"):
-            # 前端蓝色按钮提交反馈时重置相应的批准状态
             current_dialog_state = current_persistent_state.get('dialog_state')
             feedback_content = message_content.replace("FRONTEND_FEEDBACK:", "").strip()
-            
+            graph_input["current_user_request"] = feedback_content # Update the basis for generation
+
             if current_dialog_state == 'sas_awaiting_task_list_review':
-                # 在任务审核阶段提交修改意见，重置task和detail的批准状态，并触发重新生成
                 graph_input["task_list_accepted"] = False
                 graph_input["module_steps_accepted"] = False
-                graph_input["current_user_request"] = feedback_content
-                graph_input["dialog_state"] = "initial"  # ⭐ 关键修复：设置状态触发重新生成
-                logger.info(f"[SAS Chat {chat_id}] 任务审核阶段收到修改意见，重置批准状态并触发重新生成")
+                graph_input["dialog_state"] = "user_input_to_task_list"
+                logger.info(f"[SAS Chat {chat_id}] Task list feedback received. Resetting approvals and rerouting to task generation.")
             elif current_dialog_state == 'sas_awaiting_module_steps_review':
-                # 在模块步骤审核阶段提交修改意见，重置detail批准状态，并触发重新处理
+                graph_input["task_list_accepted"] = True
                 graph_input["module_steps_accepted"] = False
-                graph_input["task_list_accepted"] = True  # ⭐ 保持任务列表已批准状态
-                graph_input["current_user_request"] = feedback_content
-                graph_input["dialog_state"] = "sas_step1_tasks_generated"  # ⭐ 触发模块步骤重新生成
-                logger.info(f"[SAS Chat {chat_id}] 模块步骤审核阶段收到修改意见，重置模块批准状态并触发重新处理")
+                graph_input["dialog_state"] = "task_list_to_module_steps"
+                logger.info(f"[SAS Chat {chat_id}] Module steps feedback received. Resetting module approval and rerouting to module step generation.")
             else:
-                # 其他状态下的普通反馈
-                graph_input["current_user_request"] = feedback_content
-                logger.info(f"[SAS Chat {chat_id}] 收到普通反馈")
+                logger.info(f"[SAS Chat {chat_id}] General feedback received.")
         
         # 🔧 所有其他用户输入都作为普通输入处理，不进行任何自动批准
         else:
@@ -564,7 +555,7 @@ async def _process_sas_events(
                 has_error_state = False
                 
                 # Check if this is the main graph or SAS-related chain
-                if run_name in ["__graph__", "sas_user_input_to_task_list", "sas_review_and_refine", "sas_process_to_module_steps"] or "sas" in run_name.lower():
+                if run_name in ["__graph__", "sas_user_input_to_task_list", "sas_review_and_refine", "sas_task_list_to_module_steps"] or "sas" in run_name.lower():
                     if isinstance(outputs_from_chain, dict):
                         # 首先检查是否有错误状态
                         if outputs_from_chain.get("is_error", False) or outputs_from_chain.get("dialog_state") == "error" or outputs_from_chain.get("completion_status") == "error":
@@ -1078,21 +1069,17 @@ async def reset_stuck_state(
         current_dialog_state = current_state.get('dialog_state')
         is_error_state = current_state.get('is_error', False)
         
-        # 检查是否处于卡住或错误状态
+        # Check if the state is considered stuck
         stuck_states = [
-            'generating_xml_relation',
-            'generating_xml_final', 
-            'generation_failed',  # 新增：生成失败状态
+            'generation_failed',
             'sas_generating_individual_xmls',
-            'sas_module_steps_accepted_proceeding',
-            'sas_all_steps_accepted_proceed_to_xml',
-            'sas_step3_completed',
-            'final_xml_generated_success',
+            'parameter_mapping',
+            'merge_xml',
             'error'
         ]
         
         if current_dialog_state not in stuck_states and not is_error_state:
-            return {"success": True, "message": "当前状态不需要重置"}
+            return {"success": True, "message": "Current state does not require a reset."}
         
         logger.info(f"Resetting stuck state for flow {flow_id} from: {current_dialog_state}")
         
@@ -1132,18 +1119,14 @@ async def reset_stuck_state(
                 "message": f"已重置到干净的初始状态 (从 {current_dialog_state})"
             }
         
-        # 定义稳定状态优先级（按重要性排序）
+        # Define stable states with priority for rollback
         stable_states_priority = [
-            'sas_awaiting_module_steps_review',       # 最优先：模块步骤审查状态
-            'sas_awaiting_task_list_review',          # 次优先：任务列表审查状态  
-            'sas_step2_module_steps_generated_for_review',
-            'sas_step1_tasks_generated',
-            'sas_awaiting_module_steps_revision_input',
-            'sas_awaiting_task_list_revision_input',
-            'initial'                                 # 最后选择：初始状态
+            'sas_awaiting_module_steps_review',
+            'sas_awaiting_task_list_review',
+            'initial'
         ]
         
-        # 查找最近的稳定checkpoint（跳过当前状态）
+        # Find the most recent stable checkpoint
         target_checkpoint = None
         target_priority = float('inf')
         
@@ -1393,21 +1376,16 @@ async def rollback_to_previous_state(
             raise HTTPException(status_code=500, detail="获取历史状态失败")
         
         if len(checkpoint_history) < 2:
-            raise HTTPException(status_code=400, detail="没有找到可以回退的历史checkpoint")
+            raise HTTPException(status_code=400, detail="No previous checkpoint available to roll back to.")
         
-        # 定义稳定状态列表，用于查找合适的回退目标
+        # Define stable states for rollback targets
         stable_states = [
             'initial',
-            'sas_step1_tasks_generated',
-            'sas_awaiting_task_list_review',          # 任务列表审查状态
-            'sas_step2_module_steps_generated_for_review',
-            'sas_awaiting_module_steps_review',       # 模块步骤审查状态（用户点击承认按钮的状态）
-            'sas_xml_generation_approved',            # XML生成承认后的状态
-            'sas_awaiting_task_list_revision_input',  # 任务列表修订输入状态
-            'sas_awaiting_module_steps_revision_input' # 模块步骤修订输入状态
+            'sas_awaiting_task_list_review',
+            'sas_awaiting_module_steps_review'
         ]
         
-        # 查找最近的稳定checkpoint（跳过当前checkpoint，从第二个开始）
+        # Find the most recent stable checkpoint (skipping the current one)
         target_checkpoint = None
         target_checkpoint_index = None
         logger.info(f"Searching through {len(checkpoint_history)} checkpoints for stable state")

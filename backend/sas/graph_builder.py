@@ -71,7 +71,7 @@ BLOCKLY_NS = "https://developers.google.com/blockly/xml" # Define globally for t
 
 # New node names for SAS refactoring
 SAS_USER_INPUT_TO_TASK_LIST = "sas_user_input_to_task_list"
-SAS_PROCESS_TO_MODULE_STEPS = "sas_process_to_module_steps"
+SAS_TASK_LIST_TO_MODULE_STEPS = "sas_task_list_to_module_steps"
 SAS_PARAMETER_MAPPING = "sas_parameter_mapping"
 SAS_REVIEW_AND_REFINE = "sas_review_and_refine"
 
@@ -157,7 +157,6 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     if state.current_user_request is None and state.user_input:
         logger.info(f"Initializing current_user_request from initial user_input: '{state.user_input[:100]}...'")
         state.current_user_request = state.user_input
-        state.active_plan_basis = state.user_input  # Set active plan basis from the first input
         state.revision_iteration = 0 # Initialize revision counter
 
         # Add current_user_request as the first HumanMessage if messages list is empty
@@ -785,19 +784,13 @@ def route_after_sas_concatenate_xmls(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Routing after SAS Concatenate XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, completion_status: {state.completion_status}) ---")
     if state.is_error or state.completion_status == "error":
         logger.warning(f"Error during SAS Concatenate XMLs or error state encountered. Error: {state.error_message}")
-        # Ensure error message is in AIMessages for the user if not already present
         if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"Error concatenating XMLs: {state.error_message}")]
-        # completion_status should already be 'error' if set by the node
-        # dialog_state might also be 'error'
         return END
     elif state.completion_status == "completed_success" and state.dialog_state == "final_xml_generated_success":
         logger.info("SAS Concatenate XMLs completed successfully. Final XML generated. Routing to END.")
-        # No state change needed here as the node should have set it correctly for success.
         return END
     else:
-        # This case handles scenarios where the node might not have explicitly set completion_status to 'error'
-        # but the state is not a clear success state from concatenation.
         logger.error(f"Unexpected state after SAS Concatenate XMLs: dialog_state='{state.dialog_state}', completion_status='{state.completion_status}'. Routing to END as error.")
         state.error_message = state.error_message or f"Unexpected state ('{state.dialog_state}', status: '{state.completion_status}') after XML concatenation."
         if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
@@ -806,365 +799,136 @@ def route_after_sas_concatenate_xmls(state: RobotFlowAgentState) -> str:
         return END
 
 # --- Conditional Edge Functions ---
-def route_after_core_interaction(state: RobotFlowAgentState) -> str:
-    logger.info(
-        f"Entering routing after Core Interaction. dialog_state: {state.dialog_state}, "
-        f"active_plan_basis: '{state.active_plan_basis}', "
-        f"enriched_structured_text: '{state.enriched_structured_text}', "
-        f"is_error: {state.is_error}"
-    )
-    logger.info(f"--- Routing after Core Interaction (dialog_state: '{state.dialog_state}', is_error: {state.is_error}) ---")
-    
-    # Check if preprocess_and_enrich_input_node (CORE_INTERACTION_NODE) itself set an error during its execution
-    if state.is_error: # This implies preprocess_and_enrich_input_node failed its own task
-        logger.warning(f"Error flag is set by CORE_INTERACTION_NODE. Dialog state: {state.dialog_state}. Routing back to core for user correction.")
-        # Ensure error message is in messages for the user to see
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"Error preprocessing input: {state.error_message}")]
-        state.dialog_state = 'generation_failed'
-        state.user_input = None # Crucial: Clear stale user_input to prevent re-processing old data if core node failed.
-        state.clarification_question = None # Clear any pending questions from core node
-        return CORE_INTERACTION_NODE
-
-    current_dialog_state = state.dialog_state
-
-    # If a clarification question has been set by CORE_INTERACTION_NODE, 
-    # and it's waiting for input, it should end the current graph run.
-    if state.clarification_question and current_dialog_state in [
-        "sas_awaiting_task_list_review", # Assuming this is a valid state where clarification can be requested
-        "sas_awaiting_module_steps_review", # Another valid state
-        "initial"
-    ]:
-        logger.info(f"Clarification question is pending ('{state.clarification_question}'). Dialog state: {current_dialog_state}. Ending graph invocation to get user input.")
-        state.completion_status = "needs_clarification" # Indicate why it's ending
-        return END
-
-    if current_dialog_state == "sas_step1_tasks_generated": # Adjusted to a valid state from your typedef
-        if state.enriched_structured_text:
-            logger.info("Core interaction successful (input_understood_ready_for_xml). Routing to: UNDERSTAND_INPUT")
-            return SAS_USER_INPUT_TO_TASK_LIST
-        else: 
-            logger.warning("State is 'sas_step1_tasks_generated' but enriched_structured_text is missing. Awaiting user input.")
-            if state.messages and not any("Flow description is incomplete" in (msg.content if hasattr(msg, 'content') else '') for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
-                 state.messages = state.messages + [AIMessage(content="Flow description is incomplete or could not be processed correctly, please re-enter." )]
-            state.dialog_state = "initial" # Revert to initial to re-process
-            state.user_input = None # Clear stale input
-            return CORE_INTERACTION_NODE
-    elif current_dialog_state in ["sas_awaiting_task_list_revision_input", "initial", "generation_failed"]:
-        # If CORE_INTERACTION_NODE (preprocess_and_enrich_input_node) has set one of these states, 
-        # it means it's either waiting for a specific user reply (e.g. to a clarification_question),
-        # actively processing, or has just handled a generation failure by setting state to await input.
-        # In all these cases, the graph should loop back to CORE_INTERACTION_NODE.
-        logger.info(f"Staying in CORE_INTERACTION_NODE. Dialog_state: {current_dialog_state}. This node will await next invocation or process further.")
-        return CORE_INTERACTION_NODE
-    
-    # Fallback: If no conditions above are met (which should be rare if preprocess_and_enrich_input_node behaves as expected)
-    # this indicates an unexpected state produced by CORE_INTERACTION_NODE itself.
-    logger.error(f"CRITICAL: route_after_core_interaction encountered an unhandled dialog_state '{current_dialog_state}' originating from CORE_INTERACTION_NODE. This suggests an issue in preprocess_and_enrich_input_node's state setting. Resetting to await user input.")
-    error_msg_content = f"The process encountered an unhandled core state ({current_dialog_state}). Please retry or contact support."
-    if state.messages and not any(error_msg_content in (msg.content if hasattr(msg, 'content') else '') for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
-        state.messages = state.messages + [AIMessage(content=error_msg_content)]
-    state.dialog_state = "error"
-    state.user_input = None
-    state.is_error = True
-    state.error_message = f"The process encountered an unhandled core state ({current_dialog_state})."
-    state.clarification_question = None
-    return CORE_INTERACTION_NODE
-
-def route_xml_generation_or_python_step(state: RobotFlowAgentState, next_step_if_ok: str, current_step_name_for_log: str) -> str:
-    """Generic router for steps that can set state.is_error."""
-    logger.info(f"--- Routing after Step: '{current_step_name_for_log}' (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
-    if state.is_error or state.dialog_state == "error": # Check dialog_state as well, as some python nodes might set it
-        logger.warning(f"Error during '{current_step_name_for_log}'. Routing to core_interaction_node.")
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            # Ensure the error_message from the state is added to AIMessages if not already present by the node itself
-            state.messages = (state.messages or []) + [AIMessage(content=f"Error in step '{current_step_name_for_log}': {state.error_message}")]
-        
-        # Reset relevant state fields before going back to core interaction
-        state.dialog_state = 'generation_failed' # A specific state to indicate failure and need for new input/correction
-        state.user_input = None 
-        # state.is_error should remain True as set by the failing node
-        state.completion_status = "error" # Mark as errored
-        return CORE_INTERACTION_NODE
+def route_after_initialize_state(state: RobotFlowAgentState) -> str:
+    logger.info(f"--- Routing after Initialize State (dialog_state: {state.dialog_state}) ---")
+    if state.dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_module_steps_review"]:
+        logger.info(f"Resuming at review step: {state.dialog_state}. Routing to SAS_REVIEW_AND_REFINE.")
+        return SAS_REVIEW_AND_REFINE
     else:
-        logger.info(f"'{current_step_name_for_log}' successful. Routing to {next_step_if_ok}.")
-        return next_step_if_ok
+        logger.info(f"Starting new flow (dialog_state: '{state.dialog_state}'). Routing to SAS_USER_INPUT_TO_TASK_LIST.")
+        return SAS_USER_INPUT_TO_TASK_LIST
 
-def decide_after_final_xml_generation(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Deciding after Final XML Generation (is_error: {state.is_error}, final_xml_content exists: {bool(state.final_flow_xml_content)}) ---")
-    if not state.is_error and state.final_flow_xml_content:
-        logger.info("Final XML generated successfully. Routing to END.")
-        if state.messages and not any("Flow XML generated successfully" in (msg.content if hasattr(msg, 'content') else '') for msg in state.messages if isinstance(msg, AIMessage)): # Check for English version
-             state.messages = state.messages + [AIMessage(content=f"Flow XML generated successfully. You can view it at path {state.final_flow_xml_path or 'not saved to file'}, or see the content in the chat history.")]
-        state.dialog_state = 'final_xml_generated_success'
-        state.completion_status = "completed_success" # Mark as fully successful
-        return END
-    else:
-        logger.warning("Final XML generation failed or produced no content. Routing back to core_interaction_node.")
-        if not state.is_error: # If is_error wasn't set but content is missing
-            state.is_error = True
-            state.error_message = state.error_message or "Final XML content is empty or generation failed."
-        
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"Problem encountered while generating final XML: {state.error_message}. Please modify your instructions." )]
-        
-        state.dialog_state = 'generation_failed'
-        state.user_input = None
-        state.completion_status = "error"
-        return CORE_INTERACTION_NODE
-
-# New routing function for SAS Step 1
 def route_after_sas_step1(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after SAS Step 1: User Input to Task List Generation (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
-    if state.is_error or state.dialog_state == "error":
-        logger.warning(f"Error during SAS Step 1 (Task List Generation). Error message: {state.error_message}")
-        if not state.error_message:
-             state.error_message = "Unknown error after SAS Step 1 (Task List Generation)."
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 1 (Task List Generation) Failed: {state.error_message}")]
-        state.completion_status = "error" 
+    logger.info(f"--- Routing after SAS Step 1: Task List Generation (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
+    if state.is_error or state.dialog_state == "generation_failed":
+        logger.warning(f"Error during Task List Generation. Error: {state.error_message}")
+        state.completion_status = "error"
         return END 
-    elif state.dialog_state == "sas_step1_tasks_generated":
-        logger.info("SAS Step 1 (User Input to Task List Generation) completed successfully. Routing to SAS_REVIEW_AND_REFINE.")
-        state.task_list_accepted = False 
-        return SAS_REVIEW_AND_REFINE 
-    elif state.dialog_state == "sas_step3_completed": # Legacy state name, should be updated
-        logger.warning(f"Unexpected old state 'sas_step1_completed' after SAS Step 1. Expected 'sas_step1_tasks_generated'. Routing to END as an error.")
-        state.completion_status = "error"
-        state.error_message = f"Unexpected legacy state ('sas_step1_completed') after SAS Step 1. Task list generation might have failed to set the correct new state."
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-        return END
     else:
-        logger.warning(f"Unexpected dialog state after SAS Step 1 (Task List Generation): {state.dialog_state}. Routing to END.")
-        state.completion_status = "error"
-        state.error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 1 (Task List Generation)."
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
-        return END
+        logger.info("Task List Generation successful. Routing to SAS_REVIEW_AND_REFINE.")
+        return SAS_REVIEW_AND_REFINE
 
 # New routing function for SAS Review and Refine Task List
 def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
-    # +++ ADDED DIAGNOSTIC LOGGING START +++
     logger.info(f"--- Routing after SAS Review/Refine Node ---")
     logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] is_error: {state.is_error}")
     logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] dialog_state: '{state.dialog_state}'")
     logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] task_list_accepted: {state.task_list_accepted}")
     logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] module_steps_accepted: {state.module_steps_accepted}")
-    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] sas_step1_generated_tasks exists: {bool(state.sas_step1_generated_tasks)}")
-    if state.sas_step1_generated_tasks:
-        logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] sas_step1_generated_tasks count: {len(state.sas_step1_generated_tasks)}")
-    else:
-        logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] sas_step1_generated_tasks is None or empty.")
-    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] user_input: '{str(state.user_input)[:200]}...'")
-    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] clarification_question: '{str(state.clarification_question)[:200]}...'")
-    # +++ ADDED DIAGNOSTIC LOGGING END +++
-
+    
     if state.is_error: 
         logger.warning(f"Error flag is set after Review/Refine node. Error message: {state.error_message}")
         if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
             state.messages = (state.messages or []) + [AIMessage(content=f"Error during review/refinement: {state.error_message}")]
         state.completion_status = "error"
-        return END # Or a dedicated error handling node if desired
-
-    # NEW PRIORITY CHECK: If review_and_refine determined all steps were already accepted.
-    if state.dialog_state == "sas_all_steps_accepted_proceed_to_xml":
-        logger.info("All review steps already accepted (task list & module steps). Routing to GENERATE_INDIVIDUAL_XMLS.")
-        state.current_step_description = "All review steps previously accepted, proceeding to generate individual XMLs."
-        state.dialog_state = "sas_generating_individual_xmls" # Align with state for next step
-        state.completion_status = "processing"
-        return GENERATE_INDIVIDUAL_XMLS
-
-    # Priority 1: Handling states indicating the node is waiting for external user input
-    if state.dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_task_list_revision_input"]:
-        logger.info(f"Awaiting user feedback on the TASK LIST (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
-        state.completion_status = "needs_clarification"
         return END
-    elif state.dialog_state in ["sas_awaiting_module_steps_review", "sas_awaiting_module_steps_revision_input"]:
-        logger.info(f"Awaiting user feedback on the MODULE STEPS (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
-        state.completion_status = "needs_clarification"
-        return END
-    elif state.dialog_state == "sas_awaiting_xml_generation_approval":
-        logger.info(f"Awaiting user approval for XML GENERATION (dialog_state: {state.dialog_state}). Ending graph run for clarification.")
+
+    # Priority 1: Awaiting user input
+    if state.dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_module_steps_review"]:
+        logger.info(f"Awaiting user feedback on: {state.dialog_state}. Ending graph run for clarification.")
         state.completion_status = "needs_clarification"
         return END
 
-    # Priority 2: Handling user approval for XML generation
-    if state.module_steps_accepted and state.dialog_state == "sas_xml_generation_approved":
-        logger.info("XML generation approved by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
-        state.current_step_description = "XML generation approved, starting to generate individual XMLs."
+    # Priority 2: User approved module steps, proceed to XML generation
+    if state.module_steps_accepted:
+        logger.info("Module steps accepted by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
         state.dialog_state = "sas_generating_individual_xmls" 
         state.completion_status = "processing" 
         return GENERATE_INDIVIDUAL_XMLS
 
-    # Priority 3: Handling successful acceptance of task list (and module steps not yet reviewed/accepted)
-    if state.task_list_accepted and not state.module_steps_accepted:
-        # This implies task list was accepted, and we are now either proceeding to generate module steps
-        # or have just generated them and are going to review them.
-        # The review_and_refine_node itself would set sas_step1_tasks_generated if only task list accepted.
-        if state.dialog_state == "sas_step1_tasks_generated": # Set by review_and_refine if task list accepted
-            logger.info("Task list accepted by user. Routing to SAS_PROCESS_TO_MODULE_STEPS.")
-            state.completion_status = "processing"  # ⭐ 修复：设置为processing状态
-            return SAS_PROCESS_TO_MODULE_STEPS
-    
-    # Priority 4: Handling regeneration/re-review loops initiated by review_and_refine_node
-    if state.dialog_state == "initial": # For task list regen, assuming review node resets to 'initial' on revision
-        logger.info("User description revised for task list. Routing back to SAS_USER_INPUT_TO_TASK_LIST for regeneration.")
+    # Priority 3: User approved task list, proceed to generate module steps
+    if state.task_list_accepted:
+        logger.info("Task list accepted by user. Routing to SAS_TASK_LIST_TO_MODULE_STEPS.")
+        state.dialog_state = "task_list_to_module_steps"
         state.completion_status = "processing"
+        return SAS_TASK_LIST_TO_MODULE_STEPS
+            
+    # Priority 4: Re-generation loops based on user feedback
+    if state.dialog_state == "user_input_to_task_list":
+        logger.info("User provided revisions for the task list. Routing back to SAS_USER_INPUT_TO_TASK_LIST.")
         return SAS_USER_INPUT_TO_TASK_LIST
     
-    if state.dialog_state == "sas_step2_module_steps_generated_for_review": # For module steps re-review after modification
-        logger.info("Module steps were modified. Routing back to SAS_REVIEW_AND_REFINE for re-review.")
-        state.completion_status = "processing"
-        return SAS_REVIEW_AND_REFINE
+    if state.dialog_state == "task_list_to_module_steps":
+        logger.info("User provided revisions for the module steps. Routing back to SAS_TASK_LIST_TO_MODULE_STEPS.")
+        return SAS_TASK_LIST_TO_MODULE_STEPS
 
-    # Fallback / Unexpected states
-    logger.warning(f"Unexpected state combination after SAS Review/Refine: dialog_state='{state.dialog_state}', task_list_accepted={state.task_list_accepted}, module_steps_accepted={state.module_steps_accepted}. Defaulting to END graph run for clarification or error.")
-    state.completion_status = "needs_clarification" # Or "error"
-    if not state.clarification_question and not any("An unexpected state was reached" in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-         state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during the review process. Please try providing your feedback again or restart.")]
+    # Fallback / Unexpected state
+    logger.warning(f"Unexpected state after Review/Refine: '{state.dialog_state}'. Defaulting to END for safety.")
+    state.completion_status = "error"
+    if not state.error_message:
+         state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during the review process.")]
     return END
 
 # New routing function for SAS Step 2
 def route_after_sas_step2(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Routing after SAS Step 2: Module Steps Generation (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
-    if state.is_error or state.dialog_state == "error":
-        logger.warning(f"Error during SAS Step 2 (Module Steps Generation). Error message: {state.error_message}")
-        if not state.error_message:
-             state.error_message = "Unknown error after SAS Step 2 (Module Steps Generation)."
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 2 (Module Steps Generation) Failed: {state.error_message}")]
+    if state.is_error or state.dialog_state == "generation_failed":
+        logger.warning(f"Error during Module Steps Generation. Error: {state.error_message}")
         state.completion_status = "error"
         return END
-    elif state.dialog_state == "sas_step2_module_steps_generated_for_review" or state.dialog_state == "sas_step3_completed": # sas_step3_completed is a legacy state name
-        logger.info(f"SAS Step 2 (Module Steps Generation) completed (dialog_state: '{state.dialog_state}'). Routing to SAS_REVIEW_AND_REFINE for module steps review.")
-        state.completion_status = "processing" 
-        state.dialog_state = "sas_step2_module_steps_generated_for_review" # Normalize state for review node
-        
-        # previous_value_for_log = None
-        # try:
-        #     previous_value_for_log = state.task_list_accepted
-        # except AttributeError:
-        #     logger.warning("PATCH in route_after_sas_step2: state.task_list_accepted attribute was missing before forcing to True.")
-        
-        # logger.info(f"PATCH in route_after_sas_step2: Forcing state.task_list_accepted = True. Previous value: {previous_value_for_log}")
-        # state.task_list_accepted = True # REMOVED THIS PROBLEMATIC LINE
-        logger.info(f"POST-REMOVAL in route_after_sas_step2: state.task_list_accepted = {state.task_list_accepted}, state.module_steps_accepted = {state.module_steps_accepted}, state.dialog_state = '{state.dialog_state}'")
-        
-        return SAS_REVIEW_AND_REFINE
     else:
-        logger.warning(f"Unexpected state after SAS Step 2 (Module Steps Generation): {state.dialog_state}. Routing to END as error.")
-        state.completion_status = "error"
-        error_message = f"Unexpected state ('{state.dialog_state}') after SAS Step 2 (Module Steps Generation)."
-        if not any(error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=error_message)]
-        return END
+        logger.info("Module Steps Generation successful. Routing to SAS_REVIEW_AND_REFINE.")
+        return SAS_REVIEW_AND_REFINE
 
 # New routing function for SAS Step 3
 def route_after_sas_step3(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Routing after SAS Step 3: Parameter Mapping (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
-    if state.is_error or state.dialog_state == "error":
-        logger.warning(f"Error during SAS Step 3. Error message: {state.error_message}")
-        if not state.error_message:
-             state.error_message = "Unknown error after SAS Step 3."
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"SAS Step 3 Failed: {state.error_message}")]
+    if state.is_error or state.dialog_state == "generation_failed":
+        logger.warning(f"Error during Parameter Mapping. Error: {state.error_message}")
         state.completion_status = "error"
         return END
     elif state.dialog_state == "sas_step3_completed":
-        logger.info("SAS Step 3 (Parameter Mapping) completed successfully. Routing to SAS_MERGE_XMLS.")
-        state.dialog_state = "sas_step3_to_merge_xml" 
+        logger.info("Parameter Mapping successful. Routing to SAS_MERGE_XMLS.")
         return SAS_MERGE_XMLS
     else:
-        logger.warning(f"Unexpected state after SAS Step 3: {state.dialog_state}. Routing to END.")
+        logger.error(f"Unexpected state after Parameter Mapping: {state.dialog_state}. Routing to END as error.")
         state.completion_status = "error"
-        state.error_message = f"Unexpected state ({state.dialog_state}) after SAS Step 3."
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=state.error_message)]
         return END
-
-# New routing function after INITIALIZE_STATE
-def route_after_initialize_state(state: RobotFlowAgentState) -> str:
-    logger.info(
-        f"--- Routing after Initialize State. "
-        f"Dialog state: {state.dialog_state}, "
-        f"Graph status: {state.completion_status}, "
-        f"User input available: {bool(state.user_input)}, "
-        f"Clarification question: {state.clarification_question}, "
-        f"Task list accepted: {state.task_list_accepted}, "
-        f"Generated tasks exist: {bool(state.sas_step1_generated_tasks)}"
-    )
-
-    # If dialog_state is "sas_awaiting_task_list_review", it means the graph previously exited
-    # from review_and_refine_node to get user feedback. Now that the graph is re-entered,
-    # (and user's feedback should be in state.user_input, preserved by initialize_state_node),
-    # we should go directly to SAS_REVIEW_AND_REFINE_TASK_LIST to process that feedback.
-    if state.dialog_state == "sas_awaiting_task_list_review":
-        logger.info("Dialog state is 'sas_awaiting_task_list_review'. Routing to SAS_REVIEW_AND_REFINE.")
-        return SAS_REVIEW_AND_REFINE
-    elif state.dialog_state == "sas_awaiting_module_steps_review":
-        logger.info("Dialog state is 'sas_awaiting_module_steps_review'. Routing to SAS_REVIEW_AND_REFINE.")
-        return SAS_REVIEW_AND_REFINE
-    else:
-        # For all other cases:
-        # - Initial run (dialog_state will be 'initial' or None, then set to 'initial' by initialize_state_node)
-        # - After an error that routes back to start for a fresh attempt
-        # - If the flow logic somehow leads back to the start without being in a review cycle
-        logger.info(f"Dialog state is '{state.dialog_state}'. Routing to SAS_USER_INPUT_TO_TASK_LIST for new task generation.")
-        return SAS_USER_INPUT_TO_TASK_LIST
 
 # New routing function after GENERATE_INDIVIDUAL_XMLS
 def route_after_generate_individual_xmls(state: RobotFlowAgentState) -> str:
-    logger.info(f"--- Routing after Generate Individual XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}, graph_status: {state.completion_status}) ---")
-    if state.is_error or state.completion_status == "error":
-        logger.warning(f"Error during Generate Individual XMLs. Error: {state.error_message}")
-        # Ensure error message is in messages for the user if not already there from the node itself
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"Error generating individual XMLs: {state.error_message}")]
-        # The node generate_individual_xmls_node should set completion_status to "error"
-        # and dialog_state appropriately (e.g., "error" or a specific error state).
-        return END # Route to END on error
-    else:
-        # If successful, generate_individual_xmls_node sets:
-        # state.dialog_state = "generating_xml_relation" (this might be a legacy state name from the node)
-        # state.completion_status = None (meaning not an error, processing continues)
-        logger.info("Generate Individual XMLs successful. Routing to SAS_PARAMETER_MAPPING.")
-        state.dialog_state = "sas_individual_xmls_generated_ready_for_mapping" # Set a more appropriate state for the next step
-        state.completion_status = "processing" # Indicate that processing is ongoing
+    logger.info(f"--- Routing after Generate Individual XMLs (is_error: {state.is_error}, dialog_state: {state.dialog_state}) ---")
+    if state.is_error or state.dialog_state == "generation_failed":
+        logger.warning(f"Error during Individual XML Generation. Error: {state.error_message}")
+        state.completion_status = "error"
+        return END
+    elif state.dialog_state == "sas_individual_xmls_generated_ready_for_mapping":
+        logger.info("Individual XMLs generated. Routing to SAS_PARAMETER_MAPPING.")
         return SAS_PARAMETER_MAPPING
+    else:
+        logger.error(f"Unexpected state after Individual XML Generation: {state.dialog_state}. Routing to END as error.")
+        state.completion_status = "error"
+        return END
 
-# create_robot_flow_graph function (original was L344, this is a rewrite for the new flow)
 def create_robot_flow_graph(
     llm: BaseChatModel,
-    checkpointer: Optional[BaseCheckpointSaver] = None  # ADDED checkpointer argument
+    checkpointer: Optional[BaseCheckpointSaver] = None
 ) -> Any:
     
     workflow = StateGraph(RobotFlowAgentState)
 
-    # Node Binding (using functools.partial for llm where needed)
+    # Node Binding
     workflow.add_node(INITIALIZE_STATE, initialize_state_node)
     workflow.add_node(SAS_USER_INPUT_TO_TASK_LIST, functools.partial(user_input_to_task_list_node, llm=llm))
     workflow.add_node(SAS_REVIEW_AND_REFINE, functools.partial(review_and_refine_node, llm=llm))
-    workflow.add_node(SAS_PROCESS_TO_MODULE_STEPS, functools.partial(process_description_to_module_steps_node, llm=llm))
-    workflow.add_node(SAS_PARAMETER_MAPPING, parameter_mapping_node)
-
-    # --- Add the GENERATE_INDIVIDUAL_XMLS node ---
+    workflow.add_node(SAS_TASK_LIST_TO_MODULE_STEPS, functools.partial(task_list_to_module_steps_node, llm=llm))
     workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
-
-    # --- Add new XML processing nodes ---
+    workflow.add_node(SAS_PARAMETER_MAPPING, parameter_mapping_node)
     workflow.add_node(SAS_MERGE_XMLS, sas_merge_xml_node)
-    workflow.add_node(SAS_CONCATENATE_XMLS, sas_concatenate_xml_node)
 
-    # --- Original Nodes (Commented out for SAS refactoring) ---
-    # workflow.add_node(CORE_INTERACTION_NODE, functools.partial(preprocess_and_enrich_input_node, llm=llm))
-    # workflow.add_node(UNDERSTAND_INPUT, functools.partial(understand_input_node, llm=llm))
-    # workflow.add_node(GENERATE_RELATION_XML, generate_relation_xml_node_py) # generate_relation_xml_node_py is python only
-    # workflow.add_node(GENERATE_FINAL_XML, functools.partial(generate_final_flow_xml_node, llm=llm))
-    # workflow.add_node(ERROR_HANDLER, error_handler_node) # Optional: if a separate error logging node is desired.
-
-    # --- Define Graph Edges ---
+    # Define Graph Edges
     workflow.set_entry_point(INITIALIZE_STATE)
-    # New flow for SAS refactoring: INITIALIZE_STATE -> SAS_USER_INPUT_TO_TASK_LIST -> SAS_PROCESS_TO_MODULE_STEPS -> SAS_PARAMETER_MAPPING -> END
+
     workflow.add_conditional_edges(
         INITIALIZE_STATE,
         route_after_initialize_state,
@@ -1187,33 +951,22 @@ def create_robot_flow_graph(
         SAS_REVIEW_AND_REFINE,
         route_after_sas_review_and_refine,
         {
-            SAS_PROCESS_TO_MODULE_STEPS: SAS_PROCESS_TO_MODULE_STEPS,
+            SAS_TASK_LIST_TO_MODULE_STEPS: SAS_TASK_LIST_TO_MODULE_STEPS,
             SAS_USER_INPUT_TO_TASK_LIST: SAS_USER_INPUT_TO_TASK_LIST,
-            GENERATE_INDIVIDUAL_XMLS: GENERATE_INDIVIDUAL_XMLS, # Added new route from review
+            GENERATE_INDIVIDUAL_XMLS: GENERATE_INDIVIDUAL_XMLS,
             END: END
         }
     )
 
     workflow.add_conditional_edges(
-        SAS_PROCESS_TO_MODULE_STEPS,
+        SAS_TASK_LIST_TO_MODULE_STEPS,
         route_after_sas_step2,
         {
             SAS_REVIEW_AND_REFINE: SAS_REVIEW_AND_REFINE, 
-            END: END # For error cases
+            END: END
         }
     )
-
-    workflow.add_conditional_edges(
-        SAS_PARAMETER_MAPPING,
-        route_after_sas_step3,
-        {
-            # END: END # Original route
-            SAS_MERGE_XMLS: SAS_MERGE_XMLS, # New route
-            END: END # For error cases in routing function
-        }
-    )
-
-    # Add edge from GENERATE_INDIVIDUAL_XMLS
+    
     workflow.add_conditional_edges(
         GENERATE_INDIVIDUAL_XMLS,
         route_after_generate_individual_xmls,
@@ -1223,24 +976,24 @@ def create_robot_flow_graph(
         }
     )
 
-    # Add edges for new XML processing nodes
+    workflow.add_conditional_edges(
+        SAS_PARAMETER_MAPPING,
+        route_after_sas_step3,
+        {
+            SAS_MERGE_XMLS: SAS_MERGE_XMLS,
+            END: END
+        }
+    )
+
     workflow.add_conditional_edges(
         SAS_MERGE_XMLS,
         route_after_sas_merge_xmls,
         {
-            SAS_CONCATENATE_XMLS: SAS_CONCATENATE_XMLS,
-            END: END # For error cases
-        }
-    )
-    workflow.add_conditional_edges(
-        SAS_CONCATENATE_XMLS,
-        route_after_sas_concatenate_xmls,
-        {
-            END: END # Success or error, both route to END but with different state.completion_status
+            END: END
         }
     )
 
-    app = workflow.compile(checkpointer=checkpointer) # MODIFIED to use checkpointer
+    app = workflow.compile(checkpointer=checkpointer)
     return app
 
 class RootRunIDCollector(BaseCallbackHandler):

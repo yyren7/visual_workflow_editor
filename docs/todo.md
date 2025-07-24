@@ -12,7 +12,7 @@
 graph TD;
 A["用户输入<br/>(initial)"] --> B{"1. 生成任务列表<br/>(user_input_to_task_list)"};
 B --> C{"<br/>(sas_awaiting_task_list_review)"};
-C -- "用户批准" --> D{"2. 生成模块步骤<br/>(process_to_module_steps)"};
+C -- "用户批准" --> D{"2. 生成模块步骤<br/>(task_list_to_module_steps)"};
 D --> E{"<br/>(sas_awaiting_module_steps_review)"};
 C -- "用户提供修改意见" --> B;
 
