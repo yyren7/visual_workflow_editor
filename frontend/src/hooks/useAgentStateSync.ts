@@ -11,7 +11,7 @@ import {
   appendStreamingContent,
   setProcessingStage,
 } from '../store/slices/flowSlice';
-import { updateLangGraphState } from '../api/sasApi';
+import { updateSASState } from '../api/sasApi';
 import { debounce } from 'lodash';
 import { useSSEManager } from './useSSEManager';
 import { store } from '../store/store';
@@ -329,12 +329,45 @@ export const useAgentStateSync = () => {
     dispatch(updateAgentState({ sas_step1_generated_tasks: updatedTasks }));
   }, [agentState, dispatch]);
 
-  const updateTaskDetails = useCallback((taskIndex: number, details: string[]) => {
-    if (!agentState) return;
-    const currentDetails = agentState.sas_step2_generated_task_details || {};
-    const updatedDetails = { ...currentDetails, [taskIndex.toString()]: { details } };
-    dispatch(updateAgentState({ sas_step2_generated_task_details: updatedDetails }));
-  }, [agentState, dispatch]);
+  const updateTaskDetails = useCallback(async (taskIndex: number, details: string[]) => {
+    if (!agentState || !currentFlowId) return;
+
+    // 1. 从当前状态复制任务列表
+    const currentTasks = agentState.sas_step1_generated_tasks || [];
+    const updatedTasks = JSON.parse(JSON.stringify(currentTasks)); // Deep copy to avoid mutation issues
+
+    // 2. 更新特定任务的 'details'
+    if (taskIndex < updatedTasks.length) {
+      updatedTasks[taskIndex].details = details;
+    } else {
+      console.error(`[SYNC_ERROR] updateTaskDetails: Invalid taskIndex ${taskIndex}`);
+      return;
+    }
+
+    // 同时更新 sas_step2_generated_task_details 以确保数据一致性
+    const currentStep2Details = agentState.sas_step2_generated_task_details || {};
+    const updatedStep2Details = { ...currentStep2Details, [taskIndex.toString()]: { details } };
+
+    // 创建将要发送到后端的完整状态负载
+    const stateUpdatePayload = {
+      sas_step1_generated_tasks: updatedTasks,
+      sas_step2_generated_task_details: updatedStep2Details,
+    };
+
+    // 4. 乐观更新: 立即更新UI
+    dispatch(updateAgentState(stateUpdatePayload));
+    console.log(`[SYNC_UI_UPDATE] Optimistically updated task ${taskIndex} details in Redux.`);
+
+    // 5. 异步调用API，将完整的更新持久化到后端
+    try {
+      console.log(`[SYNC_API_CALL] Sending update for task ${taskIndex} to backend for flow ${currentFlowId}...`);
+      await updateSASState(currentFlowId, stateUpdatePayload);
+      console.log(`[SYNC_API_SUCCESS] Successfully saved updated details for task ${taskIndex} to backend.`);
+    } catch (error) {
+      console.error(`[SYNC_API_ERROR] Failed to save updated details for task ${taskIndex} to backend:`, error);
+      // 可选: 在这里可以添加错误处理逻辑, 例如 dispatch一个action来在UI上显示错误提示
+    }
+  }, [agentState, dispatch, currentFlowId]);
 
   const sendAutoConfirmation = useCallback(async (chatId: string, confirmation: string) => {
     try {

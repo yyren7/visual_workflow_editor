@@ -386,7 +386,8 @@ async def _process_sas_events(
     chat_id: str, 
     message_content: str, 
     sas_app,
-    flow_id: str = ''
+    flow_id: str = '',
+    config: Optional[Dict[str, Any]] = None  # 添加config参数
 ):
     """
     Process SAS LangGraph execution and broadcast SSE events via global broadcaster
@@ -397,6 +398,15 @@ async def _process_sas_events(
     final_state = None
 
     try:
+        # 如果没有提供外部config，则为astream_events创建一个
+        if config is None:
+            config = {"configurable": {"thread_id": chat_id}}
+        else:
+            # 确保即使提供了config，thread_id也已设置
+            if "configurable" not in config:
+                config["configurable"] = {}
+            config["configurable"]["thread_id"] = chat_id
+            
         # Prepare graph input, merging initial state values.
         # This ensures the graph starts with a clean, correct state for this run.
         logger.info(f"[SAS Chat {chat_id}] Preparing initial state for graph execution.")
@@ -516,8 +526,15 @@ async def _process_sas_events(
         else:
             logger.info(f"[SAS Chat {chat_id}] 用户输入作为普通消息处理，无自动批准")
 
-        config = {"configurable": {"thread_id": chat_id}}
-        
+        # 从外部传入的config中获取output_dir_path
+        output_dir_path = config.get("output_dir_path")
+        if output_dir_path:
+            logger.info(f"[SAS Chat {chat_id}] Using output directory from config: {output_dir_path}")
+            # 将其放入graph_input的config中，以便被initialize_state_node使用
+            if "config" not in graph_input:
+                graph_input["config"] = {}
+            graph_input["config"]["OUTPUT_DIR_PATH"] = output_dir_path
+
         logger.info(f"[SAS Chat {chat_id}] Invoking SAS graph with astream_events...")
         
         async for event in sas_app.astream_events(graph_input, config=config, version="v2"):
@@ -887,19 +904,64 @@ async def sas_chat_events_get(
 async def sas_update_state(
     chat_id: str,
     request: Request,
-    sas_app = Depends(get_sas_app),
+    checkpointer: AsyncPostgresSaver = Depends(get_checkpointer), # 直接注入真正的Checkpointer
     user: schemas.User = Depends(verify_flow_access)
 ):
     """
-    Updates the state of a SAS LangGraph flow.
+    Updates the state of a SAS LangGraph flow without triggering further execution.
+    This is a 'write-only' operation used for UI-driven state saves.
     """
     try:
         state_update_payload = await request.json()
-        config = {"configurable": {"thread_id": chat_id}}
-        updated_checkpoint = await sas_app.aupdate_state(config, state_update_payload)
-        logger.info(f"SAS update-state for thread {chat_id}: {len(str(state_update_payload))} bytes updated")
-        logger.debug(f"Updated checkpoint: {updated_checkpoint}")
-        return updated_checkpoint
+        
+        # 最终修复：确保 config 字典中包含 'checkpoint_ns'
+        config = {
+            "configurable": {
+                "thread_id": chat_id,
+                "checkpoint_ns": ""  # 为 aput 方法提供必需的键
+            }
+        }
+
+        # 方案核心：为 checkpointer.aput() 提供所有必需的参数
+        # 1. 获取当前最新状态的完整快照元组
+        current_checkpoint_tuple = await checkpointer.aget_tuple(config)
+        if not current_checkpoint_tuple:
+            raise HTTPException(status_code=404, detail=f"Flow with chat_id {chat_id} not found.")
+
+        current_checkpoint = current_checkpoint_tuple.checkpoint
+        current_metadata = current_checkpoint_tuple.metadata
+        
+        # 2. 将前端的局部更新合并到完整状态的 'values' 中
+        updated_values = {**current_checkpoint['channel_values'], **state_update_payload}
+
+        # 3. 构造一个新的、完整的检查点 (Checkpoint)
+        new_checkpoint = {
+            **current_checkpoint,
+            "channel_values": updated_values
+        }
+
+        # 4. 构造 aput 需要的 metadata 和 new_versions 参数
+        #    我们将这次写入明确标记为一次 'update'
+        updated_metadata = {**current_metadata, "source": "update"}
+        
+        #    对于 new_versions，我们假设这次手动更新不改变版本逻辑，
+        #    因此直接复用当前的 channel_versions。
+        #    这是最安全的做法，因为它确保了下次图执行时，版本依赖依然正确。
+        current_versions = current_checkpoint['channel_versions']
+
+        # 5. 调用 checkpointer.aput，并传入所有四个必需的参数
+        updated_config = await checkpointer.aput(
+            config, 
+            new_checkpoint, 
+            updated_metadata,
+            current_versions
+        )
+
+        logger.info(f"SAS update-state for thread {chat_id}: {len(str(state_update_payload))} bytes updated via checkpointer.aput.")
+        logger.debug(f"New checkpoint config: {updated_config}")
+        
+        return updated_config
+
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in request body.")
     except Exception as e:

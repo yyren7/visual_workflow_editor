@@ -169,6 +169,60 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     return data.label || t('nodes.input.userInput');
   };
 
+  const getChipContent = () => {
+    const { 
+      isInReviewMode, 
+      isInProcessingMode, 
+      isXmlGenerationComplete, 
+      isInErrorState, 
+      isInXmlApprovalMode,
+      isReadyForReview,
+      isTasksGenerated,
+    } = getAgentStateFlags();
+
+    if (isInErrorState) {
+      return { 
+        label: t('nodes.langgraph.status.error'), 
+        icon: <ErrorIcon sx={{ color: '#f44336' }} />, 
+        color: 'error' as const
+      };
+    }
+    if (isXmlGenerationComplete) {
+      return { 
+        label: t('nodes.langgraph.status.completed'), 
+        icon: <CheckIcon sx={{ color: '#4caf50' }} />, 
+        color: 'success' as const
+      };
+    }
+    if (agentState?.dialog_state === 'sas_awaiting_module_steps_review') {
+      return {
+        label: t('nodes.langgraph.status.awaitingModuleReview'),
+        icon: <AccessTimeIcon sx={{ color: '#ff9800' }} />,
+        color: 'warning' as const
+      };
+    }
+    if (isInReviewMode || isReadyForReview || isInXmlApprovalMode) {
+      return { 
+        label: t('nodes.langgraph.status.awaitingReview'), 
+        icon: <InfoIcon sx={{ color: '#2196f3' }} />, 
+        color: 'info' as const 
+      };
+    }
+    if (isInProcessingMode || isTasksGenerated) {
+      return { 
+        label: t('nodes.langgraph.status.processing'), 
+        icon: <ProcessingIcon sx={{ 
+          color: '#ffffff',
+          animation: 'spin 1.5s linear infinite'
+        }} />, 
+        color: 'secondary' as const
+      };
+    }
+    return null; // 初始状态，不显示Chip
+  };
+
+  const chipContent = getChipContent();
+
   // 如果尚未初始化，则显示一个占位符
   if (!isInitialized) {
     return (

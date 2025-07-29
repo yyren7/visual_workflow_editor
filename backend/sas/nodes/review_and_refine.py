@@ -38,46 +38,75 @@ def _load_all_task_type_descriptions(base_path: str) -> str:
     return "\n\n---\n\n".join(descriptions)
 
 
-async def review_and_refine_node(state: RobotFlowAgentState, llm: BaseChatModel) -> RobotFlowAgentState:
+async def review_and_refine_node(state: RobotFlowAgentState) -> RobotFlowAgentState:
     """
-    Handles the review and refinement process for both task lists and module steps.
-    This node transitions the state to await user feedback and prepares the necessary messages.
+    Processes user feedback to determine the next logical state in the SAS workflow.
+
+    This node acts as a central decision point after user review. It updates the
+    dialog_state based on whether the user has accepted tasks/modules, or
+    provided revisions. It also implements a "Review Gate" principle to ensure
+    that any generated artifacts force the state into a review loop, preventing stalls.
+
+    Args:
+        state: The current state of the agent.
+
+    Returns:
+        The updated state with a new dialog_state if a transition is warranted.
     """
-    logger.info(f"✨ review_and_refine_node called with dialog_state: {state.dialog_state}")
+    logger.info(f"✨ review_and_refine_node called with dialog_state: '{state.dialog_state}'")
     
-    # Check if we are entering review for the first time after task list generation.
-    # The previous node (user_input_to_task_list) has successfully run.
-    if state.sas_step1_generated_tasks and not state.task_list_accepted:
-        logger.info("📋 Entering task list review for the first time.")
-        state.dialog_state = 'sas_awaiting_task_list_review'
-        state.completion_status = 'needs_clarification'
-        
-        task_count = len(state.sas_step1_generated_tasks)
-        review_message = f"已生成 {task_count} 个任务，请审核任务列表。您可以批准或提供修改建议。"
-        if state.messages and not any(review_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=review_message)]
-        return state
-    
-    # Check if we are entering review for the first time after module steps generation.
-    # The previous node (task_list_to_module_steps) has successfully run.
-    elif state.sas_step2_module_steps and not state.module_steps_accepted:
-        logger.info("📋 Entering module steps review for the first time.")
-        state.dialog_state = 'sas_awaiting_module_steps_review'
-        state.completion_status = 'needs_clarification'
-        
-        review_message = "模块步骤已生成，请审核。您可以批准或提供修改建议。"
-        if state.messages and not any(review_message in msg.content for msg in state.messages if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=review_message)]
+    initial_dialog_state = state.dialog_state
+
+    # --- User-driven Actions ---
+    # These reflect direct input from the user in the current step and take priority.
+
+    # Case 1: User accepts the task list.
+    if state.task_list_accepted and initial_dialog_state == "sas_awaiting_task_list_review":
+        logger.info("User accepted the task list. Transitioning to 'task_list_to_module_steps'.")
+        state.dialog_state = "task_list_to_module_steps"
         return state
 
-    # If the user provides input during a review phase, the routing logic in graph_builder.py
-    # will handle directing it back to the appropriate generation node. This node's primary
-    # role here is to initiate the review state. The external interaction (e.g., via API)
-    # is responsible for setting `task_list_accepted` or `module_steps_accepted` to True upon approval.
-    
-    # Fallback/default behavior
-    logger.info(f"review_and_refine_node: No specific action taken for dialog_state '{state.dialog_state}'. Passing state through.")
+    # Case 2: User accepts the module steps.
+    if state.module_steps_accepted and initial_dialog_state == "sas_awaiting_module_steps_review":
+        logger.info("User accepted module steps. Transitioning to 'sas_generating_individual_xmls'.")
+        state.dialog_state = "sas_generating_individual_xmls"
+        return state
+
+    # Case 3: User provides revisions for the task list.
+    if state.user_input and initial_dialog_state == "sas_awaiting_task_list_review":
+        logger.info("User provided revisions for the task list. Transitioning to 'user_input_to_task_list' for re-generation.")
+        state.dialog_state = "user_input_to_task_list"
+        return state
+        
+    # Case 4: User provides revisions for the module steps.
+    if state.user_input and initial_dialog_state == "sas_awaiting_module_steps_review":
+        logger.info("User provided revisions for the module steps. Transitioning to 'task_list_to_module_steps' for re-generation.")
+        state.dialog_state = "task_list_to_module_steps"
+        return state
+
+    # --- Review Gates (State Correction) ---
+    # These gates act as a safety net. If artifacts have been generated but the
+    # state isn't a review state, they force it to become one. Order is important.
+
+    # Gate 2: Module Steps Review Gate
+    # If task list is approved, and module steps exist but are not yet approved,
+    # we MUST be awaiting their review.
+    if state.task_list_accepted and state.sas_step2_module_steps and not state.module_steps_accepted:
+        logger.info("✅ GATE 2: Module steps exist and are not accepted. Ensuring state is 'sas_awaiting_module_steps_review'.")
+        state.dialog_state = "sas_awaiting_module_steps_review"
+        return state
+
+    # Gate 1: Task List Review Gate
+    # If a task list exists and is not yet approved, we MUST be awaiting its review.
+    if state.sas_step1_generated_tasks and not state.task_list_accepted:
+        logger.info("✅ GATE 1: Task list exists and is not accepted. Ensuring state is 'sas_awaiting_task_list_review'.")
+        state.dialog_state = "sas_awaiting_task_list_review"
+        return state
+
+    # Default Case: No action taken, waiting for user feedback.
+    logger.info(f"No state transition condition met for '{initial_dialog_state}'. Passing state through to await user action.")
     return state
+
 
 __all__ = [
     "review_and_refine_node"

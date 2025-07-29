@@ -9,5 +9,5 @@ __all__ = [
     "task_list_to_module_steps_node",
     "parameter_mapping_node",
     "review_and_refine_node",
-    "generate_individual_xmls_node"
+    "generate_individual_xmls_node",
 ] 

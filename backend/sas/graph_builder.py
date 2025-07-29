@@ -41,11 +41,11 @@ from langgraph.checkpoint.base import BaseCheckpointSaver # ADDED THIS IMPORT
 
 from .state import RobotFlowAgentState, GeneratedXmlFile
 from .nodes import (
-    process_description_to_module_steps_node,
     parameter_mapping_node,
     user_input_to_task_list_node,
     review_and_refine_node,
-    generate_individual_xmls_node
+    generate_individual_xmls_node,
+    task_list_to_module_steps_node
 )
 from .xml_tools import WriteXmlFileTool
 from ..langgraphchat.tools.file_share_tool import upload_file
@@ -188,11 +188,16 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     logger.info(f"FINAL user_input in initialize_state_node before return: '{state.user_input}'")
     return state.model_dump()
 
-def _generate_relation_xml_content_from_steps_py(
+def _generate_relation_xml_content_from_steps_py_deprecated(
     parsed_steps: Optional[List[Dict[str, Any]]],
     generated_xmls: Optional[List[GeneratedXmlFile]],
     config: Dict[str, Any] # For logging and potential future use
 ) -> str:
+    """
+    DEPRECATED: This function was part of the old workflow that generated a separate relation.xml.
+    The new workflow merges XMLs directly.
+    """
+    logger.warning("Executing DEPRECATED function: _generate_relation_xml_content_from_steps_py_deprecated")
     logger.info("--- Generating Relation XML (Python Logic) ---")
 
     if not parsed_steps or not generated_xmls:
@@ -253,7 +258,11 @@ def _generate_relation_xml_content_from_steps_py(
         # Fallback to empty XML on serialization error
         return f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{BLOCKLY_NS}"></xml>'
 
-def generate_relation_xml_node_py(state: RobotFlowAgentState) -> Dict[str, Any]:
+def generate_relation_xml_node_py_deprecated(state: RobotFlowAgentState) -> Dict[str, Any]:
+    """
+    DEPRECATED: This node was part of the old workflow. The new workflow merges XMLs directly.
+    """
+    logger.warning("Executing DEPRECATED function: generate_relation_xml_node_py_deprecated")
     logger.info("--- Running Step 3: Generate Node Relation XML (Python Implementation) ---")
     state.current_step_description = "Generating node relation XML file (Python)"
     state.is_error = False 
@@ -268,7 +277,7 @@ def generate_relation_xml_node_py(state: RobotFlowAgentState) -> Dict[str, Any]:
         # Attempt to save this empty relation.xml
     else:
         try:
-            state.relation_xml_content = _generate_relation_xml_content_from_steps_py(
+            state.relation_xml_content = _generate_relation_xml_content_from_steps_py_deprecated(
                 parsed_steps,
                 generated_node_xmls_list,
                 config
@@ -306,7 +315,11 @@ def generate_relation_xml_node_py(state: RobotFlowAgentState) -> Dict[str, Any]:
 
     return state.model_dump(exclude_none=True)
 
-async def generate_final_flow_xml_node(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> Dict[str, Any]:
+async def generate_final_flow_xml_node_deprecated(state: RobotFlowAgentState, llm: Optional[BaseChatModel] = None) -> Dict[str, Any]:
+    """
+    DEPRECATED: This node was part of the old workflow. The new workflow uses a simplified merge node.
+    """
+    logger.warning("Executing DEPRECATED function: generate_final_flow_xml_node_deprecated")
     logger.info("--- Running Step 4: Merge Individual XMLs into Final Flow XML ---")
     state.current_step_description = "Merging XMLs into final flow file"
     state.is_error = False # Reset error flag at the beginning of the node execution
@@ -668,7 +681,12 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     
     return state.model_dump(exclude_none=True)
 
-def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
+def sas_concatenate_xml_node_deprecated(state: RobotFlowAgentState) -> Dict[str, Any]:
+    """
+    DEPRECATED: The new simplified workflow ends after the merge step.
+    This concatenation logic is no longer used.
+    """
+    logger.warning("Executing DEPRECATED function: sas_concatenate_xml_node_deprecated")
     logger.info("--- SAS: Concatenating Merged Task XMLs (Node) ---")
     state.current_step_description = "Concatenating merged task XMLs into a final flow."
     state.is_error = False
@@ -821,52 +839,42 @@ def route_after_sas_step1(state: RobotFlowAgentState) -> str:
 # New routing function for SAS Review and Refine Task List
 def route_after_sas_review_and_refine(state: RobotFlowAgentState) -> str:
     logger.info(f"--- Routing after SAS Review/Refine Node ---")
-    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] is_error: {state.is_error}")
     logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] dialog_state: '{state.dialog_state}'")
-    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] task_list_accepted: {state.task_list_accepted}")
-    logger.info(f"    [ROUTE_REVIEW_REFINE_ENTRY] module_steps_accepted: {state.module_steps_accepted}")
-    
+
     if state.is_error: 
-        logger.warning(f"Error flag is set after Review/Refine node. Error message: {state.error_message}")
-        if state.error_message and not any(state.error_message in (msg.content if hasattr(msg, 'content') else '') for msg in (state.messages or []) if isinstance(msg, AIMessage)):
-            state.messages = (state.messages or []) + [AIMessage(content=f"Error during review/refinement: {state.error_message}")]
+        logger.warning(f"Error flag is set. Error: {state.error_message}")
         state.completion_status = "error"
         return END
 
-    # Priority 1: Awaiting user input
-    if state.dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_module_steps_review"]:
-        logger.info(f"Awaiting user feedback on: {state.dialog_state}. Ending graph run for clarification.")
+    # The review_and_refine_node has already updated the dialog_state.
+    # We just need to route based on the result.
+    dialog_state = state.dialog_state
+
+    if dialog_state == "task_list_to_module_steps":
+        logger.info("Routing to SAS_TASK_LIST_TO_MODULE_STEPS.")
+        state.completion_status = "processing"
+        return SAS_TASK_LIST_TO_MODULE_STEPS
+    
+    if dialog_state == "sas_generating_individual_xmls":
+        logger.info("Routing to GENERATE_INDIVIDUAL_XMLS.")
+        state.completion_status = "processing"
+        return GENERATE_INDIVIDUAL_XMLS
+
+    if dialog_state == "user_input_to_task_list":
+        logger.info("Routing back to SAS_USER_INPUT_TO_TASK_LIST for re-generation.")
+        state.completion_status = "processing"
+        return SAS_USER_INPUT_TO_TASK_LIST
+
+    if dialog_state in ["sas_awaiting_task_list_review", "sas_awaiting_module_steps_review"]:
+        logger.info(f"Awaiting user feedback on: {dialog_state}. Ending graph run for clarification.")
         state.completion_status = "needs_clarification"
         return END
 
-    # Priority 2: User approved module steps, proceed to XML generation
-    if state.module_steps_accepted:
-        logger.info("Module steps accepted by user. Routing to GENERATE_INDIVIDUAL_XMLS.")
-        state.dialog_state = "sas_generating_individual_xmls" 
-        state.completion_status = "processing" 
-        return GENERATE_INDIVIDUAL_XMLS
-
-    # Priority 3: User approved task list, proceed to generate module steps
-    if state.task_list_accepted:
-        logger.info("Task list accepted by user. Routing to SAS_TASK_LIST_TO_MODULE_STEPS.")
-        state.dialog_state = "task_list_to_module_steps"
-        state.completion_status = "processing"
-        return SAS_TASK_LIST_TO_MODULE_STEPS
-            
-    # Priority 4: Re-generation loops based on user feedback
-    if state.dialog_state == "user_input_to_task_list":
-        logger.info("User provided revisions for the task list. Routing back to SAS_USER_INPUT_TO_TASK_LIST.")
-        return SAS_USER_INPUT_TO_TASK_LIST
-    
-    if state.dialog_state == "task_list_to_module_steps":
-        logger.info("User provided revisions for the module steps. Routing back to SAS_TASK_LIST_TO_MODULE_STEPS.")
-        return SAS_TASK_LIST_TO_MODULE_STEPS
-
-    # Fallback / Unexpected state
-    logger.warning(f"Unexpected state after Review/Refine: '{state.dialog_state}'. Defaulting to END for safety.")
+    # Fallback for any unexpected state
+    logger.error(f"Unexpected state after Review/Refine: '{dialog_state}'. Defaulting to END.")
     state.completion_status = "error"
     if not state.error_message:
-         state.messages = (state.messages or []) + [AIMessage(content="An unexpected state was reached during the review process.")]
+         state.messages = (state.messages or []) + [AIMessage(content="An unexpected error occurred during the review process.")]
     return END
 
 # New routing function for SAS Step 2
@@ -920,11 +928,11 @@ def create_robot_flow_graph(
     # Node Binding
     workflow.add_node(INITIALIZE_STATE, initialize_state_node)
     workflow.add_node(SAS_USER_INPUT_TO_TASK_LIST, functools.partial(user_input_to_task_list_node, llm=llm))
-    workflow.add_node(SAS_REVIEW_AND_REFINE, functools.partial(review_and_refine_node, llm=llm))
     workflow.add_node(SAS_TASK_LIST_TO_MODULE_STEPS, functools.partial(task_list_to_module_steps_node, llm=llm))
+    workflow.add_node(SAS_REVIEW_AND_REFINE, review_and_refine_node)
     workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
-    workflow.add_node(SAS_PARAMETER_MAPPING, parameter_mapping_node)
     workflow.add_node(SAS_MERGE_XMLS, sas_merge_xml_node)
+    workflow.add_node(SAS_PARAMETER_MAPPING, functools.partial(parameter_mapping_node, llm=llm))
 
     # Define Graph Edges
     workflow.set_entry_point(INITIALIZE_STATE)

@@ -64,14 +64,16 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
     const { dialog_state, completion_status } = agentState;
     
     // 蓝色处理状态检测 - 系统认为在处理中
-    const isInProcessingMode = dialog_state?.includes('generating') ||
+    const isInProcessingMode = (dialog_state?.includes('generating') ||
                              dialog_state?.includes('merging') ||
                              dialog_state?.includes('processing') ||
                              dialog_state === 'sas_xml_generation_approved' ||
                              dialog_state === 'sas_step3_completed' ||
                              // ⭐ 新增：处理反馈后的中间状态
                              (dialog_state === 'initial' && agentState?.completion_status === 'processing') ||
-                             (dialog_state === 'sas_step1_tasks_generated' && agentState?.completion_status === 'processing');
+                             (dialog_state === 'sas_step1_tasks_generated' && agentState?.completion_status === 'processing')) 
+                             // 排除掉等待审核的状态
+                             && dialog_state !== 'sas_awaiting_module_steps_review';
     
     // 审核模式状态
     const isInReviewMode = dialog_state === 'sas_awaiting_task_list_review' ||

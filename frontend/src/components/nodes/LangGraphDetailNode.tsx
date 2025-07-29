@@ -27,6 +27,8 @@ import {
 } from '@mui/icons-material';
 import { useAgentStateSync } from '../../hooks/useAgentStateSync';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 
 interface LangGraphDetailNodeData {
   label: string;
@@ -44,12 +46,27 @@ interface LangGraphDetailNodeProps {
 
 export const LangGraphDetailNode: React.FC<LangGraphDetailNodeProps> = ({ id, data, selected }) => {
   const { t } = useTranslation();
-  const [details, setDetails] = useState<string[]>(data.details || []);
+
+  // 从Redux store直接订阅最新的details
+  const latestDetails = useSelector((state: RootState) => {
+    const tasks = state.flow.agentState?.sas_step1_generated_tasks;
+    if (tasks && data.taskIndex < tasks.length) {
+      return tasks[data.taskIndex].details || [];
+    }
+    return data.details || []; // Fallback to initial props data
+  });
+
+  const [details, setDetails] = useState<string[]>(latestDetails);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newDetail, setNewDetail] = useState('');
   const { updateTaskDetails } = useAgentStateSync();
+
+  useEffect(() => {
+    // 当从Redux订阅的latestDetails数据发生变化时，同步更新组件的内部state
+    setDetails(latestDetails);
+  }, [latestDetails]);
 
   // 新增：滚动区域的refs
   const detailsListRef = useRef<HTMLDivElement>(null);
