@@ -296,12 +296,10 @@ export const useLangGraphNodes = (agentState?: AgentState) => {
     const finalLangGraphNodes = langGraphNodesGenerated.map(genNode => {
         const existingNode = nodesFromStore?.find(n => n.id === genNode.id);
         if (existingNode) {
-            // 恢复为原始逻辑：必须用新生成的数据来覆盖旧数据，UI才能更新
             return {
                 ...existingNode,
                 data: genNode.data,
                 type: genNode.type,
-                // 保留现有位置
                 position: existingNode.position, 
             };
         }

@@ -13,69 +13,89 @@ frontend/
 │   └── manifest.json         # Web 应用清单文件
 ├── src/                      # 应用源代码目录
 │   ├── api/                  # API 请求封装 (与后端交互)
-│   │   ├── apiClient.ts      # 配置 Axios 实例，添加请求/响应拦截器（如自动附加认证Token、处理401错误）。
-│   │   ├── chatApi.ts        # 封装与聊天相关的后端 API 调用（聊天记录CRUD，LangGraph聊天流式处理），支持SSE事件处理（token、tool_start、tool_end、error）以展示LangGraph Agent的思考过程和工具调用。
-│   │   ├── flowApi.ts        # 封装与工作流相关的后端 API 调用（CRUD、获取用户流程列表、复制、设置最后选择等）。
-│   │   ├── llmApi.ts         # 封装与 LLM 相关的后端 API 调用（生成节点、更新节点、处理工作流提示）。
+│   │   ├── apiClient.ts      # 配置全局 Axios 实例，添加请求/响应拦截器（自动附加认证Token、处理401错误）。
+│   │   ├── chatApi.ts        # 封装与聊天相关的后端 API 调用，包括聊天记录CRUD和LangGraph聊天流式处理（SSE）。
+│   │   ├── flowApi.ts        # 封装与工作流相关的后端 API 调用（CRUD、复制、获取用户流程列表等）。
+│   │   ├── llmApi.ts         # 封装与 LLM 相关的 API 调用（生成/更新节点）。
 │   │   ├── nodeTemplates.ts  # 封装获取后端节点模板的 API 调用。
 │   │   ├── otherApi.ts       # 封装其他零散的 API 调用（如发送邮件）。
 │   │   ├── userApi.ts        # 封装用户认证和管理相关的 API 调用（注册、登录）。
-│   │   └── variableApi.ts    # 封装工作流变量相关的后端 API 调用（CRUD、导入、导出）。
+│   │   ├── variableApi.ts    # 封装工作流变量相关的 API 调用（CRUD、导入/导出）。
+│   │   └── sasApi.ts         # 封装与LangGraph Agent状态管理相关的 API 调用。
 │   ├── components/           # 可复用的 UI 组件
+│   │   ├── chat/             # 聊天界面相关的原子组件
+│   │   │   ├── ChatMessageArea.tsx # 渲染聊天消息区域，包括消息内容、工具调用卡片和编辑表单。
+│   │   │   ├── MessageInputBar.tsx # 聊天输入框和发送按钮。
+│   │   │   └── DeleteChatDialog.tsx # 删除聊天的确认对话框。
 │   │   ├── editor/           # Flow 编辑器相关的面板和工具栏组件
-│   │   │   ├── ChatPanel.tsx           # 编辑器中的聊天面板，使用 DraggableResizableContainer。
-│   │   │   ├── FlowToolbar.tsx         # 编辑器的工具栏 (保存、运行等)，现已集成到 EditorAppBar。
-│   │   │   ├── FlowVariablesPanel.tsx # 编辑器中的流程变量面板，使用 DraggableResizableContainer。
-│   │   │   ├── NodePropertiesPanel.tsx # 编辑器中的节点属性面板，使用 DraggableResizableContainer。
-│   │   │   └── NodeSelectorSidebar.tsx # 编辑器中的节点选择侧边栏，是一个可折叠的 Drawer。
+│   │   │   ├── ChatPanel.tsx           # 编辑器中的聊天面板，是 `ChatInterface` 的一个封装。
+│   │   │   ├── FlowToolbar.tsx         # (已弃用) 编辑器的工具栏，功能已集成到 `EditorAppBar`。
+│   │   │   ├── FlowVariablesPanel.tsx # 编辑器中的流程变量面板。
+│   │   │   ├── NodePropertiesPanel.tsx # 编辑器中的节点属性面板。
+│   │   │   └── NodeSelectorSidebar.tsx # 编辑器中的节点选择侧边栏。
 │   │   ├── nodes/            # 自定义 React Flow 节点组件
-│   │   │   ├── ConditionNode.tsx     # 条件判断节点 (例如，基于真/假输出)。
-│   │   │   ├── DecisionNode.tsx      # 决策节点 (可能有多个输出路径)。
-│   │   │   ├── GenericNode.tsx       # 通用/基础节点，可显示基本信息和输入/输出句柄。
-│   │   │   ├── InputNode.tsx         # 输入节点 (通常只有一个输出)。
-│   │   │   ├── OutputNode.tsx        # 输出节点 (通常只有一个输入)。
-│   │   │   └── ProcessNode.tsx       # 处理/任务节点 (通常有输入和输出)。
-│   │   ├── ChatInterface.tsx   # 聊天界面组件，包含聊天列表侧边栏和主聊天窗口，支持发送消息、LangGraph流式响应(思考过程、工具调用的实时展示)，以及聊天记录管理(创建/删除/重命名/下载)。
-│   │   ├── DraggableResizableContainer.tsx # 提供可拖拽、可调整大小的容器 HOC，用于包裹面板组件。
-│   │   ├── EditorAppBar.tsx    # 流程图编辑器的顶部应用栏，包含流程图名称编辑、菜单(切换面板)、节点添加、布局、语言选择、用户菜单(选择流程图、登出)、保存状态显示。
-│   │   ├── FlowCanvas.tsx      # 封装 React Flow 画布，处理节点/边的渲染、连接、拖拽、缩放、背景、控件、面板(版本信息、布局按钮)等。
-│   │   ├── FlowEditor.tsx      # 核心的工作流编辑器主组件，整合 EditorAppBar, NodeSelectorSidebar, FlowCanvas, 以及各种面板(NodeProperties, FlowVariables, Chat)。管理 React Flow 状态和交互逻辑。
-│   │   ├── FlowLoader.tsx      # 负责加载指定的流程图数据，处理加载状态、错误和权限，加载成功后渲染 FlowEditorWrapper。
-│   │   ├── FlowSelect.tsx      # 流程图选择/管理对话框，允许用户查看、搜索、创建、重命名、复制和删除流程图。
-│   │   ├── FlowVariables.tsx   # 工作流变量管理组件 (独立于编辑器面板)，允许添加/编辑/删除/导入/导出流程图变量。
-│   │   ├── LanguageSelector.tsx # 语言切换组件，允许用户切换界面语言 (中/英/日)。
-│   │   ├── Login.tsx           # 登录表单组件，处理用户登录逻辑，包含表单验证和错误处理。
-│   │   ├── NavBar.tsx          # 全局导航栏组件 (可能已弃用或被 EditorAppBar 替代)，提供基本导航和用户状态显示。
-│   │   ├── NodeProperties.tsx  # 节点属性显示/编辑组件，用于在 NodePropertiesPanel 中显示选定节点的属性。
-│   │   ├── NodeSelector.tsx    # 节点选择器组件，从 API 获取可用节点模板并显示列表，支持拖拽到画布。
-│   │   ├── ProtectedRoute.tsx  # 受保护路由 HOC 或组件，检查用户认证状态，未登录则重定向到登录页。
-│   │   ├── Register.tsx        # 注册表单组件，处理用户注册逻辑。
-│   │   ├── SelectPage.tsx      # 流程图选择的专用页面，包含顶部导航(登出)和始终打开的 FlowSelect 对话框。
-│   │   ├── Sidebar.tsx         # 通用侧边栏组件 (可能已弃用或被 NodeSelectorSidebar 替代)，用于展示 NodeSelector。
-│   │   ├── Submit.tsx          # 一个无需登录的页面，允许用户填写标题和内容并发送邮件。
-│   │   ├── ToolCallCard.tsx    # 用于在 ChatInterface 中展示 LLM 工具调用和结果的卡片组件。
-│   │   └── VersionInfo.tsx     # 显示应用版本信息的简单组件 (通常放在角落或 AppBar)。
+│   │   │   ├── GenericNode.tsx       # 通用的基础节点组件。
+│   │   │   ├── LangGraphInputNode.tsx # LangGraph流程的输入节点，处理用户请求和Agent状态展示。
+│   │   │   ├── LangGraphTaskNode.tsx  # LangGraph流程的任务节点，展示任务详情。
+│   │   │   └── LangGraphDetailNode.tsx# LangGraph流程的细节节点，展示任务的具体步骤。
+│   │   ├── ChatInterface/    # 模块化的聊天界面及其逻辑
+│   │   │   ├── index.tsx         # 聊天界面的主组件，整合了数据、行为和SSE处理。
+│   │   │   ├── useChatData.ts    # Hook，负责获取和管理聊天列表和消息数据。
+│   │   │   ├── useChatActions.ts   # Hook，封装所有用户交互（发送、新建、重命名、删除、编辑）。
+│   │   │   ├── useSSEHandler.ts  # Hook，管理与后端的SSE连接，处理实时事件流。
+│   │   │   ├── types.ts          # 定义聊天相关的TypeScript类型。
+│   │   │   └── utils.ts          # 聊天相关的工具函数（如下载Markdown）。
+│   │   ├── FlowEditor/       # 核心工作流编辑器
+│   │   │   ├── index.tsx         # 编辑器主组件，整合所有UI和逻辑。
+│   │   │   ├── useFlowConfig.ts  # Hook，管理React Flow的配置。
+│   │   │   ├── useSaveHandler.ts # Hook，处理流程的保存逻辑。
+│   │   │   └── ...               # 其他辅助组件和类型定义。
+│   │   ├── FlowSelect/       # 流程选择对话框
+│   │   │   ├── index.tsx         # 流程选择/管理对话框主组件。
+│   │   │   └── ...               # 对话框的子组件和Hooks。
+│   │   ├── DraggableResizableContainer.tsx # 提供可拖拽、可调整大小的容器HOC。
+│   │   ├── EditorAppBar.tsx    # 流程图编辑器的顶部应用栏。
+│   │   ├── FlowCanvas.tsx      # 封装 React Flow 画布，处理渲染和基本交互。
+│   │   ├── FlowLoader.tsx      # 加载指定的流程图数据，处理加载、错误和权限。
+│   │   ├── FlowVariables.tsx   # (独立页面) 工作流变量管理组件。
+│   │   ├── LanguageSelector.tsx # 语言切换组件。
+│   │   ├── Login.tsx           # 登录表单组件。
+│   │   ├── NodeProperties.tsx  # (底层) 节点属性显示/编辑组件。
+│   │   ├── NodeSelector.tsx    # (底层) 节点选择器列表组件。
+│   │   ├── ProtectedRoute.tsx  # 受保护路由HOC。
+│   │   ├── Register.tsx        # 注册表单组件。
+│   │   ├── SelectPage.tsx      # 流程图选择的专用页面。
+│   │   ├── Submit.tsx          # 一个无需登录的邮件发送页面。
+│   │   └── VersionInfo.tsx     # 显示应用版本信息的组件。
 │   ├── contexts/             # React Context API (全局状态管理)
-│   │   ├── AuthContext.tsx     # 提供全局认证状态 (是否登录，用户信息)，管理 token 验证、登录、登出逻辑。
-│   │   └── FlowContext.tsx     # 管理用户的工作流列表和当前选中的工作流 ID，负责从后端获取流程列表。
-│   ├── hooks/                # 自定义 React Hooks (封装逻辑)
-│   │   ├── useDraggablePanelPosition.ts # 管理可拖动面板的位置、边界约束和响应窗口大小变化。
-│   │   ├── useFlowCore.ts      # 核心流程管理 Hook，负责加载指定 flowId 的数据，处理外部事件(如刷新、重命名)，并集成持久化逻辑。
-│   │   ├── useFlowLayout.ts    # 提供自动布局算法 (分层布局) 和边交叉优化功能，用于整理 React Flow 画布元素。
-│   │   ├── useFlowPersistence.ts # 负责流程图的自动保存 (防抖) 和初始加载，处理外部事件以保持数据同步。
-│   │   ├── usePanelManager.ts  # 管理编辑器界面中各个面板 (侧边栏、节点信息、全局变量、聊天) 的显隐状态和位置。
-│   │   └── useReactFlowManager.ts # 封装 React Flow 实例的交互逻辑，处理节点/边的变化、连接、拖放、点击等，并使用 Redux 进行状态管理。
-│   ├── routes/               # 应用路由配置 (如果使用 React Router)
+│   │   ├── AuthContext.tsx     # 提供全局认证状态和登录/登出逻辑。
+│   │   └── FlowContext.tsx     # 管理用户的工作流列表和当前选中的工作流。
+│   ├── hooks/                # 自定义 React Hooks (封装通用逻辑)
+│   │   ├── useAgentStateSync.ts # 同步后端的LangGraph Agent状态到Redux。
+│   │   ├── useChat.ts           # (可能已部分弃用) 简单的聊天逻辑Hook。
+│   │   ├── useDraggablePanelPosition.ts # 管理可拖动面板的位置。
+│   │   ├── useFlowCore.ts      # (已弃用) 旧的核心流程管理Hook。
+│   │   ├── useFlowLayout.ts    # 提供自动布局算法。
+│   │   ├── useFlowPersistence.ts # (已弃用) 旧的自动保存Hook。
+│   │   ├── useLangGraphNodes.ts # 根据Agent状态生成和同步LangGraph节点。
+│   │   ├── usePanelManager.ts  # 管理编辑器中各个面板的显隐状态。
+│   │   ├── useReactFlowManager.ts # 封装React Flow实例的交互逻辑，并与Redux集成。
+│   │   └── useSSEManager.ts    # 全局单例SSE连接管理器。
 │   ├── store/                # 状态管理 (Redux Toolkit)
-│   │   ├── slices/           # Redux Toolkit Slices (状态片段)
-│   │   │   ├── authSlice.ts    # 定义认证相关的 Redux state、reducers 和 actions (登录成功、登出、加载状态、错误处理、Token 验证结果)。
-│   │   │   └── flowSlice.ts    # 定义当前工作流相关的 Redux state、reducers、actions 和异步 thunks (获取、保存流程数据，节点/边操作)。
-│   │   └── store.ts          # 配置 Redux store，组合各个 slice 的 reducers。
-│   ├── App.tsx               # 应用根组件，设置主题、路由、全局上下文(Auth, Flow)和布局。
-│   ├── i18n.ts               # 配置 i18next，提供多语言（中、英、日）翻译资源。
-│   ├── index.css             # 全局 CSS 样式，包括基础样式、React Flow 节点/边/控件样式、拖拽样式等。
-│   ├── index.tsx             # 应用入口文件，初始化 React、Redux Store、i18next，渲染 App 组件，并提供加载指示器。
-│   └── types.ts              # 定义共享的 TypeScript 类型（如 Message, Chat, User）。
+│   │   ├── slices/           # Redux Toolkit Slices
+│   │   │   ├── authSlice.ts    # 定义认证相关的Redux state和actions。
+│   │   │   └── flowSlice.ts    # 定义当前工作流的state和actions，包括节点、边和Agent状态。
+│   │   └── store.ts          # 配置和创建Redux store。
+│   ├── styles/               # 全局样式文件
+│   │   └── performance-optimizations.css # 针对性能优化的特定样式。
+│   ├── utils/                # 通用工具函数
+│   │   └── quickResetTool.js # 用于开发过程中的快速重置工具。
+│   ├── App.tsx               # 应用根组件，设置主题、路由和全局上下文。
+│   ├── decs.d.ts             # TypeScript类型声明文件。
+│   ├── i18n.ts               # 配置i18next，提供多语言翻译资源。
+│   ├── index.css             # 全局CSS样式。
+│   ├── index.tsx             # 应用入口文件，初始化React和Redux。
+│   └── types.ts              # 定义共享的TypeScript类型。
 ├── .env                      # 环境变量文件 (需要添加到 .gitignore)
 ├── .gitignore                # Git 忽略配置
 ├── craco.config.js           # Craco 配置文件 (用于自定义 CRA 配置)
@@ -177,7 +197,7 @@ docker run -d -p 80:80 frontend-app
 - **框架:** React (使用 Create React App + Craco 自定义配置)
 - **语言:** TypeScript
 - **状态管理:** Redux Toolkit, React Context
-- **UI 库:** (可能使用了 Material UI, Ant Design 或其他，需查看 `package.json` 或组件代码确认)
-- **路由:** React Router (可能)
+- **UI 库:** Material-UI
+- **路由:** React Router
 - **流程图/编辑器:** React Flow
-- **API 请求:** Axios (可能，基于 `apiClient.ts`
+- **API 请求:** Axios
