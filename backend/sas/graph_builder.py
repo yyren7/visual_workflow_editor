@@ -98,6 +98,45 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     
     logger.info(f"state.config after merge with DEFAULT_CONFIG: {state.config}")
     
+    # 新增：获取用户信息和流程图信息，生成动态输出路径
+    try:
+        # 尝试从配置中获取用户信息和流程图信息
+        current_username = merged_config.get("CURRENT_USERNAME")
+        current_flow_id = merged_config.get("CURRENT_FLOW_ID")
+        
+        logger.info(f"从配置中获取用户信息: username={current_username}, flow_id={current_flow_id}")
+        
+        # 如果配置中没有，尝试从context中获取流程图ID
+        if not current_flow_id:
+            try:
+                from backend.langgraphchat.context import current_flow_id_var
+                current_flow_id = current_flow_id_var.get()
+                logger.info(f"从上下文中获取流程图ID: {current_flow_id}")
+            except Exception as context_e:
+                logger.warning(f"从上下文获取流程图ID失败: {context_e}")
+        
+        # 如果有流程图ID和用户名，生成动态输出路径
+        if current_flow_id and current_username and current_username != "default_user":
+            from backend.sas.prompt_loader import get_dynamic_output_path
+            dynamic_output_path = get_dynamic_output_path(current_flow_id, current_username)
+            logger.info(f"生成动态输出路径: {dynamic_output_path}")
+            
+            # 更新配置中的输出路径
+            merged_config["OUTPUT_DIR_PATH"] = dynamic_output_path
+            state.config = merged_config
+            
+            # 设置流程图和用户信息到状态中（用于后续节点使用）
+            state.config["CURRENT_FLOW_ID"] = current_flow_id
+            state.config["CURRENT_USERNAME"] = current_username
+            
+            logger.info(f"已设置动态输出路径和用户信息到配置中")
+            
+        else:
+            logger.warning(f"未能获取完整的用户信息 (username: {current_username}, flow_id: {current_flow_id})，将使用默认输出路径")
+            
+    except Exception as e:
+        logger.warning(f"设置动态输出路径失败，将使用默认路径: {e}")
+    
     # Try to use the existing OUTPUT_DIR_PATH from the main graph's config
     provided_output_dir_str = merged_config.get("OUTPUT_DIR_PATH")
     logger.info(f"Value of 'OUTPUT_DIR_PATH' from merged_config: '{provided_output_dir_str}'")
@@ -739,7 +778,10 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     merged_files_to_concat_paths = state.merged_xml_file_paths
     if not merged_files_to_concat_paths:
         logger.warning(f"ConcatenateXML Node: No merged XML file paths found in state.merged_xml_file_paths (input dir was {input_dir_for_concat}). Generating empty final XML.")
-        state.final_flow_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{CONCAT_XML_BLOCKLY_XMLNS}"></xml>'
+        # 修复：分开字符串连接避免\n字符残留
+        xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>'
+        xml_content = f'<xml xmlns="{CONCAT_XML_BLOCKLY_XMLNS}"></xml>'
+        state.final_flow_xml_content = xml_declaration + '\n' + xml_content
         state.final_flow_xml_path = str(final_output_file)
         try:
             with open(state.final_flow_xml_path, "w", encoding="utf-8") as f: f.write(state.final_flow_xml_content)
@@ -784,7 +826,9 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     try:
         if hasattr(ET, 'indent'): ET.indent(concatenated_root)
         final_xml_str = ET.tostring(concatenated_root, encoding="unicode", xml_declaration=False)
-        final_xml_str_with_decl = f'<?xml version="1.0" encoding="UTF-8"?>\n{final_xml_str}'
+        # 修复：分开字符串连接避免\n字符残留
+        xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>'
+        final_xml_str_with_decl = xml_declaration + '\n' + final_xml_str
         with open(final_output_file, "w", encoding="utf-8") as f: f.write(final_xml_str_with_decl)
         state.final_flow_xml_path = str(final_output_file)
         state.final_flow_xml_content = final_xml_str_with_decl

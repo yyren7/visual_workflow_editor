@@ -1,8 +1,38 @@
 import os
 import logging
+import re  # 新增：用于清理文件名中的特殊字符
+from datetime import datetime  # 新增：用于生成时间戳
 from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
+
+def get_dynamic_output_path(flow_id: str, username: str) -> str:
+    """
+    根据流程图号和用户名生成动态输出路径
+    
+    Args:
+        flow_id: 流程图ID
+        username: 用户名
+        
+    Returns:
+        格式化的输出路径
+    """
+    base_path = "/workspace/database/flow_database/result"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # 清理用户名和流程图ID，移除特殊字符
+    clean_username = re.sub(r'[^a-zA-Z0-9_.-]', '_', username)
+    clean_flow_id = re.sub(r'[^a-zA-Z0-9_.-]', '_', flow_id)
+    
+    # 创建路径：用户名/流程图号_时间戳
+    dynamic_path = os.path.join(
+        base_path,
+        clean_username,
+        f"flow_{clean_flow_id}_{timestamp}"
+    )
+    
+    logger.info(f"生成动态输出路径: {dynamic_path}")
+    return dynamic_path
 
 DEFAULT_CONFIG = {
     "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
