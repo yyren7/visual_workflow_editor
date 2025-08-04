@@ -89,7 +89,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: Any = None
 
     if not parsed_flow_steps:
         logger.warning("Parsed flow steps are missing. Generating a single empty relation XML.")
-        empty_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
+        empty_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
         state.relation_xml_content = empty_xml_content
         state.relation_xml_path = "" # Path will be set if file is successfully written
 
@@ -268,7 +268,7 @@ async def generate_relation_xml_node(state: RobotFlowAgentState, llm: Any = None
         if not processed_at_least_one_file_successfully and parsed_flow_steps:
              logger.warning("Loop over tasks completed, but no files were successfully processed/written.")
              # Set to default empty if no file was processed, even if there were tasks
-             state.relation_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
+             state.relation_xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="https://developers.google.com/blockly/xml"></xml>'
              state.relation_xml_path = ""
 
     # Final state updates based on whether an error occurred anywhere

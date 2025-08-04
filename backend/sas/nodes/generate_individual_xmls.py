@@ -184,6 +184,16 @@ def _extract_parameters_from_detail(detail_string: str, block_type: str) -> Dict
         # return 类型的块不需要参数，使用模板的默认结构即可
         logger.info(f"return block type detected - no parameters needed, using template defaults: {params}")
 
+    elif block_type == "wait_timer":
+        # wait_timer 类型的块设置固定的变量位置为 N480
+        params['fields'] = {
+            'name': 'N480'               # 固定使用 N480 变量位置
+        }
+        params['mutations'] = {
+            'timeout': '60000'           # 默认超时时间
+        }
+        logger.info(f"Using default parameters for wait_timer: {params}")
+
     # Add other block types and their fixed default parameters here as needed.
     # Example:
     # elif block_type == "select_robot":

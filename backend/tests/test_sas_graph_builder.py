@@ -64,6 +64,7 @@ async def test_simple_workflow():
             f.unlink()
 
     # 初始用户输入消息
+    
     initial_message ="""ロボットが、
     ハンド１で部品供給ステーションから一次加工品を掴み取り（部品供給）、
     次に加工ステーションに移動し、

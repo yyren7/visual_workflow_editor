@@ -299,15 +299,16 @@ const flowSlice = createSlice({
     setProcessingStatus: (state: FlowState, action: PayloadAction<boolean>) => {
       if (state.agentState) {
         state.agentState.isProcessingUserInput = action.payload;
-        if (action.payload) {
-          // When starting, also clear any leftover review/error states
-          state.agentState.dialog_state = 'initial';
-        }
+        // 🔧 移除对 dialog_state 的干预，让后端状态正确传递
+        // if (action.payload) {
+        //   state.agentState.dialog_state = 'initial';
+        // }
       } else {
         // If agentState doesn't exist, create it
         state.agentState = {
           isProcessingUserInput: action.payload,
-          dialog_state: action.payload ? 'initial' : 'initial',
+          // 🔧 不设置 dialog_state，让它保持 undefined 或由后端状态更新
+          // dialog_state: action.payload ? 'initial' : 'initial',
         };
       }
     },

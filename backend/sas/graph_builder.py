@@ -202,7 +202,7 @@ def _generate_relation_xml_content_from_steps_py_deprecated(
 
     if not parsed_steps or not generated_xmls:
         logger.warning("Parsed steps or generated XMLs are empty. Generating empty relation XML.")
-        return f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+        return f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{BLOCKLY_NS}"></xml>'
 
     relation_root = ET.Element(f"{{{BLOCKLY_NS}}}xml")
 
@@ -221,7 +221,7 @@ def _generate_relation_xml_content_from_steps_py_deprecated(
 
     if not valid_block_data:
         logger.warning("No successfully generated blocks with IDs and types found. Generating empty relation XML.")
-        return f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+        return f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{BLOCKLY_NS}"></xml>'
 
     current_xml_element_in_relation: Optional[ET.Element] = None
     for block_info in valid_block_data:
@@ -250,7 +250,7 @@ def _generate_relation_xml_content_from_steps_py_deprecated(
     try:
         if hasattr(ET, 'indent'): ET.indent(relation_root, space="  ")
         xml_string = ET.tostring(relation_root, encoding="unicode", xml_declaration=False)
-        final_xml_string = f'<?xml version="1.0" encoding="UTF-8"?>\\n{xml_string}'
+        final_xml_string = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_string}'
         logger.info(f"Successfully generated relation.xml content (Python Logic). Preview: {final_xml_string[:250]}...")
         return final_xml_string
     except Exception as e:
@@ -273,7 +273,7 @@ def generate_relation_xml_node_py_deprecated(state: RobotFlowAgentState) -> Dict
 
     if not parsed_steps:
         logger.warning("Parsed flow steps are missing for relation XML generation. Generating empty relation.xml.")
-        state.relation_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{BLOCKLY_NS}"></xml>'
+        state.relation_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{BLOCKLY_NS}"></xml>'
         # Attempt to save this empty relation.xml
     else:
         try:
@@ -739,7 +739,7 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     merged_files_to_concat_paths = state.merged_xml_file_paths
     if not merged_files_to_concat_paths:
         logger.warning(f"ConcatenateXML Node: No merged XML file paths found in state.merged_xml_file_paths (input dir was {input_dir_for_concat}). Generating empty final XML.")
-        state.final_flow_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\\n<xml xmlns="{CONCAT_XML_BLOCKLY_XMLNS}"></xml>'
+        state.final_flow_xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\n<xml xmlns="{CONCAT_XML_BLOCKLY_XMLNS}"></xml>'
         state.final_flow_xml_path = str(final_output_file)
         try:
             with open(state.final_flow_xml_path, "w", encoding="utf-8") as f: f.write(state.final_flow_xml_content)
@@ -784,7 +784,7 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     try:
         if hasattr(ET, 'indent'): ET.indent(concatenated_root)
         final_xml_str = ET.tostring(concatenated_root, encoding="unicode", xml_declaration=False)
-        final_xml_str_with_decl = f'<?xml version="1.0" encoding="UTF-8"?>\\n{final_xml_str}'
+        final_xml_str_with_decl = f'<?xml version="1.0" encoding="UTF-8"?>\n{final_xml_str}'
         with open(final_output_file, "w", encoding="utf-8") as f: f.write(final_xml_str_with_decl)
         state.final_flow_xml_path = str(final_output_file)
         state.final_flow_xml_content = final_xml_str_with_decl

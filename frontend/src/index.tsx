@@ -10,6 +10,13 @@ import './styles/performance-optimizations.css';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { store } from './store/store';
 
+// 抑制 ResizeObserver 错误（这是一个已知的浏览器问题）
+window.addEventListener('error', e => {
+  if (e.message === 'ResizeObserver loop completed with undelivered notifications.') {
+    e.stopImmediatePropagation();
+  }
+});
+
 // 简单的加载指示器组件
 const LoadingIndicator = () => (
   <Box sx={{ 
