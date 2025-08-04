@@ -626,9 +626,15 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     base_input_dir = Path(state.run_output_directory)
     # Individual XMLs are assumed to be in subdirectories directly under base_input_dir,
     # named by generate_individual_xmls_node (e.g., "00_TaskName", "01_AnotherTask").
-    merged_output_dir = base_input_dir / "merged_task_flows"
+    
+    # Create timestamped directory to avoid file conflicts
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    merged_output_dir = base_input_dir / f"merged_task_flows_{timestamp}"
+    state.merged_task_flows_dir = str(merged_output_dir)  # Save for concatenate step
+    
     try:
         merged_output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"MergeXML Node: Created timestamped directory: {merged_output_dir}")
     except Exception as e:
         state.is_error = True; state.error_message = f"Failed to create dir for merged flows: {e}"; logger.error(state.error_message, exc_info=True)
         state.dialog_state = "sas_processing_error"; state.completion_status = "error"
@@ -644,12 +650,16 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         for xml_info in state.generated_node_xmls:
             if xml_info.file_path:
                 parent_dir = Path(xml_info.file_path).parent
-                if parent_dir not in processed_parent_dirs and parent_dir.name != merged_output_dir.name and parent_dir.name != "concatenated_flow_output":
+                if (parent_dir not in processed_parent_dirs and 
+                    not parent_dir.name.startswith("merged_task_flows_") and 
+                    not parent_dir.name.startswith("concatenated_flow_output")):
                     subdirs_to_process.append(parent_dir)
                     processed_parent_dirs.add(parent_dir)
     else: # Fallback if generated_node_xmls is not populated as expected, try to scan run_output_directory
         logger.warning("MergeXML Node: state.generated_node_xmls is empty or not populated. Attempting to scan run_output_directory for task subdirectories.")
-        subdirs_to_process = [d for d in base_input_dir.iterdir() if d.is_dir() and d.name != merged_output_dir.name and d.name != "concatenated_flow_output"]
+        subdirs_to_process = [d for d in base_input_dir.iterdir() if d.is_dir() and 
+                             not d.name.startswith("merged_task_flows_") and 
+                             not d.name.startswith("concatenated_flow_output")]
 
     if not subdirs_to_process:
         logger.warning(f"MergeXML Node: No task-specific subdirectories found in {base_input_dir} to merge based on scan or generated_node_xmls state.")
@@ -681,12 +691,12 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     
     return state.model_dump(exclude_none=True)
 
-def sas_concatenate_xml_node_deprecated(state: RobotFlowAgentState) -> Dict[str, Any]:
+def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     """
-    DEPRECATED: The new simplified workflow ends after the merge step.
-    This concatenation logic is no longer used.
+    Concatenates merged task XML files into a single final robot program XML file.
+    This step creates the final executable XML that contains all tasks.
     """
-    logger.warning("Executing DEPRECATED function: sas_concatenate_xml_node_deprecated")
+    logger.info("Executing sas_concatenate_xml_node")
     logger.info("--- SAS: Concatenating Merged Task XMLs (Node) ---")
     state.current_step_description = "Concatenating merged task XMLs into a final flow."
     state.is_error = False
@@ -697,12 +707,30 @@ def sas_concatenate_xml_node_deprecated(state: RobotFlowAgentState) -> Dict[str,
         state.dialog_state = "sas_processing_error"; state.completion_status = "error"
         return state.model_dump(exclude_none=True)
 
-    input_dir_for_concat = Path(state.run_output_directory) / "merged_task_flows"
-    output_dir_for_concat = Path(state.run_output_directory) / "concatenated_flow_output"
-    final_output_file = output_dir_for_concat / "final_concatenated_sas_flow.xml" # More specific name
+    # Use the timestamped directory created by sas_merge_xml_node
+    if state.merged_task_flows_dir:
+        input_dir_for_concat = Path(state.merged_task_flows_dir)
+        logger.info(f"ConcatenateXML Node: Using timestamped merge directory: {input_dir_for_concat}")
+    else:
+        # Fallback to scanning for the most recent merged_task_flows directory
+        base_dir = Path(state.run_output_directory)
+        merge_dirs = [d for d in base_dir.iterdir() if d.is_dir() and d.name.startswith("merged_task_flows_")]
+        if merge_dirs:
+            input_dir_for_concat = max(merge_dirs, key=lambda d: d.stat().st_mtime)  # Most recent
+            logger.info(f"ConcatenateXML Node: Found most recent merge directory: {input_dir_for_concat}")
+        else:
+            input_dir_for_concat = base_dir / "merged_task_flows"  # Original fallback
+            logger.warning(f"ConcatenateXML Node: No timestamped merge directories found, using fallback: {input_dir_for_concat}")
+    
+    # Create timestamped output directory for concatenated results
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir_for_concat = Path(state.run_output_directory) / f"concatenated_flow_output_{timestamp}"
+    state.concatenated_flow_output_dir = str(output_dir_for_concat)  # Save for future reference
+    final_output_file = output_dir_for_concat / "final_concatenated_sas_flow.xml"
 
     try:
         output_dir_for_concat.mkdir(parents=True, exist_ok=True)
+        logger.info(f"ConcatenateXML Node: Created timestamped output directory: {output_dir_for_concat}")
     except Exception as e:
         state.is_error = True; state.error_message = f"Failed to create dir for concatenated flow: {e}"; logger.error(state.error_message, exc_info=True)
         state.dialog_state = "sas_processing_error"; state.completion_status = "error"
@@ -932,6 +960,7 @@ def create_robot_flow_graph(
     workflow.add_node(SAS_REVIEW_AND_REFINE, review_and_refine_node)
     workflow.add_node(GENERATE_INDIVIDUAL_XMLS, functools.partial(generate_individual_xmls_node, llm=llm))
     workflow.add_node(SAS_MERGE_XMLS, sas_merge_xml_node)
+    workflow.add_node(SAS_CONCATENATE_XMLS, sas_concatenate_xml_node)
     workflow.add_node(SAS_PARAMETER_MAPPING, functools.partial(parameter_mapping_node, llm=llm))
 
     # Define Graph Edges
@@ -996,6 +1025,15 @@ def create_robot_flow_graph(
     workflow.add_conditional_edges(
         SAS_MERGE_XMLS,
         route_after_sas_merge_xmls,
+        {
+            SAS_CONCATENATE_XMLS: SAS_CONCATENATE_XMLS,
+            END: END
+        }
+    )
+
+    workflow.add_conditional_edges(
+        SAS_CONCATENATE_XMLS,
+        route_after_sas_concatenate_xmls,
         {
             END: END
         }

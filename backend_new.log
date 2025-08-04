@@ -1,0 +1,220 @@
+INFO:     Will watch for changes in these directories: ['/workspace']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [34939] using WatchFiles
+--- 正在验证 AI 配置 ---
+--- AI 配置验证结束 ---
+2025-08-04 00:38:12 - backend.logging_config - [INFO] - 34952-134513069518848 - logging_config.py:71 - Backend logger configured with console and file handlers.
+2025-08-04 00:38:12 - backend.logging_config - [INFO] - 34952-134513069518848 - logging_config.py:88 - Deepseek logger configured with file handler: /workspace/logs/deepseek_api.log
+2025-08-04 00:38:12 - backend.logging_config - [INFO] - 34952-134513069518848 - logging_config.py:106 - Langchain LLM call logger configured with file handler: /workspace/logs/langgraphchat_debug.log
+2025-08-04 00:38:12 - backend.logging_config - [INFO] - 34952-134513069518848 - logging_config.py:119 - Logging setup complete. Effective level for 'backend': INFO. Main Log File: /workspace/logs/backend.log
+2025-08-04 00:38:12 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:82 - Logging system configured via backend.logging_config.py.
+2025-08-04 00:38:12 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:90 - LOG_DIR from config: /workspace/logs
+2025-08-04 00:38:12 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:92 - Importing modules...
+2025-08-04 00:38:12 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:97 - Successfully imported database.connection.Base
+2025-08-04 00:38:12 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:99 - Successfully imported database.models
+2025-08-04 00:38:12 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:101 - Successfully imported backend.config.APP_CONFIG
+2025-08-04 00:38:13 - backend.sas.nodes.task_list_to_module_steps - [WARNING] - 34952-134513069518848 - task_list_to_module_steps.py:24 - SAS Step 2 Node: Event broadcaster not available, progress events will not be sent
+DEBUG: Defining route_after_sas_concatenate_xmls
+2025-08-04 00:38:13 - backend.app.routers.sas_chat - [INFO] - 34952-134513069518848 - sas_chat.py:50 - SAS Chat Router: Successfully initialized Gemini LLM: gemini-2.5-pro
+SAS Chat Router: CHECKPOINTER will be initialized from app.state when needed.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:106 - Successfully imported basic routers.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:110 - Successfully imported workflow_router (if applicable).
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:114 - Successfully imported backend.app.utils.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:116 - Successfully imported backend.app.dependencies.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:127 - Rebuilding Pydantic models to resolve forward references...
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:130 - Pydantic models rebuilt successfully.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:134 - Initializing FastAPI application...
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:388 - Registering routers...
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:392 - Registered user router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:394 - Registered flow router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:396 - Registered email router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:398 - Registered auth router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:400 - Registered node_templates router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:405 - Registered workflow router (if applicable).
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:412 - Registered flow_variables router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:414 - Registered chat router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:416 - Registered sas_chat router.
+2025-08-04 00:38:13 - backend.app.main - [INFO] - 34952-134513069518848 - main.py:422 - FastAPI application initialization complete. Ready for requests...
+INFO:     Started server process [34952]
+INFO:     Waiting for application startup.
+2025-08-04 00:38:13 - backend.app.startup_event - [INFO] - 34952-134513069518848 - main.py:431 - 🚀 STARTUP EVENT 1 (startup_event) CALLED - ID: 384a6541-3ac8-40d1-84e0-a85aa8b87395 at 2025-08-04T00:38:13.048944
+环境变量 NODE_TEMPLATE_DIR_PATH 未设置或无效，使用默认模板目录路径: /workspace/database/node_database/quick-fcpr-new
+开始递归扫描模板目录: /workspace/database/node_database/quick-fcpr-new
+正在扫描目录: /workspace/database/node_database/quick-fcpr-new
+  - 在此目录找到 30 个XML文件
+总共发现 30 个XML文件
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/logic_custom_flag.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_custom_flag 从文件 logic_custom_flag.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/set_external_io_output_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_external_io_output_upon 从文件 set_external_io_output_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/set_external_io_output_during.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_external_io_output_during 从文件 set_external_io_output_during.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/moveL.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: moveL 从文件 moveL.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/wait_block.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_block 从文件 wait_block.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/wait_timer.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_timer 从文件 wait_timer.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/wait_external_io_input.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_external_io_input 从文件 wait_external_io_input.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/procedures_callnoreturn.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: procedures_callnoreturn 从文件 procedures_callnoreturn.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/wait_input.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: wait_input 从文件 wait_input.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/set_motor.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_motor 从文件 set_motor.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/set_output.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_output 从文件 set_output.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/external_io.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: external_io 从文件 external_io.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/moveP.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: moveP 从文件 moveP.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/loop.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: loop 从文件 loop.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/set_speed.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_speed 从文件 set_speed.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/connect_external_io.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: connect_external_io 从文件 connect_external_io.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/set_number.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: set_number 从文件 set_number.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/stop_robot_upon.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: stop_robot_upon 从文件 stop_robot_upon.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/math_number.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: math_number 从文件 math_number.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/select_robot.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: select_robot 从文件 select_robot.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/return.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+成功加载模板: return 从文件 return.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/math_custom_number.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: math_custom_number 从文件 math_custom_number.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/create_event.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: create_event 从文件 create_event.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/robot_io.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: robot_io 从文件 robot_io.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/procedures_defnoreturn.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: procedures_defnoreturn 从文件 procedures_defnoreturn.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/logic_compare.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_compare 从文件 logic_compare.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/controls_if.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: controls_if 从文件 controls_if.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/logic_operation.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_operation 从文件 logic_operation.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/logic_boolean.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+成功加载模板: logic_boolean 从文件 logic_boolean.xml
+解析XML文件: /workspace/database/node_database/quick-fcpr-new/start_thread.xml
+XML根元素: {https://developers.google.com/blockly/xml}xml
+使用命名空间 https://developers.google.com/blockly/xml 找到block元素
+使用命名空间 https://developers.google.com/blockly/xml 找到field元素
+使用命名空间 https://developers.google.com/blockly/xml 找到statement元素
+成功加载模板: start_thread 从文件 start_thread.xml
+总共加载了 30 个模板
+2025-08-04 00:38:13 - backend.app.startup_event - [INFO] - 34952-134513069518848 - main.py:433 - Node templates loaded by startup_event (ID: 384a6541-3ac8-40d1-84e0-a85aa8b87395).
+2025-08-04 00:38:13 - backend.app.checkpointer_init - [INFO] - 34952-134513069518848 - main.py:451 - Attempting to initialize checkpointer with DATABASE_URL: postgresql+psycopg2://yyren:yyren123123@db:5432/flow_editor_db
+2025-08-04 00:38:13 - backend.app.checkpointer_init - [INFO] - 34952-134513069518848 - main.py:457 - Converted URL for AsyncPostgresSaver: postgresql://yyren:yyren123123@db:5432/flow_editor_db
+2025-08-04 00:38:13 - backend.app.checkpointer_init - [INFO] - 34952-134513069518848 - main.py:467 - Successfully initialized AsyncPostgresSaver (checkpointer) and stored in app.state.
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:522 - 🚀 STARTUP EVENT 2 (validate_api_configuration) CALLED - ID: 4d954327-888f-4809-85a1-1489c62fee79 at 2025-08-04T00:38:13.057711
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:527 - Validating DeepSeek API configuration...
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:534 - ✓ DeepSeek API key is set (ends with: ...3fa5).
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:537 - DeepSeek API Base URL: https://api.deepseek.com/v1
+2025-08-04 00:38:13 - backend.app.config_validation - [WARNING] - 34952-134513069518848 - main.py:540 - ⚠️ Base URL contains /v1: https://api.deepseek.com/v1. This might cause duplicate paths as code often adds /v1/chat/completions.
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:542 - DeepSeek Model: deepseek-chat
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:546 - ✓ DeepSeekLLM client module imported successfully.
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:551 - Database URL: Set
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:554 - ⚠️ Debug mode is ENABLED.
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:558 - API Prefix: /api
+2025-08-04 00:38:13 - backend.app.config_validation - [INFO] - 34952-134513069518848 - main.py:559 - CORS Allowed Origins: http://localhost:3000, http://172.30.107.169:3001, http://172.30.107.169:8000, http://127.0.0.1:3000, http://172.18.0.3:3000, http://workflow-editor-frontend:3000, http://localhost:3001, http://127.0.0.1:3001, http://localhost:8000, http://127.0.0.1:8000
+2025-08-04 00:38:13 - backend.app.lifespan - [INFO] - 34952-134513069518848 - main.py:326 - Started stuck state monitor task
+INFO:     Application startup complete.
+2025-08-04 00:38:19 - backend.app.http_requests - [INFO] - 34952-134513069518848 - main.py:361 - REQUEST: GET /docs from 127.0.0.1
+2025-08-04 00:38:19 - backend.app.http_requests - [INFO] - 34952-134513069518848 - main.py:369 - RESPONSE: GET /docs - STATUS 200 (took: 0.0008s)
+INFO:     127.0.0.1:42872 - "GET /docs HTTP/1.1" 200 OK
+2025-08-04 00:38:20 - backend.app.http_requests - [INFO] - 34952-134513069518848 - main.py:361 - REQUEST: GET /sas-flows/c0f40994-8807-4de8-9bc0-65fbab216e71/state from 127.0.0.1
+2025-08-04 00:38:20 - backend.app.http_requests - [INFO] - 34952-134513069518848 - main.py:369 - RESPONSE: GET /sas-flows/c0f40994-8807-4de8-9bc0-65fbab216e71/state - STATUS 404 (took: 0.0002s)
+INFO:     127.0.0.1:42888 - "GET /sas-flows/c0f40994-8807-4de8-9bc0-65fbab216e71/state HTTP/1.1" 404 Not Found

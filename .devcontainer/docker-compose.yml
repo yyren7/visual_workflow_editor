@@ -12,11 +12,10 @@ services:
     environment:
       - DEBUG=1
       - SECRET_KEY=dev_secret_key
-      # - DATABASE_URL=sqlite:///database/flow_editor.db # 注释掉旧的 URL
-      - DATABASE_URL=postgresql+psycopg2://yyren:yyren123123@db:5432/flow_editor_db # 使用服务名 'db'
+      - DATABASE_URL=postgresql+psycopg2://yyren:yyren123123@db:5432/flow_editor_db
     ports:
-      - "8000:8000"
-      - "3000:3000"
+      - "8000:8000"  # 后端端口
+      - "3001:3001"  # 修改：前端端口从3000改为3001
     cap_add:
       - SYS_ADMIN
     devices:

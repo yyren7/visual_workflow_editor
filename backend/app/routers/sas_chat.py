@@ -436,7 +436,14 @@ async def _process_sas_events(
             else:
                 logger.warning(f"[SAS Chat {chat_id}] 未找到现有的checkpoint状态")
         except Exception as state_get_error:
-            logger.warning(f"[SAS Chat {chat_id}] 获取持久化状态失败，将使用默认值: {state_get_error}")
+            error_msg = str(state_get_error)
+            logger.warning(f"[SAS Chat {chat_id}] 获取持久化状态失败，将使用默认值: {error_msg}")
+            
+            # 检查是否是checkpoint数据损坏错误
+            if "'NoneType' object is not a mapping" in error_msg:
+                logger.error(f"[SAS Chat {chat_id}] 检测到损坏的checkpoint数据")
+                logger.error("这表明checkpoint数据中缺少'channel_values'字段")
+                logger.error("建议运行清理脚本: python3 backend/fix_corrupted_checkpoint.py")
         
         # 🔧 根据当前持久化状态设置初始值，避免不正确的重置
         # 特别注意：对于特定的消息类型，可能需要保留更多的状态
@@ -446,7 +453,7 @@ async def _process_sas_events(
         # 所有用户输入都将作为普通输入处理，不再进行关键字匹配批准
         
         graph_input = {
-            "dialog_state": "initial",
+            "dialog_state": current_persistent_state.get("dialog_state", "initial"),  # 🔧 保持当前状态，避免错误重置
             "current_step_description": "Processing your request...",
             "current_user_request": message_content,
             "task_list_accepted": current_persistent_state.get("task_list_accepted", False),      # 🔧 保留持久化状态
@@ -638,9 +645,12 @@ async def _process_sas_events(
                                             "dialog_state": final_state.get("dialog_state"),
                                             "clarification_question": final_state.get("clarification_question"),
                                             "sas_step1_generated_tasks": final_state.get("sas_step1_generated_tasks"),
+                                            "sas_step2_module_steps": final_state.get("sas_step2_module_steps"),  # 添加模块步骤
                                             "task_list_accepted": final_state.get("task_list_accepted"),
                                             "module_steps_accepted": final_state.get("module_steps_accepted"),
-                                            "completion_status": final_state.get("completion_status")
+                                            "completion_status": final_state.get("completion_status"),
+                                            "current_user_request": final_state.get("current_user_request"),  # 添加用户请求
+                                            "revision_iteration": final_state.get("revision_iteration", 0)  # 添加修订次数
                                         },
                                         "trigger": "sas_state_completed"
                                     }
@@ -659,8 +669,16 @@ async def _process_sas_events(
 
     except Exception as e:
         is_error = True
-        error_message = f"Error during SAS LangGraph processing: {str(e)}"
+        error_str = str(e)
+        error_message = f"Error during SAS LangGraph processing: {error_str}"
         logger.error(f"[SAS Chat {chat_id}] {error_message}", exc_info=True)
+        
+        # 检查是否是checkpoint数据损坏错误
+        if "'NoneType' object is not a mapping" in error_str:
+            logger.error(f"[SAS Chat {chat_id}] 检测到损坏的checkpoint数据")
+            logger.error("建议运行清理脚本: python3 backend/fix_corrupted_checkpoint.py")
+            error_message = f"Checkpoint data corrupted for thread {chat_id}. Please contact administrator."
+        
         error_data = {"message": error_message, "stage": "sas_execution"}
         try:
             await event_broadcaster.broadcast_event(chat_id, {"type": "error", "data": error_data})
@@ -727,10 +745,17 @@ async def _process_sas_events(
                 event_data["data"]["final_state"] = {
                     "dialog_state": state_to_send.get("dialog_state"),
                     "sas_step1_generated_tasks": sas_step1_tasks,
+                    "sas_step2_module_steps": state_to_send.get("sas_step2_module_steps"),  # 添加关键的模块步骤字段
                     "task_list_accepted": state_to_send.get("task_list_accepted"),
                     "module_steps_accepted": state_to_send.get("module_steps_accepted"),
                     "completion_status": state_to_send.get("completion_status"),
-                    "clarification_question": state_to_send.get("clarification_question")
+                    "clarification_question": state_to_send.get("clarification_question"),
+                    "current_user_request": state_to_send.get("current_user_request"),  # 添加用户请求
+                    "revision_iteration": state_to_send.get("revision_iteration", 0),  # 添加修订次数
+                    "final_flow_xml_path": state_to_send.get("final_flow_xml_path"),  # 添加最终XML文件路径
+                    "final_flow_xml_content": state_to_send.get("final_flow_xml_content"),  # 添加最终XML内容
+                    "merged_task_flows_dir": state_to_send.get("merged_task_flows_dir"),  # 添加时间戳目录路径
+                    "concatenated_flow_output_dir": state_to_send.get("concatenated_flow_output_dir")  # 添加输出目录路径
                 }
                 logger.info(f"[SAS Chat {chat_id}] Including final state in processing_complete: {state_to_send.get('dialog_state')}")
             
@@ -958,7 +983,29 @@ async def sas_get_state(
                     retry_delay *= 2  # 指数退避
                     
             except Exception as retry_error:
-                logger.warning(f"Attempt {attempt + 1} failed for thread {chat_id}: {retry_error}")
+                error_msg = str(retry_error)
+                logger.warning(f"Attempt {attempt + 1} failed for thread {chat_id}: {error_msg}")
+                
+                # 检查是否是checkpoint数据损坏错误
+                if "'NoneType' object is not a mapping" in error_msg:
+                    logger.error(f"Detected corrupted checkpoint data for thread {chat_id}")
+                    logger.error("This indicates missing 'channel_values' in checkpoint data")
+                    logger.error("Consider running cleanup script: python3 backend/fix_corrupted_checkpoint.py")
+                    
+                    # 对于损坏数据，直接返回默认状态而不是重试
+                    logger.info(f"Returning default state due to corrupted checkpoint for thread {chat_id}")
+                    return {
+                        "values": {
+                            "dialog_state": "initial",
+                            "messages": [],
+                            "task_list_accepted": False,
+                            "module_steps_accepted": False,
+                            "current_step_description": "Checkpoint data corrupted, using default initial state"
+                        },
+                        "config": {"configurable": {"thread_id": chat_id}},
+                        "metadata": {"source": "default_corrupted_fallback"}
+                    }
+                
                 if attempt < max_retries - 1:
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 2

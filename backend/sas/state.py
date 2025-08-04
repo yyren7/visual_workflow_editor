@@ -89,6 +89,12 @@ class RobotFlowAgentState(BaseModel):
     completion_status: Optional[Literal["completed_success", "completed_partial", "needs_clarification", "error", "processing"]] = Field(None, description="Indicates how the graph concluded its execution for the current call.")
 
     merged_xml_file_paths: Optional[List[str]] = Field(default_factory=list, description="Paths to XML files after merging individual task XMLs.")
+    
+    # Timestamped directory paths to avoid file conflicts
+    merged_task_flows_dir: Optional[str] = Field(None, description="Path to the timestamped directory containing merged task XMLs.")
+    concatenated_flow_output_dir: Optional[str] = Field(None, description="Path to the timestamped directory containing final concatenated XML.")
+    final_flow_xml_path: Optional[str] = Field(None, description="Path to the final concatenated XML file.")
+    final_flow_xml_content: Optional[str] = Field(None, description="Content of the final concatenated XML file.")
 
     class Config:
         arbitrary_types_allowed = True 

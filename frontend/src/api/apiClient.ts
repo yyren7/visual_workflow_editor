@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 // 使用环境变量配置API基础URL，如果不存在则使用默认值
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -39,17 +39,17 @@ apiClient.interceptors.request.use(
 
 // 添加响应拦截器，处理认证错误
 apiClient.interceptors.response.use(
-    (response) => {
+    (response: AxiosResponse) => {
         return response;
     },
-    (error) => {
+    (error: AxiosError) => {
         // 处理401未授权错误
         if (error.response && error.response.status === 401) {
-            console.error('认证失败 (401):', error.config.url);
+            console.error('认证失败 (401):', error.config?.url);
 
             // 可以在这里触发重新认证或跳转到登录页面
             // 如果不是登录请求本身导致的401，可以清除token
-            if (!error.config.url.includes('/users/login')) {
+            if (!error.config?.url?.includes('/users/login')) {
                 console.warn('检测到认证过期，清除token');
                 localStorage.removeItem('access_token');
 

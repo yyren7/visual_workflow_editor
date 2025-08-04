@@ -1,6 +1,8 @@
 module.exports = {
   devServer: {
     port: 3001,
+    host: '0.0.0.0',  // 允许所有IP地址访问
+    allowedHosts: 'all',  // 允许所有主机访问
   },
   webpack: {
     configure: (webpackConfig) => {
