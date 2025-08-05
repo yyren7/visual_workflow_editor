@@ -1,7 +1,7 @@
-declare module '@sentool/fetch-event-source' {
+declare module '@microsoft/fetch-event-source' {
   export interface EventSourceMessage {
     id: string;
-    event: string;
+    event: string; 
     data: string;
     retry?: number;
   }

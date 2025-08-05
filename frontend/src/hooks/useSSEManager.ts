@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { fetchEventSource, EventSourceMessage } from '@sentool/fetch-event-source';
+import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -92,9 +92,9 @@ class SSEConnectionManager {
           retry: event.retry
         });
         
-        if (!eventType || eventType === 'message') {
-          // 忽略未命名事件或标准 'message' 事件，因为我们的应用需要特定的事件类型
-          console.log(`[SSE_MANAGER_DEBUG] Ignoring unnamed or 'message' event for chat ${chatId}. EventType: '${eventType}'`);
+        if (!eventType || eventType === '' || eventType === 'message') {
+          // 忽略未命名事件、空事件或标准 'message' 事件，因为我们的应用需要特定的事件类型
+          console.log(`[SSE_MANAGER_DEBUG] Ignoring unnamed/empty or 'message' event for chat ${chatId}. EventType: '${eventType}'`);
           return;
         }
 
