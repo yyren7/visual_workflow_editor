@@ -132,7 +132,22 @@ export const useAgentStateSync = () => {
         dispatch(setActiveLangGraphStreamFlowId(finalChatIdForSSE));
         
         const newUnsubs: Array<() => void> = [];
-        const eventsToSubscribe: string[] = ['agent_state_updated', 'stream_end', 'processing_complete', 'connection_error', 'server_error_event', 'token', 'tool_start', 'tool_end', 'user_message_saved', 'ping', 'task_progress'];
+        const eventsToSubscribe: string[] = [
+          'agent_state_updated', 
+          'processing_complete', 
+          'connection_error', 
+          'server_error_event', 
+          'token', 
+          'tool_start', 
+          'tool_end', 
+          'user_message_saved', 
+          'ping', 
+          'task_progress',
+          'sas_step2_progress',
+          'task_detail_generation_start',
+          'task_detail_generation_end',
+          'xml_generation_progress'
+        ];
         
         eventsToSubscribe.forEach(eventType => {
           console.log(`[AGENT_SYNC_LOG] Subscribing to SSE event type: '${eventType}' for chat ID: ${finalChatIdForSSE}`);
@@ -175,6 +190,14 @@ export const useAgentStateSync = () => {
                 console.log('[AGENT_SYNC_DEBUG] About to dispatch updateAgentState with:', eventData.agent_state);
                 dispatch(updateAgentState(eventData.agent_state));
                 
+                // 🔧 立即检查dialog_state并重置processing状态
+                const newDialogState = eventData.agent_state.dialog_state;
+                if (newDialogState === 'sas_awaiting_task_list_review' || 
+                    newDialogState === 'sas_awaiting_module_steps_review') {
+                  console.log(`[AGENT_SYNC_LOG] 🎯 Detected awaiting state: ${newDialogState}, resetting processing status`);
+                  dispatch(setProcessingStatus(false));
+                }
+                
                 // 🔧 强制UI重新渲染以确保状态变化生效
                 setTimeout(() => {
                   console.log('[SYNC_FIX] 📊 Redux state after update:', store.getState().flow.agentState?.dialog_state);
@@ -212,40 +235,42 @@ export const useAgentStateSync = () => {
                 }
               }
             } else if (eventType === 'processing_complete') {
-              console.log(`[AGENT_SYNC_LOG] 🎯 Processing complete for chat ${finalChatIdForSSE}. EventData:`, eventData);
-              
-              // 🔧 如果事件数据包含最终状态，优先处理状态更新
-              if (eventData && eventData.final_state) {
-                console.log('[SYNC_FIX] 🔄 Processing complete with final state - updating:', eventData.final_state.dialog_state);
+              console.log(`[AGENT_SYNC_LOG] Processing completed for chat ${finalChatIdForSSE}. EventData:`, eventData);
+              // 处理完成事件 - 确保最终状态被正确同步
+              if (eventData.final_state) {
+                console.log('[AGENT_SYNC_LOG] Syncing final state from processing_complete:', eventData.final_state);
                 dispatch(updateAgentState(eventData.final_state));
                 
-                // 给Redux状态更新一点时间，然后再重置处理状态
-                setTimeout(() => {
-                  console.log('[SYNC_FIX] 📊 Final Redux state after processing complete:', store.getState().flow.agentState?.dialog_state);
-                  
-                  // 重置处理状态，确保前端UI正确更新
-                  dispatch(setProcessingStage(''));
-                  dispatch(setProcessingStatus(false));
-                  
-                  // 强制触发轻量更新以确保UI重新渲染
-                  dispatch(updateAgentState({ 
-                    __forceUpdate: Date.now() 
-                  }));
-                }, 50);
-              } else {
-                console.log('[SYNC_FIX] 🔄 Processing complete without final state - just resetting processing status');
-                
-                // 重置处理状态，确保前端UI正确更新
-                dispatch(setProcessingStage(''));
-                dispatch(setProcessingStatus(false));
-                
-                // 强制触发轻量更新以确保UI重新渲染
-                setTimeout(() => {
-                  dispatch(updateAgentState({ 
-                    __forceUpdate: Date.now() 
-                  }));
-                  console.log('[SYNC_FIX] 📊 Final Redux state after processing complete:', store.getState().flow.agentState?.dialog_state);
-                }, 50);
+                // 如果XML生成完成，显示成功状态
+                if (eventData.final_state.dialog_state === 'final_xml_generated_success') {
+                  console.log('[AGENT_SYNC_LOG] 🎉 XML generation completed successfully!');
+                  dispatch(setProcessingStage('XML生成完成'));
+                }
+              }
+              // 设置处理状态为完成
+              dispatch(setProcessingStatus(false));
+            } else if (eventType === 'task_detail_generation_start') {
+              console.log(`[AGENT_SYNC_LOG] Task detail generation started:`, eventData);
+              // 可以显示具体任务的进度
+            } else if (eventType === 'task_detail_generation_end') {
+              console.log(`[AGENT_SYNC_LOG] Task detail generation ended:`, eventData);
+              // 可以更新任务完成状态
+            } else if (eventType === 'sas_step2_progress') {
+              console.log(`[AGENT_SYNC_LOG] SAS Step 2 progress:`, eventData);
+              if (eventData.status && eventData.details) {
+                dispatch(setProcessingStage(`步骤2: ${eventData.details}`));
+              }
+            } else if (eventType === 'xml_generation_progress') {
+              console.log(`[AGENT_SYNC_LOG] XML generation progress:`, eventData);
+              if (eventData.status === 'starting') {
+                dispatch(setProcessingStage('开始生成XML文件'));
+                dispatch(setProcessingStatus(true));
+              } else if (eventData.status === 'processing_task') {
+                dispatch(setProcessingStage(`生成XML: ${eventData.message} (${eventData.current_task}/${eventData.total_tasks})`));
+                dispatch(setProcessingStatus(true));
+              } else if (eventData.status === 'completed') {
+                dispatch(setProcessingStage('XML文件生成完成'));
+                dispatch(setProcessingStatus(false)); // 🔧 XML生成完成后重置processing状态
               }
             } else if (eventType === 'token') {
               if (typeof eventData === 'string') {
@@ -366,6 +391,46 @@ export const useAgentStateSync = () => {
       console.log(`useAgentStateSync: Detected awaiting state: ${dialogState} for chat ${chatId}. Auto-confirmation logic is currently disabled.`);
     }
   }, [sendAutoConfirmation]);
+
+  // 监控关键状态转换
+  useEffect(() => {
+    if (agentState?.dialog_state) {
+      console.log(`[STATE_MONITOR] Dialog state changed to: ${agentState.dialog_state}`);
+      
+      // 确保每个关键状态都有相应的UI更新
+      switch (agentState.dialog_state) {
+        case 'sas_awaiting_task_list_review':
+          dispatch(setProcessingStage('✅ 任务已生成，请审核'));
+          dispatch(setProcessingStatus(false)); // 🔧 重置processing状态，允许用户操作
+          break;
+        case 'task_list_to_module_steps':
+          dispatch(setProcessingStage('⚙️ 正在生成模块步骤...'));
+          dispatch(setProcessingStatus(true)); // 🔧 设置为处理状态
+          break;
+        case 'sas_awaiting_module_steps_review':
+          dispatch(setProcessingStage('✅ 模块步骤已生成，请审核'));
+          dispatch(setProcessingStatus(false)); // 🔧 重置processing状态，允许用户操作
+          break;
+        case 'sas_generating_individual_xmls':
+          dispatch(setProcessingStage('⚙️ 正在生成XML文件...'));
+          dispatch(setProcessingStatus(true)); // 🔧 设置为处理状态
+          break;
+        case 'sas_individual_xmls_generated_ready_for_mapping':
+          dispatch(setProcessingStage('⚙️ 正在进行参数映射...'));
+          dispatch(setProcessingStatus(true)); // 🔧 继续处理状态
+          break;
+        case 'final_xml_generated_success':
+          dispatch(setProcessingStage('🎉 流程生成完成'));
+          dispatch(setProcessingStatus(false));
+          break;
+        case 'generation_failed':
+        case 'error':
+          dispatch(setProcessingStage('❌ 生成失败'));
+          dispatch(setProcessingStatus(false));
+          break;
+      }
+    }
+  }, [agentState?.dialog_state, dispatch]);
 
   return {
     updateUserInput,

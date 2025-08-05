@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { selectAgentState, selectCurrentFlowId } from '../../../store/slices/flowSlice';
 import { LangGraphInputNodeData, AgentStateFlags } from './types';
@@ -24,11 +24,32 @@ export const useNodeState = (id: string, data: LangGraphInputNodeData) => {
   // Derived state from Redux
   const streamingContent = agentState?.streamingContent || '';
   const processingStage = agentState?.processingStage || '';
-  const isProcessing = (agentState?.isProcessingUserInput === true) || 
-    (!!processingStage && 
-     processingStage !== 'Processing Complete' && 
-     processingStage !== '' && 
-     !processingStage.startsWith('Error'));
+  
+  // 🔧 重构isProcessing逻辑：优先基于isProcessingUserInput，其次检查dialog_state
+  const isProcessing = useMemo(() => {
+    // 如果明确设置了isProcessingUserInput，则使用它
+    if (agentState?.isProcessingUserInput !== undefined) {
+      return agentState.isProcessingUserInput;
+    }
+    
+    // 否则基于dialog_state判断
+    const dialogState = agentState?.dialog_state;
+    const awaitingStates = [
+      'sas_awaiting_task_list_review',
+      'sas_awaiting_module_steps_review',
+      'final_xml_generated_success',
+      'generation_failed',
+      'error'
+    ];
+    
+    // 等待状态和完成状态不应被视为processing
+    if (awaitingStates.includes(dialogState)) {
+      return false;
+    }
+    
+    // 其他有明确dialog_state的情况视为processing
+    return !!dialogState && dialogState !== 'initial';
+  }, [agentState?.isProcessingUserInput, agentState?.dialog_state]);
 
   // Operation chat ID
   const operationChatId = data.flowId || reduxCurrentFlowId;

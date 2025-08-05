@@ -444,6 +444,28 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
         _nested_block_data_no_current_val += 1
         return str(val_to_return)
 
+    # 尝试从状态中获取chat_id，如果没有则为None
+    chat_id = getattr(state, 'current_chat_id', None) or getattr(state, 'thread_id', None)
+    
+    # 添加XML生成进度事件广播
+    async def _send_xml_generation_progress_event(chat_id: str, progress_info: dict):
+        """发送XML生成进度事件，避免SSE超时"""
+        try:
+            from ..event_broadcaster import event_broadcaster
+            await event_broadcaster.broadcast_event(chat_id, {
+                "type": "xml_generation_progress",
+                "data": progress_info
+            })
+        except Exception as e:
+            logger.warning(f"Failed to send XML generation progress event: {e}")
+
+    if chat_id:
+        await _send_xml_generation_progress_event(chat_id, {
+            "status": "starting", 
+            "message": "开始生成XML文件",
+            "total_tasks": len(tasks_from_state)
+        })
+
     for task_index, task_data in enumerate(tasks_from_state):
         task_name = getattr(task_data, 'name', f'task_{task_index}')
         task_details = getattr(task_data, 'details', [])
@@ -475,6 +497,17 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
 
         logger.info(f"Processing Task '{task_name}' (index {task_index}): {len(task_details)} details found.")
         
+        # 发送任务处理进度事件
+        if chat_id:
+            await _send_xml_generation_progress_event(chat_id, {
+                "status": "processing_task",
+                "message": f"正在处理任务: {task_name}",
+                "current_task": task_index + 1,
+                "total_tasks": len(tasks_from_state),
+                "task_name": task_name,
+                "details_count": len(task_details)
+            })
+
         block_generation_coroutines_for_task = []
         file_save_metadata_for_task = [] 
         
@@ -628,31 +661,25 @@ async def generate_individual_xmls_node(state: RobotFlowAgentState, llm: Optiona
             state.generated_node_xmls.append(result_info)
 
     # After processing all tasks
-    if overall_errors_in_processing:
-        logger.error("One or more errors occurred during the generation of individual XML blocks.")
-        state.is_error = True 
-        
-        # 收集具体的错误信息
-        failed_blocks = [xml_file for xml_file in state.generated_node_xmls if xml_file.status == "failure"]
-        error_details = []
-        for failed_block in failed_blocks[:3]:  # 只显示前3个错误，避免信息过多
-            error_details.append(f"- {failed_block.type}: {failed_block.error_message}")
-        
-        if not state.error_message:
-            if error_details:
-                detailed_errors = "\n".join(error_details)
-                if len(failed_blocks) > 3:
-                    detailed_errors += f"\n- ...以及其他 {len(failed_blocks) - 3} 个错误"
-                state.error_message = f"XML生成过程中发生错误:\n{detailed_errors}"
-            else:
-                state.error_message = "XML生成过程中发生未知错误，请检查日志以获取更多信息。"
-        
+    if overall_errors_in_processing: 
+        logger.warning("Some individual XML blocks had errors during generation.")
+        state.error_message = "One or more individual XML blocks failed to generate properly."
+        state.is_error = True
         state.completion_status = "error" 
         state.dialog_state = "generation_failed"
     else:
         logger.info("All individual XML blocks for all tasks were generated and saved successfully.")
         state.dialog_state = "sas_individual_xmls_generated_ready_for_mapping" 
         state.completion_status = "processing"
+        
+        # 发送XML生成完成事件
+        if chat_id:
+            await _send_xml_generation_progress_event(chat_id, {
+                "status": "completed",
+                "message": "XML文件生成完成",
+                "total_blocks_generated": len([xml for xml in state.generated_node_xmls if xml.status == "success"]),
+                "total_blocks_failed": len([xml for xml in state.generated_node_xmls if xml.status != "success"])
+            })
     
     return state
 

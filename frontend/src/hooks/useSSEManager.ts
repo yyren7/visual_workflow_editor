@@ -2,6 +2,23 @@ import { useCallback, useRef, useEffect } from 'react';
 import { fetchEventSource, EventSourceMessage } from '@sentool/fetch-event-source';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * SSE连接管理器 - 支持延迟关闭机制防止事件丢失
+ * 
+ * 🚨 问题背景：
+ * 在快速处理流程中（如XML生成），后端可能在前端重新订阅SSE事件之前就完成了处理，
+ * 导致最终状态事件丢失，前端卡在中间状态。
+ * 
+ * 🔧 解决方案：延迟关闭机制
+ * - 当没有订阅者时，不立即关闭SSE连接
+ * - 设置3秒延迟，给事件处理和重新订阅留出时间
+ * - 如果延迟期间有新订阅者，取消关闭操作
+ * - 延迟期结束后再次检查，无订阅者才真正关闭
+ * 
+ * 🛠️ 调试工具：
+ * 在浏览器控制台使用 SSEDebug 对象进行调试和故障排除
+ */
+
 // 临时的占位类型
 export type SSEState = 'CONNECTING' | 'OPEN' | 'CLOSED' | 'ERROR';
 
@@ -11,6 +28,8 @@ class SSEConnectionManager {
   private activeConnections: Map<string, AbortController> = new Map();
   private subscribers: Map<string, Map<string, Set<(data: any) => void>>> = new Map();
   private cleanupTimers: Map<string, NodeJS.Timeout> = new Map();
+  // 延迟关闭配置 - 给事件处理留出时间
+  private readonly CLOSE_DELAY_MS = 3000; // 3秒延迟
   // private connectionPromises: Map<string, Promise<EventSource>> = new Map(); // Potentially useful for concurrent subscriptions to the same new connection, but adds complexity. Let's omit for now.
 
   static getInstance(): SSEConnectionManager {
@@ -124,6 +143,15 @@ class SSEConnectionManager {
     callback: (data: any) => void
   ): () => void {
     console.log(`[SSE_MANAGER_LOG] subscribe called for chat: ${chatId}, eventType: ${eventType}`);
+    
+    // 🔧 如果有延迟关闭定时器，取消它
+    const existingTimer = this.cleanupTimers.get(chatId);
+    if (existingTimer) {
+      console.log(`[SSE_MANAGER_LOG] Cancelling delayed close timer for chat: ${chatId}`);
+      clearTimeout(existingTimer);
+      this.cleanupTimers.delete(chatId);
+    }
+    
     this._ensureConnection(chatId);
 
     if (!this.subscribers.has(chatId)) {
@@ -156,8 +184,37 @@ class SSEConnectionManager {
         currentChatEventSubscribers.forEach(set => totalSubscribersForChat += set.size);
         
         if (totalSubscribersForChat === 0) {
-          console.log(`SSEManager: No more subscribers for any event on chat [${chatId}]. Closing connection.`);
-          this.closeConnection(chatId); // Close if no subscribers left for this chat at all
+          // 🔧 不立即关闭连接，而是设置延迟关闭定时器
+          console.log(`SSEManager: No more subscribers for chat [${chatId}]. Scheduling delayed close in ${this.CLOSE_DELAY_MS}ms.`);
+          
+          // 如果已经有定时器，先清除它
+          const existingTimer = this.cleanupTimers.get(chatId);
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+          }
+          
+          // 设置新的延迟关闭定时器
+          const closeTimer = setTimeout(() => {
+            console.log(`SSEManager: Delayed close timer triggered for chat [${chatId}]. Checking if still no subscribers...`);
+            
+            // 再次检查是否有订阅者（防止在延迟期间有新的订阅）
+            const currentSubscribers = this.subscribers.get(chatId);
+            let currentTotalSubscribers = 0;
+            if (currentSubscribers) {
+              currentSubscribers.forEach(set => currentTotalSubscribers += set.size);
+            }
+            
+            if (currentTotalSubscribers === 0) {
+              console.log(`SSEManager: No subscribers found after delay. Closing connection for chat [${chatId}].`);
+              this.closeConnection(chatId);
+            } else {
+              console.log(`SSEManager: Found ${currentTotalSubscribers} subscribers after delay. Keeping connection alive for chat [${chatId}].`);
+            }
+            
+            this.cleanupTimers.delete(chatId);
+          }, this.CLOSE_DELAY_MS);
+          
+          this.cleanupTimers.set(chatId, closeTimer);
         }
       }
     };
@@ -165,6 +222,15 @@ class SSEConnectionManager {
 
   closeConnection(chatId: string): void {
     console.log(`[SSE_MANAGER_LOG] closeConnection called for chat: ${chatId}`);
+    
+    // 🔧 清理延迟关闭定时器
+    const existingTimer = this.cleanupTimers.get(chatId);
+    if (existingTimer) {
+      console.log(`[SSE_MANAGER_LOG] Clearing delayed close timer for chat: ${chatId}`);
+      clearTimeout(existingTimer);
+      this.cleanupTimers.delete(chatId);
+    }
+    
     const controller = this.activeConnections.get(chatId);
     if (controller) {
       console.log('[SSE_MANAGER_LOG] Aborting fetchEventSource connection for chat:', chatId);
@@ -180,6 +246,15 @@ class SSEConnectionManager {
 
   closeAllConnections(): void {
     console.log('SSEManager: Closing all connections, count:', this.activeConnections.size);
+    
+    // 🔧 清理所有延迟关闭定时器
+    console.log('SSEManager: Clearing all delayed close timers, count:', this.cleanupTimers.size);
+    this.cleanupTimers.forEach((timer, chatId) => {
+      console.log(`[SSE_MANAGER_LOG] Clearing delayed close timer for chat: ${chatId}`);
+      clearTimeout(timer);
+    });
+    this.cleanupTimers.clear();
+    
     const chatIds = Array.from(this.activeConnections.keys());
     chatIds.forEach(chatId => {
       this.closeConnection(chatId);
@@ -188,6 +263,33 @@ class SSEConnectionManager {
 
   hasActiveConnection(chatId: string): boolean {
     return this.activeConnections.has(chatId);
+  }
+
+  // 🔧 调试和配置方法
+  getConnectionInfo(chatId?: string): any {
+    if (chatId) {
+      return {
+        hasConnection: this.activeConnections.has(chatId),
+        hasTimer: this.cleanupTimers.has(chatId),
+        subscriberCount: this.subscribers.get(chatId)?.size || 0,
+        subscribers: this.subscribers.get(chatId) ? 
+          Array.from(this.subscribers.get(chatId)!.keys()) : []
+      };
+    }
+    
+    return {
+      totalConnections: this.activeConnections.size,
+      totalTimers: this.cleanupTimers.size,
+      totalChats: this.subscribers.size,
+      chats: Array.from(this.subscribers.keys()),
+      closeDelayMs: this.CLOSE_DELAY_MS
+    };
+  }
+  
+  // 🔧 强制立即关闭（绕过延迟）
+  forceCloseConnection(chatId: string): void {
+    console.log(`[SSE_MANAGER_LOG] Force closing connection for chat: ${chatId}`);
+    this.closeConnection(chatId);
   }
 }
 
@@ -227,11 +329,59 @@ export const useSSEManager = () => {
     return managerRef.current.hasActiveConnection(chatId);
   }, []);
 
+  const getConnectionInfo = useCallback((chatId?: string) => {
+    return managerRef.current.getConnectionInfo(chatId);
+  }, []);
+
+  const forceCloseConnection = useCallback((chatId: string) => {
+    managerRef.current.forceCloseConnection(chatId);
+  }, []);
+
   return {
     subscribe,
     closeConnection,
     hasActiveConnection,
+    getConnectionInfo, // 🔧 新增：获取连接信息用于调试
+    forceCloseConnection, // 🔧 新增：强制关闭连接
     // Expose closeAllConnections if manual global cleanup is needed, e.g. on user logout
     // closeAllConnections: () => managerRef.current.closeAllConnections() 
   };
 }; 
+
+// 🔧 全局调试工具 - 暴露到window对象以便在控制台调试
+if (typeof window !== 'undefined') {
+  const manager = SSEConnectionManager.getInstance();
+  
+  (window as any).SSEDebug = {
+    // 获取所有连接信息
+    getInfo: (chatId?: string) => manager.getConnectionInfo(chatId),
+    
+    // 强制关闭连接
+    forceClose: (chatId: string) => manager.forceCloseConnection(chatId),
+    
+    // 关闭所有连接
+    closeAll: () => manager.closeAllConnections(),
+    
+    // 检查连接状态
+    isConnected: (chatId: string) => manager.hasActiveConnection(chatId),
+    
+    // 打印详细状态
+    printStatus: () => {
+      const info = manager.getConnectionInfo();
+      console.log('🔍 SSE Manager Status:', info);
+      
+      info.chats.forEach((chatId: string) => {
+        const chatInfo = manager.getConnectionInfo(chatId);
+        console.log(`📡 Chat ${chatId}:`, chatInfo);
+      });
+    }
+  };
+  
+  console.log('🛠️ SSE调试工具已加载! 使用方法:');
+  console.log('- SSEDebug.getInfo() - 获取所有连接信息');
+  console.log('- SSEDebug.getInfo(chatId) - 获取特定chat的连接信息');
+  console.log('- SSEDebug.printStatus() - 打印详细状态');
+  console.log('- SSEDebug.forceClose(chatId) - 强制关闭连接');
+  console.log('- SSEDebug.closeAll() - 关闭所有连接');
+  console.log('- SSEDebug.isConnected(chatId) - 检查连接状态');
+} 

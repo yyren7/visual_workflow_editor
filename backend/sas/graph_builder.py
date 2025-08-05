@@ -730,7 +730,7 @@ def sas_merge_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     
     return state.model_dump(exclude_none=True)
 
-def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
+async def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
     """
     Concatenates merged task XML files into a single final robot program XML file.
     This step creates the final executable XML that contains all tasks.
@@ -790,8 +790,14 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
             state.is_error = True; state.error_message = f"Failed to save empty final XML: {e_save}"; logger.error(state.error_message, exc_info=True)
             state.dialog_state = "sas_processing_error"; state.completion_status = "error"
             return state.model_dump(exclude_none=True)
+        
+        # 🔧 空XML情况下也延迟1秒，给前端SSE连接准备时间
+        logger.info("🔧 空XML生成完成，延迟1秒发送最终状态事件，确保前端SSE准备就绪...")
+        await asyncio.sleep(1.0)
+        
         state.dialog_state = "final_xml_generated_success"
         state.completion_status = "completed_success"
+        logger.info("🎉 最终状态已设置：final_xml_generated_success (空XML情况)")
         return state.model_dump(exclude_none=True)
 
     ET.register_namespace("", CONCAT_XML_BLOCKLY_XMLNS)
@@ -833,8 +839,14 @@ def sas_concatenate_xml_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         state.final_flow_xml_path = str(final_output_file)
         state.final_flow_xml_content = final_xml_str_with_decl
         logger.info(f"ConcatenateXML: Successfully concatenated XML files to {final_output_file}")
+        
+        # 🔧 XML生成完成延迟1秒，给前端SSE连接准备时间
+        logger.info("🔧 XML生成完成，延迟1秒发送最终状态事件，确保前端SSE准备就绪...")
+        await asyncio.sleep(1.0)
+        
         state.dialog_state = "final_xml_generated_success"
         state.completion_status = "completed_success"
+        logger.info("🎉 最终状态已设置：final_xml_generated_success")
     except Exception as e:
         logger.error(f"ConcatenateXML: Error writing final concatenated XML to {final_output_file}: {e}")
         state.is_error = True
