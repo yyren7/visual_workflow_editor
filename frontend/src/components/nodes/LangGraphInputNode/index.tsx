@@ -23,7 +23,8 @@ import {
   AutoFixHigh as ProcessingIcon,
   ErrorOutline as ErrorIcon,
   InfoOutlined as InfoIcon,
-  AccessTime as AccessTimeIcon
+  AccessTime as AccessTimeIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 
 import { LangGraphInputNodeProps, Task } from './types';
@@ -132,6 +133,48 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
     setIsEditing(false);
     setErrorMessage(null);
   }, [getAgentStateFlags, setInput, setShowAddForm, setIsEditing, setErrorMessage]);
+
+  // Download XML file handler
+  const handleDownloadXML = useCallback(() => {
+    if (!agentState?.final_flow_xml_content) {
+      setErrorMessage(t('nodes.input.xmlDownloadError'));
+      return;
+    }
+
+    try {
+      // 创建文件名（带时间戳）
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const taskName = agentState?.current_user_request?.slice(0, 20).replace(/[^a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]/g, '_') || 'robot_flow';
+      const fileName = `${taskName}_${timestamp}.xml`;
+      
+      // 创建Blob对象
+      const blob = new Blob([agentState.final_flow_xml_content], { 
+        type: 'application/xml;charset=utf-8' 
+      });
+      
+      // 创建下载链接
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.display = 'none';
+      
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      
+      // 清理
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log(`XML文件已下载: ${fileName}`);
+      // 可以在这里添加成功提示，比如toast通知
+      
+    } catch (error) {
+      console.error('XML下载失败:', error);
+      setErrorMessage(t('nodes.input.xmlDownloadFailed'));
+    }
+  }, [agentState, setErrorMessage, t]);
 
   // Event prevention - only for wheel events when selected
   const stopWheelPropagation = (e: React.WheelEvent) => e.stopPropagation();
@@ -605,6 +648,7 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                 <Button 
                   size="small" 
                   variant="outlined" 
+                  startIcon={<DownloadIcon />}
                   sx={{ 
                     fontSize: '0.8rem', 
                     color: '#4caf50', 
@@ -614,11 +658,9 @@ export const LangGraphInputNode: React.FC<LangGraphInputNodeProps> = ({ id, data
                       backgroundColor: 'rgba(76, 175, 80, 0.1)'
                     }
                   }}
-                  onClick={() => {
-                    console.log('View XML file:', agentState?.final_flow_xml_path);
-                  }}
+                  onClick={handleDownloadXML}
                 >
-                  {t('nodes.input.viewResult')}
+                  {t('nodes.input.downloadXmlFile')}
                 </Button>
                 <Button 
                   size="small" 
