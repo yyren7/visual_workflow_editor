@@ -37,7 +37,7 @@ def get_dynamic_output_path(flow_id: str, username: str) -> str:
 DEFAULT_CONFIG = {
     "GENERAL_INSTRUCTION_INTRO": "As an intelligent agent for creating robot process files, you need to perform the following multi-step process to generate robot control XML files based on the context and the user's latest natural language input:",
     "NODE_TEMPLATE_DIR_PATH": os.getenv("NODE_TEMPLATE_DIR_PATH", "/workspace/database/node_database/quick-fcpr-new"), # Read from environment variable, use default value if not set
-    "OUTPUT_DIR_PATH": "/workspace/database/flow_database/result/example_run/",
+    "OUTPUT_DIR_PATH": None,  # 强制设为None，禁止使用固定的example_run路径，必须动态生成
     "EXAMPLE_FLOW_STRUCTURE_DOC_PATH": "/workspace/database/document_database/flow.xml",
     "BLOCK_ID_PREFIX_EXAMPLE": "block_uuid",
     "RELATION_FILE_NAME_ACTUAL": "relation.xml",

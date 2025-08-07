@@ -50,7 +50,7 @@ from backend.config import DB_CONFIG # ADDED - Assuming DB_CONFIG is here or acc
 
 # 导入配置 (Keep this)
 from backend.config.base import LOG_DIR # LOG_DIR is now primarily for reference if needed
-from backend.config.app_config import APP_CONFIG
+from backend.config.app_config import APP_CONFIG, is_cors_origin_allowed
 
 # 创建logs目录 (This is now handled by logging_config.py or base.py, can be removed or kept for explicitness if preferred)
 # log_dir = Path(LOG_DIR)
@@ -378,6 +378,7 @@ async def log_requests_detailed(request: Request, call_next):
 # CORS configuration (Keep this section)
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"^http://192\.168\.16\.\d{1,3}:(3000|3001|8000|8080)$|^http://(localhost|127\.0\.0\.1):(3000|3001|8000|8080)$",
     allow_origins=APP_CONFIG['CORS_ORIGINS'],
     allow_credentials=APP_CONFIG.get('CORS_CREDENTIALS', True),
     allow_methods=APP_CONFIG.get('CORS_METHODS', ["*"]),

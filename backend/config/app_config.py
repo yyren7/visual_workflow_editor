@@ -30,6 +30,40 @@ def get_cors_origins() -> list[str]:
             "http://127.0.0.1:8000"  # 后端自己
         ]
 
+def is_cors_origin_allowed(origin: str) -> bool:
+    """
+    动态验证CORS origin是否被允许
+    支持：
+    1. 静态配置的origins列表
+    2. 192.168.16.*网段的所有地址
+    """
+    import re
+    
+    # 获取静态配置的origins
+    allowed_origins = get_cors_origins()
+    
+    # 如果配置了 "*"，允许所有源
+    if "*" in allowed_origins:
+        return True
+    
+    # 检查是否在静态列表中
+    if origin in allowed_origins:
+        return True
+    
+    # 检查是否是192.168.16.*网段（支持常用端口）
+    pattern = r'^http://192\.168\.16\.\d{1,3}:(3000|3001|8000|8080)$'
+    if re.match(pattern, origin):
+        return True
+    
+    # 检查环境变量中是否明确配置了192.168.16.*模式
+    origins_str = os.getenv("CORS_ORIGINS", "")
+    if "192.168.16.*" in origins_str:
+        subnet_pattern = r'^http://192\.168\.16\.\d{1,3}:\d+$'
+        if re.match(subnet_pattern, origin):
+            return True
+    
+    return False
+
 # 应用配置
 APP_CONFIG = {
     "PROJECT_NAME": "Flow Editor",

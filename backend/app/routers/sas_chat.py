@@ -533,6 +533,28 @@ async def _process_sas_events(
         else:
             logger.info(f"[SAS Chat {chat_id}] 用户输入作为普通消息处理，无自动批准")
 
+        # --- START OF MODIFICATION ---
+        # 调试：打印传入的config内容
+        logger.info(f"[SAS Chat {chat_id}] DEBUG: 传入的config内容: {config}")
+        logger.info(f"[SAS Chat {chat_id}] DEBUG: flow_id: {flow_id}")
+        
+        # 从传入的配置中注入用户信息到graph_input
+        if config and "user_info" in config:
+            user_info = config["user_info"]
+            username = user_info.get("username")
+            logger.info(f"[SAS Chat {chat_id}] DEBUG: 从config中获取到username: {username}")
+            if username:
+                if "config" not in graph_input:
+                    graph_input["config"] = {}
+                graph_input["config"]["CURRENT_USERNAME"] = username
+                graph_input["config"]["CURRENT_FLOW_ID"] = flow_id
+                logger.info(f"[SAS Chat {chat_id}] ✅ 已从task_config注入用户信息: user={username}, flow={flow_id}")
+            else:
+                logger.warning(f"[SAS Chat {chat_id}] ❌ username为空，无法注入用户信息")
+        else:
+            logger.warning(f"[SAS Chat {chat_id}] ❌ config为空或不包含user_info: config={config}")
+        # --- END OF MODIFICATION ---
+
         # 从外部传入的config中获取output_dir_path
         output_dir_path = config.get("output_dir_path")
         if output_dir_path:
@@ -789,8 +811,24 @@ async def sas_chat_events_post(
         # Extract flow_id from chat_id if possible (for state sync)
         flow_id = chat_id  # Assuming chat_id is flow_id for SAS
         
-        # Start background task to process SAS events using the global broadcaster
-        asyncio.create_task(_process_sas_events(chat_id, message_content, sas_app, flow_id))
+        # --- START OF MODIFICATION ---
+        # 为后台任务创建配置，包含用户信息
+        task_config = {
+            "configurable": {"thread_id": chat_id},
+            "user_info": {
+                "username": user.username,
+            }
+        }
+        
+        # 启动后台任务，并传递包含用户信息的配置
+        asyncio.create_task(_process_sas_events(
+            chat_id, 
+            message_content, 
+            sas_app, 
+            flow_id, 
+            config=task_config
+        ))
+        # --- END OF MODIFICATION ---
         
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in request body.")

@@ -115,27 +115,40 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
             except Exception as context_e:
                 logger.warning(f"从上下文获取流程图ID失败: {context_e}")
         
-        # 如果有流程图ID和用户名，生成动态输出路径
-        if current_flow_id and current_username and current_username != "default_user":
-            from backend.sas.prompt_loader import get_dynamic_output_path
-            dynamic_output_path = get_dynamic_output_path(current_flow_id, current_username)
-            logger.info(f"生成动态输出路径: {dynamic_output_path}")
-            
-            # 更新配置中的输出路径
-            merged_config["OUTPUT_DIR_PATH"] = dynamic_output_path
-            state.config = merged_config
-            
-            # 设置流程图和用户信息到状态中（用于后续节点使用）
-            state.config["CURRENT_FLOW_ID"] = current_flow_id
-            state.config["CURRENT_USERNAME"] = current_username
-            
-            logger.info(f"已设置动态输出路径和用户信息到配置中")
-            
-        else:
-            logger.warning(f"未能获取完整的用户信息 (username: {current_username}, flow_id: {current_flow_id})，将使用默认输出路径")
+        # 强制生成动态输出路径，不允许使用examplerun默认路径
+        # 为缺失的信息提供默认值
+        safe_username = current_username or "unknown_user"
+        safe_flow_id = current_flow_id or f"flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        from backend.sas.prompt_loader import get_dynamic_output_path
+        dynamic_output_path = get_dynamic_output_path(safe_flow_id, safe_username)
+        logger.info(f"强制生成动态输出路径: {dynamic_output_path} (username: {safe_username}, flow_id: {safe_flow_id})")
+        
+        # 更新配置中的输出路径
+        merged_config["OUTPUT_DIR_PATH"] = dynamic_output_path
+        state.config = merged_config
+        
+        # 设置流程图和用户信息到状态中（用于后续节点使用）
+        state.config["CURRENT_FLOW_ID"] = safe_flow_id
+        state.config["CURRENT_USERNAME"] = safe_username
+        
+        logger.info(f"已强制设置动态输出路径和用户信息到配置中，禁止使用examplerun路径")
             
     except Exception as e:
-        logger.warning(f"设置动态输出路径失败，将使用默认路径: {e}")
+        logger.error(f"设置动态输出路径失败，但将强制重试: {e}")
+        # 即使异常也要强制使用动态路径，不允许回退到examplerun
+        try:
+            fallback_username = "fallback_user"
+            fallback_flow_id = f"fallback_flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            from backend.sas.prompt_loader import get_dynamic_output_path
+            fallback_dynamic_path = get_dynamic_output_path(fallback_flow_id, fallback_username)
+            merged_config["OUTPUT_DIR_PATH"] = fallback_dynamic_path
+            state.config = merged_config
+            
+            logger.warning(f"强制使用回退动态路径: {fallback_dynamic_path}")
+        except Exception as fallback_e:
+            logger.error(f"回退动态路径也失败: {fallback_e}，但仍禁止使用examplerun路径")
     
     # Try to use the existing OUTPUT_DIR_PATH from the main graph's config
     provided_output_dir_str = merged_config.get("OUTPUT_DIR_PATH")
@@ -173,11 +186,21 @@ def initialize_state_node(state: RobotFlowAgentState) -> Dict[str, Any]:
         logger.info("'OUTPUT_DIR_PATH' was not found in merged_config or was empty. Will fallback.")
 
     if not run_output_directory_set:
-        base_output_dir_str = merged_config.get("RUN_BASE_OUTPUT_DIR", "backend/tests/llm_sas_test") # Original fallback base
-        effective_base_output_dir = Path(base_output_dir_str)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        run_specific_dir_name = f"run_sas_subgraph_{timestamp}"
-        run_output_dir = effective_base_output_dir / run_specific_dir_name
+        # 强制使用动态路径，不允许回退到默认测试路径
+        logger.warning("run_output_directory未设置，强制生成最终回退动态路径")
+        final_fallback_username = "emergency_user"
+        final_fallback_flow_id = f"emergency_flow_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        
+        try:
+            from backend.sas.prompt_loader import get_dynamic_output_path
+            final_dynamic_path = get_dynamic_output_path(final_fallback_flow_id, final_fallback_username)
+            run_output_dir = Path(final_dynamic_path)
+            logger.info(f"使用最终回退动态路径: {run_output_dir}")
+        except Exception as final_e:
+            logger.error(f"最终回退动态路径生成失败: {final_e}，使用基础动态路径结构")
+            # 如果连动态路径生成都失败，至少确保不使用examplerun
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            run_output_dir = Path(f"/workspace/database/flow_database/result/emergency_user/emergency_flow_{timestamp}")
         
         logger.warning(f"FALLBACK: 'OUTPUT_DIR_PATH' ('{provided_output_dir_str}') was not valid or usable. Creating new run-specific directory in fallback location: {run_output_dir}")
         try:
