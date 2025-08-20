@@ -1,0 +1,118 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8F4FD',
+    'primaryTextColor': '#2C3E50',
+    'primaryBorderColor': '#3498DB',
+    'lineColor': '#34495E',
+    'secondaryColor': '#F8F9FA',
+    'tertiaryColor': '#ECF0F1',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8F4FD',
+    'secondBkg': '#D5DBDB',
+    'tertiaryBkg': '#FADBD8'
+  }
+}}%%
+
+flowchart TD
+    %% 初始化節点
+    A["`**[初期化] 状態初期化**
+    initialize_state
+    ■ システム準備・設定`"]
+    
+    %% 主要処理ノード
+    B["`**[生成] タスクリスト生成**
+    sas_user_input_to_task_list
+    ▼ ユーザー入力解析処理`"]
+    
+    C["`**[審査] レビューと修正**
+    sas_review_and_refine
+    ◆ 品質管理・承認チェック`"]
+    
+    D["`**[構築] モジュールステップ作成**
+    sas_task_list_to_module_steps
+    ● 処理ステップ定義・構築`"]
+    
+    %% XML処理ノード
+    F["`**[XML] 個別XML生成**
+    generate_individual_xmls
+    □ XMLファイル個別作成`"]
+    
+    G["`**[連携] パラメータマッピング**
+    sas_parameter_mapping
+    ◇ データ関連付け処理`"]
+    
+    H["`**[統合] XML統合処理**
+    sas_merge_xmls
+    ▲ 複数XMLファイル統合`"]
+    
+    I["`**[完成] XML最終連結**
+    sas_concatenate_xmls
+    ★ 最終出力ファイル生成`"]
+    
+    %% 終了ノード
+    J["`**[終了] 処理完了**
+    END
+    ◎ 正常終了・出力完成`"]
+
+    %% メインフロー（太い矢印）
+    A ==>|">> 新規フロー開始"| B
+    A ==>|">> レビュー状態復旧"| C
+    B ==> C
+    C ==>|">> タスク承認済み"| D
+    D ==> C
+    C ==>|">> 生成開始承認"| F
+    F ==> G
+    G ==> H
+    H ==> I
+    I ==>|">> final_xml_generated_success"| J
+
+    %% フィードバックループ
+    C -.->|"<< タスク再生成要求"| B
+
+    %% エラーハンドリング（点線）
+    B -.->|"× エラー・失敗"| J
+    D -.->|"× エラー・失敗"| J
+    F -.->|"× エラー・失敗"| J
+    G -.->|"× エラー・失敗"| J
+    H -.->|"× エラー・失敗"| J
+    I -.->|"× エラー・失敗"| J
+    C -.->|"|| ユーザー待機<br/>sas_awaiting_*/異常"| J
+
+    %% スタイリング
+    classDef initNode fill:#E8F4FD,stroke:#3498DB,stroke-width:4px,color:#2C3E50,font-weight:bold
+    classDef processNode fill:#D5DBDB,stroke:#2ECC71,stroke-width:3px,color:#2C3E50,font-weight:bold
+    classDef reviewNode fill:#FADBD8,stroke:#E74C3C,stroke-width:4px,color:#2C3E50,font-weight:bold
+    classDef xmlNode fill:#F4E8D5,stroke:#F39C12,stroke-width:3px,color:#2C3E50,font-weight:bold
+    classDef endNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold
+
+    %% ノードへのスタイル適用
+    class A initNode
+    class B,D processNode
+    class C reviewNode
+    class F,G,H,I xmlNode
+    class J endNode
+
+    %% サブグラフでグループ化
+    subgraph USER_INTERACTION ["`◆◆ ユーザー交互処理ゾーン ◆◆`"]
+        direction TB
+        C
+    end
+
+    subgraph AUTO_PROCESS ["`■■ 自動処理ゾーン ■■`"]
+        direction TB
+        B
+        D
+    end
+
+    subgraph XML_GENERATION ["`□□ XML生成処理ゾーン □□`"]
+        direction TB
+        F
+        G
+        H
+        I
+    end
+
+    %% サブグラフのスタイリング
+    USER_INTERACTION ~~~ AUTO_PROCESS
+    AUTO_PROCESS ~~~ XML_GENERATION 

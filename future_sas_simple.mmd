@@ -1,0 +1,24 @@
+flowchart TB
+    subgraph Future ["将来のシステム構成"]
+        direction TB
+        
+        subgraph AI ["🧠 拡張AI層"]
+            RAG["🔍 RAG拡張<br/>ベクトルDB"]
+            Memory["🧠 長期記憶<br/>学習ループ"]
+        end
+        
+        subgraph Smart ["⚙️ スマート処理層"]
+            Enhanced["🚀 強化LangGraph<br/>適応ワークフロー"]
+            Teaching["🎯 自動ティーチング<br/>センサー統合"]
+        end
+        
+        AI --> Enhanced
+        Enhanced --> Teaching
+        Teaching --> Memory
+    end
+    
+    classDef ai fill:#e8f5e8,stroke:#2e7d32,color:#000,stroke-width:2px
+    classDef smart fill:#f3e5f5,stroke:#7b1fa2,color:#000,stroke-width:2px
+    
+    class AI,RAG,Memory ai
+    class Smart,Enhanced,Teaching smart

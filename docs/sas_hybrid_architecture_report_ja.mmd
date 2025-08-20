@@ -1,0 +1,111 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#f8f9fa',
+    'primaryTextColor': '#1a1a1a',
+    'primaryBorderColor': '#2c3e50',
+    'lineColor': '#34495e',
+    'secondaryColor': '#ecf0f1',
+    'tertiaryColor': '#e8f4f8',
+    'background': '#ffffff',
+    'mainBkg': '#f8f9fa',
+    'secondBkg': '#ecf0f1',
+    'tertiaryBkg': '#e8f4f8',
+    'clusterBkg': '#f1f2f6',
+    'altBackground': '#f8f9fa'
+  }
+}}%%
+
+flowchart TB
+    %% ========================================
+    %% SAS LangGraphハイブリッド生成アーキテクチャ
+    %% ========================================
+    
+    %% 入力層
+    INPUT["`**自然言語入力**<br/>Natural Language Input<br/>📝 ユーザー要求記述`"]
+    
+    %% Phase 1: LLM創造的処理ゾーン
+    subgraph CREATIVE_ZONE ["`🧠 **フェーズ1: LLM創造的処理ゾーン**<br/>Creative Intelligence Processing Zone`"]
+        direction TB
+        
+        STEP1["`**Step1: 意図解析**<br/>user_input_to_task_list<br/>━━━━━━━━━━━━━━<br/>📋 自然言語 → 構造化タスクリスト<br/>⚡ 最適化: テンプレート化プロンプト<br/>🎯 Token削減: 履歴情報除外`"]
+        
+        REVIEW1["`**レビュー1: タスク承認**<br/>review_and_refine<br/>━━━━━━━━━━━━━━<br/>👤 人間審査・品質保証<br/>✅ 承認 / 📝 修正指示`"]
+        
+        STEP2["`**Step2: 詳細展開**<br/>task_list_to_module_steps<br/>━━━━━━━━━━━━━━<br/>🔧 並列処理による実行ステップ生成<br/>⚡ 最適化: 独立コンテキスト処理<br/>🎯 Token削減: タスク別分離実行`"]
+        
+        REVIEW2["`**レビュー2: ステップ承認**<br/>review_and_refine<br/>━━━━━━━━━━━━━━<br/>👤 最終確認・実行許可<br/>✅ 生成開始承認`"]
+    end
+    
+    %% Phase 2: テンプレートエンジン精密処理ゾーン  
+    subgraph TEMPLATE_ZONE ["`⚙️ **フェーズ2: テンプレート精密処理ゾーン**<br/>Template Engine Precision Zone`"]
+        direction TB
+        
+        STEP3["`**Step3: XML個別生成**<br/>generate_individual_xmls<br/>━━━━━━━━━━━━━━<br/>📄 テンプレートベース変換<br/>⚡ LLM使用: なし（完全自動化）<br/>🎯 精度保証: 構文エラー0%`"]
+        
+        STEP4["`**Step4: パラメータマッピング**<br/>parameter_mapping<br/>━━━━━━━━━━━━━━<br/>🔗 論理-物理パラメータ関連付け<br/>⚡ 処理方式: 辞書ベース高速検索<br/>🎯 データ整合性: 自動検証`"]
+        
+        STEP5["`**Step5: XML統合**<br/>merge_xmls<br/>━━━━━━━━━━━━━━<br/>🔄 個別XMLファイル結合<br/>⚡ 処理方式: ストリーミング処理<br/>🎯 メモリ効率: 最適化済み`"]
+        
+        STEP6["`**Step6: 最終連結**<br/>concatenate_xmls<br/>━━━━━━━━━━━━━━<br/>✨ 実行可能プログラム完成<br/>⚡ 処理方式: 完全自動化<br/>🎯 出力品質: 決定論的保証`"]
+    end
+    
+    %% 出力層
+    OUTPUT["`**実行可能XMLプログラム**<br/>Executable Robot Program<br/>🎯 ロボット制御コード`"]
+
+    %% ========================================
+    %% フローの定義
+    %% ========================================
+    
+    %% メインフロー
+    INPUT ==> STEP1
+    STEP1 ==> REVIEW1
+    REVIEW1 ==>|"`✅ **承認**`"| STEP2
+    STEP2 ==> REVIEW2
+    REVIEW2 ==>|"`🚀 **生成開始**`"| STEP3
+    STEP3 ==> STEP4
+    STEP4 ==> STEP5
+    STEP5 ==> STEP6
+    STEP6 ==> OUTPUT
+    
+    %% フィードバックループ
+    REVIEW1 -.->|"`📝 **修正要求**`"| STEP1
+    REVIEW2 -.->|"`📝 **修正要求**`"| STEP2
+
+    %% ========================================
+    %% 技術特性説明サブグラフ
+    %% ========================================
+    
+    subgraph TECH_FEATURES ["`💡 **技術的特徴・最適化戦略**<br/>Technical Features & Optimization Strategy`"]
+        direction TB
+        
+        HYBRID["`**🔀 ハイブリッド分離設計**<br/>━━━━━━━━━━━━━━<br/>**LLM領域**: 創造性・解釈・推論<br/>**テンプレート領域**: 精度・構文・実行`"]
+        
+        TOKEN["`**⚡ Token最適化技術**<br/>━━━━━━━━━━━━━━<br/>• 履歴制限: 最大10メッセージ<br/>• 段階処理: 必要情報のみ伝播<br/>• 並列実行: I/Oバウンド最適化`"]
+        
+        QUALITY["`**🎯 品質保証機構**<br/>━━━━━━━━━━━━━━<br/>• 構文精度: 100%保証<br/>• 人間審査: 2段階レビュー<br/>• 状態管理: Pydantic厳密制御`"]
+    end
+
+    %% ========================================
+    %% スタイリング定義
+    %% ========================================
+    
+    classDef inputOutput fill:#e74c3c,stroke:#c0392b,stroke-width:3px,color:#ffffff,font-weight:bold,font-size:14px
+    classDef llmStep fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef reviewStep fill:#9b59b6,stroke:#8e44ad,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef templateStep fill:#27ae60,stroke:#229954,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef techFeature fill:#f39c12,stroke:#e67e22,stroke-width:2px,color:#ffffff,font-weight:bold
+    
+    %% スタイル適用
+    class INPUT,OUTPUT inputOutput
+    class STEP1,STEP2 llmStep
+    class REVIEW1,REVIEW2 reviewStep
+    class STEP3,STEP4,STEP5,STEP6 templateStep
+    class HYBRID,TOKEN,QUALITY techFeature
+
+    %% ========================================
+    %% サブグラフ配置調整
+    %% ========================================
+    
+    CREATIVE_ZONE ~~~ TEMPLATE_ZONE
+    TEMPLATE_ZONE ~~~ TECH_FEATURES 
