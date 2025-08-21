@@ -1,0 +1,42 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'clusterBkg': '#f4f6f7', 'clusterBorder': '#d5d8dc'}}}%%
+graph TD
+    subgraph "新ドメインへの適応プロセス"
+        A["<div style='font-size:18px; font-weight:bold; padding:10px;'>入力<br>自然言語によるタスク記述</div>"]:::input --> S1;
+        
+        S1("<b>ステップ1: ナレッジベースの再定義</b><br>ドメイン固有の「アトミック能力」を定義する<br><i>例: 画像処理用の関数群</i>"):::step;
+        S2("<b>ステップ2: プロンプトの更新</b><br>LLMに新しいツールセットとコンテキストを指示する<br><i>例: 「ロボット」→「画像」</i>"):::step;
+        S3("<b>ステップ3: AgentStateの汎用化</b><br>ドメイン固有の状態を削除し、汎用化する<br><i>例: RobotFlowAgentState → AgentState</i>"):::step;
+        S4("<b>ステップ4: コード生成ノードの置換</b><br>最終的な出力を生成するロジックを置き換える<br><i>例: XML生成 → Pythonスクリプト生成</i>"):::step;
+        S5("<b>ステップ5: 検証スキーマの調整</b><br>入力タスクの構造を定義するスキーマを修正する<br><i>例: 新タスク用のPydanticモデル</i>"):::step;
+        
+        S1 --> S2 --> S3 --> S4 --> S5;
+        
+        S5 --> B["<div style='font-size:18px; font-weight:bold; padding:10px;'>出力<br>ターゲットドメインのコード</div>"]:::output;
+    end
+
+    subgraph "フレームワークの構成要素"
+        direction LR
+        
+        subgraph "コアアーキテクチャ"
+            C1["メインワークフローグラフ"]
+            C2["状態管理 (AgentState)"]
+            C3["レビューノード (Human-in-the-Loop)"]
+            C4["スキーマ駆動入力解析"]
+        end
+        
+        subgraph "ドメイン固有コンポーネント (交換可能)"
+            D1["ナレッジベース"]
+            D2["プロンプト"]
+            D3["コードジェネレータ"]
+        end
+    end
+
+    %% スタイル定義 (新カラーパレット)
+    classDef input fill:#eaf2f8,stroke:#aed6f1,stroke-width:2px,color:#1b4f72;
+    classDef output fill:#e8f8f5,stroke:#a9dfbf,stroke-width:2px,color:#117864;
+    classDef step fill:#f4f6f7,stroke:#abb2b9,stroke-width:2px,color:#212f3c;
+    classDef core fill:#eaeded,stroke:#aeb6bf,stroke-width:2px,color:#17202a;
+    classDef adaptable fill:#e6f2f8,stroke:#9fbfd7,stroke-width:2px,color:#1a5276;
+
+    class C1,C2,C3,C4 core;
+    class D1,D2,D3 adaptable;
