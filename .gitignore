@@ -41,3 +41,7 @@ backend/database/flow_editor.db
 database/flow_editor.db
 backend/backend/*
 backend/langchainchat/sessions/*
+
+database/flow_database/result/*
+
+logs/*
