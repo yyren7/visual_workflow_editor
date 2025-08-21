@@ -30,12 +30,17 @@ const Login: React.FC = () => {
         try {
           localStorage.setItem('access_token', response.access_token); // 存储 token
           
+          // 存储用户ID，用于获取流程图
+          if (response.user_id) {
+            localStorage.setItem('user_id', response.user_id);
+          }
+          
           // 触发登录状态变化事件，通知NavBar更新
           window.dispatchEvent(new Event('loginChange'));
           
           enqueueSnackbar(t('login.success'), { variant: 'success' });
-          // 成功存储token后再导航
-          navigate('/flow');
+          // 成功存储token后导航到选择页面
+          navigate('/select');
         } catch (e) { // 捕获 localStorage.setItem 异常
           console.error('Error saving access token to localStorage:', e);
           enqueueSnackbar(t('login.tokenError'), { variant: 'warning' }); // 提示警告 Snackbar

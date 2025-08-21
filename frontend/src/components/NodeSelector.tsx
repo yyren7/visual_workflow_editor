@@ -91,7 +91,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
   };
 
   return (
-    <Box sx={{ width: '100%', bgcolor: 'background.paper' }}>
+    <Box sx={{ width: '100%', bgcolor: 'transparent' }}>
       <nav aria-label="node types">
         <List>
           {getNodeTypes().map((nodeType) => (
@@ -106,15 +106,16 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
                 cursor: 'grab',
                 padding: '8px 16px',
                 margin: '4px 0',
-                border: '1px dashed #aaa',
+                border: '1px dashed rgba(255, 255, 255, 0.3)',
                 borderRadius: '4px',
+                color: 'white',
                 '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                  border: '1px solid #1976d2',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.6)',
                 },
                 '&.dragging': {
                   opacity: 0.5,
-                  backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
                 }
               }}
               >
@@ -122,7 +123,12 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ onNodeSelect = () => {} }) 
                 primary={nodeType.label}
                 secondary={t('nodeTypes.dragHint')}
                 primaryTypographyProps={{
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  color: 'white'
+                }}
+                secondaryTypographyProps={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.75rem'
                 }}
               />
             </ListItem>

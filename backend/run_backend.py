@@ -1,6 +1,13 @@
+#!/usr/bin/env python3
+## backend/run_backend.py
+
 import sys
 import os
 import uvicorn
+import warnings
+
+# 忽略PyTorch的TypedStorage警告
+warnings.filterwarnings("ignore", message="TypedStorage is deprecated")
 
 # 将父目录添加到Python路径以解决导入问题
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,5 +23,10 @@ if os.path.exists(sqlite_db_path):
         print(f"警告: 无法删除旧数据库文件: {sqlite_db_path}")
 
 if __name__ == "__main__":
-    # 使用正确的模块路径
-    uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)
+    # 使用uvicorn直接运行FastAPI应用
+    uvicorn.run(
+        "backend.app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )

@@ -75,19 +75,26 @@ const VersionInfo: React.FC = () => {
         sx={{ 
           display: 'flex',
           alignItems: 'center',
-          mr: 2,
-          padding: '2px 8px',
+          padding: '4px 8px',
           borderRadius: '4px',
-          opacity: 0.85,
+          opacity: 0.7,
+          backgroundColor: '#2d2d2d',
+          border: '1px solid #444',
           '&:hover': {
             opacity: 1,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)'
           }
         }}
       >
-        <InfoIcon sx={{ fontSize: '0.9rem', mr: 0.5 }} />
-        <Typography variant="caption" color="inherit">
-          {t('version.label')}: {versionData.version}
+        <InfoIcon sx={{ fontSize: '0.8rem', mr: 0.5, color: 'inherit' }} />
+        <Typography 
+          variant="caption" 
+          color="inherit" 
+          sx={{ 
+            fontSize: '0.75rem',
+            userSelect: 'none',
+          }}
+        >
+          Visual Workflow Editor {versionData.version}
         </Typography>
       </Box>
     </Tooltip>

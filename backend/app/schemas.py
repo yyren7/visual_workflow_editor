@@ -5,6 +5,7 @@ from datetime import datetime
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user_id: Optional[str] = None
 
 class TokenData(BaseModel):
     username: Optional[str] = None
@@ -16,10 +17,10 @@ class UserCreate(UserBase):
     password: str
 
 class User(UserBase):
-    id: int
+    id: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NodeData(BaseModel):
     """
@@ -55,14 +56,14 @@ class FlowUpdate(BaseModel):
     flow_data: Optional[Dict[str, Any]] = None
 
 class Flow(FlowBase):
-    id: int
-    owner_id: int
+    id: str
+    owner_id: str
     flow_data: Dict[str, Any]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NodeGenerationRequest(BaseModel):
     prompt: str

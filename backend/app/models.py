@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+# 对于PostgreSQL数据库，可以使用以下导入
+# from sqlalchemy.dialects.postgresql import UUID
+import uuid
 from backend.app.database import Base
 
 class User(Base):
@@ -10,7 +13,8 @@ class User(Base):
     __tablename__ = "users"
     __table_args__ = {'extend_existing': True}
 
-    id = Column(Integer, primary_key=True, index=True)
+    # 使用String类型存储UUID，适用于SQLite
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     flows = relationship("Flow", back_populates="owner")
@@ -28,9 +32,10 @@ class Flow(Base):
     __tablename__ = "flows"
     __table_args__ = {'extend_existing': True}
 
-    id = Column(Integer, primary_key=True, index=True)
+    # 使用String类型存储UUID，适用于SQLite
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     flow_data = Column(JSON, nullable=False, default={})  # Stores the flow data as a JSON object
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(String(36), ForeignKey("users.id"))
     owner = relationship("User", back_populates="flows")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

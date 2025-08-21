@@ -15,7 +15,7 @@ class Config:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/flow_editor")  # Default PostgreSQL URL
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///flow_editor.db")
 
     # LLM API settings
     LLM_API_URL: str = os.getenv("LLM_API_URL", "http://localhost:8001")  # Default LLM API URL
