@@ -1,0 +1,20 @@
+%%{init: {"themeVariables": {"clusterBkg": "white"}} }%%
+graph LR;
+
+    subgraph "非技術者（本システム利用）"
+        direction LR
+        D("<b>所要時間</b><br>約6時間（0.75人日）") --> E("<b>必要スキル</b><br>・日常的な言語での対話能力") --> F("<b>効率向上</b><br>🚀 <b>約5.3倍</b>");
+    end
+    
+    subgraph "専門技術者（手動作成）"
+        direction LR
+        A("<b>所要時間</b><br>約32時間（4人日）") --> B("<b>必要スキル</b><br>・ロボットプログラミングの専門知識<br>・QuickFCPツールの理解");
+    end
+
+
+    %% スタイリング
+    classDef manualNode fill:#FADBD8,stroke:#E74C3C,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef systemNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold;
+
+    class A,B manualNode;
+    class D,E,F systemNode; 

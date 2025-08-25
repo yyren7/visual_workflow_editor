@@ -1,0 +1,67 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8F4FD',
+    'primaryTextColor': '#2C3E50',
+    'primaryBorderColor': '#3498DB',
+    'lineColor': '#34495E',
+    'secondaryColor': '#F8F9FA',
+    'tertiaryColor': '#ECF0F1',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8F4FD',
+    'secondBkg': '#D5DBDB',
+    'tertiaryBkg': '#FADBD8'
+  }
+}}%%
+
+flowchart LR
+    %% ノード定義
+    A["`**[初期化]**<br/>状態初期化`"]
+    J["`**[終了]**<br/>処理完了`"]
+    
+    subgraph "自動処理ゾーン"
+        direction TB
+        B["`**[生成]**<br/>タスクリスト生成`"]
+        D["`**[構築]**<br/>モジュールステップ作成`"]
+    end
+
+    subgraph "ユーザー交互処理ゾーン"
+        direction TB
+        C["`**[審査]**<br/>レビューと修正`"]
+    end
+    
+    subgraph "XML生成処理ゾーン"
+        direction TB
+        XML_GEN["`**[XML生成]**<br/>XMLファイル群の処理`"]
+    end
+
+    %% フロー接続
+    A -- "新規フロー開始" --> B
+    B -- "レビュー依頼" --> C
+    C -- "タスク承認" --> D
+    D -- "再レビュー依頼" --> C
+    C -- "生成開始承認" --> XML_GEN
+    XML_GEN -- "生成成功" --> J
+    
+    %% その他の接続
+    A -. "レビュー状態復旧" .-> C
+    C -. "タスク再生成" .-> B
+    
+    %% エラーハンドリング
+    B -.->|"エラー"| J
+    D -.->|"エラー"| J
+    C -.->|"エラー/待機"| J
+    XML_GEN -.->|"エラー"| J
+
+    %% スタイリング
+    classDef initNode fill:#E8F4FD,stroke:#3498DB,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef processNode fill:#D5DBDB,stroke:#2ECC71,stroke-width:3px,color:#2C3E50,font-weight:bold;
+    classDef reviewNode fill:#FADBD8,stroke:#E74C3C,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef xmlNode fill:#F4E8D5,stroke:#F39C12,stroke-width:3px,color:#2C3E50,font-weight:bold;
+    classDef endNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold;
+
+    class A initNode;
+    class B,D processNode;
+    class C reviewNode;
+    class XML_GEN xmlNode;
+    class J endNode; 

@@ -1,0 +1,21 @@
+graph LR;
+    subgraph "专业技术人员 (手动创建)";
+        A("<b>所需时间</b><br>约24小时 (3人日)");
+        B("<b>所需技能</b><br>・机器人编程专业知识<br>・XML语法理解");
+        C("<b>产出</b><br>-");
+        A --> B --> C;
+    end
+
+    subgraph "非技术人员 (本系统利用)";
+        D("<b>所需时间</b><br>约2小时");
+        E("<b>所需技能</b><br>・日常语言对话能力");
+        F("<b>效率提升</b><br>🚀 <b>约12倍</b>");
+        D --> E --> F;
+    end
+
+    %% スタイリング
+    classDef manualNode fill:#FADBD8,stroke:#E74C3C,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef systemNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold;
+
+    class A,B,C manualNode;
+    class D,E,F systemNode; 

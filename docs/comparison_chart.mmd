@@ -1,0 +1,33 @@
+graph TD
+    subgraph 比較表
+        direction LR
+        A["<b>項目</b>"] --> B["<b>専門技術者<br/>（手動作成）</b>"]
+        A --> C["<b>非技術者<br/>（本システム利用）</b>"]
+
+        D["<b>所要時間</b>"] --> E["約24時間<br/>（3人日）"]
+        D --> F["約2時間"]
+
+        G["<b>必要スキル</b>"] --> H["・ロボットプログラミングの専門知識<br/>・XML構文の理解"]
+        G --> I["・日常的な言語での対話能力"]
+
+        J["<b>効率向上</b>"] --> K["-"]
+        J --> L["約12倍"]
+    end
+
+    style A fill:#ECF0F1
+    style D fill:#ECF0F1
+    style G fill:#ECF0F1
+    style J fill:#ECF0F1
+
+    style B fill:#f9f2f4
+    style E fill:#f2dede
+    style H fill:#f2dede
+    style K fill:#f2dede
+
+    style C fill:#eef7fa
+    style F fill:#d9edf7
+    style I fill:#d9edf7
+    style L fill:#d9edf7
+
+    %% This line has been corrected to only include existing links (0-7)
+    linkStyle 0,1,2,3,4,5,6,7 stroke-width:0px

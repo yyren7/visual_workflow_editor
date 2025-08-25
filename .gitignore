@@ -56,13 +56,12 @@ database/flow_database/result/
 
 # 忽略前端依赖
 frontend/node_modules/
-# Log files
-logs/*
-!logs/.keep
+
 
 1.epub
 
 # Ignore specific test result directories
 /database/flow_database/result/5.20_test/
 /database/test_database/test_robot_flow
-backend/tests/llm_sas_test
+/backend/tests/llm_sas_test
+/sota_agent/

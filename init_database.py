@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-数据库初始化脚本
-创建所有必要的表，包括新添加的字段
+Database initialization script
+Creates all necessary tables including newly added fields
 """
 
 import sys
@@ -13,38 +13,38 @@ from database.models import User, Flow, Chat, FlowVariable, VersionInfo, JsonEmb
 from sqlalchemy import text
 
 def init_database():
-    """初始化数据库"""
-    print("开始初始化数据库...")
+    """Initialize the database"""
+    print("Starting database initialization...")
     
     try:
-        # 获取引擎
+        # Get engine
         engine = get_db_engine()
         
-        # 先检查数据库连接
+        # First check database connection
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-            print("✅ 数据库连接正常")
+            print("✅ Database connection OK")
         
-        # 创建所有表
-        print("正在创建数据库表...")
+        # Create all tables
+        print("Creating database tables...")
         Base.metadata.create_all(bind=engine)
-        print("✅ 数据库表创建完成")
+        print("✅ Database tables creation completed")
         
-        # 如果是 PostgreSQL，确保 pgvector 扩展已启用
+        # For PostgreSQL, ensure pgvector extension is enabled
         if "postgresql" in str(engine.url):
             try:
                 with engine.connect() as conn:
                     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
                     conn.commit()
-                    print("✅ pgvector 扩展已启用")
+                    print("✅ pgvector extension enabled")
             except Exception as e:
-                print(f"⚠️ 启用 pgvector 扩展失败: {e}")
+                print(f"⚠️ Failed to enable pgvector extension: {e}")
         
-        print("🎉 数据库初始化完成！")
+        print("🎉 Database initialization completed!")
         return True
         
     except Exception as e:
-        print(f"❌ 数据库初始化失败: {e}")
+        print(f"❌ Database initialization failed: {e}")
         import traceback
         traceback.print_exc()
         return False

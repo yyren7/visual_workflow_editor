@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-分析checkpoint_writes表中的状态变化数据
+Analyze state change data in the checkpoint_writes table
 """
 
 import sys
@@ -15,19 +15,19 @@ from sqlalchemy import text
 
 TARGET_THREAD_ID = '26f8c147-7a85-42a9-ad77-9fffae46d64c'
 
-# 配置基本日志
+# Configure basic logging
 logging.basicConfig(level=logging.WARNING)
 
 def run_analysis():
-    print(f"🔍 分析checkpoint_writes中的流程ID: {TARGET_THREAD_ID}")
-    print(f"⏰ 时间: {datetime.now()}")
+    print(f"🔍 Analyzing checkpoint_writes for thread ID: {TARGET_THREAD_ID}")
+    print(f"⏰ Time: {datetime.now()}")
     print("="*80)
     
     try:
         with get_db_context() as db:
-            print(f"📊 正在查询checkpoint_writes数据...")
+            print(f"📊 Querying checkpoint_writes data...")
             
-            # 查询checkpoint_writes记录
+            # Query checkpoint_writes records
             query = """
             SELECT 
                 thread_id,
@@ -48,9 +48,9 @@ def run_analysis():
             records = result.fetchall()
             
             if not records:
-                print(f"❌ 没有找到thread_id {TARGET_THREAD_ID} 的写入记录")
+                print(f"❌ No records found for thread_id {TARGET_THREAD_ID}")
                 
-                # 查找类似的thread_id
+                # Find similar thread_ids
                 similar_query = """
                 SELECT DISTINCT thread_id
                 FROM checkpoint_writes 
@@ -64,11 +64,11 @@ def run_analysis():
                 similar_records = similar_result.fetchall()
                 
                 if similar_records:
-                    print("\n📋 找到类似的thread_id:")
+                    print("\n📋 Found similar thread_ids:")
                     for record in similar_records:
                         print(f"  - {record[0]}")
                 else:
-                    print("\n📋 最近的10个thread_id:")
+                    print("\n📋 Recent 10 thread_ids:")
                     recent_query = "SELECT DISTINCT thread_id FROM checkpoint_writes ORDER BY checkpoint_id DESC LIMIT 10"
                     recent_result = db.execute(text(recent_query))
                     recent_records = recent_result.fetchall()
@@ -77,9 +77,9 @@ def run_analysis():
                 
                 return
             
-            print(f"✅ 找到 {len(records)} 条写入记录\n")
+            print(f"✅ Found {len(records)} write records\n")
             
-            # 分析状态变化
+            # Analyze state changes
             dialog_states = []
             acceptance_changes = []
             key_events = []
@@ -91,29 +91,29 @@ def run_analysis():
                     checkpoint_groups[checkpoint_id] = []
                 checkpoint_groups[checkpoint_id].append(record)
             
-            # 按checkpoint分组显示
+            # Display by checkpoint
             for checkpoint_idx, (checkpoint_id, group_records) in enumerate(checkpoint_groups.items()):
                 print(f"{'='*60}")
                 print(f"📝 Checkpoint {checkpoint_idx+1}: {checkpoint_id}")
-                print(f"📝 包含 {len(group_records)} 条写入记录")
+                print(f"📝 Contains {len(group_records)} write records")
                 print(f"{'='*60}")
                 
                 for j, record in enumerate(group_records):
-                    print(f"\n--- 写入记录 {j+1} ---")
+                    print(f"\n--- Write record {j+1} ---")
                     print(f"🆔 Task ID: {record.task_id}")
                     print(f"📋 Channel: {record.channel}")
                     print(f"🏷️  Type: {record.type}")
                     print(f"📍 Index: {record.idx}")
                     print(f"🛤️  Task Path: {record.task_path}")
                     
-                    # 解析blob数据
+                    # Parse blob data
                     if record.blob:
                         try:
-                            # blob是二进制数据，需要解码
+                            # blob is binary data, needs to be decoded
                             blob_str = record.blob.decode('utf-8') if isinstance(record.blob, bytes) else str(record.blob)
                             data = json.loads(blob_str)
                             
-                            # 查找关键状态信息
+                            # Find key state information
                             if isinstance(data, dict):
                                 dialog_state = data.get('dialog_state')
                                 task_list_accepted = data.get('task_list_accepted')
@@ -124,42 +124,42 @@ def run_analysis():
                                 current_step_description = data.get('current_step_description')
                                 clarification_question = data.get('clarification_question')
                                 
-                                # 显示关键状态
+                                # Display key states
                                 if dialog_state:
-                                    print(f"🎯 对话状态: {dialog_state}")
+                                    print(f"🎯 Dialog state: {dialog_state}")
                                     dialog_states.append((checkpoint_idx, j, dialog_state))
                                     key_events.append((checkpoint_idx, j, 'dialog_state', dialog_state))
                                 
                                 if task_list_accepted is not None:
                                     icon = "✅" if task_list_accepted else "❌"
-                                    print(f"{icon} 任务列表已接受: {task_list_accepted}")
+                                    print(f"{icon} Task list accepted: {task_list_accepted}")
                                     acceptance_changes.append((checkpoint_idx, j, 'task_list', task_list_accepted))
                                     key_events.append((checkpoint_idx, j, 'task_list_accepted', task_list_accepted))
                                 
                                 if module_steps_accepted is not None:
                                     icon = "✅" if module_steps_accepted else "❌"
-                                    print(f"{icon} 模块步骤已接受: {module_steps_accepted}")
+                                    print(f"{icon} Module steps accepted: {module_steps_accepted}")
                                     acceptance_changes.append((checkpoint_idx, j, 'module_steps', module_steps_accepted))
                                     key_events.append((checkpoint_idx, j, 'module_steps_accepted', module_steps_accepted))
                                 
                                 if completion_status:
-                                    print(f"📊 完成状态: {completion_status}")
+                                    print(f"📊 Completion status: {completion_status}")
                                     key_events.append((checkpoint_idx, j, 'completion_status', completion_status))
                                 
                                 if is_error:
-                                    print(f"🚨 错误状态: {is_error}")
+                                    print(f"🚨 Error status: {is_error}")
                                 
                                 if user_input:
-                                    print(f"💬 用户输入: {str(user_input)[:80]}...")
+                                    print(f"💬 User input: {str(user_input)[:80]}...")
                                     key_events.append((checkpoint_idx, j, 'user_input', str(user_input)[:50]))
                                 
                                 if current_step_description:
-                                    print(f"📋 步骤描述: {str(current_step_description)[:80]}...")
+                                    print(f"📋 Step description: {str(current_step_description)[:80]}...")
                                 
                                 if clarification_question:
-                                    print(f"❓ 确认问题: {str(clarification_question)[:80]}...")
+                                    print(f"❓ Clarification question: {str(clarification_question)[:80]}...")
                                 
-                                # SAS相关数据
+                                # SAS related data
                                 sas_fields = {}
                                 for key, value in data.items():
                                     if key.startswith('sas_step') and value:
@@ -171,74 +171,74 @@ def run_analysis():
                                             sas_fields[key] = str(value)[:40]
                                 
                                 if sas_fields:
-                                    print("🤖 SAS数据:")
+                                    print("🤖 SAS data:")
                                     for key, value in sas_fields.items():
                                         print(f"   {key}: {value}")
                             
-                            # 显示数据预览
+                            # Display data preview
                             if len(blob_str) > 200:
-                                print(f"📄 数据预览: {blob_str[:200]}...")
+                                print(f"📄 Data preview: {blob_str[:200]}...")
                             else:
-                                print(f"📄 完整数据: {blob_str}")
+                                print(f"📄 Full data: {blob_str}")
                                 
                         except Exception as e:
-                            print(f"❌ 解析blob数据失败: {e}")
-                            print(f"原始blob长度: {len(record.blob) if record.blob else 0}")
+                            print(f"❌ Failed to parse blob data: {e}")
+                            print(f"Original blob length: {len(record.blob) if record.blob else 0}")
                 
                 print()
             
-            # 详细分析
+            # Detailed analysis
             print("="*80)
-            print("🔍 详细状态变化分析")
+            print("🔍 Detailed state change analysis")
             print("="*80)
             
-            # Dialog State 轨迹分析
+            # Dialog State trajectory analysis
             if dialog_states:
-                print("🎯 Dialog State 变化轨迹:")
+                print("🎯 Dialog State trajectory:")
                 for i, (checkpoint_idx, write_idx, state) in enumerate(dialog_states):
                     arrow = " → " if i > 0 else "   "
                     print(f"{arrow} Checkpoint {checkpoint_idx+1}-{write_idx+1}: {state}")
                 
-                # 分析状态序列
+                # Analyze state sequence
                 states = [state for _, _, state in dialog_states]
-                print(f"\n📊 状态序列:")
+                print(f"\n📊 State sequence:")
                 print(f"   {' → '.join(states)}")
                 
-                # 检查关键问题：是否跳过了任务审核
-                print(f"\n🔍 关键问题分析:")
+                # Check key problem: whether to skip task review
+                print(f"\n🔍 Key problem analysis:")
                 
                 if 'sas_step1_tasks_generated' in states:
                     step1_idx = states.index('sas_step1_tasks_generated')
                     
                     if step1_idx + 1 < len(states):
                         next_state = states[step1_idx + 1]
-                        print(f"   ✓ 任务生成后的下一个状态: {next_state}")
+                        print(f"   ✓ Next state after task generation: {next_state}")
                         
                         if next_state == 'sas_awaiting_task_list_review':
-                            print(f"   ✅ 正常：进入了任务审核状态")
+                            print(f"   ✅ Normal: entered task review state")
                         elif next_state == 'sas_step2_module_steps_generated_for_review':
-                            print(f"   🚨 问题发现：直接跳到了模块步骤生成，跳过了任务审核！")
+                            print(f"   🚨 Problem found: directly jumped to module step generation, skipped task review!")
                         else:
-                            print(f"   ⚠️  异常：跳转到了意外的状态 {next_state}")
+                            print(f"   ⚠️  Unexpected state: {next_state}")
                     else:
-                        print(f"   ⚠️  任务生成后没有后续状态")
+                        print(f"   ⚠️  No subsequent state after task generation")
                 
-                # 查找是否有审核相关状态
+                # Find if there are any review-related states
                 review_states = [s for s in states if 'awaiting' in s or 'review' in s]
                 if review_states:
-                    print(f"   📋 发现的审核状态: {review_states}")
+                    print(f"   📋 Found review states: {review_states}")
                 else:
-                    print(f"   🚨 警告：没有发现任何审核状态！")
+                    print(f"   🚨 Warning: no review states found!")
             
             # 接受状态变化分析
             if acceptance_changes:
-                print(f"\n✅ 接受状态变化:")
+                print(f"\n✅ Acceptance state change:")
                 for checkpoint_idx, write_idx, acc_type, value in acceptance_changes:
                     print(f"   Checkpoint {checkpoint_idx+1}-{write_idx+1}: {acc_type} = {value}")
             
-            # 关键事件时间线
+            # Key event timeline
             if key_events:
-                print(f"\n📅 关键事件时间线:")
+                print(f"\n📅 Key event timeline:")
                 for checkpoint_idx, write_idx, event_type, value in key_events:
                     location = f"Checkpoint {checkpoint_idx+1}-{write_idx+1}"
                     if event_type == 'dialog_state':
@@ -251,38 +251,38 @@ def run_analysis():
                     else:
                         print(f"   {location}: 📄 {event_type} = {value}")
             
-            # 最终结论
+            # Final conclusion
             print(f"\n" + "="*80)
-            print("🎯 问题诊断结论")
+            print("🎯 Problem diagnosis conclusion")
             print("="*80)
             
             states = [state for _, _, state in dialog_states] if dialog_states else []
             
             if 'sas_step1_tasks_generated' in states and 'sas_awaiting_task_list_review' not in states:
-                print("🚨 确认问题：系统跳过了任务审核阶段")
-                print("   - 任务生成完成后，应该进入 'sas_awaiting_task_list_review' 状态")
-                print("   - 但实际上直接跳转到了其他状态")
-                print("   - 这解释了为什么用户没有看到任务审核界面")
+                print("🚨 Problem confirmed: system skipped task review stage")
+                print("   - After task generation, it should enter 'sas_awaiting_task_list_review' state")
+                print("   - But it directly jumped to other states")
+                print("   - This explains why the user didn't see the task review interface")
                 
-                # 查找task_list_accepted被设置的位置
+                # Find where task_list_accepted is set
                 task_accepted_events = [e for e in key_events if e[2] == 'task_list_accepted' and e[3] == True]
                 if task_accepted_events:
-                    print("\n🔍 发现task_list_accepted被设置为True的位置:")
+                    print("\n🔍 Found where task_list_accepted is set to True:")
                     for checkpoint_idx, write_idx, _, _ in task_accepted_events:
                         print(f"   - Checkpoint {checkpoint_idx+1}-{write_idx+1}")
                         
-                print("\n🔍 建议检查：")
-                print("   1. backend/sas/nodes/review_and_refine.py 中的审核逻辑")
-                print("   2. backend/sas/graph_builder.py 中的路由函数")
-                print("   3. 是否有代码自动设置 task_list_accepted = True")
-                print("   4. 前端是否发送了跳过审核的指令")
+                print("\n🔍 Suggested checks:")
+                print("   1. Review logic in backend/sas/nodes/review_and_refine.py")
+                print("   2. Routing logic in backend/sas/graph_builder.py")
+                print("   3. Whether there is code that automatically sets task_list_accepted = True")
+                print("   4. Whether the frontend sent a skip review instruction")
             else:
-                print("✅ 审核流程看起来正常，问题可能在其他地方")
+                print("✅ The review process looks normal, the problem may be elsewhere")
                 if not dialog_states:
-                    print("   ⚠️  但是没有找到任何dialog_state变化记录")
+                    print("   ⚠️  But no dialog_state change record was found")
     
     except Exception as e:
-        print(f"❌ 分析失败: {e}")
+        print(f"❌ Analysis failed: {e}")
         import traceback
         traceback.print_exc()
 
