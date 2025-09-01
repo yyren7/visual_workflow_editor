@@ -30,7 +30,6 @@ elif ACTIVE_LLM_PROVIDER == "gemini" and not GOOGLE_API_KEY:
     print("警告: ACTIVE_LLM_PROVIDER 设置为 gemini, 但 GOOGLE_API_KEY 未设置.")
 
 # 可以在这里添加其他应用配置，例如 CORS 设置等
-# ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"] # 前端地址示例
 
 class Config:
     """
@@ -60,12 +59,6 @@ class Config:
     DEBUG: bool = os.getenv("DEBUG", "0") == "1"
 
     # CORS settings
-    # CORS_ORIGINS: list = [
-    #     "http://localhost:3000",      # 本地开发环境
-    #     "http://172.18.0.3:3000",     # Docker网络中的前端容器
-    #     "http://workflow-editor-frontend:3000",  # 容器名称访问
-    #     "*"                          # 允许所有源（生产环境应该更严格）
-    # ]
     # CORS_CREDENTIALS: bool = True
     # CORS_METHODS: list = ["*"]
     # CORS_HEADERS: list = ["*"]

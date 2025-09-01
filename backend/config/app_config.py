@@ -21,11 +21,8 @@ def get_cors_origins() -> list[str]:
     else:
         # 默认允许的源列表（如果环境变量未设置）
         return [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
             "http://localhost:3001", # 确保开发时常用的端口也被包含
             "http://127.0.0.1:3001", # 新增：允许来自127.0.0.1:3001的请求
-            "http://workflow-editor-frontend:3000", # Docker Compose 服务名
             "http://localhost:8000", # 后端自己
             "http://127.0.0.1:8000"  # 后端自己
         ]
@@ -51,7 +48,7 @@ def is_cors_origin_allowed(origin: str) -> bool:
         return True
     
     # 检查是否是192.168.16.*网段（支持常用端口）
-    pattern = r'^http://192\.168\.16\.\d{1,3}:(3000|3001|8000|8080)$'
+    pattern = r'^http://192\.168\.16\.\d{1,3}:(3001|8000|8080)$'
     if re.match(pattern, origin):
         return True
     

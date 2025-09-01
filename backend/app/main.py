@@ -378,7 +378,7 @@ async def log_requests_detailed(request: Request, call_next):
 # CORS configuration (Keep this section)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://192\.168\.16\.\d{1,3}:(3000|3001|8000|8080)$|^http://(localhost|127\.0\.0\.1):(3000|3001|8000|8080)$",
+    allow_origin_regex=r"^http://192\.168\.16\.\d{1,3}:(3001|8000|8080)$|^http://(localhost|127\.0\.0\.1):(3001|8000|8080)$",
     allow_origins=APP_CONFIG['CORS_ORIGINS'],
     allow_credentials=APP_CONFIG.get('CORS_CREDENTIALS', True),
     allow_methods=APP_CONFIG.get('CORS_METHODS', ["*"]),

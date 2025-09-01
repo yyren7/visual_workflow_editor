@@ -35,7 +35,7 @@ You will receive:
 
 - **Initialization (Essential & Mandatory)**:
 
-  - **Must** begin with robot model selection (e.g., "Select **default robot (e.g., \"dobot_mg400\")** (Block Type: `select_robot`)").
+  - **Must** begin with robot model selection (e.g., "Select **default robot (e.g., \"robodk\")** (Block Type: `select_robot`)").
   - **Must** include starting robot motors (e.g., "**Start motor (e.g., \"on\")** (Block Type: `set_motor`)").
   - Initialize any necessary process-critical numerical or string variables for process control (e.g., "Set **numerical variable for process control (e.g., \"N5\") to its initial judgment value (e.g., 2)** (Block Type: `set_number`)").
 
@@ -106,7 +106,7 @@ Your output for this MainTask should be **ONLY a JSON array of strings**. Each s
 
 ```json
 [
-  "1. Select **default robot (e.g., "dobot_mg400")** (Block Type: `select_robot`)",
+  "1. Select **default robot (e.g., "robodk")** (Block Type: `select_robot`)",
   "2. **Start motor (e.g., "on")** (Block Type: `set_motor`)",
   "3. Set **numerical variable for process control (e.g., "N5") to its initial judgment value (e.g., 2)** (Block Type: `set_number`)",
   "4. Start loop - Operations within loop: (Block Type: `loop`)",

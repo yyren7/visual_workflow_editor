@@ -156,7 +156,7 @@ npm start
 yarn start
 ```
 
-这将启动一个热重载的开发服务器，通常监听在 `http://localhost:3000`。
+这将启动一个热重载的开发服务器，通常监听在 `http://localhost:3001`。
 
 ## 构建项目
 

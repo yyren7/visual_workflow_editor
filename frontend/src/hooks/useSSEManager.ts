@@ -121,19 +121,20 @@ class SSEConnectionManager {
       },
       
       onclose: () => {
-        // 这个回调在连接因错误或网络问题而丢失时触发
-        // @microsoft/fetch-event-source 会在 onerror 抛出错误后自动尝试重连
-        // 我们不应该在这里调用 this.closeConnection()，因为它会阻止重连
-        console.log(`[SSE_MANAGER_LOG] Connection closed for chat: ${chatId}. If this was due to an error, the library will attempt to reconnect.`);
+        // 这个回调在连接正常关闭时（被服务器或客户端中止）触发
+        console.log(`[SSE_MANAGER_LOG] Connection closed for chat: ${chatId}. This is expected on stream end or manual closure.`);
         // 不需要在这里调用 this.closeConnection(chatId)，因为它会被外部逻辑（如 stream_end 事件或组件卸载）调用
         // 避免循环调用
       },
 
       onerror: (error: any) => {
-        console.error(`[SSE_MANAGER_LOG] Connection error for chat: ${chatId}. Re-throwing to trigger auto-reconnect.`, error);
+        console.error(`[SSE_MANAGER_LOG] Connection error for chat: ${chatId}`, error);
         this.dispatchEvent(chatId, 'connection_error', { chatId, error });
-        // 关键改动：不再调用 this.closeConnection(chatId);
-        // 而是重新抛出错误，让 @microsoft/fetch-event-source 库来处理指数退避重连
+        
+        // 关键改动：不再调用 this.closeConnection(chatId)，因为它会彻底终止连接并阻止重连。
+        // this.closeConnection(chatId); // 发生不可恢复的错误时，关闭并清理
+
+        // 重新抛出错误，以触发 @microsoft/fetch-event-source 的内置指数退避重连机制。
         throw error;
       }
     });
@@ -248,6 +249,34 @@ class SSEConnectionManager {
     console.log('SSEManager: Cleared subscribers for chat:', chatId);
   }
 
+  reconnect(chatId: string): void {
+    console.log(`[SSE_MANAGER_LOG] reconnect called for chat: ${chatId}`);
+    
+    // 如果存在活动的连接，先中止它
+    if (this.activeConnections.has(chatId)) {
+      const controller = this.activeConnections.get(chatId)!;
+      console.log('[SSE_MANAGER_LOG] Aborting existing fetchEventSource connection to reconnect for chat:', chatId);
+      // Abort会触发onclose/onerror，但由于我们已删除activeConnection，旧的实例不会再被使用
+      controller.abort(); 
+      this.activeConnections.delete(chatId);
+    }
+
+    // 检查这个chatId是否还有任何订阅者
+    const chatSubscribers = this.subscribers.get(chatId);
+    let totalSubscribers = 0;
+    if (chatSubscribers) {
+        chatSubscribers.forEach(set => totalSubscribers += set.size);
+    }
+
+    // 只有在还有订阅者的情况下才重新建立连接
+    if (totalSubscribers > 0) {
+        console.log(`[SSE_MANAGER_LOG] Re-establishing connection for chat ${chatId} as ${totalSubscribers} subscribers exist.`);
+        this._ensureConnection(chatId);
+    } else {
+        console.log(`[SSE_MANAGER_LOG] No subscribers for chat ${chatId}, skipping reconnection attempt.`);
+    }
+  }
+
   closeAllConnections(): void {
     console.log('SSEManager: Closing all connections, count:', this.activeConnections.size);
     
@@ -267,6 +296,10 @@ class SSEConnectionManager {
 
   hasActiveConnection(chatId: string): boolean {
     return this.activeConnections.has(chatId);
+  }
+
+  getAllActiveChatIds(): string[] {
+    return Array.from(this.activeConnections.keys());
   }
 
   // 🔧 调试和配置方法
@@ -307,12 +340,29 @@ export const useSSEManager = () => {
   // Let's keep it for now but with a comment.
   useEffect(() => {
     const manager = managerRef.current; // Capture manager instance
+
+    // 页面可见性处理：当用户切回标签页时，强制重连所有活动连接
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("[SSE_MANAGER_LOG] Page is visible again. Reconnecting all active connections.");
+        const activeChatIds = manager.getAllActiveChatIds();
+        activeChatIds.forEach(chatId => {
+          console.log(`[SSE_MANAGER_LOG] Triggering reconnect for chat: ${chatId}`);
+          manager.reconnect(chatId);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       // This will close ALL connections when a component *using* this hook unmounts.
       // This might not be desired if the manager is meant to persist connections across component lifecycles.
       // Consider if closeAllConnections here is appropriate or if cleanup should be more granular.
       // manager.closeAllConnections(); 
       // console.log("useSSEManager: Hook unmounted. Called closeAllConnections - review if this is intended behavior.");
+
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []); // Empty dependency means this runs once on mount and cleanup on unmount of the component that *first* uses the hook.
 
