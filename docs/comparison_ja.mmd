@@ -1,20 +1,33 @@
 %%{init: {"themeVariables": {"clusterBkg": "white"}} }%%
 graph LR;
 
-    subgraph "非技術者（本システム利用）"
+    subgraph "非専門家（本システム利用）"
         direction LR
-        D("<b>所要時間</b><br>約6時間（0.75人日）") --> E("<b>必要スキル</b><br>・日常的な言語での対話能力") --> F("<b>効率向上</b><br>🚀 <b>約5.3倍</b>");
+        D("<b>所要時間</b><br>約6時間") --> E("<b>必要スキル</b><br>・日常的な言語での対話能力");
     end
     
-    subgraph "専門技術者（手動作成）"
+    subgraph "専門家（手動作成）"
         direction LR
-        A("<b>所要時間</b><br>約32時間（4人日）") --> B("<b>必要スキル</b><br>・ロボットプログラミングの専門知識<br>・QuickFCPツールの理解");
+        A("<b>所要時間</b><br>約32時間") --> B("<b>必要スキル</b><br>・ロボットプログラミングの専門知識<br>・QuickFCPツールの理解");
     end
 
+    %% 独立した効率向上ノード
+    F("<b>効率向上</b><br>🚀 <b>約5.3倍</b>");
+
+    %% 隐藏连接用于布局定位
+    B -.-> F;
+    E -.-> F;
 
     %% スタイリング
     classDef manualNode fill:#FADBD8,stroke:#E74C3C,stroke-width:4px,color:#2C3E50,font-weight:bold;
     classDef systemNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef efficiencyNode fill:#FFF2CC,stroke:#F39C12,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef hiddenLink stroke:transparent,fill:transparent;
 
     class A,B manualNode;
-    class D,E,F systemNode; 
+    class D,E systemNode;
+    class F efficiencyNode;
+    
+    %% 隐藏布局连接线
+    linkStyle 2 stroke:transparent;
+    linkStyle 3 stroke:transparent; 

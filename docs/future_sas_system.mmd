@@ -1,0 +1,166 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8F4FD',
+    'primaryTextColor': '#2C3E50',
+    'primaryBorderColor': '#3498DB',
+    'lineColor': '#34495E',
+    'secondaryColor': '#F8F9FA',
+    'tertiaryColor': '#ECF0F1',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8F4FD',
+    'secondBkg': '#D5DBDB',
+    'tertiaryBkg': '#FADBD8',
+    'clusterBkg': '#F0F8FF',
+    'altBackground': '#F8F9FA'
+  }
+}}%%
+
+flowchart TB
+    %% ========================================
+    %% 未来SASシステム全体アーキテクチャ
+    %% Future SAS System Architecture
+    %% ========================================
+    
+    %% 入力層 - Input Layer
+    INPUT["`**📝 ユーザー入力**<br/>自然言語タスク記述<br/>音声・テキスト・ジェスチャー`"]
+    
+    %% AI拡張層 - Enhanced AI Layer
+    subgraph AI_LAYER ["`🧠 **AI拡張層** - Enhanced AI Intelligence Layer`"]
+        direction TB
+        
+        subgraph RAG_SYSTEM ["`🔍 **RAG拡張システム**`"]
+            VECTOR_DB["`**ベクトルDB**<br/>Vector Database<br/>━━━━━━━━━━<br/>📚 過去の作業履歴<br/>🎯 類似タスク検索<br/>⚡ 高速セマンティック検索`"]
+            
+            KNOWLEDGE_BASE["`**知識ベース**<br/>Knowledge Repository<br/>━━━━━━━━━━<br/>🔧 ロボット能力辞書<br/>📋 業界標準プロトコル<br/>💡 ベストプラクティス`"]
+        end
+        
+        subgraph MEMORY_SYSTEM ["`🧠 **長期記憶システム**`"]
+            LEARNING_LOOP["`**学習ループ**<br/>Continuous Learning<br/>━━━━━━━━━━<br/>📈 性能フィードバック<br/>🔄 自動改善メカニズム<br/>⭐ 成功パターン記録`"]
+            
+            CONTEXT_MEMORY["`**コンテキスト記憶**<br/>Context Memory<br/>━━━━━━━━━━<br/>🕐 作業履歴保存<br/>👤 ユーザー嗜好学習<br/>🔗 関連性マッピング`"]
+        end
+    end
+    
+    %% スマート処理層 - Smart Processing Layer  
+    subgraph SMART_LAYER ["`⚙️ **スマート処理層** - Intelligent Processing Layer`"]
+        direction TB
+        
+        subgraph ENHANCED_LANGGRAPH ["`🚀 **強化LangGraph**`"]
+            ADAPTIVE_WORKFLOW["`**適応ワークフロー**<br/>Adaptive Workflow<br/>━━━━━━━━━━<br/>🔄 動的フロー調整<br/>⚡ リアルタイム最適化<br/>🎯 状況別処理分岐`"]
+            
+            PARALLEL_PROCESSING["`**並列処理エンジン**<br/>Parallel Engine<br/>━━━━━━━━━━<br/>⚡ 同時タスク実行<br/>🔧 負荷分散処理<br/>📊 リソース効率化`"]
+        end
+        
+        subgraph AUTO_TEACHING ["`🎯 **自動ティーチング**`"]
+            SENSOR_INTEGRATION["`**センサー統合**<br/>Sensor Integration<br/>━━━━━━━━━━<br/>📷 視覚センサー連携<br/>🤖 位置・力覚フィードバック<br/>🔧 自動キャリブレーション`"]
+            
+            MOTION_OPTIMIZATION["`**動作最適化**<br/>Motion Optimization<br/>━━━━━━━━━━<br/>🎯 軌道自動生成<br/>⚡ 速度・精度バランス<br/>🛡️ 安全性保証`"]
+        end
+    end
+    
+    %% ハイブリッド生成層 - Hybrid Generation Layer
+    subgraph GENERATION_LAYER ["`🔧 **ハイブリッド生成層** - Hybrid Generation Layer`"]
+        direction TB
+        
+        subgraph LLM_CREATIVE ["`💡 **LLM創造的処理**`"]
+            INTENT_ANALYSIS["`**意図解析**<br/>Intent Analysis<br/>━━━━━━━━━━<br/>🔍 自然言語理解<br/>📋 タスク構造化<br/>🎯 実行可能分解`"]
+            
+            CREATIVE_PLANNING["`**創造的計画**<br/>Creative Planning<br/>━━━━━━━━━━<br/>💡 新規手法生成<br/>🔄 代替案提案<br/>🧠 問題解決戦略`"]
+        end
+        
+        subgraph TEMPLATE_PRECISION ["`⚙️ **テンプレート精密処理**`"]
+            XML_GENERATION["`**XML生成**<br/>XML Generation<br/>━━━━━━━━━━<br/>📄 構文保証済み出力<br/>🔗 パラメータマッピング<br/>✨ 実行可能コード生成`"]
+            
+            VALIDATION_ENGINE["`**検証エンジン**<br/>Validation Engine<br/>━━━━━━━━━━<br/>✅ 構文チェック<br/>🛡️ 安全性検証<br/>📊 品質保証`"]
+        end
+    end
+    
+    %% 実行・フィードバック層 - Execution & Feedback Layer
+    subgraph EXECUTION_LAYER ["`🤖 **実行・フィードバック層** - Execution & Feedback Layer`"]
+        direction TB
+        
+        ROBOT_EXECUTION["`**ロボット実行**<br/>Robot Execution<br/>━━━━━━━━━━<br/>🤖 実機制御実行<br/>📊 リアルタイム監視<br/>⚡ 動的調整機能`"]
+        
+        FEEDBACK_ANALYSIS["`**フィードバック解析**<br/>Feedback Analysis<br/>━━━━━━━━━━<br/>📈 性能評価・解析<br/>🔄 学習データ蓄積<br/>💡 改善提案生成`"]
+    end
+    
+    %% 出力層 - Output Layer
+    OUTPUT["`**🎯 最終出力**<br/>実行可能ロボットプログラム<br/>+ 継続的改善データ`"]
+
+    %% ========================================
+    %% メインフロー定義 - Main Flow Definition
+    %% ========================================
+    
+    %% 入力から処理へ
+    INPUT ==> VECTOR_DB
+    INPUT ==> KNOWLEDGE_BASE
+    INPUT ==> INTENT_ANALYSIS
+    
+    %% AI層からスマート層へ
+    VECTOR_DB ==> ADAPTIVE_WORKFLOW
+    KNOWLEDGE_BASE ==> CREATIVE_PLANNING
+    LEARNING_LOOP ==> PARALLEL_PROCESSING
+    CONTEXT_MEMORY ==> SENSOR_INTEGRATION
+    
+    %% スマート層から生成層へ
+    ADAPTIVE_WORKFLOW ==> INTENT_ANALYSIS
+    PARALLEL_PROCESSING ==> CREATIVE_PLANNING
+    SENSOR_INTEGRATION ==> XML_GENERATION
+    MOTION_OPTIMIZATION ==> VALIDATION_ENGINE
+    
+    %% 生成層から実行層へ
+    CREATIVE_PLANNING ==> XML_GENERATION
+    VALIDATION_ENGINE ==> ROBOT_EXECUTION
+    XML_GENERATION ==> ROBOT_EXECUTION
+    
+    %% 実行層から出力へ
+    ROBOT_EXECUTION ==> OUTPUT
+    FEEDBACK_ANALYSIS ==> OUTPUT
+    
+    %% フィードバックループ
+    FEEDBACK_ANALYSIS -.->|"`📊 **学習データ**`"| LEARNING_LOOP
+    ROBOT_EXECUTION -.->|"`📈 **実行結果**`"| CONTEXT_MEMORY
+    FEEDBACK_ANALYSIS -.->|"`💡 **改善提案**`"| ADAPTIVE_WORKFLOW
+    
+    %% ========================================
+    %% 特徴説明サブグラフ
+    %% ========================================
+    
+    subgraph FEATURES ["`⭐ **未来システムの特徴** - Future System Features`"]
+        direction TB
+        
+        F1["`**🔄 自己進化能力**<br/>━━━━━━━━━━<br/>• 継続学習による性能向上<br/>• 新しいタスクへの自動適応<br/>• エラーからの自動回復`"]
+        
+        F2["`**⚡ リアルタイム最適化**<br/>━━━━━━━━━━<br/>• 動的負荷分散<br/>• センサーフィードバック統合<br/>• 予測的メンテナンス`"]
+        
+        F3["`**🧠 マルチモーダル統合**<br/>━━━━━━━━━━<br/>• 音声・画像・センサー統合<br/>• 自然な人間-ロボット対話<br/>• 状況認識能力向上`"]
+    end
+
+    %% ========================================
+    %% スタイリング定義
+    %% ========================================
+    
+    classDef inputOutput fill:#E74C3C,stroke:#C0392B,stroke-width:4px,color:#FFFFFF,font-weight:bold
+    classDef aiLayer fill:#3498DB,stroke:#2980B9,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef smartLayer fill:#9B59B6,stroke:#8E44AD,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef generationLayer fill:#27AE60,stroke:#229954,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef executionLayer fill:#F39C12,stroke:#E67E22,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef featureNode fill:#E67E22,stroke:#D35400,stroke-width:2px,color:#FFFFFF,font-weight:bold
+    
+    %% スタイル適用
+    class INPUT,OUTPUT inputOutput
+    class VECTOR_DB,KNOWLEDGE_BASE,LEARNING_LOOP,CONTEXT_MEMORY aiLayer
+    class ADAPTIVE_WORKFLOW,PARALLEL_PROCESSING,SENSOR_INTEGRATION,MOTION_OPTIMIZATION smartLayer
+    class INTENT_ANALYSIS,CREATIVE_PLANNING,XML_GENERATION,VALIDATION_ENGINE generationLayer
+    class ROBOT_EXECUTION,FEEDBACK_ANALYSIS executionLayer
+    class F1,F2,F3 featureNode
+
+    %% ========================================
+    %% サブグラフ配置調整
+    %% ========================================
+    
+    AI_LAYER ~~~ SMART_LAYER
+    SMART_LAYER ~~~ GENERATION_LAYER
+    GENERATION_LAYER ~~~ EXECUTION_LAYER
+    EXECUTION_LAYER ~~~ FEATURES 

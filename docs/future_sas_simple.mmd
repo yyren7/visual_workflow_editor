@@ -1,24 +1,48 @@
-flowchart TB
-    subgraph Future ["将来のシステム構成"]
+%%{init: {"themeVariables": {"clusterBkg": "white"}} }%%
+flowchart LR
+    %% 文中关键词のみを使用（原文フレーズに統一）
+    subgraph RAG ["<b>RAGの拡張</b>"]
         direction TB
-        
-        subgraph AI ["🧠 拡張AI層"]
-            RAG["🔍 RAG拡張<br/>ベクトルDB"]
-            Memory["🧠 長期記憶<br/>学習ループ"]
-        end
-        
-        subgraph Smart ["⚙️ スマート処理層"]
-            Enhanced["🚀 強化LangGraph<br/>適応ワークフロー"]
-            Teaching["🎯 自動ティーチング<br/>センサー統合"]
-        end
-        
-        AI --> Enhanced
-        Enhanced --> Teaching
-        Teaching --> Memory
+        N1["<b>多様な工程パターン</b>"]
+        N2["<b>複雑なロボットタスク</b>"]
+        N3["<b>最適コンテキスト<br>検索処理</b>"]
+        N1 --> N3
+        N2 --> N3
     end
+
+    subgraph Memory ["<b>LLM長期記憶の組み込み</b>"]
+        direction TB
+        N4["<b>ユーザーからの修正<br>フィードバック</b>"] --> N6["<b>学習ループ</b>"] --> N8["<b>知識ベース更新</b>"]
+    end
+
+    subgraph Teach ["<b>座標設定の対応</b>"]
+        direction TB
+        N13["<b>座標設定ティーチング</b>"] --> N16["<b>自動パラメータ<br>最適化</b>"]
+    end
+
+    A["<b>LLMエージェント</b>"]
+    A --> N3
+    N3 --> N13
+    N13 --> N6
+    N6 --> A
+
+    %% スタイリング - RAG関連（ブルー系）
+    classDef ragNode fill:#D6EAF8,stroke:#3498DB,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef ragSubgraph fill:#EBF5FB,stroke:#3498DB,stroke-width:3px;
     
-    classDef ai fill:#e8f5e8,stroke:#2e7d32,color:#000,stroke-width:2px
-    classDef smart fill:#f3e5f5,stroke:#7b1fa2,color:#000,stroke-width:2px
+    %% スタイリング - Memory関連（グリーン系）
+    classDef memoryNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef memorySubgraph fill:#EAFAF1,stroke:#27AE60,stroke-width:3px;
     
-    class AI,RAG,Memory ai
-    class Smart,Enhanced,Teaching smart
+    %% スタイリング - Teach関連（パープル系）
+    classDef teachNode fill:#E8DAEF,stroke:#8E44AD,stroke-width:4px,color:#2C3E50,font-weight:bold;
+    classDef teachSubgraph fill:#F4F1F8,stroke:#8E44AD,stroke-width:3px;
+    
+    %% スタイリング - 中央エージェント（オレンジ系）
+    classDef agentNode fill:#FDEBD0,stroke:#E67E22,stroke-width:5px,color:#2C3E50,font-weight:bold;
+
+    %% クラス適用
+    class N1,N2,N3 ragNode;
+    class N4,N6,N8 memoryNode;
+    class N13,N16 teachNode;
+    class A agentNode;

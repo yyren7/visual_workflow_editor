@@ -1,0 +1,62 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8F4FD',
+    'primaryTextColor': '#2C3E50',
+    'primaryBorderColor': '#3498DB',
+    'lineColor': '#34495E',
+    'secondaryColor': '#F8F9FA',
+    'tertiaryColor': '#ECF0F1',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8F4FD',
+    'secondBkg': '#D5DBDB',
+    'tertiaryBkg': '#FADBD8',
+    'fontSize': '16px'
+  }
+}}%%
+
+flowchart LR
+    %% ノード定義
+    A["`**[状態永続化管理]<br/>LangGraph初期化**`"]
+    J["`**[完了]**<br/>プログラムの出力`"]
+    
+    subgraph sub1 ["提案・手順分解"]
+        direction LR
+        B["`**[提案エージェント]**<br/>①目的のヒアリング`"]
+        D["`**[手順分解エージェント]**<br/>②手順の生成`"]
+    end
+
+    subgraph sub2 ["対話サイクル管理"]
+        direction LR
+        C["`**[ユーザー確認]**<br/>④ユーザー確認・修正`"]
+    end
+    
+    subgraph sub3 ["コード生成"]
+        direction LR
+        XML_GEN["`③コードへの変換`"]
+    end
+
+    %% フロー接続
+    A --> B
+    B -- "提案レビュー" --> C
+    C -- "②手順の生成へ" --> D
+    D -- "手順レビュー" --> C
+    C -- "③コードへの変換" --> XML_GEN
+    XML_GEN --> J
+    
+    %% その他の接続
+    A -. "履歴から状態復旧" .-> C
+    C -. "提案の再生成" .-> B
+
+    %% スタイリング
+    classDef initNode fill:#E8F4FD,stroke:#3498DB,stroke-width:4px,color:#2C3E50,font-weight:bold,font-size:16px;
+    classDef processNode fill:#D5DBDB,stroke:#2ECC71,stroke-width:3px,color:#2C3E50,font-weight:bold,font-size:16px;
+    classDef reviewNode fill:#FADBD8,stroke:#E74C3C,stroke-width:4px,color:#2C3E50,font-weight:bold,font-size:16px;
+    classDef xmlNode fill:#F4E8D5,stroke:#F39C12,stroke-width:3px,color:#2C3E50,font-weight:bold,font-size:16px;
+    classDef endNode fill:#D5F4E6,stroke:#27AE60,stroke-width:4px,color:#2C3E50,font-weight:bold,font-size:16px;
+
+    class A initNode;
+    class B,D processNode;
+    class C reviewNode;
+    class XML_GEN xmlNode;
+    class J endNode; 

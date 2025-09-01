@@ -1,0 +1,19 @@
+flowchart LR
+    subgraph 従来の方法
+        direction LR
+        A["15,000+ tokens<br/>全データ一括送信"];
+    end
+
+    subgraph 処理フロー
+        direction LR
+        F["Step 1<br/>📊 ~500 tokens<br/>提案リスト生成"] --> G["Step 2<br/>1000-2000 tokens<br/>🧠 並列処理 (5-10 タスク)"] --> H["Step 3<br/>🚀 0 tokens<br/>テンプレート生成"];
+    end
+
+    A -- "ハイブリッド生成" --> F;
+
+    style 従来の方法 fill:#fde7e9,stroke:#e15258,stroke-width:2px
+    style 処理フロー fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px
+    style A fill:#fff,stroke:#e15258,stroke-width:1px
+    style F fill:#fff,stroke:#ab47bc,stroke-width:1px
+    style G fill:#fff,stroke:#ab47bc,stroke-width:1px
+    style H fill:#fff,stroke:#ab47bc,stroke-width:1px 

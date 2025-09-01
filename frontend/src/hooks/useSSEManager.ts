@@ -121,16 +121,20 @@ class SSEConnectionManager {
       },
       
       onclose: () => {
-        // 这个回调在连接正常关闭时（被服务器或客户端中止）触发
-        console.log(`[SSE_MANAGER_LOG] Connection closed for chat: ${chatId}. This is expected on stream end or manual closure.`);
+        // 这个回调在连接因错误或网络问题而丢失时触发
+        // @microsoft/fetch-event-source 会在 onerror 抛出错误后自动尝试重连
+        // 我们不应该在这里调用 this.closeConnection()，因为它会阻止重连
+        console.log(`[SSE_MANAGER_LOG] Connection closed for chat: ${chatId}. If this was due to an error, the library will attempt to reconnect.`);
         // 不需要在这里调用 this.closeConnection(chatId)，因为它会被外部逻辑（如 stream_end 事件或组件卸载）调用
         // 避免循环调用
       },
 
       onerror: (error: any) => {
-        console.error(`[SSE_MANAGER_LOG] Connection error for chat: ${chatId}`, error);
+        console.error(`[SSE_MANAGER_LOG] Connection error for chat: ${chatId}. Re-throwing to trigger auto-reconnect.`, error);
         this.dispatchEvent(chatId, 'connection_error', { chatId, error });
-        this.closeConnection(chatId); // 发生不可恢复的错误时，关闭并清理
+        // 关键改动：不再调用 this.closeConnection(chatId);
+        // 而是重新抛出错误，让 @microsoft/fetch-event-source 库来处理指数退避重连
+        throw error;
       }
     });
 
